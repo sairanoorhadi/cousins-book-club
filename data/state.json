@@ -1,5 +1,5 @@
 {
-  "rev": 1008,
+  "rev": 1009,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "One book at a time. Opinions welcome.",
@@ -86,10 +86,14 @@
       "badge": "",
       "series": "Six of Crows Duology",
       "seriesIndex": 1,
-      "started": "",
+      "started": "2026-04-17",
       "finished": "2026-07-02",
       "progressPage": 0,
-      "members": [],
+      "members": [
+        "mb-saira",
+        "mb-pareesa",
+        "mb-mt3zx2lgcj3x8"
+      ],
       "review": {
         "rating": 5,
         "text": "Thrilling and Captivating. Did not see anything comming",
