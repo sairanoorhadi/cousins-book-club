@@ -1,5 +1,5 @@
 {
-  "rev": 1009,
+  "rev": 1007,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "One book at a time. Opinions welcome.",
@@ -29,14 +29,6 @@
       "avatar": "",
       "fable": "",
       "goodreads": ""
-    },
-    {
-      "id": "mb-mt3zy8m6cxe9o",
-      "name": "Zainab",
-      "joined": "2026-07-25",
-      "avatar": "",
-      "fable": "",
-      "goodreads": ""
     }
   ],
   "books": [
@@ -61,12 +53,7 @@
       "started": "2026-08-22",
       "finished": "2026-08-22",
       "progressPage": 0,
-      "members": [
-        "mb-saira",
-        "mb-pareesa",
-        "mb-mt3zx2lgcj3x8",
-        "mb-mt3zy8m6cxe9o"
-      ]
+      "members": []
     },
     {
       "id": "bk-soc",
@@ -86,14 +73,10 @@
       "badge": "",
       "series": "Six of Crows Duology",
       "seriesIndex": 1,
-      "started": "2026-04-17",
+      "started": "",
       "finished": "2026-07-02",
       "progressPage": 0,
-      "members": [
-        "mb-saira",
-        "mb-pareesa",
-        "mb-mt3zx2lgcj3x8"
-      ],
+      "members": [],
       "review": {
         "rating": 5,
         "text": "Thrilling and Captivating. Did not see anything comming",
@@ -107,7 +90,7 @@
       "bookId": "bk-ck",
       "date": "2026-08-27",
       "time": "19:00",
-      "place": "",
+      "place": "Online - Discord",
       "chapters": "Chapter 23-32",
       "pages": "100",
       "done": false,
