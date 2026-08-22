@@ -1,5 +1,5 @@
 {
-  "rev": 1003,
+  "rev": 1004,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "One book at a time. Opinions welcome.",
@@ -9,7 +9,7 @@
     {
       "id": "mb-saira",
       "name": "Saira",
-      "joined": "",
+      "joined": "2026-04-17",
       "avatar": "",
       "fable": "",
       "goodreads": ""
