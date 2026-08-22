@@ -1,0 +1,2221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cousins Book Club</title>
+<meta name="description" content="What the Cousins Book Club is reading, what we've finished, and what we might read next.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=DM+Mono:wght@400;500&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+
+/* ============ tokens ============ */
+:root{
+  --paper:#FAF7FF; --surface:#FFFFFF; --sunk:#F1ECFF;
+  --ink:#191233; --muted:#6E6689; --edge:#191233; --stamp:#191233; --hairline:#DED5F5;
+  --flare:#E8285A; --zest:#F5A800; --surf:#0A9E88; --sky:#3257E0; --grape:#7C31D8;
+  --on-flare:#FFFFFF; --on-zest:#191233; --on-surf:#FFFFFF; --on-sky:#FFFFFF; --on-grape:#FFFFFF;
+  --f-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Newsreader",Georgia,"Times New Roman",serif;
+  --f-mono:"DM Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:8px; --shadow:4px 4px 0 var(--stamp); --shadow-sm:3px 3px 0 var(--stamp); --wrap:1120px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#120E26; --surface:#1C1640; --sunk:#251D52;
+    --ink:#F2EDFF; --muted:#A79FC9; --edge:#4E40A0; --stamp:#080615; --hairline:#372C74;
+    --flare:#FF5C7C; --zest:#FFC44D; --surf:#2FD6B8; --sky:#7C9BFF; --grape:#B47CFF;
+    --on-flare:#2A0710; --on-zest:#2A1E00; --on-surf:#04241E; --on-sky:#0A1440; --on-grape:#1E0736;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#120E26; --surface:#1C1640; --sunk:#251D52;
+  --ink:#F2EDFF; --muted:#A79FC9; --edge:#4E40A0; --stamp:#080615; --hairline:#372C74;
+  --flare:#FF5C7C; --zest:#FFC44D; --surf:#2FD6B8; --sky:#7C9BFF; --grape:#B47CFF;
+  --on-flare:#2A0710; --on-zest:#2A1E00; --on-surf:#04241E; --on-sky:#0A1440; --on-grape:#1E0736;
+}
+
+/* ============ base ============ */
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--f-display);font-weight:800;line-height:1.04;margin:0;text-wrap:balance;letter-spacing:-.02em}
+p{margin:0}
+button{font:inherit;color:inherit}
+a{color:inherit}
+img{max-width:100%;display:block}
+:focus-visible{outline:3px solid var(--grape);outline-offset:3px;border-radius:4px}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 24px}
+.stack{display:flex;flex-direction:column}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.hint{font-size:13.5px;color:var(--muted)}
+.empty{color:var(--muted);font-style:italic;font-size:15px}
+
+/* ============ buttons ============ */
+.btn{display:inline-flex;align-items:center;gap:8px;justify-content:center;font-family:var(--f-display);font-weight:700;font-size:14px;padding:10px 18px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--stamp)}
+.btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--stamp)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none;box-shadow:var(--shadow-sm)}
+.btn--flare{background:var(--flare);color:var(--on-flare)}
+.btn--sky{background:var(--sky);color:var(--on-sky)}
+.btn--surf{background:var(--surf);color:var(--on-surf)}
+.btn--zest{background:var(--zest);color:var(--on-zest)}
+.btn--grape{background:var(--grape);color:var(--on-grape)}
+.btn--sm{padding:6px 12px;font-size:12.5px;box-shadow:2px 2px 0 var(--stamp)}
+.btn--ghost{background:transparent;box-shadow:none;border-color:var(--hairline)}
+.btn--ghost:hover{background:var(--sunk);transform:none;box-shadow:none}
+
+/* ============ chrome ============ */
+.topbar{position:sticky;top:0;z-index:60;background:var(--paper);border-bottom:2px solid var(--edge)}
+.topbar__in{display:flex;align-items:center;gap:20px;min-height:64px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand__mark{width:32px;height:32px;flex:none;border:2px solid var(--edge);border-radius:5px;background:var(--flare);position:relative;box-shadow:2px 2px 0 var(--stamp);overflow:hidden}
+.brand__mark::after{content:"";position:absolute;left:9px;top:4px;bottom:4px;width:2px;background:var(--on-flare);opacity:.85}
+.brand__mark img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
+.brand__mark.has-logo::after{display:none}
+.brand__name{font-family:var(--f-display);font-weight:800;font-size:18px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.navlinks{display:flex;gap:4px;margin-left:auto;align-items:center;flex-wrap:wrap}
+.navlinks a{font-family:var(--f-display);font-weight:700;font-size:13.5px;text-decoration:none;padding:7px 12px;border-radius:6px;color:var(--muted)}
+.navlinks a:hover{color:var(--ink);background:var(--sunk)}
+
+/* ============ covers ============ */
+.cover{position:relative;display:block;aspect-ratio:2/3;border:2px solid var(--edge);border-radius:5px;overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff)}
+.cover img{width:100%;height:100%;object-fit:cover}
+.cover__gen{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:9% 9% 10%;text-align:left}
+.cover__gen::before{content:"";position:absolute;left:6%;top:0;bottom:0;width:3px;background:currentColor;opacity:.34}
+.cover__gen::after{content:"";position:absolute;left:9%;right:9%;top:16%;height:2px;background:currentColor;opacity:.5}
+.cover__t{font-family:var(--f-display);font-weight:800;line-height:1.05;letter-spacing:-.02em;font-size:clamp(11px,13cqw,26px);text-wrap:balance}
+.cover__a{font-family:var(--f-mono);font-size:clamp(7px,5.4cqw,11px);letter-spacing:.08em;text-transform:uppercase;opacity:.82;margin-top:6%}
+.cover-wrap{container-type:inline-size;display:block}
+
+/* ============ hero ============ */
+.hero{padding:52px 0 44px;border-bottom:2px solid var(--edge)}
+.hero__grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(290px,1fr);gap:36px;align-items:start}
+.hero__main{display:grid;grid-template-columns:172px minmax(0,1fr);gap:30px;align-items:start}
+.hero__cover{width:172px;box-shadow:var(--shadow);cursor:pointer;transition:transform .14s ease, box-shadow .14s ease}
+.hero__cover:hover{transform:translate(-3px,-3px);box-shadow:7px 7px 0 var(--stamp)}
+.hero h1{font-size:clamp(32px,4.6vw,52px);margin:12px 0 0;cursor:pointer;display:inline-block;text-decoration:3px underline transparent;text-underline-offset:8px;transition:text-decoration-color .15s ease}
+.hero h1:hover{text-decoration-color:var(--flare)}
+.hero__author{font-size:19px;color:var(--muted);margin-top:8px;font-style:italic}
+.hero__facts{display:flex;flex-wrap:wrap;gap:7px;margin-top:18px}
+.hero__blurb{margin-top:20px;max-width:58ch}
+.hero__cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
+
+.progress{margin-top:18px;max-width:460px}
+.progress__bar{height:15px;border:2px solid var(--edge);border-radius:999px;background:var(--sunk);overflow:hidden}
+.progress__fill{height:100%;background:var(--flare);border-right:2px solid var(--edge);transition:width .4s cubic-bezier(.22,1,.36,1)}
+.progress__label{display:flex;justify-content:space-between;gap:12px;margin-top:7px;font-family:var(--f-mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+.tagbank{display:flex;flex-wrap:wrap;gap:7px}
+.tag{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.04em;padding:4px 9px;border:1.5px solid var(--edge);border-radius:999px;background:var(--surface);white-space:nowrap}
+.tag--zest{background:var(--zest);color:var(--on-zest)}
+.tag--surf{background:var(--surf);color:var(--on-surf)}
+.tag--sky{background:var(--sky);color:var(--on-sky)}
+.tag--grape{background:var(--grape);color:var(--on-grape)}
+.tag--flare{background:var(--flare);color:var(--on-flare)}
+
+.meetcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
+.meetcard__top{background:var(--sky);color:var(--on-sky);padding:13px 20px;border-bottom:2px solid var(--edge)}
+.meetcard__top .eyebrow{color:inherit;opacity:.92}
+.meetcard__body{padding:20px}
+.meetcard__date{font-family:var(--f-display);font-weight:800;font-size:27px;line-height:1.1;letter-spacing:-.02em}
+.meetcard__row{display:flex;gap:10px;align-items:baseline;margin-top:11px;font-size:15px}
+.meetcard__row .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);min-width:74px;flex:none}
+.countdown{display:inline-flex;align-items:baseline;gap:7px;margin-top:14px;background:var(--zest);color:var(--on-zest);border:2px solid var(--edge);border-radius:999px;padding:5px 14px;font-family:var(--f-mono);font-size:12.5px}
+
+.upnext{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
+.upnext[hidden]{display:none}
+.upnext__top{background:var(--grape);color:var(--on-grape);padding:11px 20px;border-bottom:2px solid var(--edge)}
+.upnext__top .eyebrow{color:inherit;opacity:.92}
+.upnext__list{list-style:none;margin:0;padding:0}
+.upnext__list li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:13px;padding:13px 20px;align-items:center}
+.upnext__list li + li{border-top:1.5px solid var(--hairline)}
+.upnext__t{font-family:var(--f-display);font-weight:700;font-size:16px;line-height:1.2;background:none;border:0;padding:0;text-align:left;cursor:pointer;color:inherit;text-decoration:2px underline transparent;text-underline-offset:4px;transition:text-decoration-color .14s ease}
+.upnext__t:hover{text-decoration-color:var(--grape)}
+.upnext__a{display:block;color:var(--muted);font-style:italic;font-size:14px;margin-top:2px}
+.upnext__list .cover__gen{padding:4px 5px}
+.upnext__list .cover__t{font-size:7.5px;line-height:1.05}
+.upnext__list .cover__a,.upnext__list .cover__gen::after{display:none}
+
+/* ============ sections ============ */
+.section{padding:58px 0;border-bottom:2px solid var(--edge)}
+.section__head{margin-bottom:26px}
+.section h2{font-size:clamp(26px,3.4vw,38px)}
+.section__head p{color:var(--muted);font-size:15.5px;max-width:56ch;margin-top:8px}
+
+.tabbar{display:flex;border:2px solid var(--edge);border-radius:var(--r);background:var(--sunk);padding:5px;flex-wrap:wrap;box-shadow:var(--shadow-sm);width:max-content;max-width:100%}
+.tabbtn{font-family:var(--f-display);font-weight:700;font-size:14px;padding:9px 16px;border:2px solid transparent;border-radius:6px;background:transparent;cursor:pointer;color:var(--muted)}
+.tabbtn:hover{color:var(--ink)}
+.tabbtn[aria-selected="true"]{background:var(--surface);border-color:var(--edge);color:var(--ink)}
+.tabpanel[hidden]{display:none}
+.tabpanel{padding-top:28px}
+
+/* ============ previous books ============ */
+.shelf{display:grid;gap:18px}
+.shelfrow{display:grid;grid-template-columns:78px minmax(0,1fr) auto;gap:22px;align-items:start;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-sm);padding:18px 20px}
+.shelfrow__cover{width:78px;cursor:pointer}
+.shelfrow h3{font-size:22px}
+.shelfrow__author{color:var(--muted);font-style:italic;margin-top:4px}
+.review{margin-top:14px;border-left:3px solid var(--grape);padding-left:14px}
+.review__stars{display:flex;align-items:center;gap:10px}
+.stars{position:relative;display:inline-block;font-size:18px;letter-spacing:2px;line-height:1;white-space:nowrap;flex:none}
+.stars__off{color:var(--hairline)}
+.stars__on{position:absolute;left:0;top:0;overflow:hidden;color:var(--zest);white-space:nowrap}
+.stars--sm{font-size:14px;letter-spacing:1px}
+.stars__num{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.review__text{margin-top:6px;font-size:15.5px}
+.review__by{margin-top:6px;font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.shelfrow__side{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+
+/* ============ recommendations ============ */
+.recgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:20px}
+.reccard{position:relative;padding:0;border:0;background:none;cursor:pointer;display:block;text-align:left;transition:transform .14s ease}
+.reccard:hover,.reccard:focus-visible{transform:translate(-3px,-3px)}
+.reccard .cover{box-shadow:var(--shadow-sm)}
+.reccard:hover .cover,.reccard:focus-visible .cover{box-shadow:6px 6px 0 var(--stamp)}
+.reccard__foot{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 11px;background:rgba(10,7,26,.82);color:#F6F2FF;border-top:2px solid var(--edge);border-radius:0 0 3px 3px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.03em}
+.reccard__by{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85}
+.reccard .cover__gen{padding-bottom:18%}
+.reccard__reveal{position:absolute;left:0;right:0;bottom:0;background:rgba(10,7,26,.94);color:#F6F2FF;border-top:2px solid var(--edge);border-radius:0 0 3px 3px;padding:10px 12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 9px;align-items:baseline;transform:translateY(101%);opacity:0;transition:transform .2s cubic-bezier(.22,1,.36,1), opacity .16s ease;pointer-events:none}
+.reccard:hover .reccard__reveal,.reccard:focus-visible .reccard__reveal{transform:translateY(0);opacity:1}
+.reccard__reveal .k{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.62;white-space:nowrap}
+.reccard__reveal .v{font-size:12.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ============ badges ============ */
+.badgehead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.tree{position:relative;width:100%;aspect-ratio:16/10;min-height:380px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
+.tree__svg{position:absolute;inset:0;width:100%;height:100%}
+.tree__node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;cursor:pointer;z-index:2}
+.tree__disc{width:74px;height:74px;border-radius:50%;border:3px solid var(--edge);overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm);transition:transform .14s ease}
+.tree__node:hover .tree__disc,.tree__node:focus-visible .tree__disc{transform:scale(1.08)}
+.tree__disc img{width:100%;height:100%;object-fit:cover}
+.tree__disc span{font-family:var(--f-display);font-weight:800;font-size:26px}
+.tree__disc--now{border-style:dashed}
+.tree__disc--hub{width:106px;height:106px;border-width:3px;background:var(--flare);color:var(--on-flare)}
+.tree__disc--hub span{font-size:15px;text-align:center;line-height:1.1;padding:6px;letter-spacing:-.01em}
+.tree__cap{font-family:var(--f-display);font-weight:700;font-size:12px;max-width:118px;text-align:center;line-height:1.2;color:var(--ink);background:var(--surface);border:1.5px solid var(--hairline);border-radius:5px;padding:3px 7px}
+.tip{position:absolute;z-index:5;transform:translate(-50%,-100%);background:var(--ink);color:var(--paper);border-radius:6px;padding:8px 11px;font-family:var(--f-mono);font-size:11px;line-height:1.5;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s ease}
+.tip[data-on="1"]{opacity:1}
+
+.timeline{position:relative;padding-left:44px}
+.timeline::before{content:"";position:absolute;left:15px;top:6px;bottom:6px;width:3px;background:var(--hairline)}
+.tlrow{position:relative;padding:0 0 26px}
+.tlrow__dot{position:absolute;left:-44px;top:2px;width:34px;height:34px;border-radius:50%;border:2.5px solid var(--edge);overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:13px}
+.tlrow__dot img{width:100%;height:100%;object-fit:cover}
+.tlcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:14px 17px;box-shadow:var(--shadow-sm);text-align:left;width:100%;cursor:pointer;font-family:var(--f-body);transition:transform .12s ease}
+.tlcard:hover{transform:translateX(3px)}
+.tlcard--flat{cursor:default;box-shadow:none;border-style:dashed;background:transparent}
+.tlcard--flat:hover{transform:none}
+.tlcard__when{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.tlcard__what{display:block;font-family:var(--f-display);font-weight:800;font-size:18px;margin-top:4px}
+.tlcard__sub{display:block;color:var(--muted);font-size:14.5px;font-style:italic;margin-top:3px}
+
+.crew{margin-top:22px;border:2px solid var(--edge);border-radius:var(--r);background:var(--sunk);padding:18px 20px}
+.crew[hidden]{display:none}
+.crew__list{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px}
+.crewchip{display:flex;align-items:center;gap:9px;background:var(--surface);border:2px solid var(--edge);border-radius:999px;padding:5px 14px 5px 5px}
+.crewchip__pic{width:32px;height:32px;border-radius:50%;border:2px solid var(--edge);overflow:hidden;background:var(--c,var(--sky));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:13px;flex:none}
+.crewchip__pic img{width:100%;height:100%;object-fit:cover}
+.crewchip__n{font-family:var(--f-display);font-weight:700;font-size:14px}
+.crewchip__links{display:flex;gap:6px;margin-left:2px}
+.crewlink{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;border:1.5px solid var(--hairline);border-radius:999px;padding:2px 7px;color:var(--muted);white-space:nowrap}
+.crewlink:hover{border-color:var(--edge);color:var(--ink);background:var(--sunk)}
+
+.focusbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:22px}
+.focusbar__lab{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.focuschip{display:flex;align-items:center;gap:8px;background:var(--surface);border:2px solid var(--hairline);border-radius:999px;padding:4px 14px 4px 4px;cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--muted)}
+.focuschip:hover{color:var(--ink);border-color:var(--edge)}
+.focuschip[aria-pressed="true"]{border-color:var(--edge);color:var(--ink);background:var(--sunk);box-shadow:2px 2px 0 var(--stamp)}
+.focuschip__pic{width:26px;height:26px;border-radius:50%;border:2px solid var(--edge);overflow:hidden;background:var(--c,var(--sky));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:11px;flex:none}
+.focuschip__pic img{width:100%;height:100%;object-fit:cover}
+.focuschip--all{padding-left:14px}
+.focusnote{font-size:14.5px;color:var(--muted);margin-bottom:18px;font-style:italic}
+.focusnote[hidden]{display:none}
+
+.ratepick{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.ratepick input[type=range]{flex:1 1 180px;min-width:150px;accent-color:var(--zest)}
+.ratepick__out{font-family:var(--f-mono);font-size:14px;font-variant-numeric:tabular-nums;min-width:52px}
+.ratepick [data-ratestars] .stars__num{display:none}
+
+/* ============ forms ============ */
+.field{display:flex;flex-direction:column;gap:6px}
+.field > label{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.input,.textarea,.select{font-family:var(--f-body);font-size:16px;color:var(--ink);background:var(--surface);border:2px solid var(--edge);border-radius:6px;padding:10px 12px;width:100%}
+.textarea{min-height:96px;resize:vertical;line-height:1.5}
+.select{font-family:var(--f-display);font-weight:500;font-size:15px}
+.input::placeholder,.textarea::placeholder{color:var(--muted);opacity:.75}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+.formcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:26px;max-width:760px}
+
+.picker{display:flex;gap:14px;align-items:flex-start}
+.picker__prev{width:64px;flex:none}
+.picker__prev--round{width:56px;height:56px;border-radius:50%;border:2px solid var(--edge);overflow:hidden;background:var(--sunk);display:flex;align-items:center;justify-content:center}
+.picker__prev--round img{width:100%;height:100%;object-fit:cover}
+.picker__btns{display:flex;flex-direction:column;gap:8px}
+
+/* ============ modal ============ */
+.scrim{position:fixed;inset:0;z-index:100;background:rgba(12,8,32,.66);background:color-mix(in srgb, var(--ink) 62%, transparent);display:flex;align-items:flex-start;justify-content:center;padding:32px 18px;overflow:auto;backdrop-filter:blur(2px)}
+.scrim[hidden]{display:none}
+#meetScrim{z-index:120}
+#bookScrim{z-index:130}
+.modal{width:100%;max-width:820px;background:var(--paper);border:2px solid var(--edge);border-radius:12px;box-shadow:8px 8px 0 var(--stamp);overflow:hidden}
+.modal--wide{max-width:980px}
+.modal__bar{display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:2px solid var(--edge);background:var(--surface);position:sticky;top:0;z-index:2}
+.modal__bar h2{font-size:20px;flex:1;min-width:0}
+.modal__body{padding:26px 24px 30px}
+.xbtn{width:34px;height:34px;flex:none;border:2px solid var(--edge);border-radius:6px;background:var(--surface);cursor:pointer;font-family:var(--f-display);font-weight:700;line-height:1;box-shadow:2px 2px 0 var(--stamp)}
+.xbtn:hover{background:var(--flare);color:var(--on-flare)}
+
+.noteblock{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);overflow:hidden;margin-top:22px}
+.noteblock__head{padding:11px 18px;border-bottom:2px solid var(--edge)}
+.noteblock__head h3{font-size:15px;letter-spacing:.02em}
+.noteblock--pred .noteblock__head{background:var(--grape);color:var(--on-grape)}
+.noteblock--disc .noteblock__head{background:var(--surf);color:var(--on-surf)}
+.noteblock--sum .noteblock__head{background:var(--zest);color:var(--on-zest)}
+.noteblock__body{padding:18px}
+.notelist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.notelist li{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:12px;align-items:start;padding:11px 12px;border:1.5px solid var(--hairline);border-radius:6px;background:var(--sunk)}
+.notelist .n{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding-top:2px}
+.notelist .who{display:block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+.addrow{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.addrow .input{flex:1 1 240px;width:auto}
+.addrow .input--who{flex:0 1 150px}
+
+/* ============ admin ============ */
+.lane{margin-bottom:26px}
+.lane__label{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.lane__label h4{font-family:var(--f-display);font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.lane__label .rule{flex:1;height:2px;background:var(--hairline)}
+.lanerow{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:14px 16px}
+.lanerow + .lanerow{margin-top:10px}
+.lanerow--now{border-width:3px;box-shadow:var(--shadow-sm)}
+.lanerow__head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.lanerow__title{font-family:var(--f-display);font-weight:800;font-size:17px;min-width:0}
+.lanerow__meta{color:var(--muted);font-style:italic;font-size:14.5px}
+.lanerow__acts{display:flex;gap:7px;flex-wrap:wrap;margin-left:auto}
+.ord{display:flex;flex-direction:column;gap:2px;flex:none}
+.ord button{width:24px;height:19px;line-height:1;padding:0;border:1.5px solid var(--edge);border-radius:4px;background:var(--sunk);cursor:pointer;font-size:11px}
+.ord button:hover{background:var(--grape);color:var(--on-grape)}
+.ord button[disabled]{opacity:.3;cursor:not-allowed}
+.editor{margin-top:14px;border-top:1.5px solid var(--hairline);padding-top:14px}
+.editor > summary{cursor:pointer;font-family:var(--f-mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);list-style:none}
+.editor > summary::-webkit-details-marker{display:none}
+.editor > summary::before{content:"▸ "}
+.editor[open] > summary::before{content:"▾ "}
+.editor > summary:hover{color:var(--ink)}
+.editor__body{padding-top:16px}
+.rotate{display:flex;align-items:center;gap:16px;flex-wrap:wrap;border:3px solid var(--edge);border-radius:var(--r);background:var(--zest);color:var(--on-zest);padding:16px 20px;box-shadow:var(--shadow);margin-bottom:28px}
+.rotate p{font-size:15px;max-width:46ch}
+.rotate strong{font-family:var(--f-display);font-weight:800}
+.adminrow{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:16px 18px}
+.adminrow + .adminrow{margin-top:14px}
+.adminrow__head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.adminrow__head strong{font-family:var(--f-display);font-size:16px}
+.pending{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:start;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:18px;box-shadow:var(--shadow-sm)}
+.pending + .pending{margin-top:14px}
+.pending h4{font-family:var(--f-display);font-size:18px;font-weight:800}
+.pending__acts{display:flex;flex-direction:column;gap:8px}
+.pill{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1.5px solid currentColor}
+.pill--up{color:var(--sky)}
+.pill--done{color:var(--muted)}
+.checkgrid{display:flex;flex-wrap:wrap;gap:9px}
+.checkgrid label{display:flex;align-items:center;gap:7px;border:1.5px solid var(--hairline);border-radius:999px;padding:5px 13px;font-size:14px;cursor:pointer;background:var(--surface)}
+.checkgrid input{accent-color:var(--grape)}
+.divider{height:2px;background:var(--edge);border:0;margin:26px 0}
+
+/* ============ status ============ */
+.status{position:fixed;right:18px;bottom:18px;z-index:200;font-family:var(--f-mono);font-size:12px;border:2px solid var(--edge);border-radius:999px;padding:8px 16px;background:var(--surface);box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:8px;max-width:min(92vw,420px)}
+.status[hidden]{display:none}
+.status--ok{background:var(--surf);color:var(--on-surf)}
+.status--bad{background:var(--flare);color:var(--on-flare)}
+.status--busy{background:var(--zest);color:var(--on-zest)}
+.banner{border:2px solid var(--edge);border-radius:var(--r);background:var(--zest);color:var(--on-zest);padding:12px 18px;font-size:14.5px;margin-bottom:22px;box-shadow:var(--shadow-sm)}
+.banner[hidden]{display:none}
+.foot{padding:34px 0 54px;color:var(--muted);font-size:13.5px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+@media (max-width:960px){
+  .hero__grid{grid-template-columns:1fr;gap:28px}
+}
+@media (max-width:700px){
+  .hero__main{grid-template-columns:118px minmax(0,1fr);gap:20px}
+  .hero__cover{width:118px}
+  .shelfrow{grid-template-columns:64px minmax(0,1fr)}
+  .shelfrow__cover{width:64px}
+  .shelfrow__side{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:flex-start}
+  .pending{grid-template-columns:1fr}
+  .pending__acts{flex-direction:row}
+  .tree{aspect-ratio:1/1.05;min-height:460px}
+  .tree__disc{width:56px;height:56px}
+  .tree__disc--hub{width:84px;height:84px}
+  .tree__cap{font-size:10.5px;max-width:92px}
+}
+@media (max-width:620px){
+  body{font-size:16px}
+  .topbar__in{padding:12px 0;flex-wrap:wrap}
+  .navlinks{margin-left:0;width:100%}
+  .section{padding:44px 0}
+}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms !important;animation-duration:.01ms !important}}
+
+</style>
+</head>
+<body>
+
+<script id="seed-state" type="application/json">
+{
+  "rev": 1000,
+  "club": {
+    "name": "Cousins Book Club",
+    "tagline": "One book at a time. Opinions welcome.",
+    "logo": ""
+  },
+  "members": [
+    {
+      "id": "mb-saira",
+      "name": "Saira",
+      "joined": "",
+      "avatar": ""
+    },
+    {
+      "id": "mb-pareesa",
+      "name": "Pareesa",
+      "joined": "",
+      "avatar": ""
+    }
+  ],
+  "books": [
+    {
+      "id": "bk-ck",
+      "title": "Crooked Kingdom",
+      "author": "Leigh Bardugo",
+      "pages": 560,
+      "genres": [
+        "Young Adult",
+        "Fantasy",
+        "Heist",
+        "Grishaverse"
+      ],
+      "level": "Ages 14+",
+      "blurb": "Kaz Brekker and his crew pulled off the impossible and got nothing for it. Back in Ketterdam, double-crossed and badly out of pocket, they are hunted by rival gangs, a merchant council that wants them buried, and a foreign government that wants one of them back. With a member of the crew in enemy hands, Kaz has to out-scheme an entire city — and this time the con is personal. The second half of the Six of Crows duology.",
+      "status": "current",
+      "cover": "",
+      "badge": "",
+      "series": "Six of Crows Duology",
+      "seriesIndex": 2,
+      "started": "",
+      "finished": "",
+      "progressPage": 0,
+      "members": []
+    },
+    {
+      "id": "bk-soc",
+      "title": "Six of Crows",
+      "author": "Leigh Bardugo",
+      "pages": 465,
+      "genres": [
+        "Young Adult",
+        "Fantasy",
+        "Heist",
+        "Grishaverse"
+      ],
+      "level": "Ages 14+",
+      "blurb": "Ketterdam is a city that runs on debt, and Kaz Brekker collects. Offered a fortune he cannot turn down, he assembles six dangerous outcasts — a sharpshooter, a runaway, a spy, a Heartrender, a thief and a convict — to break into the Ice Court, the most secure fortress in the world, and pull out the scientist who invented a drug that turns Grisha power into a weapon. Six narrators, six agendas, and no honest people anywhere.",
+      "status": "past",
+      "cover": "",
+      "badge": "",
+      "series": "Six of Crows Duology",
+      "seriesIndex": 1,
+      "started": "",
+      "finished": "2026-07-02",
+      "progressPage": 0,
+      "members": [],
+      "review": {
+        "rating": 5,
+        "text": "Thrilling and Captivating. Did not see anything comming",
+        "by": "The club"
+      }
+    }
+  ],
+  "meetings": [
+    {
+      "id": "mt-ck",
+      "bookId": "bk-ck",
+      "date": "",
+      "time": "19:00",
+      "place": "",
+      "chapters": "",
+      "pages": "",
+      "done": false,
+      "summary": "",
+      "predictions": [],
+      "points": [
+        {
+          "id": "d1",
+          "text": "Kaz says he doesn't believe in luck, only leverage. Did Six of Crows actually bear that out?",
+          "by": ""
+        },
+        {
+          "id": "d2",
+          "text": "Six narrators, six agendas — whose chapters do you trust least, and why?",
+          "by": ""
+        },
+        {
+          "id": "d3",
+          "text": "Ketterdam runs on debt: money, favours, revenge. Is anyone in the crew actually free?",
+          "by": ""
+        },
+        {
+          "id": "d4",
+          "text": "Bardugo drops a backstory chapter into the middle of the heist. Does that break the tension or build it?",
+          "by": ""
+        }
+      ]
+    },
+    {
+      "id": "mt-soc",
+      "bookId": "bk-soc",
+      "date": "2026-07-02",
+      "time": "19:00",
+      "place": "",
+      "chapters": "Complete",
+      "pages": "",
+      "done": true,
+      "summary": "",
+      "predictions": [],
+      "points": []
+    }
+  ],
+  "recs": [
+    {
+      "id": "rc-thief",
+      "title": "The Book Thief",
+      "author": "Markus Zusak",
+      "pages": 592,
+      "genres": [
+        "Historical Fiction",
+        "WWII",
+        "Literary"
+      ],
+      "level": "Ages 13+",
+      "by": "Saira",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Narrated by Death himself, this is the story of Liesel Meminger, a foster girl in Nazi Germany who steals books she cannot yet read and reads them aloud in bomb shelters. When her family hides a Jewish man in their basement, words become the most dangerous and most saving thing she owns."
+    },
+    {
+      "id": "rc-1984",
+      "title": "1984",
+      "author": "George Orwell",
+      "pages": 368,
+      "genres": [
+        "Dystopian",
+        "Political Fiction",
+        "Classic"
+      ],
+      "level": "Ages 15+",
+      "by": "Saira",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Winston Smith rewrites history for a living in a state where the Party controls the past, the present and the language itself. His quiet rebellion — a diary, a love affair, a rented room — runs headlong into a machine built to make rebellion unthinkable."
+    },
+    {
+      "id": "rc-kite",
+      "title": "The Kite Runner",
+      "author": "Khaled Hosseini",
+      "pages": 371,
+      "genres": [
+        "Literary Fiction",
+        "Historical",
+        "Coming-of-Age"
+      ],
+      "level": "Ages 16+",
+      "by": "Saira",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Amir and Hassan are inseparable in 1970s Kabul until one winter afternoon at a kite tournament, when Amir's silence costs Hassan everything. Decades later, safe in California, an old phone call gives him one chance to go back. Spans the Soviet invasion and the rise of the Taliban, but stays a story about cowardice and what it takes to undo it."
+    },
+    {
+      "id": "rc-mockingbird",
+      "title": "To Kill a Mockingbird",
+      "author": "Harper Lee",
+      "pages": 323,
+      "genres": [
+        "Classic",
+        "Literary Fiction",
+        "Coming-of-Age"
+      ],
+      "level": "Ages 13+",
+      "by": "Saira",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Scout Finch grows up in Depression-era Alabama watching her father defend a Black man falsely accused of assault. A courtroom drama told from a child's shoulder height, where the neighbour everyone fears turns out to be the one paying attention."
+    },
+    {
+      "id": "rc-elevator",
+      "title": "The Elevator Ghost",
+      "author": "Glen Huser",
+      "pages": 128,
+      "genres": [
+        "Middle Grade",
+        "Ghost Stories",
+        "Humour"
+      ],
+      "level": "Ages 8-11",
+      "by": "Pareesa",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Carolina Giddle arrives at the Blatchford Arms in sequinned sneakers with a tarantula named Chiquita and a talent for babysitting the building's most impossible children. Her method is simple: tell each one a ghost story built exactly to their size. Six linked tales — creepy, funny, and just scary enough — leading to a Halloween party and a very suspicious departure."
+    },
+    {
+      "id": "rc-champion",
+      "title": "Heart of a Champion",
+      "author": "Ellen Schwartz",
+      "pages": 257,
+      "genres": [
+        "Middle Grade",
+        "Historical Fiction",
+        "Sports"
+      ],
+      "level": "Ages 9-12",
+      "by": "Pareesa",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Kenny Sakamoto worships his older brother Mickey and the Vancouver Asahi baseball team, and wants nothing more than a place on the field. Then Pearl Harbor is bombed and his Japanese-Canadian community is uprooted to the interior. A coming-of-age story about a boy holding on to the one thing that still makes sense."
+    },
+    {
+      "id": "rc-grace",
+      "title": "Finding Grace",
+      "author": "Becky Citra",
+      "pages": 176,
+      "genres": [
+        "Middle Grade",
+        "Historical Fiction",
+        "Family"
+      ],
+      "level": "Ages 10-13",
+      "by": "Pareesa",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "It's 1954, and eleven-year-old Hope has spent years writing letters to a sister she believes she invented. When she discovers Grace is real — a twin given up for adoption after contracting polio — Hope sets out to find her, and to reach the mother who has gone quiet in the next room."
+    },
+    {
+      "id": "rc-trouts",
+      "title": "Look Out for the Fitzgerald-Trouts",
+      "author": "Esta Spalding",
+      "pages": 256,
+      "genres": [
+        "Middle Grade",
+        "Adventure",
+        "Humour"
+      ],
+      "level": "Ages 8-12",
+      "by": "Pareesa",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Four loosely related children live in a car on a tropical island. They bathe in the ocean, fish for dinner, pick fruit for breakfast, and drive themselves to school — all while hunting for a real home. Witty, warm, and quietly serious about what family means when the adults have opted out."
+    },
+    {
+      "id": "rc-pandas",
+      "title": "Pandas on the Eastside",
+      "author": "Gabrielle Prendergast",
+      "pages": 192,
+      "genres": [
+        "Middle Grade",
+        "Historical Fiction",
+        "Animals"
+      ],
+      "level": "Ages 9-12",
+      "by": "Pareesa",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Vancouver, 1970s. Ten-year-old Journey Song finds two pandas stranded in a warehouse in her neighbourhood, caught up in a diplomatic standoff and going quietly neglected. She has no money and no connections, so she uses what her block does have: everybody on it."
+    },
+    {
+      "id": "rc-heartless",
+      "title": "Heartless",
+      "author": "Marissa Meyer",
+      "pages": 453,
+      "genres": [
+        "Young Adult",
+        "Fantasy",
+        "Retelling",
+        "Romance"
+      ],
+      "level": "Ages 12+",
+      "by": "Pareesa",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Before she was the Queen of Hearts, Catherine wanted to open a bakery. The King of Hearts wants to marry her; her parents want the match; and Jest, the new court joker, wants something he won't name. A Wonderland origin story that starts as a confection and ends somewhere much colder."
+    }
+  ]
+}
+</script>
+
+<div class="topbar">
+  <div class="wrap topbar__in">
+    <div class="brand">
+      <div class="brand__mark" id="brandMark" aria-hidden="true"></div>
+      <div class="brand__name" id="brandName">Book Club</div>
+    </div>
+    <nav class="navlinks" aria-label="Sections">
+      <a href="#now">Now Reading</a>
+      <a href="#shelf">Previous Books</a>
+      <a href="#recs">Recommendations</a>
+      <a href="#badges">Badges</a>
+      <button class="btn btn--sm btn--grape" id="adminOpen" type="button">Admin</button>
+    </nav>
+  </div>
+</div>
+
+<main>
+  <!-- ===== NOW READING ===== -->
+  <section class="hero" id="now">
+    <div class="wrap">
+      <div class="banner" id="roBanner" hidden></div>
+      <div class="hero__grid">
+        <div class="hero__main">
+          <div class="hero__cover cover-wrap" id="heroCover"></div>
+          <div>
+            <p class="eyebrow">Currently reading &middot; <span id="heroTagline"></span></p>
+            <h1 id="heroTitle">—</h1>
+            <p class="hero__author" id="heroAuthor"></p>
+            <div class="hero__facts tagbank" id="heroFacts"></div>
+            <div id="heroProgress"></div>
+            <p class="hero__blurb" id="heroBlurb"></p>
+            <div class="hero__cta">
+              <button class="btn btn--flare" id="heroDetails" type="button">See meeting notes &rarr;</button>
+              <button class="btn btn--ghost" id="heroJumpRecs" type="button">Browse recommendations</button>
+            </div>
+          </div>
+        </div>
+        <div class="stack" style="gap:18px">
+          <aside class="meetcard">
+            <div class="meetcard__top"><p class="eyebrow">Next meeting</p></div>
+            <div class="meetcard__body" id="heroMeetBody"></div>
+          </aside>
+          <aside class="upnext" id="upNext"></aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PREVIOUS BOOKS ===== -->
+  <section class="section" id="shelf">
+    <div class="wrap">
+      <div class="section__head">
+        <p class="eyebrow">The shelf</p>
+        <h2>Previous books</h2>
+        <p>Everything the club has finished, with our verdict and a link back to the meeting notes.</p>
+      </div>
+      <div class="shelf" id="shelfList"></div>
+    </div>
+  </section>
+
+  <!-- ===== RECOMMENDATIONS ===== -->
+  <section class="section" id="recs">
+    <div class="wrap">
+      <div class="section__head">
+        <p class="eyebrow">The pile</p>
+        <h2>Recommendations</h2>
+        <p>Hover a cover for genres and reading level, click it for the summary. Anyone with a GitHub account can put a book forward.</p>
+      </div>
+      <div class="tabbar" role="tablist" aria-label="Recommendations">
+        <button class="tabbtn" role="tab" id="tab-recs" aria-controls="panel-recs" aria-selected="true" type="button">Recommendations</button>
+        <button class="tabbtn" role="tab" id="tab-suggest" aria-controls="panel-suggest" aria-selected="false" type="button">Suggest a Book</button>
+      </div>
+      <div class="tabpanel" role="tabpanel" id="panel-recs" aria-labelledby="tab-recs">
+        <div class="recgrid" id="recGrid"></div>
+      </div>
+      <div class="tabpanel" role="tabpanel" id="panel-suggest" aria-labelledby="tab-suggest" hidden>
+        <form class="formcard stack" id="suggestForm" style="gap:18px">
+          <div>
+            <h3 style="font-size:22px">Put a book forward</h3>
+            <p class="hint" style="margin-top:8px">This opens a suggestion on the club&rsquo;s GitHub page. The organiser reads it and adds the ones the club wants. You&rsquo;ll need a free GitHub account to send it.</p>
+          </div>
+          <div class="formgrid">
+            <div class="field"><label for="sTitle">Book title</label><input class="input" id="sTitle" name="title" required maxlength="140"></div>
+            <div class="field"><label for="sAuthor">Author</label><input class="input" id="sAuthor" name="author" required maxlength="140"></div>
+            <div class="field"><label for="sPages">Page count</label><input class="input" id="sPages" name="pages" type="number" min="1" max="20000" inputmode="numeric"></div>
+            <div class="field"><label for="sLevel">Reading level</label><select class="select" id="sLevel" name="level"></select></div>
+          </div>
+          <div class="field"><label for="sGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label><input class="input" id="sGenres" name="genres" placeholder="Young Adult, Fantasy" maxlength="200"></div>
+          <div class="field"><label for="sBlurb">What&rsquo;s it about?</label><textarea class="textarea" id="sBlurb" name="blurb" placeholder="A few sentences — no spoilers." maxlength="1600"></textarea></div>
+          <div class="field"><label for="sBy">Your name</label><input class="input" id="sBy" name="by" required maxlength="60"></div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn--surf" type="submit" id="suggestSubmit">Open a suggestion on GitHub</button>
+            <span class="hint" id="suggestNote"></span>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== BADGES ===== -->
+  <section class="section" id="badges">
+    <div class="wrap">
+      <div class="section__head badgehead">
+        <div>
+          <p class="eyebrow">The record</p>
+          <h2>Badges</h2>
+          <p>Every book the club has finished, as a growing tree or a straight timeline. Hover a badge for its dates, click it for who read it &mdash; or focus on one member to see only their books.</p>
+        </div>
+        <div class="tabbar" role="tablist" aria-label="Badge view">
+          <button class="tabbtn" role="tab" id="tab-tree" aria-controls="panel-tree" aria-selected="true" type="button">Tree</button>
+          <button class="tabbtn" role="tab" id="tab-time" aria-controls="panel-time" aria-selected="false" type="button">Timeline</button>
+        </div>
+      </div>
+      <div class="focusbar" id="focusBar"></div>
+      <p class="focusnote" id="focusNote" hidden></p>
+      <div class="tabpanel" role="tabpanel" id="panel-tree" aria-labelledby="tab-tree">
+        <div class="tree" id="treeBox"></div>
+      </div>
+      <div class="tabpanel" role="tabpanel" id="panel-time" aria-labelledby="tab-time" hidden>
+        <div class="timeline" id="timeBox"></div>
+      </div>
+      <div class="crew" id="crewBox" hidden></div>
+    </div>
+  </section>
+
+  <div class="wrap foot">
+    <span id="footClub"></span>
+    <span class="mono" id="footStats"></span>
+  </div>
+</main>
+
+<div class="scrim" id="meetScrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="meetModalTitle">
+    <div class="modal__bar"><h2 id="meetModalTitle">Meeting notes</h2>
+      <button class="xbtn" type="button" data-close="meetScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body" id="meetModalBody"></div>
+  </div>
+</div>
+<div class="scrim" id="bookScrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle">
+    <div class="modal__bar"><h2 id="bookModalTitle">Book</h2>
+      <button class="xbtn" type="button" data-close="bookScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body" id="bookModalBody"></div>
+  </div>
+</div>
+<div class="scrim" id="adminScrim" hidden>
+  <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+    <div class="modal__bar"><h2 id="adminModalTitle">Organiser tools</h2>
+      <button class="xbtn" type="button" data-close="adminScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body" id="adminModalBody"></div>
+  </div>
+</div>
+
+<div class="status" id="status" hidden><span id="statusText"></span></div>
+
+<script>
+(function(){
+"use strict";
+
+var state = null, readOnly = true, isAdmin = false, saveBusy = false;
+var HUES = ["flare","zest","surf","sky","grape"];
+var LEVELS = ["Ages 6-8","Ages 8-11","Ages 9-12","Ages 10-13","Ages 12+","Ages 13+","Ages 14+","Ages 15+","Ages 16+","Adult"];
+var $ = function(id){ return document.getElementById(id); };
+
+function esc(s){
+  return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function uid(p){ return (p||"id") + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function hueFor(key){
+  var h = 0; key = String(key||"");
+  for(var i=0;i<key.length;i++) h = (h*31 + key.charCodeAt(i)) >>> 0;
+  return HUES[h % HUES.length];
+}
+function initials(s){
+  var w = String(s||"?").trim().split(/\s+/);
+  return ((w[0]||"?")[0] + (w.length>1 ? w[w.length-1][0] : "")).toUpperCase();
+}
+
+/* ---------- dates ---------- */
+var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+var DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+function parseDate(iso){
+  if(!iso) return null;
+  var p = String(iso).split("-"); if(p.length !== 3) return null;
+  var d = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+  return isNaN(d.getTime()) ? null : d;
+}
+function longDate(iso){ var d = parseDate(iso); return d ? DAYS[d.getDay()] + ", " + MONTHS[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear() : "Date to be confirmed"; }
+function shortDate(iso){ var d = parseDate(iso); return d ? MONTHS[d.getMonth()].slice(0,3) + " " + d.getDate() + ", " + d.getFullYear() : "TBC"; }
+function prettyTime(t){
+  if(!t) return "";
+  var p = String(t).split(":"), h = Number(p[0]), m = p[1] || "00";
+  if(isNaN(h)) return t;
+  var ap = h >= 12 ? "PM" : "AM", hh = h % 12; if(hh === 0) hh = 12;
+  return hh + ":" + m + " " + ap;
+}
+function daysUntil(iso){
+  var d = parseDate(iso); if(!d) return null;
+  var n = new Date(); n.setHours(0,0,0,0);
+  return Math.round((d - n) / 86400000);
+}
+function todayISO(){
+  var n = new Date();
+  return n.getFullYear() + "-" + String(n.getMonth()+1).padStart(2,"0") + "-" + String(n.getDate()).padStart(2,"0");
+}
+
+/* ---------- status chip ---------- */
+var statusTimer = null;
+function say(msg, kind, sticky){
+  var el = $("status");
+  $("statusText").textContent = msg;
+  el.className = "status status--" + (kind || "busy");
+  el.hidden = false;
+  clearTimeout(statusTimer);
+  if(!sticky) statusTimer = setTimeout(function(){ el.hidden = true; }, kind === "bad" ? 9000 : 3200);
+}
+
+/* ---------- load + migrate ---------- */
+var REC_BY = {
+  "the book thief":"Saira","1984":"Saira","the kite runner":"Saira","kite runner":"Saira",
+  "to kill a mockingbird":"Saira","the elevator ghost":"Pareesa","elevator ghost":"Pareesa",
+  "heart of a champion":"Pareesa","finding grace":"Pareesa",
+  "look out for the fitzgerald-trouts":"Pareesa","look out for the fitzgerald trouts":"Pareesa",
+  "pandas on the eastside":"Pareesa","pandas on the east side":"Pareesa","heartless":"Pareesa"
+};
+var SERIES = {
+  "six of crows":{ series:"Six of Crows Duology", i:1 },
+  "crooked kingdom":{ series:"Six of Crows Duology", i:2 }
+};
+
+function migrate(s){
+  s.club = s.club || { name:"Book Club", tagline:"" };
+  if(typeof s.club.logo !== "string") s.club.logo = "";
+  if(!Array.isArray(s.books)) s.books = [];
+  if(!Array.isArray(s.meetings)) s.meetings = [];
+  if(!Array.isArray(s.recs)) s.recs = [];
+  delete s.adminPin;   /* the PIN is meaningless in a public repo; the GitHub token is the real gate */
+  if(!Array.isArray(s.members)) s.members = [];
+  s.members.forEach(function(m){
+    if(!m.id) m.id = uid("mb");
+    if(typeof m.avatar !== "string") m.avatar = "";
+    if(typeof m.joined !== "string") m.joined = "";
+    if(typeof m.fable !== "string") m.fable = "";
+    if(typeof m.goodreads !== "string") m.goodreads = "";
+  });
+  (s.books || []).forEach(function(b){
+    if(typeof b.cover !== "string") b.cover = "";
+    if(typeof b.badge !== "string") b.badge = "";
+    if(typeof b.started !== "string") b.started = "";
+    if(typeof b.finished !== "string") b.finished = "";
+    if(typeof b.progressPage !== "number") b.progressPage = 0;
+    if(!Array.isArray(b.members)) b.members = [];
+    if(!b.series){
+      var hit = SERIES[String(b.title||"").toLowerCase().trim()];
+      if(hit){ b.series = hit.series; b.seriesIndex = hit.i; }
+      else { b.series = ""; b.seriesIndex = 1; }
+    }
+    if(typeof b.seriesIndex !== "number") b.seriesIndex = 1;
+  });
+  (s.recs || []).forEach(function(r){
+    if(typeof r.cover !== "string") r.cover = "";
+    if(!r.by) r.by = REC_BY[String(r.title||"").toLowerCase().trim()] || "";
+    if(typeof r.at !== "string") r.at = "";
+  });
+  (s.meetings || []).forEach(function(m){
+    if(typeof m.pages !== "string") m.pages = "";
+    if(typeof m.chapters !== "string") m.chapters = "";
+    if(!Array.isArray(m.predictions)) m.predictions = [];
+    if(!Array.isArray(m.points)) m.points = [];
+  });
+  return s;
+}
+
+async function loadState(){
+  var seed = JSON.parse($("seed-state").textContent);
+  var file = null;
+  try{
+    var res = await fetch("data/state.json", { cache: "no-store" });
+    if(res.ok) file = await res.json();
+  }catch(e){}
+  state = migrate((file && Number(file.rev || 0) >= Number(seed.rev || 0)) ? file : seed);
+}
+
+/* ---------- save: commit data/state.json to GitHub ---------- */
+var GH = { owner: "sairanoorhadi", repo: "cousins-book-club", branch: "main", path: "data/state.json" };
+var TOKEN_KEY = "marginNotes.ghToken";
+
+function ghToken(){ try{ return localStorage.getItem(TOKEN_KEY) || ""; }catch(e){ return ""; } }
+function setGhToken(v){
+  try{ if(v) localStorage.setItem(TOKEN_KEY, v); else localStorage.removeItem(TOKEN_KEY); }catch(e){}
+  refreshWriteMode();
+}
+function refreshWriteMode(){
+  readOnly = !ghToken();
+  isAdmin = !readOnly;
+  var b = $("roBanner");
+  if(readOnly){
+    b.hidden = false;
+    b.innerHTML = "You\u2019re browsing. Saving needs the organiser\u2019s GitHub token \u2014 open <strong>Admin \u2192 Settings</strong> to add one.";
+  }else{ b.hidden = true; }
+}
+function goReadOnly(){ setGhToken(""); renderAll(); }
+
+function b64(str){
+  var bytes = new TextEncoder().encode(str), bin = "";
+  for(var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function ghFetch(url, opts){
+  opts = opts || {};
+  var h = { "Authorization": "Bearer " + ghToken(), "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
+  for(var k in (opts.headers || {})) h[k] = opts.headers[k];
+  opts.headers = h; opts.cache = "no-store";
+  return fetch(url, opts);
+}
+function ghMsg(status){
+  if(status === 401) return "GitHub rejected that token. It may have expired \u2014 create a new one and paste it under Settings.";
+  if(status === 403) return "That token can\u2019t write here. It needs Contents: Read and write on " + GH.owner + "/" + GH.repo + ".";
+  if(status === 404) return "Couldn\u2019t find the repo, branch or data file. Check the token includes " + GH.owner + "/" + GH.repo + ".";
+  if(status === 409 || status === 422) return "Someone saved before you. Reload the page and make the change again.";
+  if(status === 429) return "GitHub is rate-limiting. Wait a minute and try again.";
+  return "GitHub returned an error (" + status + "). Try again in a moment.";
+}
+var CONTENTS_URL = "https://api.github.com/repos/" + GH.owner + "/" + GH.repo + "/contents/" + GH.path;
+
+async function save(label){
+  if(!ghToken()){ say("No GitHub token set \u2014 open Admin \u2192 Settings to add one.", "bad"); return false; }
+  if(saveBusy){ say("Still saving the last change \u2014 try again in a second.", "busy"); return false; }
+  saveBusy = true;
+  say(label || "Saving\u2026", "busy", true);
+  state.rev = Number(state.rev || 0) + 1;
+  try{
+    var sha = null;
+    var head = await ghFetch(CONTENTS_URL + "?ref=" + encodeURIComponent(GH.branch));
+    if(head.ok) sha = (await head.json()).sha;
+    else if(head.status !== 404) throw { status: head.status };
+
+    var payload = {
+      message: (label || "Update").replace(/[\u2026]/g, "") + " (book club site)",
+      content: b64(JSON.stringify(state, null, 2)),
+      branch: GH.branch
+    };
+    if(sha) payload.sha = sha;
+    var put = await ghFetch(CONTENTS_URL, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    if(!put.ok) throw { status: put.status };
+    saveBusy = false;
+    say("Saved. The live site catches up in about a minute.", "ok");
+    return true;
+  }catch(err){
+    saveBusy = false;
+    state.rev = Number(state.rev || 1) - 1;
+    if(err && err.status) say(ghMsg(err.status), "bad");
+    else say("Couldn\u2019t reach GitHub. Check your connection and try again.", "bad");
+    return false;
+  }
+}
+function downloadState(){
+  var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "state.json";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+/* ---------- image picker ---------- */
+function pickImage(maxW, type, cb){
+  var inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "image/*";
+  inp.addEventListener("change", function(){
+    var f = inp.files && inp.files[0]; if(!f) return;
+    say("Reading image…", "busy", true);
+    var fr = new FileReader();
+    fr.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        var w = Math.min(maxW, img.width), h = Math.max(1, Math.round(img.height * (w / img.width)));
+        var c = document.createElement("canvas"); c.width = w; c.height = h;
+        var g = c.getContext("2d");
+        if(type === "image/jpeg"){ g.fillStyle = "#fff"; g.fillRect(0,0,w,h); }
+        g.drawImage(img, 0, 0, w, h);
+        var url = c.toDataURL(type, 0.82);
+        if(url.length > 400000){ say("That image is very large even after shrinking. Try a smaller one.", "bad"); return; }
+        cb(url);
+      };
+      img.onerror = function(){ say("That file couldn't be read as an image.", "bad"); };
+      img.src = fr.result;
+    };
+    fr.onerror = function(){ say("That file couldn't be read.", "bad"); };
+    fr.readAsDataURL(f);
+  });
+  inp.click();
+}
+
+/* ---------- lookups ---------- */
+function currentBook(){ return state.books.filter(function(b){ return b.status === "current"; })[0] || null; }
+function nextBooks(){ return state.books.filter(function(b){ return b.status === "next"; }); }
+function pastBooks(){
+  return state.books.filter(function(b){ return b.status === "past"; }).slice().sort(function(x,y){
+    var fx = x.finished || (meetingForBook(x.id) || {}).date || "";
+    var fy = y.finished || (meetingForBook(y.id) || {}).date || "";
+    return String(fy).localeCompare(String(fx));
+  });
+}
+function bookById(id){ return state.books.filter(function(b){ return b.id === id; })[0] || null; }
+function meetingById(id){ return state.meetings.filter(function(m){ return m.id === id; })[0] || null; }
+function meetingForBook(id){ return state.meetings.filter(function(m){ return m.bookId === id; })[0] || null; }
+function nextMeeting(){
+  return state.meetings.filter(function(m){ return !m.done; })
+    .sort(function(a,b){ return String(a.date||"9999").localeCompare(String(b.date||"9999")); })[0] || null;
+}
+function approvedRecs(){ return state.recs.filter(function(r){ return r.status === "approved"; }); }
+function pendingRecs(){ return state.recs.filter(function(r){ return r.status === "pending"; }); }
+function recById(id){ return state.recs.filter(function(r){ return r.id === id; })[0] || null; }
+function memberById(id){ return state.members.filter(function(m){ return m.id === id; })[0] || null; }
+function clampRating(n){ n = Number(n); if(isNaN(n)) n = 0; return Math.max(0, Math.min(5, Math.round(n * 10) / 10)); }
+function stars(n, small){
+  n = clampRating(n);
+  return '<span class="stars' + (small ? " stars--sm" : "") + '" role="img" aria-label="' + n + ' out of 5">' +
+    '<span class="stars__off">★★★★★</span>' +
+    '<span class="stars__on" style="width:' + (n / 5 * 100) + '%">★★★★★</span></span>' +
+    '<span class="stars__num">' + n.toFixed(1) + " / 5</span>";
+}
+function safeUrl(u){
+  u = String(u || "").trim();
+  return /^https?:\/\//i.test(u) ? u : "";
+}
+
+/* ---------- cover ---------- */
+function coverHTML(b, cls){
+  var hue = hueFor(b.id || b.title);
+  var style = 'style="--c:var(--' + hue + ');--cf:var(--on-' + hue + ')"';
+  if(b.cover){
+    return '<span class="cover ' + (cls||"") + '" ' + style + '><img src="' + esc(b.cover) + '" alt="Cover of ' + esc(b.title) + '"></span>';
+  }
+  return '<span class="cover ' + (cls||"") + '" ' + style + '>' +
+    '<span class="cover__gen">' +
+      '<span class="cover__t">' + esc(b.title) + "</span>" +
+      '<span class="cover__a">' + esc(b.author || "") + "</span>" +
+    "</span></span>";
+}
+function discHTML(b, extra){
+  var hue = hueFor(b.id || b.title);
+  return '<span class="tree__disc ' + (extra||"") + '" style="--c:var(--' + hue + ');--cf:var(--on-' + hue + ')">' +
+    (b.badge ? '<img src="' + esc(b.badge) + '" alt="">' : "<span>" + esc(initials(b.title)) + "</span>") + "</span>";
+}
+
+/* ---------- render: hero ---------- */
+function renderHero(){
+  var book = currentBook(), meet = nextMeeting();
+  $("brandName").textContent = state.club.name;
+  $("footClub").textContent = state.club.name;
+  document.title = state.club.name;
+  $("heroTagline").textContent = state.club.tagline || "";
+  var mark = $("brandMark");
+  mark.className = "brand__mark" + (state.club.logo ? " has-logo" : "");
+  mark.innerHTML = state.club.logo ? '<img src="' + esc(state.club.logo) + '" alt="">' : "";
+
+  if(!book){
+    $("heroCover").innerHTML = "";
+    $("heroTitle").textContent = "No book chosen yet";
+    $("heroAuthor").textContent = "";
+    $("heroFacts").innerHTML = "";
+    $("heroProgress").innerHTML = "";
+    $("heroBlurb").textContent = "Open Organiser tools to set the club's current book.";
+    $("heroDetails").hidden = true;
+  }else{
+    $("heroDetails").hidden = false;
+    $("heroCover").innerHTML = coverHTML(book);
+    $("heroTitle").textContent = book.title;
+    $("heroAuthor").textContent = "by " + book.author;
+    var facts = ['<span class="tag tag--zest mono">' + esc(book.pages || "?") + " pages</span>",
+                 '<span class="tag tag--surf">' + esc(book.level || "All ages") + "</span>"];
+    (book.genres || []).forEach(function(g){ facts.push('<span class="tag">' + esc(g) + "</span>"); });
+    $("heroFacts").innerHTML = facts.join("");
+    $("heroBlurb").textContent = book.blurb || "";
+
+    var read = Number(book.progressPage) || 0, total = Number(book.pages) || 0;
+    if(total > 0){
+      var pct = Math.max(0, Math.min(100, Math.round(read / total * 100)));
+      $("heroProgress").innerHTML =
+        '<div class="progress"><div class="progress__bar">' +
+          '<div class="progress__fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="progress__label"><span>' + (read ? esc(read) + " of " + esc(total) + " pages" : "Not started yet") + "</span>" +
+        "<span>" + pct + "%</span></div></div>";
+    }else{ $("heroProgress").innerHTML = ""; }
+  }
+
+  var body = $("heroMeetBody");
+  if(!meet){
+    body.innerHTML = '<p class="empty">No meeting scheduled. The organiser can add one from Organiser tools.</p>';
+  }else{
+    var mb = bookById(meet.bookId), dleft = daysUntil(meet.date), cd = "";
+    if(dleft === 0) cd = "Today"; else if(dleft === 1) cd = "Tomorrow";
+    else if(dleft > 1) cd = "In " + dleft + " days";
+    else if(dleft !== null) cd = Math.abs(dleft) + " days ago";
+    body.innerHTML =
+      '<div class="meetcard__date">' + esc(longDate(meet.date)) + "</div>" +
+      (cd ? '<div class="countdown">' + esc(cd) + "</div>" : "") +
+      '<div class="meetcard__row"><span class="k">Time</span><span>' + esc(prettyTime(meet.time) || "TBC") + "</span></div>" +
+      '<div class="meetcard__row"><span class="k">Where</span><span>' + esc(meet.place || "TBC") + "</span></div>" +
+      '<div class="meetcard__row"><span class="k">Book</span><span>' + esc(mb ? mb.title : "TBC") + "</span></div>" +
+      '<div class="meetcard__row"><span class="k">Chapters</span><span>' + esc(meet.chapters || "TBC") + "</span></div>" +
+      '<div class="meetcard__row"><span class="k">Pages</span><span class="mono">' + esc(meet.pages || "TBC") + "</span></div>" +
+      '<div style="margin-top:18px"><button class="btn btn--sky btn--sm" type="button" data-meet="' + esc(meet.id) + '">Predictions &amp; discussion points</button></div>';
+  }
+  renderUpNext();
+  $("footStats").textContent = pastBooks().length + " finished · " + nextBooks().length + " queued · " +
+    approvedRecs().length + " recommended · " + state.members.length + " members";
+}
+function renderUpNext(){
+  var q = nextBooks(), host = $("upNext");
+  if(!q.length){ host.hidden = true; host.innerHTML = ""; return; }
+  host.hidden = false;
+  host.innerHTML = '<div class="upnext__top"><p class="eyebrow">Up next</p></div><ul class="upnext__list">' +
+    q.map(function(b){
+      return '<li><span class="cover-wrap" style="width:34px">' + coverHTML(b) + "</span>" +
+        '<span><button class="upnext__t" type="button" data-book="' + esc(b.id) + '">' + esc(b.title) + "</button>" +
+        '<span class="upnext__a">' + esc(b.author) + " · " + esc(b.pages || "?") + " pages</span></span></li>";
+    }).join("") + "</ul>";
+}
+
+/* ---------- render: shelf ---------- */
+function renderShelf(){
+  var list = pastBooks(), host = $("shelfList");
+  if(!list.length){
+    host.innerHTML = '<p class="empty">Nothing on the shelf yet. Once a book is marked finished it lands here with the club’s review.</p>';
+    return;
+  }
+  host.innerHTML = list.map(function(b){
+    var m = meetingForBook(b.id);
+    var when = b.finished || (m && m.date) || "";
+    var rev = b.review && (b.review.text || Number(b.review.rating) > 0);
+    return '<article class="shelfrow">' +
+      '<button class="shelfrow__cover cover-wrap" type="button" data-book="' + esc(b.id) + '" style="background:none;border:0;padding:0">' + coverHTML(b) + "</button>" +
+      "<div><h3>" + esc(b.title) + "</h3>" +
+        '<p class="shelfrow__author">by ' + esc(b.author) + (when ? " · finished " + esc(shortDate(when)) : "") + "</p>" +
+        '<div class="tagbank" style="margin-top:10px">' +
+          '<span class="tag tag--surf">' + esc(b.level || "All ages") + "</span>" +
+          '<span class="tag tag--zest mono">' + esc(b.pages || "?") + " pages</span>" +
+          (b.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
+        "</div>" +
+        (rev
+          ? '<div class="review"><div class="review__stars">' + stars(b.review.rating) + "</div>" +
+            '<p class="review__text">' + esc(b.review.text || "") + "</p>" +
+            '<p class="review__by">' + esc(b.review.by || "The club") + "</p></div>"
+          : '<p class="empty" style="margin-top:12px">No club review written yet.</p>') +
+      "</div>" +
+      '<div class="shelfrow__side">' +
+        (m ? '<button class="btn btn--sm btn--grape" type="button" data-meet="' + esc(m.id) + '">Meeting notes</button>' : "") +
+        '<button class="btn btn--sm btn--ghost" type="button" data-book="' + esc(b.id) + '">Summary</button>' +
+      "</div></article>";
+  }).join("");
+}
+
+/* ---------- render: recommendations ---------- */
+function renderRecs(){
+  var list = approvedRecs(), host = $("recGrid");
+  if(!list.length){
+    host.innerHTML = '<p class="empty">No recommendations approved yet. Use the Suggest a Book tab to put one forward.</p>';
+    return;
+  }
+  host.innerHTML = list.map(function(r){
+    return '<button class="reccard cover-wrap" type="button" data-rec="' + esc(r.id) + '" aria-label="' + esc(r.title + " by " + r.author + " — open summary") + '">' +
+      coverHTML(r) +
+      '<span class="reccard__foot"><span>' + esc(r.pages || "?") + " pp</span>" +
+        '<span class="reccard__by">' + (r.by ? esc(r.by) : "&nbsp;") + "</span></span>" +
+      '<span class="reccard__reveal">' +
+        '<span class="k">Genres</span><span class="v">' + esc((r.genres || []).join(" · ") || "Unlisted") + "</span>" +
+        '<span class="k">Level</span><span class="v">' + esc(r.level || "All ages") + "</span>" +
+      "</span></button>";
+  }).join("");
+}
+
+/* ---------- render: badges ---------- */
+var focusId = null;
+function focusMember(){ return focusId ? memberById(focusId) : null; }
+function readBooks(){
+  var read = state.books.filter(function(b){ return b.status === "past" || b.status === "current"; });
+  if(focusId) read = read.filter(function(b){ return (b.members || []).indexOf(focusId) !== -1; });
+  return read;
+}
+function renderFocus(){
+  var bar = $("focusBar");
+  if(!state.members.length){ bar.innerHTML = ""; $("focusNote").hidden = true; return; }
+  bar.innerHTML = '<span class="focusbar__lab">Focus</span>' +
+    '<button class="focuschip focuschip--all" type="button" data-focus="" aria-pressed="' + (!focusId) + '">Whole club</button>' +
+    state.members.map(function(m){
+      var h = hueFor(m.id);
+      return '<button class="focuschip" type="button" data-focus="' + esc(m.id) + '" aria-pressed="' + (focusId === m.id) + '">' +
+        '<span class="focuschip__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
+          (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
+        esc(m.name) + "</button>";
+    }).join("");
+  var note = $("focusNote"), fm = focusMember();
+  if(fm){
+    var n = readBooks().length;
+    note.hidden = false;
+    note.textContent = n
+      ? "Showing the " + n + " book" + (n === 1 ? "" : "s") + " " + fm.name + " read."
+      : fm.name + " isn't tagged on any books yet — set that under Organiser tools → Reading list.";
+  }else{ note.hidden = true; }
+}
+function branches(){
+  var read = readBooks();
+  var groups = [], byKey = {};
+  read.forEach(function(b){
+    var key = b.series ? "s:" + b.series : "b:" + b.id;
+    if(!byKey[key]){ byKey[key] = { key: key, label: b.series || b.title, books: [] }; groups.push(byKey[key]); }
+    byKey[key].books.push(b);
+  });
+  groups.forEach(function(g){
+    g.books.sort(function(x,y){ return (Number(x.seriesIndex)||1) - (Number(y.seriesIndex)||1); });
+  });
+  return groups;
+}
+function hubHTML(){
+  var fm = focusMember();
+  if(fm){
+    var h = hueFor(fm.id);
+    return '<span class="tree__disc tree__disc--hub" style="--c:var(--' + h + ');--cf:var(--on-' + h + ');background:var(--' + h + ')">' +
+      (fm.avatar ? '<img src="' + esc(fm.avatar) + '" alt="">' : "<span>" + esc(fm.name) + "</span>") + "</span>";
+  }
+  return '<span class="tree__disc tree__disc--hub">' +
+    (state.club.logo ? '<img src="' + esc(state.club.logo) + '" alt="">' : "<span>" + esc(state.club.name) + "</span>") + "</span>";
+}
+function renderTree(){
+  var host = $("treeBox"), gs = branches();
+  if(!gs.length){
+    host.innerHTML =
+      '<div class="tree__node" style="left:50%;top:50%;cursor:default">' + hubHTML() + "</div>" +
+      '<div style="position:absolute;left:0;right:0;bottom:26px;text-align:center;padding:0 30px"><p class="empty">' +
+      (focusMember() ? esc(focusMember().name) + " isn’t tagged on any books yet." : "The tree grows as the club finishes books.") +
+      "</p></div>";
+    return;
+  }
+  /* lay the tree out in arbitrary units, then scale it to fill the box */
+  var raw = [], hub = { x:0, y:0, hub:true };
+  raw.push(hub);
+  gs.forEach(function(g, gi){
+    var ang = (-90 + (360 / gs.length) * gi) * Math.PI / 180;
+    var prev = hub;
+    g.books.forEach(function(b, bi){
+      var rad = 1 + bi;
+      var n = { x: Math.cos(ang) * rad * 1.35, y: Math.sin(ang) * rad, book: b, from: prev, ang: ang };
+      raw.push(n); prev = n;
+    });
+  });
+  var xs = raw.map(function(n){ return n.x; }), ys = raw.map(function(n){ return n.y; });
+  var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+  var y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+  var PADX = 11, PADY = 15;
+  function fit(v, lo, hi, pad){
+    if(hi - lo < 0.0001) return 50;
+    return pad + (v - lo) / (hi - lo) * (100 - pad * 2);
+  }
+  raw.forEach(function(n){ n.px = fit(n.x, x0, x1, PADX); n.py = fit(n.y, y0, y1, PADY); });
+
+  var paths = "", nodes = "";
+  raw.forEach(function(n){
+    if(!n.book) return;
+    var a = n.from, ang = n.ang;
+    var mx = (a.px + n.px) / 2 + Math.cos(ang + Math.PI/2) * 3.5;
+    var my = (a.py + n.py) / 2 + Math.sin(ang + Math.PI/2) * 3.5;
+    paths += '<path d="M' + a.px + " " + a.py + " Q" + mx + " " + my + " " + n.px + " " + n.py +
+      '" fill="none" stroke="var(--hairline)" stroke-width="0.9" stroke-linecap="round"' +
+      (n.book.status === "current" ? ' stroke-dasharray="2 1.6"' : "") + "></path>";
+    nodes += '<button class="tree__node" type="button" data-badge="' + esc(n.book.id) + '" ' +
+      'style="left:' + n.px + '%;top:' + n.py + '%" ' +
+      'data-tip="' + esc(n.book.title + " — " + tipDates(n.book)) + '">' +
+      discHTML(n.book, n.book.status === "current" ? "tree__disc--now" : "") +
+      '<span class="tree__cap">' + esc(n.book.title) + "</span></button>";
+  });
+  host.innerHTML =
+    '<svg class="tree__svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + paths + "</svg>" +
+    '<div class="tree__node" style="left:' + hub.px + '%;top:' + hub.py + '%;cursor:default">' + hubHTML() + "</div>" +
+    nodes + '<div class="tip" id="treeTip"></div>';
+}
+function tipDates(b){
+  var s = b.started ? shortDate(b.started) : "start not set";
+  var f = b.finished ? shortDate(b.finished) : (b.status === "current" ? "still reading" : "end not set");
+  return s + " → " + f;
+}
+function renderTimeline(){
+  var host = $("timeBox");
+  var events = [];
+  readBooks().forEach(function(b){
+    var m = meetingForBook(b.id);
+    events.push({ when: b.finished || (m && m.date) || "", kind: "book", book: b });
+  });
+  var mem = focusId ? state.members.filter(function(m){ return m.id === focusId; }) : state.members;
+  mem.forEach(function(m){ events.push({ when: m.joined || "", kind: "member", member: m }); });
+  if(!events.length){ host.innerHTML = '<p class="empty">Nothing on the timeline yet.</p>'; return; }
+  events.sort(function(a,b){ return String(b.when || "0000").localeCompare(String(a.when || "0000")); });
+  host.innerHTML = events.map(function(e){
+    if(e.kind === "book"){
+      var b = e.book, hue = hueFor(b.id);
+      return '<div class="tlrow">' +
+        '<span class="tlrow__dot" style="--c:var(--' + hue + ');--cf:var(--on-' + hue + ')">' +
+          (b.badge ? '<img src="' + esc(b.badge) + '" alt="">' : esc(initials(b.title))) + "</span>" +
+        '<button class="tlcard" type="button" data-badge="' + esc(b.id) + '" data-tip="' + esc(tipDates(b)) + '">' +
+          '<span class="tlcard__when">' + (b.status === "current" ? "Reading now" : (e.when ? "Finished " + esc(shortDate(e.when)) : "Finished — date not set")) + "</span>" +
+          '<span class="tlcard__what">' + esc(b.title) + "</span>" +
+          '<span class="tlcard__sub">' + esc(b.author) + " · " + esc(tipDates(b)) + "</span>" +
+        "</button></div>";
+    }
+    var mm = e.member, mh = hueFor(mm.id);
+    return '<div class="tlrow">' +
+      '<span class="tlrow__dot" style="--c:var(--' + mh + ');--cf:var(--on-' + mh + ')">' +
+        (mm.avatar ? '<img src="' + esc(mm.avatar) + '" alt="">' : esc(initials(mm.name))) + "</span>" +
+      '<div class="tlcard tlcard--flat">' +
+        '<span class="tlcard__when">' + (mm.joined ? "Joined " + esc(shortDate(mm.joined)) : "Member") + "</span>" +
+        '<span class="tlcard__what">' + esc(mm.name) + "</span>" +
+        memberLinks(mm, "margin-top:8px") +
+      "</div></div>";
+  }).join("");
+}
+function memberLinks(m, style){
+  var f = safeUrl(m.fable), g = safeUrl(m.goodreads);
+  if(!f && !g) return "";
+  return '<span class="crewchip__links"' + (style ? ' style="' + style + '"' : "") + ">" +
+    (f ? '<a class="crewlink" href="' + esc(f) + '" target="_blank" rel="noopener noreferrer">Fable</a>' : "") +
+    (g ? '<a class="crewlink" href="' + esc(g) + '" target="_blank" rel="noopener noreferrer">Goodreads</a>' : "") +
+    "</span>";
+}
+function showCrew(bookId){
+  var b = bookById(bookId); if(!b) return;
+  var box = $("crewBox");
+  var list = (b.members || []).map(memberById).filter(Boolean);
+  box.hidden = false;
+  box.innerHTML =
+    '<p class="eyebrow">Who read it</p>' +
+    '<h3 style="font-size:21px;margin-top:6px">' + esc(b.title) + "</h3>" +
+    '<p class="hint" style="margin-top:5px">' + esc(tipDates(b)) + "</p>" +
+    (list.length
+      ? '<div class="crew__list">' + list.map(function(m){
+          var h = hueFor(m.id);
+          return '<span class="crewchip"><span class="crewchip__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
+            (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
+            '<span class="crewchip__n">' + esc(m.name) + "</span>" + memberLinks(m, "") + "</span>";
+        }).join("") + "</div>"
+      : '<p class="empty" style="margin-top:12px">No members recorded for this book yet — set them in Organiser tools → Reading list.</p>');
+  box.scrollIntoView({ behavior:"smooth", block:"nearest" });
+}
+
+/* ---------- tooltips ---------- */
+document.addEventListener("mouseover", function(e){
+  var n = e.target.closest && e.target.closest("[data-tip]");
+  if(!n) return;
+  var tip = $("treeTip"); if(!tip || !$("treeBox").contains(n)) return;
+  var box = $("treeBox").getBoundingClientRect(), r = n.getBoundingClientRect();
+  tip.textContent = n.getAttribute("data-tip");
+  var half = tip.offsetWidth / 2 + 6;
+  var x = Math.max(half, Math.min(box.width - half, r.left - box.left + r.width/2));
+  var y = r.top - box.top - 6;
+  if(y - tip.offsetHeight < 4){ y = r.bottom - box.top + 8; tip.style.transform = "translate(-50%,0)"; }
+  else tip.style.transform = "translate(-50%,-100%)";
+  tip.style.left = x + "px";
+  tip.style.top = y + "px";
+  tip.setAttribute("data-on","1");
+});
+document.addEventListener("mouseout", function(e){
+  var n = e.target.closest && e.target.closest("[data-tip]");
+  if(n){ var tip = $("treeTip"); if(tip) tip.removeAttribute("data-on"); }
+});
+
+/* ---------- modals ---------- */
+var lastFocus = null;
+function openScrim(id){
+  lastFocus = document.activeElement;
+  $(id).hidden = false;
+  document.body.style.overflow = "hidden";
+  var f = $(id).querySelector(".xbtn"); if(f) f.focus();
+}
+function closeScrim(id){
+  $(id).hidden = true;
+  if($("meetScrim").hidden && $("bookScrim").hidden && $("adminScrim").hidden) document.body.style.overflow = "";
+  if(lastFocus && lastFocus.focus) lastFocus.focus();
+}
+document.addEventListener("keydown", function(e){
+  if(e.key !== "Escape") return;
+  ["bookScrim","meetScrim","adminScrim"].some(function(id){ if($(id).hidden) return false; closeScrim(id); return true; });
+});
+document.addEventListener("click", function(e){
+  var c = e.target.closest && e.target.closest("[data-close]");
+  if(c){ closeScrim(c.getAttribute("data-close")); return; }
+  if(e.target.classList && e.target.classList.contains("scrim")) closeScrim(e.target.id);
+});
+
+function openMeeting(id){
+  var m = meetingById(id); if(!m) return;
+  var b = bookById(m.bookId);
+  $("meetModalTitle").textContent = (b ? b.title : "Meeting") + " — " + shortDate(m.date);
+  $("meetModalBody").innerHTML = meetingHTML(m, b);
+  openScrim("meetScrim");
+}
+function noteList(items, kind, mid){
+  if(!items || !items.length) return '<p class="empty">' + (kind === "pred" ? "No predictions yet. Call it before you read it." : "No discussion points yet.") + "</p>";
+  return '<ul class="notelist">' + items.map(function(p, i){
+    return "<li><span class=\"n\">" + (i+1) + "</span><span>" + esc(p.text) +
+      (p.by ? '<span class="who">' + esc(p.by) + "</span>" : "") + "</span>" +
+      (readOnly ? "<span></span>" : '<button class="btn btn--sm btn--ghost" type="button" data-del="' + kind + '" data-mid="' + esc(mid) + '" data-iid="' + esc(p.id) + '">Remove</button>') +
+    "</li>";
+  }).join("") + "</ul>";
+}
+function meetingHTML(m, b){
+  return '<p class="eyebrow">' + (m.done ? "Past meeting" : "Upcoming meeting") + "</p>" +
+    '<h3 style="font-size:26px;margin-top:8px">' + esc(b ? b.title : "Meeting notes") + "</h3>" +
+    (b ? '<p style="color:var(--muted);font-style:italic;margin-top:5px">by ' + esc(b.author) + "</p>" : "") +
+    '<div class="tagbank" style="margin-top:16px">' +
+      '<span class="tag tag--sky">' + esc(longDate(m.date)) + "</span>" +
+      (m.time ? '<span class="tag mono">' + esc(prettyTime(m.time)) + "</span>" : "") +
+      (m.place ? '<span class="tag">' + esc(m.place) + "</span>" : "") +
+      (m.chapters ? '<span class="tag tag--zest">' + esc(m.chapters) + "</span>" : "") +
+      (m.pages ? '<span class="tag tag--grape mono">pp. ' + esc(m.pages) + "</span>" : "") +
+    "</div>" +
+    '<section class="noteblock noteblock--pred"><div class="noteblock__head"><h3>Predictions</h3></div><div class="noteblock__body">' +
+      noteList(m.predictions, "pred", m.id) +
+      (readOnly ? "" : '<div class="addrow"><input class="input" type="text" placeholder="What do you think happens?" data-add="pred-text" maxlength="400">' +
+        '<input class="input input--who" type="text" placeholder="Your name" data-add="pred-by" maxlength="60">' +
+        '<button class="btn btn--sm btn--grape" type="button" data-addbtn="pred" data-mid="' + esc(m.id) + '">Add</button></div>') +
+    "</div></section>" +
+    '<section class="noteblock noteblock--disc"><div class="noteblock__head"><h3>Discussion points</h3></div><div class="noteblock__body">' +
+      noteList(m.points, "disc", m.id) +
+      (readOnly ? "" : '<div class="addrow"><input class="input" type="text" placeholder="A question worth arguing about" data-add="disc-text" maxlength="400">' +
+        '<input class="input input--who" type="text" placeholder="Added by" data-add="disc-by" maxlength="60">' +
+        '<button class="btn btn--sm btn--surf" type="button" data-addbtn="disc" data-mid="' + esc(m.id) + '">Add</button></div>') +
+    "</div></section>" +
+    '<section class="noteblock noteblock--sum"><div class="noteblock__head"><h3>What happened at the meeting</h3></div><div class="noteblock__body">' +
+      (isAdmin
+        ? '<textarea class="textarea" id="sumBox" style="min-height:190px" placeholder="Write up the meeting — who argued what, where the room split, what to carry forward.">' + esc(m.summary || "") + "</textarea>" +
+          '<div style="margin-top:12px"><button class="btn btn--sm btn--zest" type="button" data-savesum="' + esc(m.id) + '">Save summary</button></div>'
+        : (m.summary ? '<p style="white-space:pre-wrap">' + esc(m.summary) + "</p>"
+                     : '<p class="empty">' + (m.done ? "No summary written yet." : "Written up after the meeting.") + "</p>")) +
+    "</div></section>";
+}
+
+function openBookDetail(o, kind){
+  $("bookModalTitle").textContent = o.title;
+  $("bookModalBody").innerHTML =
+    '<div style="display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap">' +
+      '<span class="cover-wrap" style="width:104px;flex:none;box-shadow:var(--shadow-sm)">' + coverHTML(o) + "</span>" +
+      '<div style="flex:1 1 260px;min-width:0">' +
+        '<p class="eyebrow">' + (kind === "rec" ? "Recommendation" : "Book") + "</p>" +
+        '<h3 style="font-size:27px;margin-top:8px">' + esc(o.title) + "</h3>" +
+        '<p style="color:var(--muted);font-style:italic;margin-top:6px">by ' + esc(o.author) + "</p>" +
+        '<div class="tagbank" style="margin-top:16px">' +
+          '<span class="tag tag--zest mono">' + esc(o.pages || "?") + " pages</span>" +
+          '<span class="tag tag--surf">' + esc(o.level || "All ages") + "</span>" +
+          (o.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
+        "</div>" +
+        (o.by ? '<p class="review__by" style="margin-top:14px">Recommended by ' + esc(o.by) + "</p>" : "") +
+      "</div></div>" +
+    '<hr class="divider">' +
+    '<p style="white-space:pre-wrap">' + esc(o.blurb || "No summary written yet.") + "</p>" +
+    (o.review && (o.review.text || Number(o.review.rating) > 0)
+      ? '<div class="review" style="margin-top:22px"><div class="review__stars">' + stars(o.review.rating) + "</div>" +
+        '<p class="review__text">' + esc(o.review.text || "") + "</p>" +
+        '<p class="review__by">' + esc(o.review.by || "The club") + "</p></div>"
+      : "");
+  openScrim("bookScrim");
+}
+
+/* ---------- admin ---------- */
+var adminTab = "shelf", openEditors = {};
+function openAdmin(){ renderAdmin(); openScrim("adminScrim"); }
+function renderAdmin(){
+  var pend = pendingRecs().length;
+  var tabs = [["shelf","Reading list"],["recs","Recommendations" + (pend ? " (" + pend + ")" : "")],
+              ["meetings","Meetings"],["members","Members"],["settings","Settings"]];
+  $("adminModalBody").innerHTML =
+    (readOnly ? '<div class="banner" style="display:block">This view is read-only, so nothing you change here will be saved for others.</div>' : "") +
+    '<div class="tabbar" style="margin-bottom:24px">' +
+      tabs.map(function(t){ return '<button class="tabbtn" type="button" data-atab="' + t[0] + '" aria-selected="' + (adminTab === t[0]) + '">' + esc(t[1]) + "</button>"; }).join("") +
+    '</div><div id="adminPane"></div>';
+  renderAdminPane();
+}
+function renderAdminPane(){
+  var h = $("adminPane");
+  h.innerHTML = adminTab === "shelf" ? paneShelf()
+    : adminTab === "recs" ? paneRecs()
+    : adminTab === "meetings" ? paneMeetings()
+    : adminTab === "members" ? paneMembers()
+    : paneSettings();
+}
+
+function imgField(label, kind, id, cur, round){
+  return '<div class="field"><label>' + esc(label) + "</label>" +
+    '<div class="picker">' +
+      (round
+        ? '<span class="picker__prev picker__prev--round">' + (cur ? '<img src="' + esc(cur) + '" alt="">' : "") + "</span>"
+        : '<span class="picker__prev cover-wrap">' + (cur
+            ? '<span class="cover"><img src="' + esc(cur) + '" alt=""></span>'
+            : '<span class="cover" style="--c:var(--sunk)"></span>') + "</span>") +
+      '<span class="picker__btns">' +
+        '<button class="btn btn--sm btn--sky" type="button" data-pick="' + kind + '" data-pid="' + esc(id) + '">Upload</button>' +
+        (cur ? '<button class="btn btn--sm btn--ghost" type="button" data-clearimg="' + kind + '" data-pid="' + esc(id) + '">Remove</button>' : "") +
+      "</span></div></div>";
+}
+
+function bookEditor(b){
+  var r = b.review || {};
+  return '<details class="editor"' + (openEditors[b.id] ? " open" : "") + '>' +
+    '<summary data-editfor="' + esc(b.id) + '">Edit details, cover, badge, dates &amp; members</summary>' +
+    '<div class="editor__body">' +
+      '<div class="formgrid">' +
+        '<div class="field"><label>Title</label><input class="input" type="text" value="' + esc(b.title) + '" data-bfield="title" data-bid="' + esc(b.id) + '" maxlength="140"></div>' +
+        '<div class="field"><label>Author</label><input class="input" type="text" value="' + esc(b.author) + '" data-bfield="author" data-bid="' + esc(b.id) + '" maxlength="140"></div>' +
+        '<div class="field"><label>Pages</label><input class="input" type="number" min="1" max="20000" value="' + esc(b.pages || "") + '" data-bfield="pages" data-bid="' + esc(b.id) + '"></div>' +
+        '<div class="field"><label>Reading level</label><select class="select" data-bfield="level" data-bid="' + esc(b.id) + '">' +
+          LEVELS.map(function(l){ return "<option" + (l === b.level ? " selected" : "") + ">" + esc(l) + "</option>"; }).join("") + "</select></div>" +
+        '<div class="field"><label>Series</label><input class="input" type="text" value="' + esc(b.series || "") + '" data-bfield="series" data-bid="' + esc(b.id) + '" placeholder="Leave blank if standalone" maxlength="120"></div>' +
+        '<div class="field"><label>Book number in series</label><input class="input" type="number" min="1" max="99" value="' + esc(b.seriesIndex || 1) + '" data-bfield="seriesIndex" data-bid="' + esc(b.id) + '"></div>' +
+        '<div class="field"><label>Started</label><input class="input" type="date" value="' + esc(b.started || "") + '" data-bfield="started" data-bid="' + esc(b.id) + '"></div>' +
+        '<div class="field"><label>Finished</label><input class="input" type="date" value="' + esc(b.finished || "") + '" data-bfield="finished" data-bid="' + esc(b.id) + '"></div>' +
+        (b.status === "current" ? '<div class="field"><label>Pages read so far</label><input class="input" type="number" min="0" max="20000" value="' + esc(b.progressPage || 0) + '" data-bfield="progressPage" data-bid="' + esc(b.id) + '"></div>' : "") +
+      "</div>" +
+      '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
+        '<input class="input" type="text" value="' + esc((b.genres || []).join(", ")) + '" data-bfield="genres" data-bid="' + esc(b.id) + '" maxlength="200"></div>' +
+      '<div class="field" style="margin-top:14px"><label>Summary</label>' +
+        '<textarea class="textarea" data-bfield="blurb" data-bid="' + esc(b.id) + '">' + esc(b.blurb || "") + "</textarea></div>" +
+      '<div class="formgrid" style="margin-top:18px">' +
+        imgField("Book cover", "bcover", b.id, b.cover, false) +
+        imgField("Book badge", "bbadge", b.id, b.badge, true) +
+      "</div>" +
+      '<div class="field" style="margin-top:16px"><label>Who read it</label>' +
+        (state.members.length
+          ? '<div class="checkgrid">' + state.members.map(function(m){
+              return "<label><input type=\"checkbox\" data-bmember=\"" + esc(m.id) + "\" data-bid=\"" + esc(b.id) + "\"" +
+                ((b.members || []).indexOf(m.id) !== -1 ? " checked" : "") + ">" + esc(m.name) + "</label>";
+            }).join("") + "</div>"
+          : '<p class="hint">Add members on the Members tab first.</p>') + "</div>" +
+      (b.status === "past"
+        ? '<hr class="divider" style="margin:22px 0"><div class="formgrid">' +
+          '<div class="field"><label>Club rating</label><div class="ratepick">' +
+            '<input type="range" min="0" max="5" step="0.1" value="' + clampRating(r.rating) + '" data-bfield="rating" data-bid="' + esc(b.id) + '" aria-label="Club rating out of 5">' +
+            '<span class="ratepick__out" data-rateout="' + esc(b.id) + '">' + clampRating(r.rating).toFixed(1) + " / 5</span>" +
+            '<span data-ratestars="' + esc(b.id) + '">' + stars(r.rating, true) + "</span></div></div>" +
+          '<div class="field"><label>Reviewed by</label><input class="input" type="text" value="' + esc(r.by || "") + '" data-bfield="by" data-bid="' + esc(b.id) + '" placeholder="The club" maxlength="60"></div></div>' +
+          '<div class="field" style="margin-top:14px"><label>Club review</label>' +
+            '<textarea class="textarea" data-bfield="text" data-bid="' + esc(b.id) + '" placeholder="What did the group make of it?">' + esc(r.text || "") + "</textarea></div>"
+        : "") +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
+        '<button class="btn btn--sm btn--zest" type="button" data-bsave="' + esc(b.id) + '">Save changes</button>' +
+        '<button class="btn btn--sm btn--ghost" type="button" data-bdel="' + esc(b.id) + '" style="margin-left:auto">Remove from the list</button>' +
+      "</div></div></details>";
+}
+function laneRow(b, opts){
+  var acts = (opts.acts || []).map(function(a){
+    return '<button class="btn btn--sm ' + (a[2] || "btn--ghost") + '" type="button" data-setstatus="' + a[0] + '" data-bid="' + esc(b.id) + '">' + esc(a[1]) + "</button>";
+  }).join("");
+  var ord = opts.order
+    ? '<span class="ord"><button type="button" data-bmove="up" data-bid="' + esc(b.id) + '" aria-label="Move up"' + (opts.first ? " disabled" : "") + ">&#9650;</button>" +
+      '<button type="button" data-bmove="down" data-bid="' + esc(b.id) + '" aria-label="Move down"' + (opts.last ? " disabled" : "") + ">&#9660;</button></span>"
+    : "";
+  return '<div class="lanerow' + (opts.now ? " lanerow--now" : "") + '">' +
+    '<div class="lanerow__head">' + ord +
+      '<span class="lanerow__title">' + esc(b.title) + "</span>" +
+      '<span class="lanerow__meta">' + esc(b.author) + " · " + esc(b.pages || "?") + " pp" +
+        (b.series ? " · " + esc(b.series) + " #" + esc(b.seriesIndex || 1) : "") + "</span>" +
+      '<span class="lanerow__acts">' + acts + "</span></div>" +
+    bookEditor(b) + "</div>";
+}
+function paneShelf(){
+  var now = currentBook(), q = nextBooks(), done = pastBooks(), out = "";
+  if(now || q.length){
+    var up = q.length ? q[0].title : null;
+    out += '<div class="rotate"><p>' + (now ? "Currently reading <strong>" + esc(now.title) + "</strong>. " : "") +
+      (up ? "Next up is <strong>" + esc(up) + "</strong>." : "Nothing queued yet — add a book to Up next below.") + "</p>" +
+      (up ? '<button class="btn btn--flare" type="button" data-advance="1" style="margin-left:auto">' +
+        (now ? "Finish it &amp; start " : "Start ") + esc(up) + "</button>" : "") + "</div>";
+  }
+  out += '<div class="lane"><div class="lane__label"><h4>Currently reading</h4><span class="rule"></span></div>' +
+    (now ? laneRow(now, { now:true, acts:[["next","Back to Up next"],["past","Mark finished","btn--surf"]] })
+         : '<p class="empty">No current book. Use “Start reading” on a queued book, or add one below.</p>') + "</div>";
+  out += '<div class="lane"><div class="lane__label"><h4>Up next</h4><span class="rule"></span></div>' +
+    (q.length ? q.map(function(b,i){ return laneRow(b, { order:true, first:i===0, last:i===q.length-1,
+        acts:[["current","Start reading","btn--flare"],["past","Mark finished"]] }); }).join("")
+      : '<p class="empty">Nothing queued. Add a book below, or pull one from the recommendations.</p>') + "</div>";
+  out += '<div class="lane"><div class="lane__label"><h4>Finished</h4><span class="rule"></span></div>' +
+    (done.length ? done.map(function(b){ return laneRow(b, { acts:[["current","Read it again","btn--ghost"],["next","Move to Up next"]] }); }).join("")
+      : '<p class="empty">Nothing finished yet.</p>') + "</div>";
+  out += '<hr class="divider"><p class="eyebrow">Add</p><h3 style="font-size:20px;margin:8px 0 16px">Add a book to the list</h3>' +
+    '<div class="adminrow"><div class="formgrid">' +
+      '<div class="field"><label for="abTitle">Title</label><input class="input" id="abTitle" type="text" maxlength="140"></div>' +
+      '<div class="field"><label for="abAuthor">Author</label><input class="input" id="abAuthor" type="text" maxlength="140"></div>' +
+      '<div class="field"><label for="abPages">Pages</label><input class="input" id="abPages" type="number" min="1" max="20000"></div>' +
+      '<div class="field"><label for="abLevel">Reading level</label><select class="select" id="abLevel">' +
+        LEVELS.map(function(l){ return "<option" + (l === "Ages 12+" ? " selected" : "") + ">" + esc(l) + "</option>"; }).join("") + "</select></div>" +
+      '<div class="field"><label for="abSeries">Series</label><input class="input" id="abSeries" type="text" placeholder="Blank if standalone" maxlength="120"></div>' +
+      '<div class="field"><label for="abLane">Goes to</label><select class="select" id="abLane">' +
+        '<option value="next">Up next</option><option value="current">Currently reading</option><option value="past">Finished</option></select></div>' +
+    "</div>" +
+    '<div class="field" style="margin-top:14px"><label for="abGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
+      '<input class="input" id="abGenres" type="text" maxlength="200"></div>' +
+    '<div class="field" style="margin-top:14px"><label for="abBlurb">Summary</label><textarea class="textarea" id="abBlurb"></textarea></div>' +
+    '<div style="margin-top:16px"><button class="btn btn--sm btn--sky" type="button" id="abAdd">Add to the list</button></div></div>';
+  out += '<hr class="divider"><p class="eyebrow">Or</p><h3 style="font-size:20px;margin:8px 0 16px">Pull one from the recommendations</h3>' +
+    (approvedRecs().length
+      ? '<div class="adminrow"><div class="field"><label for="promoSel">Recommendation</label><select class="select" id="promoSel">' +
+        approvedRecs().map(function(r){ return '<option value="' + esc(r.id) + '">' + esc(r.title + " — " + r.author) + "</option>"; }).join("") + "</select></div>" +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">' +
+          '<button class="btn btn--sm btn--grape" type="button" data-promote="next">Add to Up next</button>' +
+          '<button class="btn btn--sm btn--flare" type="button" data-promote="current">Make it the current book</button>' +
+          '<button class="btn btn--sm btn--ghost" type="button" data-promote="past">Add to Finished</button></div>' +
+        '<p class="hint" style="margin-top:12px">Its cover comes along, and it leaves the Recommendations list.</p></div>'
+      : '<p class="empty">No approved recommendations to pull from yet.</p>');
+  return out;
+}
+
+function recEditor(r){
+  return '<details class="editor"' + (openEditors[r.id] ? " open" : "") + '>' +
+    '<summary data-editfor="' + esc(r.id) + '">Edit details &amp; cover</summary>' +
+    '<div class="editor__body"><div class="formgrid">' +
+      '<div class="field"><label>Title</label><input class="input" type="text" value="' + esc(r.title) + '" data-rfield="title" data-rid="' + esc(r.id) + '" maxlength="140"></div>' +
+      '<div class="field"><label>Author</label><input class="input" type="text" value="' + esc(r.author) + '" data-rfield="author" data-rid="' + esc(r.id) + '" maxlength="140"></div>' +
+      '<div class="field"><label>Pages</label><input class="input" type="number" min="1" max="20000" value="' + esc(r.pages || "") + '" data-rfield="pages" data-rid="' + esc(r.id) + '"></div>' +
+      '<div class="field"><label>Reading level</label><select class="select" data-rfield="level" data-rid="' + esc(r.id) + '">' +
+        LEVELS.map(function(l){ return "<option" + (l === r.level ? " selected" : "") + ">" + esc(l) + "</option>"; }).join("") + "</select></div>" +
+      '<div class="field"><label>Recommended by</label><input class="input" type="text" value="' + esc(r.by || "") + '" data-rfield="by" data-rid="' + esc(r.id) + '" maxlength="60"></div>' +
+    "</div>" +
+    '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
+      '<input class="input" type="text" value="' + esc((r.genres || []).join(", ")) + '" data-rfield="genres" data-rid="' + esc(r.id) + '" maxlength="200"></div>' +
+    '<div class="field" style="margin-top:14px"><label>Summary</label>' +
+      '<textarea class="textarea" data-rfield="blurb" data-rid="' + esc(r.id) + '">' + esc(r.blurb || "") + "</textarea></div>" +
+    '<div class="formgrid" style="margin-top:18px">' + imgField("Book cover", "rcover", r.id, r.cover, false) + "</div>" +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
+      '<button class="btn btn--sm btn--zest" type="button" data-rsave="' + esc(r.id) + '">Save changes</button>' +
+      '<button class="btn btn--sm btn--ghost" type="button" data-rdel="' + esc(r.id) + '" style="margin-left:auto">Delete permanently</button>' +
+    "</div></div></details>";
+}
+function paneRecs(){
+  var pend = pendingRecs(), ok = approvedRecs(), rej = state.recs.filter(function(r){ return r.status === "rejected"; });
+  var out = '<p class="eyebrow">Waiting for approval</p><h3 style="font-size:22px;margin:8px 0 18px">' +
+    (pend.length ? pend.length + " submission" + (pend.length > 1 ? "s" : "") + " to review" : "Nothing waiting") + "</h3>";
+  out += pend.length
+    ? pend.map(function(r){
+        return '<div class="pending"><div><h4>' + esc(r.title) + "</h4>" +
+          '<p style="color:var(--muted);font-style:italic;margin-top:4px">by ' + esc(r.author) + " · " + esc(r.pages || "?") + " pages</p>" +
+          '<div class="tagbank" style="margin-top:10px"><span class="tag mono">' + esc(r.level || "All ages") + "</span>" +
+            (r.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") + "</div>" +
+          '<p style="margin-top:12px;font-size:15.5px">' + esc(r.blurb || "No summary given.") + "</p>" +
+          '<p class="review__by">Submitted by ' + esc(r.by || "anonymous") + (r.at ? " · " + esc(shortDate(r.at)) : "") + "</p></div>" +
+          '<div class="pending__acts"><button class="btn btn--sm btn--surf" type="button" data-approve="' + esc(r.id) + '">Approve</button>' +
+          '<button class="btn btn--sm btn--ghost" type="button" data-reject="' + esc(r.id) + '">Reject</button></div></div>';
+      }).join("")
+    : '<p class="empty">When someone submits a book it lands here first. Nothing reaches the public list until you approve it.</p>';
+
+  out += '<hr class="divider"><p class="eyebrow">Live on the site</p><h3 style="font-size:22px;margin:8px 0 18px">' +
+    ok.length + " recommendation" + (ok.length === 1 ? "" : "s") + "</h3>";
+  out += ok.length
+    ? ok.map(function(r){
+        return '<div class="adminrow"><div class="adminrow__head"><strong>' + esc(r.title) + "</strong>" +
+          '<span class="lanerow__meta">' + esc(r.author) + " · " + esc(r.pages || "?") + " pp" + (r.by ? " · rec. " + esc(r.by) : "") + "</span>" +
+          '<button class="btn btn--sm btn--ghost" type="button" data-reject="' + esc(r.id) + '" style="margin-left:auto">Unpublish</button></div>' +
+          recEditor(r) + "</div>";
+      }).join("")
+    : '<p class="empty">Nothing published yet.</p>';
+
+  if(rej.length){
+    out += '<hr class="divider"><p class="eyebrow">Rejected / unpublished</p><div style="margin-top:12px">' +
+      rej.map(function(r){
+        return '<div class="adminrow"><div class="adminrow__head"><strong>' + esc(r.title) + "</strong>" +
+          '<span class="pill pill--done">Hidden</span>' +
+          '<span style="margin-left:auto;display:flex;gap:8px">' +
+            '<button class="btn btn--sm btn--surf" type="button" data-approve="' + esc(r.id) + '">Publish</button>' +
+            '<button class="btn btn--sm btn--ghost" type="button" data-rdel="' + esc(r.id) + '">Delete</button></span></div></div>';
+      }).join("") + "</div>";
+  }
+  return out;
+}
+
+function paneMeetings(){
+  var ms = state.meetings.slice().sort(function(a,b){ return String(b.date||"").localeCompare(String(a.date||"")); });
+  var opts = state.books.concat(approvedRecs()).map(function(b){ return { id:b.id, label:b.title + " — " + b.author }; });
+  return '<p class="eyebrow">Schedule</p><h3 style="font-size:22px;margin:8px 0 18px">Meetings</h3>' +
+    ms.map(function(m){
+      var b = bookById(m.bookId) || recById(m.bookId);
+      return '<div class="adminrow"><div class="adminrow__head"><strong>' + esc(b ? b.title : "Unassigned") + "</strong>" +
+        '<span class="pill ' + (m.done ? "pill--done" : "pill--up") + '">' + (m.done ? "Finished" : "Upcoming") + "</span></div>" +
+        '<div class="formgrid">' +
+          '<div class="field"><label>Date</label><input class="input" type="date" value="' + esc(m.date || "") + '" data-mfield="date" data-mid="' + esc(m.id) + '"></div>' +
+          '<div class="field"><label>Time</label><input class="input" type="time" value="' + esc(m.time || "") + '" data-mfield="time" data-mid="' + esc(m.id) + '"></div>' +
+          '<div class="field"><label>Where</label><input class="input" type="text" value="' + esc(m.place || "") + '" data-mfield="place" data-mid="' + esc(m.id) + '" maxlength="140"></div>' +
+          '<div class="field"><label>Chapters covered</label><input class="input" type="text" value="' + esc(m.chapters || "") + '" data-mfield="chapters" data-mid="' + esc(m.id) + '" placeholder="Chapters 1-15" maxlength="140"></div>' +
+          '<div class="field"><label>Pages covered</label><input class="input" type="text" value="' + esc(m.pages || "") + '" data-mfield="pages" data-mid="' + esc(m.id) + '" placeholder="1-240" maxlength="60"></div>' +
+          '<div class="field"><label>Book</label><select class="select" data-mfield="bookId" data-mid="' + esc(m.id) + '">' +
+            opts.map(function(o){ return '<option value="' + esc(o.id) + '"' + (o.id === m.bookId ? " selected" : "") + ">" + esc(o.label) + "</option>"; }).join("") + "</select></div>" +
+        "</div>" +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
+          '<button class="btn btn--sm btn--zest" type="button" data-msave="' + esc(m.id) + '">Save changes</button>' +
+          '<button class="btn btn--sm btn--ghost" type="button" data-mdone="' + esc(m.id) + '">' + (m.done ? "Reopen" : "Mark finished") + "</button>" +
+          '<button class="btn btn--sm btn--ghost" type="button" data-meet="' + esc(m.id) + '">Open notes</button>' +
+          '<button class="btn btn--sm btn--ghost" type="button" data-mdel="' + esc(m.id) + '" style="margin-left:auto">Delete</button>' +
+        "</div></div>";
+    }).join("") +
+    '<hr class="divider"><p class="eyebrow">Add</p><h3 style="font-size:20px;margin:8px 0 16px">Schedule a new meeting</h3>' +
+    '<div class="adminrow"><div class="formgrid">' +
+      '<div class="field"><label for="nmDate">Date</label><input class="input" type="date" id="nmDate" value="' + todayISO() + '"></div>' +
+      '<div class="field"><label for="nmTime">Time</label><input class="input" type="time" id="nmTime" value="19:00"></div>' +
+      '<div class="field"><label for="nmPlace">Where</label><input class="input" type="text" id="nmPlace" maxlength="140"></div>' +
+      '<div class="field"><label for="nmChap">Chapters covered</label><input class="input" type="text" id="nmChap" placeholder="Chapters 1-15" maxlength="140"></div>' +
+      '<div class="field"><label for="nmPages">Pages covered</label><input class="input" type="text" id="nmPages" placeholder="1-240" maxlength="60"></div>' +
+      '<div class="field"><label for="nmBook">Book</label><select class="select" id="nmBook">' +
+        opts.map(function(o){ return '<option value="' + esc(o.id) + '">' + esc(o.label) + "</option>"; }).join("") + "</select></div>" +
+    '</div><div style="margin-top:16px"><button class="btn btn--sm btn--sky" type="button" id="nmAdd">Add meeting</button></div></div>';
+}
+
+function paneMembers(){
+  return '<p class="eyebrow">The club</p><h3 style="font-size:22px;margin:8px 0 18px">Members</h3>' +
+    (state.members.length
+      ? state.members.map(function(m){
+          return '<div class="adminrow"><div class="adminrow__head"><strong>' + esc(m.name) + "</strong>" +
+            '<span class="lanerow__meta">' + (m.joined ? "joined " + esc(shortDate(m.joined)) : "join date not set") + "</span>" +
+            memberLinks(m, "") +
+            '<button class="btn btn--sm btn--ghost" type="button" data-memdel="' + esc(m.id) + '" style="margin-left:auto">Remove</button></div>' +
+            '<div class="formgrid">' +
+              '<div class="field"><label>Name</label><input class="input" type="text" value="' + esc(m.name) + '" data-mmfield="name" data-mmid="' + esc(m.id) + '" maxlength="60"></div>' +
+              '<div class="field"><label>Joined</label><input class="input" type="date" value="' + esc(m.joined || "") + '" data-mmfield="joined" data-mmid="' + esc(m.id) + '"></div>' +
+              imgField("Profile picture", "avatar", m.id, m.avatar, true) +
+              '<div class="field"><label>Fable profile</label><input class="input" type="url" value="' + esc(m.fable || "") + '" data-mmfield="fable" data-mmid="' + esc(m.id) + '" placeholder="https://fable.co/..." maxlength="300"></div>' +
+              '<div class="field"><label>Goodreads profile</label><input class="input" type="url" value="' + esc(m.goodreads || "") + '" data-mmfield="goodreads" data-mmid="' + esc(m.id) + '" placeholder="https://www.goodreads.com/user/show/..." maxlength="300"></div>' +
+            "</div>" +
+            '<div style="margin-top:14px"><button class="btn btn--sm btn--zest" type="button" data-memsave="' + esc(m.id) + '">Save</button></div></div>';
+        }).join("")
+      : '<p class="empty">No members yet. Add the first one below — members show up on the timeline and can be tagged on each book.</p>') +
+    '<hr class="divider"><p class="eyebrow">Add</p><h3 style="font-size:20px;margin:8px 0 16px">Add a member</h3>' +
+    '<div class="adminrow"><div class="formgrid">' +
+      '<div class="field"><label for="amName">Name</label><input class="input" id="amName" type="text" maxlength="60"></div>' +
+      '<div class="field"><label for="amJoined">Joined</label><input class="input" id="amJoined" type="date"></div>' +
+      '<div class="field"><label for="amFable">Fable profile</label><input class="input" id="amFable" type="url" placeholder="https://fable.co/..." maxlength="300"></div>' +
+      '<div class="field"><label for="amGoodreads">Goodreads profile</label><input class="input" id="amGoodreads" type="url" placeholder="https://www.goodreads.com/user/show/..." maxlength="300"></div>' +
+    '</div><div style="margin-top:16px"><button class="btn btn--sm btn--sky" type="button" id="amAdd">Add member</button></div>' +
+    '<p class="hint" style="margin-top:12px">Add them first, then upload their picture from the row above. Profile links must start with http:// or https:// to show on the site.</p></div>';
+}
+
+function paneSettings(){
+  var has = !!ghToken();
+  return '<p class="eyebrow">Club</p><h3 style="font-size:22px;margin:8px 0 18px">Settings</h3>' +
+    '<div class="adminrow"><div class="formgrid">' +
+      '<div class="field"><label for="setName">Club name</label><input class="input" id="setName" type="text" value="' + esc(state.club.name) + '" maxlength="80"></div>' +
+      imgField("Club logo", "logo", "club", state.club.logo, true) +
+    "</div>" +
+    '<div class="field" style="margin-top:14px"><label for="setTag">Tagline</label><input class="input" id="setTag" type="text" value="' + esc(state.club.tagline || "") + '" maxlength="140"></div>' +
+    '<div style="margin-top:16px"><button class="btn btn--sm btn--zest" type="button" id="setSave">Save settings</button></div></div>' +
+
+    '<hr class="divider"><p class="eyebrow">Publishing</p><h3 style="font-size:20px;margin:8px 0 16px">Saving to GitHub</h3>' +
+    '<div class="adminrow">' +
+      '<div class="field"><label for="ghTok">Personal access token</label>' +
+        '<input class="input mono" id="ghTok" type="password" autocomplete="off" spellcheck="false" maxlength="255" placeholder="' +
+          (has ? "A token is saved in this browser" : "github_pat_\u2026") + '"></div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">' +
+        '<button class="btn btn--sm btn--zest" type="button" id="ghSave">Save token</button>' +
+        '<button class="btn btn--sm btn--ghost" type="button" id="ghTest">Test connection</button>' +
+        (has ? '<button class="btn btn--sm btn--ghost" type="button" id="ghForget">Forget token</button>' : "") +
+        '<button class="btn btn--sm btn--ghost" type="button" id="ghDownload" style="margin-left:auto">Download state.json</button>' +
+      "</div>" +
+      '<p class="hint" style="margin-top:14px">Create a <strong>fine-grained personal access token</strong> under GitHub \u2192 Settings \u2192 Developer settings \u2192 Personal access tokens. Give it access to only <code>' + esc(GH.owner + "/" + GH.repo) + '</code>, with <strong>Contents: Read and write</strong>. It is stored in this browser alone and never written into the repo, so add it once per device. Without a token the site is read-only for everyone \u2014 which is what visitors should see.</p>' +
+      '<p class="hint" style="margin-top:10px">Every save commits <code>data/state.json</code> to <code>' + esc(GH.branch) + '</code>, and the published site refreshes about a minute later.</p>' +
+    "</div>" +
+
+    '<hr class="divider"><p class="eyebrow">Suggestions</p><h3 style="font-size:20px;margin:8px 0 16px">Books people have put forward</h3>' +
+    '<div class="adminrow"><p style="font-size:15.5px">The Suggest a Book form opens a GitHub issue on the repo. Read them there, then add the ones you want from the Recommendations tab.</p>' +
+      '<div style="margin-top:14px"><a class="btn btn--sm btn--sky" href="https://github.com/' + esc(GH.owner + "/" + GH.repo) + '/issues?q=is%3Aissue+is%3Aopen" target="_blank" rel="noopener noreferrer">Open suggestions on GitHub</a></div></div>';
+}
+
+/* ---------- image actions ---------- */
+async function setImage(kind, id, url){
+  if(kind === "logo"){ state.club.logo = url; }
+  else if(kind === "avatar"){ var m = memberById(id); if(!m) return; m.avatar = url; }
+  else if(kind === "rcover"){ var r = recById(id); if(!r) return; r.cover = url; }
+  else { var b = bookById(id); if(!b) return; b[kind === "bcover" ? "cover" : "badge"] = url; }
+  if(await save(url ? "Saving image…" : "Removing image…")){ renderAll(); renderAdmin(); }
+}
+
+/* ---------- events ---------- */
+document.addEventListener("input", function(e){
+  var n = e.target;
+  if(!n || !n.getAttribute || n.getAttribute("data-bfield") !== "rating") return;
+  var id = n.getAttribute("data-bid"), v = clampRating(n.value), pane = $("adminPane");
+  if(!pane) return;
+  var out = pane.querySelector('[data-rateout="' + id + '"]');
+  var st = pane.querySelector('[data-ratestars="' + id + '"]');
+  if(out) out.textContent = v.toFixed(1) + " / 5";
+  if(st) st.innerHTML = stars(v, true);
+});
+document.addEventListener("click", async function(e){
+  var t = e.target; if(!t || !t.closest) return;
+  var el;
+
+  if((el = t.closest("[data-focus]"))){
+    focusId = el.getAttribute("data-focus") || null;
+    $("crewBox").hidden = true;
+    renderFocus(); renderTree(); renderTimeline();
+    return;
+  }
+  if((el = t.closest("[data-badge]"))){ showCrew(el.getAttribute("data-badge")); return; }
+  if((el = t.closest("[data-meet]"))){ openMeeting(el.getAttribute("data-meet")); return; }
+  if((el = t.closest("[data-rec]"))){ var rr0 = recById(el.getAttribute("data-rec")); if(rr0) openBookDetail(rr0, "rec"); return; }
+  if((el = t.closest("[data-book]"))){ var bk0 = bookById(el.getAttribute("data-book")); if(bk0) openBookDetail(bk0, "book"); return; }
+
+  if((el = t.closest("[data-pick]"))){
+    var pk = el.getAttribute("data-pick"), pid = el.getAttribute("data-pid");
+    var round = (pk === "avatar" || pk === "logo" || pk === "bbadge");
+    pickImage(round ? (pk === "logo" ? 240 : 200) : 340, round ? "image/png" : "image/jpeg", function(url){ setImage(pk, pid, url); });
+    return;
+  }
+  if((el = t.closest("[data-clearimg]"))){ setImage(el.getAttribute("data-clearimg"), el.getAttribute("data-pid"), ""); return; }
+
+  /* meeting notes */
+  if((el = t.closest("[data-addbtn]"))){
+    var kind = el.getAttribute("data-addbtn"), mid = el.getAttribute("data-mid"), box = $("meetModalBody");
+    var txt = box.querySelector('[data-add="' + kind + '-text"]'), who = box.querySelector('[data-add="' + kind + '-by"]');
+    var val = (txt.value || "").trim(); if(!val){ txt.focus(); return; }
+    var m = meetingById(mid); if(!m) return;
+    var item = { id: uid(kind), text: val, by: (who.value || "").trim() }, memo = item.by;
+    if(kind === "pred") m.predictions.push(item); else m.points.push(item);
+    if(await save("Adding…")){
+      box.innerHTML = meetingHTML(m, bookById(m.bookId)); renderAll();
+      var again = box.querySelector('[data-add="' + kind + '-by"]'); if(again) again.value = memo;
+    }
+    return;
+  }
+  if((el = t.closest("[data-del]"))){
+    var dk = el.getAttribute("data-del"), dm = meetingById(el.getAttribute("data-mid")), iid = el.getAttribute("data-iid");
+    if(!dm) return;
+    var key = dk === "pred" ? "predictions" : "points";
+    dm[key] = dm[key].filter(function(x){ return x.id !== iid; });
+    if(await save("Removing…")){ $("meetModalBody").innerHTML = meetingHTML(dm, bookById(dm.bookId)); renderAll(); }
+    return;
+  }
+  if((el = t.closest("[data-savesum]"))){
+    var sm = meetingById(el.getAttribute("data-savesum")); if(!sm) return;
+    sm.summary = $("sumBox").value;
+    await save("Saving summary…"); renderAll();
+    return;
+  }
+
+  if(t.closest("#adminOpen")){ openAdmin(); return; }
+  if((el = t.closest("[data-atab]"))){ adminTab = el.getAttribute("data-atab"); renderAdmin(); return; }
+  if((el = t.closest("[data-editfor]"))){ var eid = el.getAttribute("data-editfor"); openEditors[eid] = !openEditors[eid]; return; }
+
+  /* recommendations admin */
+  if((el = t.closest("[data-approve]"))){
+    var ar = recById(el.getAttribute("data-approve")); if(!ar) return;
+    ar.status = "approved";
+    if(await save("Approving…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-reject]"))){
+    var rj = recById(el.getAttribute("data-reject")); if(!rj) return;
+    rj.status = "rejected";
+    if(await save("Updating…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-rdel]"))){
+    var did = el.getAttribute("data-rdel");
+    state.recs = state.recs.filter(function(x){ return x.id !== did; });
+    if(await save("Deleting…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-rsave]"))){
+    var rs = recById(el.getAttribute("data-rsave")); if(!rs) return;
+    var rp = $("adminPane");
+    var rget = function(f){ return rp.querySelector('[data-rfield="' + f + '"][data-rid="' + rs.id + '"]'); };
+    ["title","author","by","level","blurb"].forEach(function(f){ var n = rget(f); if(n) rs[f] = f === "blurb" ? n.value : n.value.trim(); });
+    var rpg = rget("pages"); if(rpg) rs.pages = Number(rpg.value) || null;
+    var rgn = rget("genres"); if(rgn) rs.genres = rgn.value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+    if(!rs.title) rs.title = "Untitled";
+    if(await save("Saving…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+
+  /* reading list */
+  if((el = t.closest("[data-bsave]"))){
+    var bb = bookById(el.getAttribute("data-bsave")); if(!bb) return;
+    var p2 = $("adminPane");
+    var get = function(f){ return p2.querySelector('[data-bfield="' + f + '"][data-bid="' + bb.id + '"]'); };
+    ["title","author","level","series","started","finished","blurb"].forEach(function(f){
+      var n = get(f); if(n) bb[f] = f === "blurb" ? n.value : n.value.trim();
+    });
+    if(!bb.title) bb.title = "Untitled";
+    var pg = get("pages"); if(pg) bb.pages = Number(pg.value) || null;
+    var si = get("seriesIndex"); if(si) bb.seriesIndex = Number(si.value) || 1;
+    var pp = get("progressPage"); if(pp) bb.progressPage = Math.max(0, Number(pp.value) || 0);
+    var gn = get("genres"); if(gn) bb.genres = gn.value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+    var picks = p2.querySelectorAll('[data-bmember][data-bid="' + bb.id + '"]');
+    if(picks.length){
+      bb.members = [];
+      Array.prototype.forEach.call(picks, function(c){ if(c.checked) bb.members.push(c.getAttribute("data-bmember")); });
+    }
+    var rt = get("text"), rr2 = get("rating"), rb = get("by");
+    if(rt || rr2 || rb){
+      bb.review = bb.review || {};
+      if(rt) bb.review.text = rt.value;
+      if(rr2) bb.review.rating = clampRating(rr2.value);
+      if(rb) bb.review.by = rb.value.trim();
+    }
+    if(await save("Saving…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-setstatus]"))){
+    var want = el.getAttribute("data-setstatus"), sb = bookById(el.getAttribute("data-bid")); if(!sb) return;
+    var wasCurrent = sb.status === "current";
+    if(want === "current") state.books.forEach(function(b){ if(b.status === "current") b.status = "past"; });
+    sb.status = want;
+    if(want === "past" && !sb.finished) sb.finished = todayISO();
+    if(want === "current" && !sb.started) sb.started = todayISO();
+    if(wasCurrent && want !== "current"){ var q3 = nextBooks(); if(q3.length){ q3[0].status = "current"; if(!q3[0].started) q3[0].started = todayISO(); } }
+    if(await save("Updating…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if(t.closest("[data-advance]")){
+    var cur = currentBook(), queue = nextBooks();
+    if(cur){ cur.status = "past"; if(!cur.finished) cur.finished = todayISO(); }
+    if(queue.length){ queue[0].status = "current"; if(!queue[0].started) queue[0].started = todayISO(); }
+    if(await save("Moving the list on…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-bmove]"))){
+    var dir = el.getAttribute("data-bmove"), mb = bookById(el.getAttribute("data-bid")); if(!mb) return;
+    var qids = nextBooks().map(function(b){ return b.id; });
+    var at = qids.indexOf(mb.id), to = dir === "up" ? at - 1 : at + 1;
+    if(at < 0 || to < 0 || to >= qids.length) return;
+    var iA = state.books.indexOf(mb), iB = state.books.indexOf(bookById(qids[to]));
+    state.books[iA] = state.books[iB]; state.books[iB] = mb;
+    if(await save("Reordering…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if(t.closest("#abAdd")){
+    var ttl = $("abTitle").value.trim(); if(!ttl){ $("abTitle").focus(); return; }
+    var lane = $("abLane").value;
+    if(lane === "current") state.books.forEach(function(b){ if(b.status === "current") b.status = "past"; });
+    state.books.push({
+      id: uid("bk"), title: ttl, author: $("abAuthor").value.trim(), pages: Number($("abPages").value) || null,
+      level: $("abLevel").value, series: $("abSeries").value.trim(), seriesIndex: 1,
+      genres: $("abGenres").value.split(",").map(function(s){ return s.trim(); }).filter(Boolean),
+      blurb: $("abBlurb").value.trim(), status: lane, cover:"", badge:"",
+      started: lane === "current" ? todayISO() : "", finished: lane === "past" ? todayISO() : "",
+      progressPage: 0, members: []
+    });
+    if(await save("Adding…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-bdel]"))){
+    var bid = el.getAttribute("data-bdel");
+    state.books = state.books.filter(function(x){ return x.id !== bid; });
+    if(await save("Removing…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-promote]"))){
+    var sel = $("promoSel"); if(!sel) return;
+    var pr = recById(sel.value); if(!pr) return;
+    var mode = el.getAttribute("data-promote");
+    if(mode === "current") state.books.forEach(function(b){ if(b.status === "current") b.status = "past"; });
+    adoptRec(pr, mode);
+    if(await save("Moving to the reading list…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+
+  /* meetings admin */
+  if((el = t.closest("[data-msave]"))){
+    var mm2 = meetingById(el.getAttribute("data-msave")); if(!mm2) return;
+    var mp = $("adminPane");
+    ["date","time","place","chapters","pages","bookId"].forEach(function(f){
+      var n = mp.querySelector('[data-mfield="' + f + '"][data-mid="' + mm2.id + '"]');
+      if(n) mm2[f] = n.value;
+    });
+    if(await save("Saving meeting…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-mdone]"))){
+    var dm2 = meetingById(el.getAttribute("data-mdone")); if(!dm2) return;
+    dm2.done = !dm2.done;
+    if(dm2.done){
+      var moved = bookById(dm2.bookId);
+      if(moved){
+        moved.status = "past";
+        if(!moved.finished) moved.finished = dm2.date || todayISO();
+        var q4 = nextBooks();
+        if(q4.length){ q4[0].status = "current"; if(!q4[0].started) q4[0].started = todayISO(); }
+      }else{
+        var fr = recById(dm2.bookId); if(fr) adoptRec(fr, "past");
+      }
+    }
+    if(await save("Updating…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-mdel]"))){
+    var mdid = el.getAttribute("data-mdel");
+    state.meetings = state.meetings.filter(function(x){ return x.id !== mdid; });
+    if(await save("Deleting…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if(t.closest("#nmAdd")){
+    var nb = $("nmBook").value;
+    if(!bookById(nb)){ var src = recById(nb); if(src) adoptRec(src, currentBook() ? "next" : "current"); }
+    state.meetings.push({
+      id: uid("mt"), bookId: nb, date: $("nmDate").value, time: $("nmTime").value,
+      place: $("nmPlace").value.trim(), chapters: $("nmChap").value.trim(), pages: $("nmPages").value.trim(),
+      done: false, summary: "", predictions: [], points: []
+    });
+    if(await save("Adding meeting…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+
+  /* members */
+  if(t.closest("#amAdd")){
+    var nm = $("amName").value.trim(); if(!nm){ $("amName").focus(); return; }
+    state.members.push({ id: uid("mb"), name: nm, joined: $("amJoined").value, avatar: "",
+      fable: $("amFable").value.trim(), goodreads: $("amGoodreads").value.trim() });
+    if(await save("Adding member…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-memsave]"))){
+    var mem = memberById(el.getAttribute("data-memsave")); if(!mem) return;
+    var mpn = $("adminPane");
+    var mget = function(f){ return mpn.querySelector('[data-mmfield="' + f + '"][data-mmid="' + mem.id + '"]'); };
+    var nn = mget("name"), jj = mget("joined"), ff = mget("fable"), gg = mget("goodreads");
+    if(nn && nn.value.trim()) mem.name = nn.value.trim();
+    if(jj) mem.joined = jj.value;
+    if(ff) mem.fable = ff.value.trim();
+    if(gg) mem.goodreads = gg.value.trim();
+    if(await save("Saving…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-memdel]"))){
+    var mdel = el.getAttribute("data-memdel");
+    state.members = state.members.filter(function(x){ return x.id !== mdel; });
+    state.books.forEach(function(b){ b.members = (b.members || []).filter(function(x){ return x !== mdel; }); });
+    if(await save("Removing…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+
+  /* github token */
+  if(t.closest("#ghSave")){
+    var v = $("ghTok").value.trim();
+    if(!v){ say("Paste a token first.", "bad"); return; }
+    setGhToken(v);
+    say("Token saved in this browser.", "ok");
+    renderAll(); renderAdmin();
+    return;
+  }
+  if(t.closest("#ghForget")){
+    setGhToken("");
+    say("Token removed from this browser.", "ok");
+    renderAll(); renderAdmin();
+    return;
+  }
+  if(t.closest("#ghTest")){
+    var typed = $("ghTok").value.trim();
+    if(typed) setGhToken(typed);
+    if(!ghToken()){ say("Paste a token first.", "bad"); return; }
+    say("Checking\u2026", "busy", true);
+    try{
+      var r = await ghFetch("https://api.github.com/repos/" + GH.owner + "/" + GH.repo);
+      if(!r.ok){ say(ghMsg(r.status), "bad"); return; }
+      var j = await r.json();
+      if(j.permissions && j.permissions.push) say("Connected \u2014 this token can save changes.", "ok");
+      else say("Connected, but this token is read-only. Give it Contents: Read and write.", "bad");
+    }catch(e){ say("Couldn\u2019t reach GitHub.", "bad"); }
+    renderAll(); renderAdmin();
+    return;
+  }
+  if(t.closest("#ghDownload")){ downloadState(); say("Downloaded state.json.", "ok"); return; }
+
+  /* settings */
+  if(t.closest("#setSave")){
+    state.club.name = $("setName").value.trim() || state.club.name;
+    state.club.tagline = $("setTag").value.trim();
+    if(await save("Saving settings…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+
+  /* nav */
+  if(t.closest("#heroDetails") || t.closest("#heroTitle")){
+    var cb2 = currentBook(), nm2 = (cb2 && meetingForBook(cb2.id)) || nextMeeting();
+    if(nm2) openMeeting(nm2.id);
+    return;
+  }
+  if(t.closest("#heroCover")){ var cb3 = currentBook(); if(cb3) openBookDetail(cb3, "book"); return; }
+  if(t.closest("#heroJumpRecs")){ document.getElementById("recs").scrollIntoView({ behavior:"smooth" }); return; }
+});
+
+function adoptRec(rec, status){
+  var copy = { id: rec.id, title: rec.title, author: rec.author, pages: rec.pages, genres: rec.genres || [],
+    level: rec.level, blurb: rec.blurb, status: status, cover: rec.cover || "", badge: "",
+    series: "", seriesIndex: 1, started: status === "current" ? todayISO() : "",
+    finished: status === "past" ? todayISO() : "", progressPage: 0, members: [] };
+  if(!bookById(copy.id)) state.books.push(copy);
+  state.recs = state.recs.filter(function(x){ return x.id !== rec.id; });
+}
+
+/* ---------- tabs ---------- */
+function tabGroup(ids, prefix){
+  ids.forEach(function(k){
+    $(prefix + k).addEventListener("click", function(){
+      ids.forEach(function(j){
+        var on = j === k;
+        $(prefix + j).setAttribute("aria-selected", String(on));
+        $("panel-" + j).hidden = !on;
+      });
+    });
+  });
+}
+tabGroup(["recs","suggest"], "tab-");
+tabGroup(["tree","time"], "tab-");
+
+/* ---------- submission: opens a GitHub issue ---------- */
+$("suggestForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  var el = e.target.elements;
+  var title = el.title.value.trim(), author = el.author.value.trim(), by = el.by.value.trim();
+  if(!title || !author || !by) return;
+  var lines = [
+    "**Title:** " + title,
+    "**Author:** " + author,
+    "**Pages:** " + (el.pages.value.trim() || "not given"),
+    "**Reading level:** " + el.level.value,
+    "**Genres:** " + (el.genres.value.trim() || "not given"),
+    "",
+    "**What it\u2019s about**",
+    el.blurb.value.trim() || "(not given)",
+    "",
+    "\u2014 suggested by " + by
+  ];
+  var url = "https://github.com/" + GH.owner + "/" + GH.repo + "/issues/new" +
+    "?labels=" + encodeURIComponent("book suggestion") +
+    "&title=" + encodeURIComponent("Book suggestion: " + title) +
+    "&body=" + encodeURIComponent(lines.join("\n"));
+  window.open(url, "_blank", "noopener");
+  $("suggestNote").textContent = "Opening GitHub \u2014 press \u201cCreate\u201d there to send it.";
+});
+
+/* ---------- boot ---------- */
+function renderAll(){
+  if(focusId && !memberById(focusId)) focusId = null;
+  renderHero(); renderShelf(); renderRecs(); renderFocus(); renderTree(); renderTimeline();
+}
+
+(async function boot(){
+  $("sLevel").innerHTML = LEVELS.map(function(l){ return "<option" + (l === "Ages 12+" ? " selected" : "") + ">" + esc(l) + "</option>"; }).join("");
+  await loadState();
+  refreshWriteMode();
+  renderAll();
+  window.addEventListener("resize", function(){ renderTree(); });
+})();
+
+})();
+</script>
+</body>
+</html>

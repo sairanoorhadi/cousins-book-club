@@ -1,0 +1,297 @@
+{
+  "rev": 1000,
+  "club": {
+    "name": "Cousins Book Club",
+    "tagline": "One book at a time. Opinions welcome.",
+    "logo": ""
+  },
+  "members": [
+    {
+      "id": "mb-saira",
+      "name": "Saira",
+      "joined": "",
+      "avatar": ""
+    },
+    {
+      "id": "mb-pareesa",
+      "name": "Pareesa",
+      "joined": "",
+      "avatar": ""
+    }
+  ],
+  "books": [
+    {
+      "id": "bk-ck",
+      "title": "Crooked Kingdom",
+      "author": "Leigh Bardugo",
+      "pages": 560,
+      "genres": [
+        "Young Adult",
+        "Fantasy",
+        "Heist",
+        "Grishaverse"
+      ],
+      "level": "Ages 14+",
+      "blurb": "Kaz Brekker and his crew pulled off the impossible and got nothing for it. Back in Ketterdam, double-crossed and badly out of pocket, they are hunted by rival gangs, a merchant council that wants them buried, and a foreign government that wants one of them back. With a member of the crew in enemy hands, Kaz has to out-scheme an entire city — and this time the con is personal. The second half of the Six of Crows duology.",
+      "status": "current",
+      "cover": "",
+      "badge": "",
+      "series": "Six of Crows Duology",
+      "seriesIndex": 2,
+      "started": "",
+      "finished": "",
+      "progressPage": 0,
+      "members": []
+    },
+    {
+      "id": "bk-soc",
+      "title": "Six of Crows",
+      "author": "Leigh Bardugo",
+      "pages": 465,
+      "genres": [
+        "Young Adult",
+        "Fantasy",
+        "Heist",
+        "Grishaverse"
+      ],
+      "level": "Ages 14+",
+      "blurb": "Ketterdam is a city that runs on debt, and Kaz Brekker collects. Offered a fortune he cannot turn down, he assembles six dangerous outcasts — a sharpshooter, a runaway, a spy, a Heartrender, a thief and a convict — to break into the Ice Court, the most secure fortress in the world, and pull out the scientist who invented a drug that turns Grisha power into a weapon. Six narrators, six agendas, and no honest people anywhere.",
+      "status": "past",
+      "cover": "",
+      "badge": "",
+      "series": "Six of Crows Duology",
+      "seriesIndex": 1,
+      "started": "",
+      "finished": "2026-07-02",
+      "progressPage": 0,
+      "members": [],
+      "review": {
+        "rating": 5,
+        "text": "Thrilling and Captivating. Did not see anything comming",
+        "by": "The club"
+      }
+    }
+  ],
+  "meetings": [
+    {
+      "id": "mt-ck",
+      "bookId": "bk-ck",
+      "date": "",
+      "time": "19:00",
+      "place": "",
+      "chapters": "",
+      "pages": "",
+      "done": false,
+      "summary": "",
+      "predictions": [],
+      "points": [
+        {
+          "id": "d1",
+          "text": "Kaz says he doesn't believe in luck, only leverage. Did Six of Crows actually bear that out?",
+          "by": ""
+        },
+        {
+          "id": "d2",
+          "text": "Six narrators, six agendas — whose chapters do you trust least, and why?",
+          "by": ""
+        },
+        {
+          "id": "d3",
+          "text": "Ketterdam runs on debt: money, favours, revenge. Is anyone in the crew actually free?",
+          "by": ""
+        },
+        {
+          "id": "d4",
+          "text": "Bardugo drops a backstory chapter into the middle of the heist. Does that break the tension or build it?",
+          "by": ""
+        }
+      ]
+    },
+    {
+      "id": "mt-soc",
+      "bookId": "bk-soc",
+      "date": "2026-07-02",
+      "time": "19:00",
+      "place": "",
+      "chapters": "Complete",
+      "pages": "",
+      "done": true,
+      "summary": "",
+      "predictions": [],
+      "points": []
+    }
+  ],
+  "recs": [
+    {
+      "id": "rc-thief",
+      "title": "The Book Thief",
+      "author": "Markus Zusak",
+      "pages": 592,
+      "genres": [
+        "Historical Fiction",
+        "WWII",
+        "Literary"
+      ],
+      "level": "Ages 13+",
+      "by": "Saira",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Narrated by Death himself, this is the story of Liesel Meminger, a foster girl in Nazi Germany who steals books she cannot yet read and reads them aloud in bomb shelters. When her family hides a Jewish man in their basement, words become the most dangerous and most saving thing she owns."
+    },
+    {
+      "id": "rc-1984",
+      "title": "1984",
+      "author": "George Orwell",
+      "pages": 368,
+      "genres": [
+        "Dystopian",
+        "Political Fiction",
+        "Classic"
+      ],
+      "level": "Ages 15+",
+      "by": "Saira",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Winston Smith rewrites history for a living in a state where the Party controls the past, the present and the language itself. His quiet rebellion — a diary, a love affair, a rented room — runs headlong into a machine built to make rebellion unthinkable."
+    },
+    {
+      "id": "rc-kite",
+      "title": "The Kite Runner",
+      "author": "Khaled Hosseini",
+      "pages": 371,
+      "genres": [
+        "Literary Fiction",
+        "Historical",
+        "Coming-of-Age"
+      ],
+      "level": "Ages 16+",
+      "by": "Saira",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Amir and Hassan are inseparable in 1970s Kabul until one winter afternoon at a kite tournament, when Amir's silence costs Hassan everything. Decades later, safe in California, an old phone call gives him one chance to go back. Spans the Soviet invasion and the rise of the Taliban, but stays a story about cowardice and what it takes to undo it."
+    },
+    {
+      "id": "rc-mockingbird",
+      "title": "To Kill a Mockingbird",
+      "author": "Harper Lee",
+      "pages": 323,
+      "genres": [
+        "Classic",
+        "Literary Fiction",
+        "Coming-of-Age"
+      ],
+      "level": "Ages 13+",
+      "by": "Saira",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Scout Finch grows up in Depression-era Alabama watching her father defend a Black man falsely accused of assault. A courtroom drama told from a child's shoulder height, where the neighbour everyone fears turns out to be the one paying attention."
+    },
+    {
+      "id": "rc-elevator",
+      "title": "The Elevator Ghost",
+      "author": "Glen Huser",
+      "pages": 128,
+      "genres": [
+        "Middle Grade",
+        "Ghost Stories",
+        "Humour"
+      ],
+      "level": "Ages 8-11",
+      "by": "Pareesa",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Carolina Giddle arrives at the Blatchford Arms in sequinned sneakers with a tarantula named Chiquita and a talent for babysitting the building's most impossible children. Her method is simple: tell each one a ghost story built exactly to their size. Six linked tales — creepy, funny, and just scary enough — leading to a Halloween party and a very suspicious departure."
+    },
+    {
+      "id": "rc-champion",
+      "title": "Heart of a Champion",
+      "author": "Ellen Schwartz",
+      "pages": 257,
+      "genres": [
+        "Middle Grade",
+        "Historical Fiction",
+        "Sports"
+      ],
+      "level": "Ages 9-12",
+      "by": "Pareesa",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Kenny Sakamoto worships his older brother Mickey and the Vancouver Asahi baseball team, and wants nothing more than a place on the field. Then Pearl Harbor is bombed and his Japanese-Canadian community is uprooted to the interior. A coming-of-age story about a boy holding on to the one thing that still makes sense."
+    },
+    {
+      "id": "rc-grace",
+      "title": "Finding Grace",
+      "author": "Becky Citra",
+      "pages": 176,
+      "genres": [
+        "Middle Grade",
+        "Historical Fiction",
+        "Family"
+      ],
+      "level": "Ages 10-13",
+      "by": "Pareesa",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "It's 1954, and eleven-year-old Hope has spent years writing letters to a sister she believes she invented. When she discovers Grace is real — a twin given up for adoption after contracting polio — Hope sets out to find her, and to reach the mother who has gone quiet in the next room."
+    },
+    {
+      "id": "rc-trouts",
+      "title": "Look Out for the Fitzgerald-Trouts",
+      "author": "Esta Spalding",
+      "pages": 256,
+      "genres": [
+        "Middle Grade",
+        "Adventure",
+        "Humour"
+      ],
+      "level": "Ages 8-12",
+      "by": "Pareesa",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Four loosely related children live in a car on a tropical island. They bathe in the ocean, fish for dinner, pick fruit for breakfast, and drive themselves to school — all while hunting for a real home. Witty, warm, and quietly serious about what family means when the adults have opted out."
+    },
+    {
+      "id": "rc-pandas",
+      "title": "Pandas on the Eastside",
+      "author": "Gabrielle Prendergast",
+      "pages": 192,
+      "genres": [
+        "Middle Grade",
+        "Historical Fiction",
+        "Animals"
+      ],
+      "level": "Ages 9-12",
+      "by": "Pareesa",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Vancouver, 1970s. Ten-year-old Journey Song finds two pandas stranded in a warehouse in her neighbourhood, caught up in a diplomatic standoff and going quietly neglected. She has no money and no connections, so she uses what her block does have: everybody on it."
+    },
+    {
+      "id": "rc-heartless",
+      "title": "Heartless",
+      "author": "Marissa Meyer",
+      "pages": 453,
+      "genres": [
+        "Young Adult",
+        "Fantasy",
+        "Retelling",
+        "Romance"
+      ],
+      "level": "Ages 12+",
+      "by": "Pareesa",
+      "status": "approved",
+      "at": "",
+      "cover": "",
+      "blurb": "Before she was the Queen of Hearts, Catherine wanted to open a bakery. The King of Hearts wants to marry her; her parents want the match; and Jest, the new court joker, wants something he won't name. A Wonderland origin story that starts as a confection and ends somewhere much colder."
+    }
+  ]
+}
