@@ -1,5 +1,5 @@
 {
-  "rev": 1002,
+  "rev": 1003,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "One book at a time. Opinions welcome.",
@@ -83,8 +83,8 @@
       "date": "2026-08-27",
       "time": "19:00",
       "place": "",
-      "chapters": "",
-      "pages": "",
+      "chapters": "Chapter 23-32",
+      "pages": "100",
       "done": false,
       "summary": "",
       "predictions": [],
