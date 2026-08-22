@@ -1,5 +1,5 @@
 {
-  "rev": 1007,
+  "rev": 1010,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "One book at a time. Opinions welcome.",
@@ -29,6 +29,22 @@
       "avatar": "",
       "fable": "",
       "goodreads": ""
+    },
+    {
+      "id": "mb-mt3zy8m6cxe9o",
+      "name": "Zainab",
+      "joined": "2026-07-25",
+      "avatar": "",
+      "fable": "",
+      "goodreads": ""
+    },
+    {
+      "id": "mb-mt40250262772",
+      "name": "Summer",
+      "joined": "2026-09-06",
+      "avatar": "",
+      "fable": "",
+      "goodreads": ""
     }
   ],
   "books": [
@@ -53,7 +69,12 @@
       "started": "2026-08-22",
       "finished": "2026-08-22",
       "progressPage": 0,
-      "members": []
+      "members": [
+        "mb-saira",
+        "mb-pareesa",
+        "mb-mt3zx2lgcj3x8",
+        "mb-mt3zy8m6cxe9o"
+      ]
     },
     {
       "id": "bk-soc",
@@ -73,10 +94,14 @@
       "badge": "",
       "series": "Six of Crows Duology",
       "seriesIndex": 1,
-      "started": "",
+      "started": "2026-04-17",
       "finished": "2026-07-02",
       "progressPage": 0,
-      "members": [],
+      "members": [
+        "mb-saira",
+        "mb-pareesa",
+        "mb-mt3zx2lgcj3x8"
+      ],
       "review": {
         "rating": 5,
         "text": "Thrilling and Captivating. Did not see anything comming",
@@ -90,7 +115,7 @@
       "bookId": "bk-ck",
       "date": "2026-08-27",
       "time": "19:00",
-      "place": "Online - Discord",
+      "place": "",
       "chapters": "Chapter 23-32",
       "pages": "100",
       "done": false,
