@@ -1,5 +1,5 @@
 {
-  "rev": 1005,
+  "rev": 1006,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "One book at a time. Opinions welcome.",
@@ -17,6 +17,14 @@
     {
       "id": "mb-pareesa",
       "name": "Eliza",
+      "joined": "2026-04-17",
+      "avatar": "",
+      "fable": "",
+      "goodreads": ""
+    },
+    {
+      "id": "mb-mt3zx2lgcj3x8",
+      "name": "Filza",
       "joined": "2026-04-17",
       "avatar": "",
       "fable": "",
