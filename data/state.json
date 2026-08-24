@@ -1,5 +1,5 @@
 {
-  "rev": 1012,
+  "rev": 1013,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "One book at a time. Opinions welcome.",
@@ -68,7 +68,7 @@
       "seriesIndex": 2,
       "started": "2026-08-22",
       "finished": "2026-08-22",
-      "progressPage": 0,
+      "progressPage": 320,
       "members": [
         "mb-saira",
         "mb-pareesa",
