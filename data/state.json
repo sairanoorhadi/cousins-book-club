@@ -1,5 +1,5 @@
 {
-  "rev": 1070,
+  "rev": 1071,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -328,7 +328,7 @@
       "genres": [
         "Historical Fiction",
         "WWII",
-        "Literary"
+        "Literary Fiction"
       ],
       "level": "Ages 13+",
       "by": "Saira",
