@@ -10,6 +10,9 @@ The club's website — what we're reading, what we've finished, what we might re
 |---|---|
 | `index.html` | The entire site — markup, styles and behaviour in one file. |
 | `data/state.json` | All the content: books, meetings, recommendations, members, reviews, images. |
+| `data/inbox.json` | Submissions sent from the site by people without a GitHub account. |
+| `backend/Code.gs` | Optional Google Apps Script that receives those submissions and sends meeting emails. |
+| `docs/notifications.md` | How to set that script up. |
 
 There is no build step and nothing to install. `index.html` reads `data/state.json` when the page loads and renders everything from it.
 
@@ -33,25 +36,43 @@ The token is stored in that browser only — never in this repo — so you'll ad
 
 ## Editing the site
 
-Open the live site and click **Admin**. Five tabs:
+Open the live site and click **Admin**. Six tabs:
 
-- **Reading list** — three lanes (Currently reading / Up next / Finished) with one-click moves, a "finish it and start the next one" button, and a per-book editor for details, cover, badge, dates, progress and who read it.
-- **Recommendations** — approve, edit, unpublish or delete anything on the recommendations shelf.
+- **Reading list** — three lanes (Currently reading / Up next / Finished) with one-click moves, a "finish it and start the next one" button, and a per-book editor for details, cover, badge, dates, progress and who read it. The club can have several books on the go at once; put more than one in *Currently reading* and the home page grows a slider between them.
+- **Recommendations** — approve, edit, shortlist, unpublish or delete anything on the recommendations shelf, and remove a second someone added by mistake.
 - **Meetings** — schedule and reschedule, set chapters and pages covered, mark meetings finished, write summaries.
-- **Members** — names, join dates, profile pictures, Fable and Goodreads links.
-- **Settings** — club name, tagline, logo, and the token above.
+- **Members** — names, join dates, profile pictures, Fable and Goodreads links, email addresses and which meetings each person wants emails about.
+- **Inbox** — everything sent from the site by people without a GitHub account. Accept a book suggestion and it drops into Recommendations awaiting approval; accept a join request and the member is added.
+- **Settings** — club name, tagline, logo, the token above, and the submissions endpoint.
 
 Every save commits `data/state.json` to `main`. GitHub Pages redeploys automatically and the live site catches up about a minute later.
 
-### Book suggestions
+### Reading levels
 
-The **Suggest a Book** tab opens a prefilled issue on this repo labelled `book suggestion`. Read them under [Issues](https://github.com/sairanoorhadi/cousins-book-club/issues), then add the ones the club wants from **Admin → Recommendations**, and close the issue.
+A book's reading level is an age range set with a two-handle slider. Push the right-hand handle all the way up and the range is shown open-ended: 18–100 displays as **Ages 18+**, while 8–11 stays **Ages 8–11**. The recommendations page can be filtered by the same slider.
+
+### Book suggestions and seconding
+
+The **Suggest a Book** tab searches for the title as you type, then fills in the author, page count, genres and a summary from the book's listing. The summary can come from the listing, be written for you, or be typed from scratch — all three stay editable.
+
+Anyone can also **second** a recommendation from its page, and the recommendations shelf is ordered by seconds first, then by the author's surname.
+
+Both of these need the submissions endpoint set up — see `docs/notifications.md`. Until then, suggestions fall back to opening a prefilled issue on this repo labelled `book suggestion`, and seconding is switched off.
+
+### Meeting emails
+
+Members who have an email address and have asked for reminders get three emails per meeting: one when it's scheduled, one five days before, and one thirty minutes before. This is part of the same Apps Script — again, `docs/notifications.md`.
 
 ### Covers, badges and photos
 
-The site can't load images from other websites, so every image is uploaded through the admin panel: it's shrunk in your browser and stored inside `data/state.json`. Books with no uploaded cover get a generated typographic one, so the site always looks complete.
+Two ways to set a cover:
 
-Keep an eye on file size — if `data/state.json` grows past a few megabytes, saves get slow. Reuse smaller source images rather than full-resolution scans.
+- **Search the web for a cover** looks the book up on Google Books and Open Library and offers the top five; picking one stores a link to it.
+- **Upload** takes a file from your computer, shrinks it in the browser and stores it inside `data/state.json`.
+
+Badges and profile pictures are upload-only. Books with no cover at all get a generated typographic one, so the site always looks complete.
+
+Keep an eye on file size — if `data/state.json` grows past a few megabytes, saves get slow. Searched covers cost nothing here since they're only links; uploads are what add weight.
 
 ### Editing by hand
 
@@ -59,4 +80,6 @@ Keep an eye on file size — if `data/state.json` grows past a few megabytes, sa
 
 ## A note on privacy
 
-This repo is public, which GitHub Pages requires on a free account. Everything in `data/state.json` — member names, photos, profile links, reviews — is visible to anyone who finds the URL. Don't put anything in here you wouldn't post publicly.
+This repo is public, which GitHub Pages requires on a free account. Everything in `data/state.json` and `data/inbox.json` — member names, photos, profile links, reviews, **and the email addresses people sign up with** — is visible to anyone who finds the URL. Don't put anything in here you wouldn't post publicly, and tell people that when they hand over an address.
+
+The **Admin** button is visible to everyone and the panel opens for anyone who clicks it, but nothing can be saved without the GitHub token above. There is no password, because a password checked inside a public page is not a password — anyone can read it in the page source. The token is the real lock, and it never leaves the browser it was pasted into.
