@@ -50,6 +50,12 @@ function doPost(e) {
   /* "Write one for me" on the suggestion form. */
   if (kind === 'summarise') return json(summarise(body.payload || {}));
 
+  /* "Fill in the details for me" — page count, age rating, genres, summary. */
+  if (kind === 'details') return json(bookDetails(body.payload || {}));
+
+  /* Cover search against Google Images. */
+  if (kind === 'images') return json({ ok: true, images: imageSearch(body.payload || {}) });
+
   if (KINDS.indexOf(kind) === -1) return json({ ok: false, error: 'unknown kind' });
 
   var item = {
@@ -253,6 +259,114 @@ function summarise(payload) {
     .trim();
 
   return text ? { ok: true, summary: text } : { ok: false, error: 'empty' };
+}
+
+/* ------------------------------------------------------- book details (AI)
+   Google's AI Overview is not something any program can read — there's no API
+   for it, and the search page can't be fetched from a browser or scraped
+   within Google's terms. This asks Claude the same question instead and
+   returns the answer as structured fields the form can drop straight in. */
+
+function bookDetails(payload) {
+  var key = prop('ANTHROPIC_API_KEY');
+  if (!key) return { ok: false, error: 'no api key' };
+
+  var title = String(payload.title || '').slice(0, 200);
+  var author = String(payload.author || '').slice(0, 200);
+  if (!title) return { ok: false, error: 'no title' };
+
+  var schema = {
+    type: 'object',
+    additionalProperties: false,
+    required: ['author', 'pages', 'ageMin', 'ageMax', 'genres', 'summary', 'confident'],
+    properties: {
+      author: { type: 'string', description: 'The author, or "" if unsure.' },
+      pages: { type: 'integer', description: 'Typical print page count. 0 if unsure.' },
+      ageMin: { type: 'integer', description: 'Youngest age this suits, 0-100.' },
+      ageMax: { type: 'integer', description: 'Oldest age band. Use 100 for "and up".' },
+      genres: {
+        type: 'array',
+        maxItems: 6,
+        items: { type: 'string' },
+        description: 'Plain genre names a reader would use, e.g. Fantasy, Humour, Middle Grade.'
+      },
+      summary: { type: 'string', description: 'Three or four sentences, no spoilers past the opening premise.' },
+      confident: { type: 'boolean', description: 'False if you are not sure this book exists or are guessing.' }
+    }
+  };
+
+  var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    muteHttpExceptions: true,
+    payload: JSON.stringify({
+      model: 'claude-opus-5',
+      max_tokens: 2000,
+      output_config: {
+        effort: 'low',
+        format: { type: 'json_schema', schema: schema }
+      },
+      system: 'You answer with facts about published books. If you do not know a book, ' +
+              'set confident to false and leave the fields you are unsure of empty or zero ' +
+              'rather than inventing them. Age ratings are about reading level and content, ' +
+              'not marketing categories.',
+      messages: [{
+        role: 'user',
+        content: 'Give me the details for the book "' + title + '"' + (author ? ' by ' + author : '') + '.'
+      }]
+    })
+  });
+
+  if (res.getResponseCode() >= 300) return { ok: false, error: 'api ' + res.getResponseCode() };
+
+  var body = JSON.parse(res.getContentText());
+  if (body.stop_reason === 'refusal') return { ok: false, error: 'refused' };
+
+  var text = (body.content || [])
+    .filter(function (b) { return b.type === 'text'; })
+    .map(function (b) { return b.text; })
+    .join('')
+    .trim();
+
+  try {
+    return { ok: true, details: JSON.parse(text) };
+  } catch (err) {
+    return { ok: false, error: 'unparseable' };
+  }
+}
+
+/* ---------------------------------------------------------- Google Images
+   Requires a Programmable Search Engine set up for image search. Both values
+   live in Script Properties; neither ever reaches the browser. Without them
+   this returns nothing and the site falls back to the book databases. */
+
+function imageSearch(payload) {
+  var key = prop('GOOGLE_API_KEY');
+  var cx = prop('GOOGLE_CSE_ID');
+  if (!key || !cx) return [];
+
+  var title = String(payload.title || '').slice(0, 200);
+  var author = String(payload.author || '').slice(0, 200);
+  if (!title) return [];
+
+  var q = [title, author, 'book cover'].filter(Boolean).join(' ');
+  var url = 'https://www.googleapis.com/customsearch/v1' +
+    '?key=' + encodeURIComponent(key) +
+    '&cx=' + encodeURIComponent(cx) +
+    '&searchType=image&num=6&imgType=photo&safe=active' +
+    '&q=' + encodeURIComponent(q);
+
+  try {
+    var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (res.getResponseCode() >= 300) return [];
+    return (JSON.parse(res.getContentText()).items || [])
+      .map(function (it) { return it.link; })
+      .filter(function (u) { return /^https:/i.test(u); })
+      .slice(0, 5);
+  } catch (err) {
+    return [];
+  }
 }
 
 /* ------------------------------------------------------ meeting reminders */

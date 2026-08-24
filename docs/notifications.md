@@ -46,10 +46,30 @@ Add script property, once for each row:
 | --- | --- |
 | `GITHUB_TOKEN` | the token from step 1 |
 | `ORGANISER_EMAIL` | where new submissions should be emailed |
-| `ANTHROPIC_API_KEY` | *optional* — only for the "Write one for me" summaries |
+| `ANTHROPIC_API_KEY` | *optional* — "Write one for me" and "Fill in the details for me" |
+| `GOOGLE_API_KEY` | *optional* — Google Images cover search |
+| `GOOGLE_CSE_ID` | *optional* — the search engine id that goes with it |
 
-Leave `ANTHROPIC_API_KEY` out and that one button politely says the feature
-isn't switched on. Everything else works without it.
+The optional three each switch on one button. Leave them out and that button
+says the feature isn't set up; everything else works regardless.
+
+### Google Images for covers (optional)
+
+Google has no open image API. The one programmable route is a **Programmable
+Search Engine**, and it needs a key — which is exactly why this goes through
+the script rather than the page: a key in a public web page is a key anyone can
+spend.
+
+1. Create a search engine at <https://programmablesearchengine.google.com/>.
+   Set it to **search the entire web** and turn **Image search** on.
+2. Copy its **Search engine ID** into `GOOGLE_CSE_ID`.
+3. Get an API key at <https://console.cloud.google.com/apis/credentials>, enable
+   the **Custom Search API** for the project, and put the key in
+   `GOOGLE_API_KEY`.
+
+The free tier is 100 searches a day, which is far more than a book club will
+use. Without it, cover search still works — it just uses Google Books and Open
+Library only.
 
 ## 4. Deploy it
 

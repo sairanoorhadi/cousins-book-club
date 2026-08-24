@@ -899,6 +899,7 @@ img{max-width:100%;display:block}
           <div class="field"><label>Look it up</label>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
               <button class="btn btn--sm btn--sky" type="button" id="sLookup">Search the web for this book</button>
+              <button class="btn btn--sm btn--grape" type="button" id="sAskAI">Fill in the details for me</button>
               <a class="btn btn--sm btn--ghost" id="sGoodreads" href="https://www.goodreads.com" target="_blank" rel="noopener noreferrer">Open on Goodreads</a>
               <a class="btn btn--sm btn--ghost" id="sGoogle" href="https://www.google.com" target="_blank" rel="noopener noreferrer">Google it</a>
             </div>
@@ -1029,6 +1030,84 @@ function initials(s){
 function surname(name){
   var w = String(name || "").trim().split(/\s+/);
   return (w.length ? w[w.length-1] : "").toLowerCase();
+}
+
+/* ---------- genres ----------
+   Two jobs. First, book APIs hand back category paths like
+   "Juvenile Fiction / Humorous Stories" — those get split into their parts.
+   Second, the same genre arrives under several names: comedy and humour, sci-fi
+   and science fiction. Those collapse onto one label so the filter lists them
+   once instead of three times. Only genuine synonyms and spelling variants are
+   merged — sub-genres stay distinct, so Fantasy and Grishaverse remain
+   separate. Anything unrecognised is kept exactly as typed. */
+var GENRE_ALIASES = {};
+[
+  ["Humour", ["humor","humour","comedy","comedic","funny","comic","humorous","humorous stories"]],
+  ["Science Fiction", ["sci-fi","scifi","sci fi","science-fiction","sf"]],
+  ["Young Adult", ["ya","teen","teens","teen fiction","young-adult","young adult fiction"]],
+  ["Middle Grade", ["mg","middle-grade","middle grade fiction"]],
+  ["Children's", ["childrens","children","kids","kid","children's fiction","childrens fiction"]],
+  ["Historical Fiction", ["historical","historical-fiction","period fiction"]],
+  ["Literary Fiction", ["literary","literature","literary-fiction"]],
+  ["Coming-of-Age", ["coming of age","coming-of-age","bildungsroman","growing up"]],
+  ["Mystery", ["mysteries","detective","detective fiction","whodunit","whodunnit"]],
+  ["Crime", ["crime fiction","criminal"]],
+  ["Thriller", ["thrillers","suspense","psychological thriller"]],
+  ["Horror", ["scary","spooky","frightening","horror stories"]],
+  ["Dystopian", ["dystopia","dystopian fiction","distopian"]],
+  ["Romance", ["romantic","love story","love stories","romances"]],
+  ["Adventure", ["action","action & adventure","action and adventure","action-adventure","adventures"]],
+  ["Classic", ["classics","classic literature","classic fiction"]],
+  ["Fantasy", ["fantasy fiction"]],
+  ["Graphic Novel", ["graphic novels","comics","comic books","comic book"]],
+  ["Nonfiction", ["non-fiction","non fiction","nonfiction"]],
+  ["Biography", ["biographies","biographical"]],
+  ["Memoir", ["memoirs","autobiography","autobiographies"]],
+  ["Fairy Tale", ["fairytale","fairy tales","fairytales","folk tale","folk tales","folklore"]],
+  ["Retelling", ["retellings","re-telling","reimagining"]],
+  ["Magical Realism", ["magic realism","magical-realism"]],
+  ["Poetry", ["poems","poem","verse","novel in verse"]],
+  ["Short Stories", ["short story","anthology","anthologies","collection"]],
+  ["WWII", ["ww2","wwii","world war ii","world war 2","world war two","second world war"]],
+  ["Sports", ["sport","sporting"]],
+  ["Animals", ["animal","animal stories"]],
+  ["Family", ["family life","families"]],
+  ["Ghost Stories", ["ghost story","ghosts","haunting"]],
+  ["Survival", ["survival stories"]],
+  ["School", ["school stories","boarding school"]]
+].forEach(function(pair){
+  GENRE_ALIASES[pair[0].toLowerCase()] = pair[0];
+  pair[1].forEach(function(alias){ GENRE_ALIASES[alias] = pair[0]; });
+});
+/* Shelving labels rather than genres. "Juvenile Fiction" in particular covers
+   everything from picture books to teen novels, so it says nothing the age
+   slider isn't already saying — and guessing at Young Adult from it would
+   mislabel an eight-year-old's book. */
+var GENRE_NOISE = {
+  "general": 1, "fiction": 1, "other": 1, "misc": 1, "miscellaneous": 1, "": 1,
+  "juvenile fiction": 1, "juvenile": 1, "juvenile nonfiction": 1
+};
+
+function canonGenre(raw){
+  var key = String(raw || "").trim().toLowerCase().replace(/\s+/g, " ").replace(/[.]+$/, "");
+  if(!key) return "";
+  return GENRE_ALIASES[key] || String(raw).trim();
+}
+/* one flat, de-duplicated list from whatever shape the genres arrived in */
+function normaliseGenres(list){
+  var out = [], seen = {};
+  (Array.isArray(list) ? list : String(list || "").split(",")).forEach(function(entry){
+    /* category paths from the book APIs come through as "A / B / C" */
+    String(entry || "").split(/\s*[\/>|]\s*/).forEach(function(part){
+      var g = canonGenre(part);
+      if(!g || GENRE_NOISE[g.toLowerCase()]) return;
+      var k = g.toLowerCase();
+      if(seen[k]) return;
+      seen[k] = 1;
+      out.push(g);
+    });
+  });
+  return out.slice(0, 12);
 }
 
 /* ---------- reading level as an age range ----------
@@ -1192,6 +1271,7 @@ function migrate(s){
     }
     if(typeof b.seriesIndex !== "number") b.seriesIndex = 1;
     if(typeof b.order !== "number") b.order = 0;
+    b.genres = normaliseGenres(b.genres);
     withAges(b);
     if(b.review && typeof b.review.community !== "number") b.review.community = 0;
   });
@@ -1200,6 +1280,7 @@ function migrate(s){
     if(!r.by) r.by = REC_BY[String(r.title||"").toLowerCase().trim()] || "";
     if(typeof r.at !== "string") r.at = "";
     if(typeof r.shortlist !== "boolean") r.shortlist = false;
+    r.genres = normaliseGenres(r.genres);
     if(typeof r.summarySource !== "string") r.summarySource = "own";
     if(!Array.isArray(r.reviews)) r.reviews = [];
     if(!Array.isArray(r.endorsements)) r.endorsements = [];
@@ -1528,12 +1609,43 @@ async function searchCovers(title, author){
   return out.slice(0, 5);
 }
 
+/* Google Images, by way of the club's endpoint. Google has no open image API —
+   the one programmable route is a Custom Search engine, which needs a key, and
+   a key in a public page is a key anyone can spend. So the request goes to the
+   Apps Script, which holds the key and passes the results back. Without it set
+   up, the two book databases above still answer. */
+async function googleImageCovers(title, author){
+  var url = endpoint();
+  if(!url || !title) return [];
+  try{
+    var res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ kind: "images", payload: { title: title, author: author }, at: new Date().toISOString() })
+    });
+    if(!res.ok) return [];
+    var j = await res.json();
+    return (j && j.images || []).map(function(u){ return { url: httpsify(u), src: "Google Images" }; })
+      .filter(function(x){ return x.url; });
+  }catch(e){ return []; }
+}
+
 /* ---------- cover picker widget ---------- */
 var coverHooks = {};
 function coverSearchHTML(scope, query, onPick){
   coverHooks[scope] = { query: query, pick: onPick };
   return '<div data-coverscope="' + esc(scope) + '">' +
-    '<button class="btn btn--sm btn--sky" type="button" data-coversearch="' + esc(scope) + '">Search the web for a cover</button>' +
+    '<div style="display:flex;gap:9px;flex-wrap:wrap">' +
+      '<button class="btn btn--sm btn--sky" type="button" data-coversearch="' + esc(scope) + '">Search the web for a cover</button>' +
+      '<button class="btn btn--sm btn--ghost" type="button" data-coverpaste="' + esc(scope) + '">Paste an image link</button>' +
+    "</div>" +
+    '<div data-coverpastebox="' + esc(scope) + '" hidden style="margin-top:10px">' +
+      '<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">' +
+        '<input class="input mono" type="url" data-coverurlbox="' + esc(scope) + '" placeholder="https://…/cover.jpg" style="flex:1 1 240px;width:auto" maxlength="600">' +
+        '<button class="btn btn--sm btn--zest" type="button" data-coveruse="' + esc(scope) + '">Use it</button>' +
+      "</div>" +
+      '<p class="hint" style="margin-top:8px">Found a cover anywhere on the web? Right-click it, copy the image address, and paste it here.</p>' +
+    "</div>" +
     '<div data-coverresults="' + esc(scope) + '"></div></div>';
 }
 async function runCoverSearch(scope){
@@ -1543,7 +1655,15 @@ async function runCoverSearch(scope){
   var q = hook.query() || {};
   if(!String(q.title || "").trim()){ say("Type a book title first.", "bad"); return; }
   host.innerHTML = '<p class="hint" style="margin-top:10px">Searching&hellip;</p>';
-  var hits = await searchCovers(q.title, q.author);
+  /* Google Images first when it's available — it finds jackets the book
+     databases don't have — then the two book sources fill the rest of the five */
+  var hits = await googleImageCovers(q.title, q.author);
+  var seen = {};
+  hits.forEach(function(h){ seen[h.url] = 1; });
+  (await searchCovers(q.title, q.author)).forEach(function(h){
+    if(!seen[h.url]){ seen[h.url] = 1; hits.push(h); }
+  });
+  hits = hits.slice(0, 5);
   host.innerHTML = hits.length
     ? '<div class="covergrid">' + hits.map(function(h, i){
         return '<button class="coverpick" type="button" data-coverurl="' + esc(h.url) + '" data-cscope="' + esc(scope) + '">' +
@@ -1606,10 +1726,11 @@ function scoreLabel(r){
   var n = recScore(r);
   return n > 0 ? "+" + n : String(n);
 }
+/* one chip per genre, with near-identical names already folded together */
 function allGenres(){
   var seen = {}, out = [];
   approvedRecs().forEach(function(r){
-    (r.genres || []).forEach(function(g){
+    normaliseGenres(r.genres).forEach(function(g){
       var k = g.toLowerCase();
       if(!seen[k]){ seen[k] = 1; out.push(g); }
     });
@@ -1855,8 +1976,9 @@ var filtersOpen = false;
 function recMatches(r){
   if(recFilter.by && r.by !== recFilter.by) return false;
   if(recFilter.genres.length){
-    var have = (r.genres || []).map(function(g){ return g.toLowerCase(); });
-    var hit = recFilter.genres.some(function(g){ return have.indexOf(g.toLowerCase()) !== -1; });
+    /* compare on the merged names, so picking "Humour" also finds "comedy" */
+    var have = normaliseGenres(r.genres).map(function(g){ return g.toLowerCase(); });
+    var hit = recFilter.genres.some(function(g){ return have.indexOf(canonGenre(g).toLowerCase()) !== -1; });
     if(!hit) return false;
   }
   /* keep anything whose age band overlaps the band being asked for */
@@ -2904,6 +3026,24 @@ document.addEventListener("click", async function(e){
     if(hk && hk.pick) hk.pick(el.getAttribute("data-coverurl"));
     return;
   }
+  if((el = t.closest("[data-coverpaste]"))){
+    var pscope = el.getAttribute("data-coverpaste");
+    var pbox = document.querySelector('[data-coverpastebox="' + pscope + '"]');
+    if(pbox){
+      pbox.hidden = !pbox.hidden;
+      if(!pbox.hidden){ var f = pbox.querySelector("input"); if(f) f.focus(); }
+    }
+    return;
+  }
+  if((el = t.closest("[data-coveruse]"))){
+    var uscope = el.getAttribute("data-coveruse");
+    var ubox = document.querySelector('[data-coverurlbox="' + uscope + '"]');
+    var uurl = safeUrl(ubox ? ubox.value : "");
+    if(!uurl){ say("That needs to be a full https:// image address.", "bad"); if(ubox) ubox.focus(); return; }
+    var uhook = coverHooks[uscope];
+    if(uhook && uhook.pick) uhook.pick(uurl);
+    return;
+  }
 
   /* recommendation filters */
   if((el = t.closest("[data-fgenre]"))){
@@ -3099,7 +3239,7 @@ document.addEventListener("click", async function(e){
     var rget = function(f){ return rp.querySelector('[data-rfield="' + f + '"][data-rid="' + rs.id + '"]'); };
     ["title","author","by","blurb"].forEach(function(f){ var n = rget(f); if(n) rs[f] = f === "blurb" ? n.value : n.value.trim(); });
     var rpg = rget("pages"); if(rpg) rs.pages = Number(rpg.value) || null;
-    var rgn = rget("genres"); if(rgn) rs.genres = rgn.value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+    var rgn = rget("genres"); if(rgn) rs.genres = normaliseGenres(rgn.value);
     var rAge = dualValue("rc:" + rs.id);
     rs.ageMin = rAge.lo; rs.ageMax = rAge.hi; rs.level = levelText(rs);
     var rrv = rget("reviews");
@@ -3136,7 +3276,7 @@ document.addEventListener("click", async function(e){
     var pg = get("pages"); if(pg) bb.pages = Number(pg.value) || null;
     var si = get("seriesIndex"); if(si) bb.seriesIndex = Number(si.value) || 1;
     var pp = get("progressPage"); if(pp) bb.progressPage = Math.max(0, Number(pp.value) || 0);
-    var gn = get("genres"); if(gn) bb.genres = gn.value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+    var gn = get("genres"); if(gn) bb.genres = normaliseGenres(gn.value);
     var picks = p2.querySelectorAll('[data-bmember][data-bid="' + bb.id + '"]');
     if(picks.length){
       bb.members = [];
@@ -3194,7 +3334,7 @@ document.addEventListener("click", async function(e){
     state.books.push(withAges({
       id: uid("bk"), title: ttl, author: $("abAuthor").value.trim(), pages: Number($("abPages").value) || null,
       ageMin: abAge.lo, ageMax: abAge.hi, series: $("abSeries").value.trim(), seriesIndex: 1,
-      genres: $("abGenres").value.split(",").map(function(s){ return s.trim(); }).filter(Boolean),
+      genres: normaliseGenres($("abGenres").value),
       blurb: $("abBlurb").value.trim(), status: lane, cover:"", badge:"",
       started: lane === "current" ? todayISO() : "", finished: lane === "past" ? todayISO() : "",
       progressPage: 0, members: [], order: state.books.length
@@ -3395,7 +3535,7 @@ function acceptSubmission(item){
     state.recs.push(withAges({
       id: item.id, title: String(p.title || "Untitled").slice(0, 140), author: String(p.author || "").slice(0, 140),
       pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
-      genres: Array.isArray(p.genres) ? p.genres : String(p.genres || "").split(",").map(function(s){ return s.trim(); }).filter(Boolean),
+      genres: normaliseGenres(p.genres),
       by: String(p.by || "").slice(0, 60), status: "pending", at: String(item.at || "").slice(0, 10),
       cover: safeUrl(p.cover), blurb: String(p.blurb || ""), summarySource: String(p.summarySource || "own"),
       shortlist: false, reviews: [], endorsements: []
@@ -3538,12 +3678,10 @@ async function chooseACHit(i){
   var extras = await openLibraryExtras(h.title, h.author);
   if(extras){
     if(!h.pages && extras.pages) $("sPages").value = extras.pages;
-    extras.genres.forEach(function(g){
-      if(!genres.some(function(x){ return x.toLowerCase() === g.toLowerCase(); })) genres.push(g);
-    });
+    genres = genres.concat(extras.genres);
     if(!sugCover && extras.cover) sugCover = extras.cover;
   }
-  $("sGenres").value = genres.slice(0, 10).join(", ");
+  $("sGenres").value = normaliseGenres(genres).join(", ");
   sugAI = "";
   setSugMode(sugMode === "own" ? "own" : "fetched");
   renderSugCover();
@@ -3596,6 +3734,60 @@ async function runLookup(){
   lookupHits = res.hits;
 }
 var lookupHits = [];
+
+/* The details pass: page count, age rating, genres and a summary in one go.
+   Google's AI Overview has no API and can't be read from a page, so this asks
+   Claude the same question through the club's endpoint and fills in the answer.
+   Everything it returns stays editable. */
+async function askAIForDetails(){
+  var title = $("sTitle").value.trim(), author = $("sAuthor").value.trim();
+  var out = $("sLookupOut");
+  if(!title){ $("sTitle").focus(); return; }
+  if(!endpoint()){
+    out.innerHTML = '<p class="hint" style="margin-top:10px">This needs the club&rsquo;s endpoint set up — ask the organiser. The web search above works without it.</p>';
+    return;
+  }
+  out.innerHTML = '<p class="hint" style="margin-top:10px">Looking it up&hellip;</p>';
+  try{
+    var res = await fetch(endpoint(), {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ kind: "details", payload: { title: title, author: author }, at: new Date().toISOString() })
+    });
+    var j = res.ok ? await res.json() : null;
+    if(!j || !j.ok){
+      out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t look that one up. Try the web search, or fill it in yourself.</p>';
+      return;
+    }
+    var d = j.details || {}, filled = [];
+    if(d.author && !author){ $("sAuthor").value = d.author; filled.push("author"); }
+    if(Number(d.pages) > 0){ $("sPages").value = Number(d.pages); filled.push("page count"); }
+    if(Array.isArray(d.genres) && d.genres.length){
+      $("sGenres").value = normaliseGenres(d.genres).join(", ");
+      filled.push("genres");
+    }
+    if(typeof d.ageMin === "number" && typeof d.ageMax === "number"){
+      dualState.sAge = { lo: clampAge(d.ageMin, 0), hi: clampAge(d.ageMax, AGE_TOP) };
+      var loEl = document.querySelector('#sAgeSlider input[data-end="lo"]');
+      var hiEl = document.querySelector('#sAgeSlider input[data-end="hi"]');
+      if(loEl) loEl.value = dualState.sAge.lo;
+      if(hiEl) hiEl.value = dualState.sAge.hi;
+      syncDual("sAge");
+      filled.push("age rating");
+    }
+    if(d.summary){
+      sugAI = String(d.summary).trim();
+      if(sugMode !== "own") setSugMode("ai");
+    }
+    syncSearchLinks();
+    out.innerHTML = '<p class="hint" style="margin-top:10px">' +
+      (filled.length ? "Filled in the " + filled.join(", ") + ". " : "") +
+      "Written by Claude from what it knows about the book, so give it a glance before you send it &mdash; everything here is editable." +
+      (d.confident === false ? " It wasn't sure about this one, so do check." : "") + "</p>";
+  }catch(e){
+    out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t reach the club&rsquo;s inbox. Try the web search instead.</p>';
+  }
+}
 $("sTitle").addEventListener("input", function(){
   clearTimeout(acTimer);
   var q = $("sTitle").value.trim();
@@ -3618,6 +3810,7 @@ document.addEventListener("click", async function(e){
   var sm = e.target.closest && e.target.closest("[data-summode]");
   if(sm){ setSugMode(sm.getAttribute("data-summode")); return; }
   if(e.target.closest && e.target.closest("#sLookup")){ await runLookup(); return; }
+  if(e.target.closest && e.target.closest("#sAskAI")){ await askAIForDetails(); return; }
   var uh = e.target.closest && e.target.closest("[data-usehit]");
   if(uh){
     var pick = lookupHits[Number(uh.getAttribute("data-usehit"))];
@@ -3640,7 +3833,7 @@ $("suggestForm").addEventListener("submit", async function(e){
   var title = el.title.value.trim(), author = el.author.value.trim(), by = el.by.value.trim();
   if(!title || !author || !by) return;
   var age = dualValue("sAge");
-  var genres = el.genres.value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+  var genres = normaliseGenres(el.genres.value);
   var blurb = el.blurb.value.trim();
   var note = $("suggestNote");
 
