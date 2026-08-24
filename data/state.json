@@ -1,5 +1,5 @@
 {
-  "rev": 1038,
+  "rev": 1039,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -339,7 +339,12 @@
       "shortlist": false,
       "summarySource": "own",
       "reviews": [],
-      "endorsements": [],
+      "endorsements": [
+        {
+          "name": "Saira",
+          "at": "2026-08-24T20:52:08.603Z"
+        }
+      ],
       "ageMin": 8,
       "ageMax": 11
     },
