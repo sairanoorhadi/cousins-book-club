@@ -1,5 +1,5 @@
 {
-  "rev": 1015,
+  "rev": 1016,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "One book at a time. Opinions welcome.",
@@ -115,7 +115,7 @@
       "bookId": "bk-ck",
       "date": "2026-08-27",
       "time": "19:00",
-      "place": "",
+      "place": "Online - Discord",
       "chapters": "Chapter 23-32",
       "pages": "100",
       "done": false,
