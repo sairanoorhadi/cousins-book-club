@@ -1,5 +1,5 @@
 {
-  "rev": 1077,
+  "rev": 1078,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -236,7 +236,7 @@
       "place": "",
       "chapters": "Section 6",
       "pages": "",
-      "done": false,
+      "done": true,
       "summary": "",
       "predictions": [],
       "points": [],
