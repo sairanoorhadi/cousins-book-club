@@ -1,5 +1,5 @@
 {
-  "rev": 1022,
+  "rev": 1023,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -132,17 +132,12 @@
       "date": "2026-08-27",
       "time": "19:00",
       "place": "Online - Discord",
-      "chapters": "Chapter 23-32",
+      "chapters": "23-32 Section 5",
       "pages": "100",
       "done": false,
       "summary": "",
       "predictions": [],
       "points": [
-        {
-          "id": "d1",
-          "text": "Kaz says he doesn't believe in luck, only leverage. Did Six of Crows actually bear that out?",
-          "by": ""
-        },
         {
           "id": "d2",
           "text": "Six narrators, six agendas — whose chapters do you trust least, and why?",
