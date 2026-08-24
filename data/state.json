@@ -1,5 +1,5 @@
 {
-  "rev": 1050,
+  "rev": 1051,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -273,7 +273,13 @@
           "by": "Everyone"
         }
       ],
-      "points": []
+      "points": [
+        {
+          "id": "disc-mt7qdsl2lzhni",
+          "text": "Why did the girls get away with so much",
+          "by": ""
+        }
+      ]
     }
   ],
   "recs": [
