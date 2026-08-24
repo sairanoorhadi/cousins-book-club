@@ -1,5 +1,5 @@
 {
-  "rev": 1061,
+  "rev": 1062,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -428,7 +428,7 @@
       "at": "",
       "cover": "",
       "blurb": "Carolina Giddle arrives at the Blatchford Arms in sequinned sneakers with a tarantula named Chiquita and a talent for babysitting the building's most impossible children. Her method is simple: tell each one a ghost story built exactly to their size. Six linked tales — creepy, funny, and just scary enough — leading to a Halloween party and a very suspicious departure.",
-      "shortlist": false,
+      "shortlist": true,
       "summarySource": "own",
       "reviews": [],
       "endorsements": [
