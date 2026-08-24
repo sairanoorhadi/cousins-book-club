@@ -1,5 +1,5 @@
 {
-  "rev": 1054,
+  "rev": 1055,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -305,7 +305,13 @@
       "done": false,
       "summary": "",
       "predictions": [],
-      "points": []
+      "points": [
+        {
+          "id": "disc-mt7qim9iwveq7",
+          "text": "Who is this Dunyasha girl and why is she as good as Inej",
+          "by": ""
+        }
+      ]
     }
   ],
   "recs": [
