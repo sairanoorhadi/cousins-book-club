@@ -41,7 +41,7 @@ Open the live site and click **Admin**. Six tabs:
 - **Reading list** — three lanes (Currently reading / Up next / Finished) with one-click moves, a "finish it and start the next one" button, and a per-book editor for details, cover, badge, dates, progress and who read it. The club can have several books on the go at once; put more than one in *Currently reading* and the home page grows a slider between them.
 - **Recommendations** — approve, edit, shortlist, unpublish or delete anything on the recommendations shelf, and remove a second someone added by mistake.
 - **Meetings** — schedule and reschedule, set chapters and pages covered, mark meetings finished, write summaries.
-- **Members** — names, join dates, profile pictures, Fable and Goodreads links, email addresses and which meetings each person wants emails about.
+- **Members** — names, join dates, profile pictures, Fable and Goodreads links, and which meetings each person wants emails about. There's no field for an email address on purpose; people add their own from the site and it's stored privately, never in this repo.
 - **Inbox** — everything sent from the site by people without a GitHub account. Accept a book suggestion and it drops into Recommendations awaiting approval; accept a join request and the member is added.
 - **Settings** — club name, tagline, logo, the token above, and the submissions endpoint.
 
@@ -80,6 +80,8 @@ Keep an eye on file size — if `data/state.json` grows past a few megabytes, sa
 
 ## A note on privacy
 
-This repo is public, which GitHub Pages requires on a free account. Everything in `data/state.json` and `data/inbox.json` — member names, photos, profile links, reviews, **and the email addresses people sign up with** — is visible to anyone who finds the URL. Don't put anything in here you wouldn't post publicly, and tell people that when they hand over an address.
+This repo is public, which GitHub Pages requires on a free account. Everything in `data/state.json` and `data/inbox.json` — member names, photos, profile links, reviews — is readable by anyone. Not just anyone who finds the URL: GitHub publishes a firehose of every public push, and harvesting public repos is automated and routine. Assume it's read.
+
+**Email addresses are the exception, and are deliberately kept out.** Some of the club are children, so an address never reaches this repo: the submissions endpoint holds it privately inside the organiser's Google account, and the repo carries only an opaque reference and a masked hint (`s••••@gmail.com`). The admin panel has no field to type an address into, and meeting reminders go out bcc so no child sees another's. Reading them back, and deleting one on request, is covered in `docs/notifications.md`.
 
 The **Admin** button is visible to everyone and the panel opens for anyone who clicks it, but nothing can be saved without the GitHub token above. There is no password, because a password checked inside a public page is not a password — anyone can read it in the page source. The token is the real lock, and it never leaves the browser it was pasted into.

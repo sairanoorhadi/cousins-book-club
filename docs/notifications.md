@@ -75,13 +75,56 @@ press **Run**. That schedules `sendMeetingEmails` every five minutes.
 To check the GitHub side is wired up, run `testGitHub` and look at the log —
 it should report reading `state.json`.
 
+## Where the addresses live
+
+**No email address is ever written into this repo.** The repo is public and
+some of the club are children, so the script splits the address off the moment
+a submission arrives:
+
+- the address goes into the script's own properties, inside your Google
+  account, under an opaque reference like `sub-4f2a91c0e7bb`;
+- `data/inbox.json` and `data/state.json` get only that reference and a masked
+  hint, `s••••@gmail.com`, so you can tell one person from another;
+- `sendMeetingEmails` swaps the reference back for the real address at the
+  moment it sends.
+
+The notification email you get when someone signs up **does** carry the real
+address — that goes to your inbox, not the repo, and it's the easiest way to
+see it.
+
+Reminders go out with every recipient in **bcc**, so no child ever sees another
+child's address.
+
+### Reading and deleting addresses
+
+In the script editor:
+
+- `listSubscribers` logs everyone currently signed up, with their references.
+- `forgetSubscriber` deletes one. Put the `sub-…` reference — shown beside the
+  member under **Admin → Members** — at the top of the function first, run it,
+  then untick their boxes on the site.
+
+If a parent asks you to remove their child's details, those two steps are the
+whole job.
+
+### If an address did get committed
+
+Addresses added by hand before this existed are flagged in red under **Admin →
+Members** with a button to remove them. That takes it out of the current file,
+but **git keeps history** — the old commit still holds it. For a family book
+club that's usually fine; if it isn't, the address has to be scrubbed from the
+history (`git filter-repo`) and the repo force-pushed, which rewrites every
+commit hash.
+
 ## Who gets meeting emails
 
-A member gets emailed about a meeting when they have an email address and have
-either asked for **every meeting** or for **that book**. Set both under
-**Admin → Members**. People can sign themselves up from the site with the
-**Email me about this** button on the meeting card; the request lands in your
-inbox and adds them when you accept it.
+A member gets emailed about a meeting when the script holds an address for them
+and they've asked for **every meeting** or for **that book**. People sign
+themselves up from the site with the **Email me about this** button on the
+meeting card; the request lands in your inbox and takes effect when you accept
+it. You can tick and untick the books under **Admin → Members**, but you can't
+type an address in — that's deliberate, so one can't end up in the repo by
+accident.
 
 Each meeting gets at most three emails. What's already gone out is remembered
 in the script's own properties, so re-saving the site never re-sends anything.

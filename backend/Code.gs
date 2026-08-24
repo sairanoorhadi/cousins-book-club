@@ -56,7 +56,7 @@ function doPost(e) {
     id: kind + '-' + Utilities.getUuid().slice(0, 12),
     kind: kind,
     at: new Date().toISOString(),
-    payload: clean(body.payload || {})
+    payload: withheldEmail(clean(body.payload || {}))
   };
 
   try {
@@ -92,6 +92,37 @@ function clean(payload) {
   return out;
 }
 
+/* ------------------------------------------------- keeping addresses private
+   The repo this writes to is public, and some of the people signing up are
+   children. So an address never reaches it. The address is kept here, in this
+   script's own properties, under an opaque reference; the repo gets the
+   reference and a masked hint ("s••••@gmail.com") so the organiser can tell
+   one person from another. sendMeetingEmails resolves the reference back to a
+   real address at the moment it sends. */
+
+function withheldEmail(payload) {
+  var address = String(payload.email || '').trim();
+  delete payload.email;
+  if (!address || address.indexOf('@') === -1) return payload;
+
+  var ref = 'sub-' + Utilities.getUuid().slice(0, 12);
+  PropertiesService.getScriptProperties().setProperty('email:' + ref, address);
+  payload.emailRef = ref;
+  payload.emailHint = maskEmail(address);
+  return payload;
+}
+
+function lookupEmail(ref) {
+  if (!ref) return '';
+  return PropertiesService.getScriptProperties().getProperty('email:' + String(ref)) || '';
+}
+
+function maskEmail(address) {
+  var at = address.indexOf('@');
+  if (at < 1) return '•••';
+  return address[0] + '••••' + address.slice(at);
+}
+
 /* --------------------------------------------------------------- the inbox */
 
 function appendToInbox(item) {
@@ -121,6 +152,10 @@ function notifyOrganiser(item) {
     var v = item.payload[k];
     return k + ': ' + (Array.isArray(v) ? v.join(', ') : v);
   });
+  /* This email goes to your own inbox, not the repo, so it can carry the real
+     address — it's the one place you can see it without opening the script. */
+  var address = lookupEmail(item.payload.emailRef);
+  if (address) lines.push('address: ' + address + '  (kept private, not in the repo)');
   MailApp.sendEmail({
     to: to,
     subject: 'Book club — new ' + item.kind,
@@ -301,13 +336,23 @@ function meetingStart(m) {
   return isNaN(d.getTime()) ? null : d;
 }
 
-/* Members who asked for every meeting, or for this book in particular. */
+/**
+ * Members who asked for every meeting, or for this book in particular.
+ *
+ * The address itself comes from this script's private store, keyed by the
+ * notifyRef the repo holds. A member with a plain `email` in state.json is an
+ * older record from before addresses were withheld — it still works, but it is
+ * sitting in a public repo, and the site flags it for removal.
+ */
 function recipients(members, bookId) {
   return members.filter(function (m) {
-    if (!m.email) return false;
     var want = m.notify || [];
     return want.indexOf('*') !== -1 || want.indexOf(bookId) !== -1;
-  }).map(function (m) { return m.email; });
+  }).map(function (m) {
+    return lookupEmail(m.notifyRef) || m.email || '';
+  }).filter(function (address) {
+    return address && address.indexOf('@') !== -1;
+  });
 }
 
 function intro(m, book, start, clubName) {
@@ -325,8 +370,14 @@ function intro(m, book, start, clubName) {
   return lines.join('\n');
 }
 
+/* Everyone goes in bcc, so no recipient learns anyone else's address. */
 function send(to, subject, body) {
-  MailApp.sendEmail({ to: to.join(','), subject: subject, body: body });
+  MailApp.sendEmail({
+    to: prop('ORGANISER_EMAIL') || to[0],
+    bcc: to.join(','),
+    subject: subject,
+    body: body
+  });
 }
 
 /* ---------------------------------------------------------------- one-offs */
@@ -343,4 +394,29 @@ function setUpTrigger() {
 function testGitHub() {
   var file = ghGetFile(STATE_PATH);
   Logger.log(file.sha ? 'Read state.json, ' + file.content.length + ' bytes' : 'state.json not found');
+}
+
+/**
+ * Run from the editor to see who is signed up for meeting emails. The
+ * addresses live only here, so this log is the way to read them back. Nothing
+ * is written anywhere — close the log and they're private again.
+ */
+function listSubscribers() {
+  var all = PropertiesService.getScriptProperties().getProperties();
+  var rows = Object.keys(all)
+    .filter(function (k) { return k.indexOf('email:') === 0; })
+    .map(function (k) { return k.slice(6) + '  ' + all[k]; });
+  Logger.log(rows.length ? rows.join('\n') : 'Nobody has signed up yet.');
+}
+
+/**
+ * Forget one person's address — run this when someone asks to be removed, or
+ * when a parent asks you to take their child's details out. Set the reference
+ * (the "sub-…" value shown beside them under Admin → Members) below first.
+ */
+function forgetSubscriber() {
+  var ref = '';                                   // <- put the sub-… reference here
+  if (!ref) { Logger.log('Set ref first.'); return; }
+  PropertiesService.getScriptProperties().deleteProperty('email:' + ref);
+  Logger.log('Forgot ' + ref + '. Also untick their boxes under Admin → Members.');
 }

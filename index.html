@@ -1114,7 +1114,14 @@ function migrate(s){
     if(typeof m.joined !== "string") m.joined = "";
     if(typeof m.fable !== "string") m.fable = "";
     if(typeof m.goodreads !== "string") m.goodreads = "";
+    /* Addresses are deliberately not kept here — this repo is public and some
+       members are children. The submissions endpoint holds the address
+       privately and the repo carries only an opaque reference plus a masked
+       hint. `email` survives on older records so they keep working, and the
+       Members tab flags it for removal. */
     if(typeof m.email !== "string") m.email = "";
+    if(typeof m.notifyRef !== "string") m.notifyRef = "";
+    if(typeof m.emailHint !== "string") m.emailHint = "";
     /* book ids this member wants meeting emails about; "*" means every meeting */
     if(!Array.isArray(m.notify)) m.notify = [];
   });
@@ -2129,7 +2136,8 @@ function openMemberForm(kind, bookId){
       ? '<p class="eyebrow">Existing member</p><h3 style="font-size:24px;margin:8px 0 6px">Request a change</h3>' +
         '<p class="hint">Say what you want changed on your profile and the organiser will apply it.</p>'
       : '<p class="eyebrow">Reminders</p><h3 style="font-size:24px;margin:8px 0 6px">Meeting emails</h3>' +
-        '<p class="hint">You&rsquo;ll get an email when a meeting is scheduled, another five days before, and a nudge thirty minutes before it starts.</p>') +
+        '<p class="hint">You&rsquo;ll get an email when a meeting is scheduled, another five days before, and a nudge thirty minutes before it starts.</p>' +
+        '<p class="hint" style="margin-top:8px"><strong>If you&rsquo;re under 13, use a parent&rsquo;s address</strong> and check with them first.</p>') +
     '<div class="formgrid" style="margin-top:20px">' +
       (kind === "profile" && state.members.length
         ? '<div class="field"><label for="mfWho">You are</label><select class="select" id="mfWho">' +
@@ -2153,7 +2161,8 @@ function openMemberForm(kind, bookId){
         (kind === "join" ? "Anything you&rsquo;d like to say" : "What should change?") + "</label>" +
         '<textarea class="textarea" id="mfNote" maxlength="1200" placeholder="' +
         (kind === "join" ? "Which cousin are you, what do you like reading?" : "New name, new photo, updated links…") + '"></textarea></div>') +
-    '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:20px">' +
+    '<p class="hint" style="margin-top:16px">Your email address is kept privately by the organiser and is never published on this site or written into the club&rsquo;s public files. Ask them any time to delete it.</p>' +
+    '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:14px">' +
       '<button class="btn btn--surf" type="button" data-memsend="' + esc(kind) + '">Send it</button>' +
       '<span class="hint" id="mfNote2"></span>' +
     "</div>";
@@ -2451,7 +2460,6 @@ function paneMembers(){
             '<div class="formgrid">' +
               '<div class="field"><label>Name</label><input class="input" type="text" value="' + esc(m.name) + '" data-mmfield="name" data-mmid="' + esc(m.id) + '" maxlength="60"></div>' +
               '<div class="field"><label>Joined</label><input class="input" type="date" value="' + esc(m.joined || "") + '" data-mmfield="joined" data-mmid="' + esc(m.id) + '"></div>' +
-              '<div class="field"><label>Email</label><input class="input" type="email" value="' + esc(m.email || "") + '" data-mmfield="email" data-mmid="' + esc(m.id) + '" placeholder="For meeting reminders" maxlength="160"></div>' +
               imgField("Profile picture", "avatar", m.id, m.avatar, true) +
               '<div class="field"><label>Fable profile</label><input class="input" type="url" value="' + esc(m.fable || "") + '" data-mmfield="fable" data-mmid="' + esc(m.id) + '" placeholder="https://fable.co/..." maxlength="300"></div>' +
               '<div class="field"><label>Goodreads profile</label><input class="input" type="url" value="' + esc(m.goodreads || "") + '" data-mmfield="goodreads" data-mmid="' + esc(m.id) + '" placeholder="https://www.goodreads.com/user/show/..." maxlength="300"></div>' +
@@ -2464,7 +2472,16 @@ function paneMembers(){
                   ((m.notify || []).indexOf(b.id) !== -1 ? " checked" : "") + ">" + esc(b.title) + "</label>";
               }).join("") +
             "</div>" +
-            (m.email ? "" : '<p class="hint">Add an email above before ticking these.</p>') + "</div>" +
+            (m.notifyRef
+              ? '<p class="hint">Sending to <strong>' + esc(m.emailHint || "their address") + '</strong> &mdash; held privately by the submissions endpoint, not stored here. Reference <code>' + esc(m.notifyRef) + "</code>.</p>"
+              : '<p class="hint">No address on file. They can add one themselves with <strong>Email me about this</strong> on the meeting card; it never touches this repo.</p>') +
+            "</div>" +
+            (m.email
+              ? '<div class="banner" style="display:block;margin-top:14px;background:var(--flare);color:var(--on-flare)">' +
+                "<strong>" + esc(m.email) + "</strong> is written into <code>data/state.json</code>, which is public. " +
+                "Remove it and ask them to sign up from the site instead." +
+                '<div style="margin-top:10px"><button class="btn btn--sm" type="button" data-memwipe="' + esc(m.id) + '">Remove the address</button></div></div>'
+              : "") +
             '<div style="margin-top:14px"><button class="btn btn--sm btn--zest" type="button" data-memsave="' + esc(m.id) + '">Save</button></div></div>';
         }).join("")
       : '<p class="empty">No members yet. Add the first one below — members show up on the timeline and can be tagged on each book.</p>') +
@@ -2472,7 +2489,6 @@ function paneMembers(){
     '<div class="adminrow"><div class="formgrid">' +
       '<div class="field"><label for="amName">Name</label><input class="input" id="amName" type="text" maxlength="60"></div>' +
       '<div class="field"><label for="amJoined">Joined</label><input class="input" id="amJoined" type="date"></div>' +
-      '<div class="field"><label for="amEmail">Email</label><input class="input" id="amEmail" type="email" maxlength="160"></div>' +
       '<div class="field"><label for="amFable">Fable profile</label><input class="input" id="amFable" type="url" placeholder="https://fable.co/..." maxlength="300"></div>' +
       '<div class="field"><label for="amGoodreads">Goodreads profile</label><input class="input" id="amGoodreads" type="url" placeholder="https://www.goodreads.com/user/show/..." maxlength="300"></div>' +
     '</div><div style="margin-top:16px"><button class="btn btn--sm btn--sky" type="button" id="amAdd">Add member</button></div>' +
@@ -2954,7 +2970,7 @@ document.addEventListener("click", async function(e){
   if(t.closest("#amAdd")){
     var nm = $("amName").value.trim(); if(!nm){ $("amName").focus(); return; }
     state.members.push({ id: uid("mb"), name: nm, joined: $("amJoined").value, avatar: "",
-      email: $("amEmail").value.trim(), notify: [],
+      email: "", notifyRef: "", emailHint: "", notify: [],
       fable: $("amFable").value.trim(), goodreads: $("amGoodreads").value.trim() });
     if(await save("Adding member…")){ renderAll(); renderAdmin(); }
     return;
@@ -2963,18 +2979,26 @@ document.addEventListener("click", async function(e){
     var mem = memberById(el.getAttribute("data-memsave")); if(!mem) return;
     var mpn = $("adminPane");
     var mget = function(f){ return mpn.querySelector('[data-mmfield="' + f + '"][data-mmid="' + mem.id + '"]'); };
-    var nn = mget("name"), jj = mget("joined"), ff = mget("fable"), gg = mget("goodreads"), ee = mget("email");
+    var nn = mget("name"), jj = mget("joined"), ff = mget("fable"), gg = mget("goodreads");
     if(nn && nn.value.trim()) mem.name = nn.value.trim();
     if(jj) mem.joined = jj.value;
     if(ff) mem.fable = ff.value.trim();
     if(gg) mem.goodreads = gg.value.trim();
-    if(ee) mem.email = ee.value.trim();
     var nboxes = mpn.querySelectorAll('[data-mnotify][data-mmid="' + mem.id + '"]');
     if(nboxes.length){
       mem.notify = [];
       Array.prototype.forEach.call(nboxes, function(c){ if(c.checked) mem.notify.push(c.getAttribute("data-mnotify")); });
     }
     if(await save("Saving…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-memwipe]"))){
+    var wipe = memberById(el.getAttribute("data-memwipe")); if(!wipe) return;
+    wipe.email = "";
+    if(await save("Removing the address…")){
+      say("Removed. It stays in the repo's history — see docs/notifications.md if that matters.", "ok");
+      renderAll(); renderAdmin();
+    }
     return;
   }
   if((el = t.closest("[data-memdel]"))){
@@ -3071,20 +3095,23 @@ function acceptSubmission(item){
     var nm = String(p.name || "").trim();
     if(!nm) return;
     if(state.members.some(function(m){ return m.name.toLowerCase() === nm.toLowerCase(); })) return;
+    /* only the reference and the masked hint — never the address itself */
     state.members.push({ id: uid("mb"), name: nm.slice(0, 60), joined: todayISO(), avatar: "",
-      email: String(p.email || "").slice(0, 160), notify: [],
+      email: "", notifyRef: String(p.emailRef || ""), emailHint: String(p.emailHint || ""), notify: [],
       fable: safeUrl(p.fable), goodreads: safeUrl(p.goodreads) });
   }else if(item.kind === "notify"){
-    var who = String(p.name || "").trim(), mail = String(p.email || "").trim();
-    if(!mail) return;
+    var who = String(p.name || "").trim(), ref = String(p.emailRef || "").trim();
+    if(!ref) return;
     var mem = state.members.filter(function(m){
-      return (who && m.name.toLowerCase() === who.toLowerCase()) || (m.email && m.email.toLowerCase() === mail.toLowerCase());
+      return (who && m.name.toLowerCase() === who.toLowerCase()) || (m.notifyRef && m.notifyRef === ref);
     })[0];
     if(!mem){
-      mem = { id: uid("mb"), name: who || mail, joined: "", avatar: "", email: mail, notify: [], fable: "", goodreads: "" };
+      mem = { id: uid("mb"), name: who || "New subscriber", joined: "", avatar: "",
+        email: "", notifyRef: "", emailHint: "", notify: [], fable: "", goodreads: "" };
       state.members.push(mem);
     }
-    mem.email = mail;
+    mem.notifyRef = ref;
+    mem.emailHint = String(p.emailHint || "");
     (Array.isArray(p.books) ? p.books : []).forEach(function(id){
       if(mem.notify.indexOf(id) === -1) mem.notify.push(id);
     });
