@@ -422,6 +422,16 @@ img{max-width:100%;display:block}
   transition:width .16s cubic-bezier(.22,1,.36,1)}
 .reccard-wrap:hover .vote__score,.vote:focus-within .vote__score{display:none}
 .reccard-wrap:hover .vote__btn,.vote:focus-within .vote__btn{width:30px;height:24px}
+/* the card lifts on hover; the pill rides along with it */
+.reccard-wrap:hover .vote{transform:translate(-3px,-3px)}
+/* On a touch screen there is no hover, so the +/− would never appear. Show the
+   score and both buttons together instead — most of the club is on a phone. */
+@media (hover:none),(pointer:coarse){
+  .reccard-wrap:hover .vote{transform:none}
+  .vote__score{padding:3px 7px;min-width:22px}
+  .vote__btn,.reccard-wrap:hover .vote__btn{width:28px;height:24px}
+  .vote__btn--up{border-left:1.5px solid var(--edge)}
+}
 .vote__btn--up:hover{background:var(--surf);color:var(--on-surf)}
 .vote__btn--down:hover{background:var(--flare);color:var(--on-flare)}
 .vote__btn--up{border-right:1.5px solid var(--edge)}
@@ -1438,7 +1448,13 @@ function applyInbox(){
     var name = String(p.name || "").trim();
     if(!name) return;
     var list = p.vote === "down" ? "dislikes" : "endorsements";
-    var dupe = (r[list] || []).some(function(e){ return e.name.toLowerCase() === name.toLowerCase(); });
+    var other = list === "dislikes" ? "endorsements" : "dislikes";
+    if(!Array.isArray(r[list])) r[list] = [];
+    if(!Array.isArray(r[other])) r[other] = [];
+    /* someone who changed their mind sent a second vote — move them across
+       rather than letting them count on both sides */
+    r[other] = r[other].filter(function(e){ return e.name.toLowerCase() !== name.toLowerCase(); });
+    var dupe = r[list].some(function(e){ return e.name.toLowerCase() === name.toLowerCase(); });
     if(!dupe) r[list].push({ name: name, at: it.at || "" });
   });
 }
@@ -1541,6 +1557,12 @@ function editDistance(a, b){
   }
   return prev[b.length];
 }
+/* true when the title already contains what was typed — nothing to correct */
+function titleHasQuery(query, title){
+  query = String(query || "").toLowerCase().trim();
+  title = String(title || "").toLowerCase().trim();
+  return !!query && title.indexOf(query) !== -1;
+}
 function titleCloseness(query, title){
   query = String(query || "").toLowerCase().trim();
   title = String(title || "").toLowerCase().trim();
@@ -1558,9 +1580,11 @@ async function lookupBook(query){
   var best = hits[0] || null;
   return {
     hits: hits.slice(0, 6),
-    /* only call it a correction when they clearly meant something else */
-    correction: best && best.near > 0.5 && best.near < 3 &&
-      best.title.toLowerCase() !== String(query || "").toLowerCase().trim() ? best.title : "",
+    /* Offer a correction only when the best match doesn't contain what was
+       typed but is still close to it — a slip or two, not a different book.
+       A one-character slip in a long title scores around 0.3, so the ceiling
+       has to sit above that. */
+    correction: best && !titleHasQuery(query, best.title) && best.near < 1.5 ? best.title : "",
     /* every distinct author across the matches, so they can pick the right edition */
     authors: hits.map(function(h){ return h.author; }).filter(function(a, i, all){
       return a && all.indexOf(a) === i;
@@ -1694,13 +1718,24 @@ function meetingsForBook(id){
   return state.meetings.filter(function(m){ return m.bookId === id; })
     .sort(function(a,b){ return String(a.date||"9999").localeCompare(String(b.date||"9999")); });
 }
-/* A meeting is behind us once it's been marked finished OR its start time has
-   simply gone by — the organiser shouldn't have to tick a box to stop last
-   week's meeting appearing as the next one. */
+/* A meeting is behind us once it's been marked finished, or once it's actually
+   over — the organiser shouldn't have to tick a box to stop last week's meeting
+   appearing as the next one. "Over" means a few hours after it started, so the
+   card doesn't blank out while everyone is still sitting in the meeting; with
+   no time set at all, it stands until the end of that day. */
+var MEETING_RUNS_HOURS = 3;
+function meetingEnd(m){
+  var start = meetingStart(m);
+  if(!start) return null;
+  var end = new Date(start);
+  if(m && m.time) end.setHours(end.getHours() + MEETING_RUNS_HOURS);
+  else end.setHours(23, 59, 59, 999);
+  return end;
+}
 function meetingIsPast(m){
   if(m.done) return true;
-  var start = meetingStart(m);
-  return !!start && start < new Date();
+  var end = meetingEnd(m);
+  return !!end && end < new Date();
 }
 function upcomingMeetings(){
   return state.meetings.filter(function(m){ return !meetingIsPast(m); })
@@ -2211,8 +2246,10 @@ function renderTimeline(){
     if(e.kind === "book"){
       var b = e.book, hue = hueFor(b.id);
       return '<div class="tlrow">' +
+        /* the initials need their own element, or the diamond's counter-rotation
+           misses them and they sit at 45° */
         '<span class="tlrow__dot" style="--c:var(--' + hue + ');--cf:var(--on-' + hue + ')">' +
-          (b.badge ? '<img src="' + esc(b.badge) + '" alt="">' : esc(initials(b.title))) + "</span>" +
+          (b.badge ? '<img src="' + esc(b.badge) + '" alt="">' : "<span>" + esc(initials(b.title)) + "</span>") + "</span>" +
         '<button class="tlcard" type="button" data-badge="' + esc(b.id) + '" data-tip="' + esc(tipDates(b)) + '">' +
           '<span class="tlcard__when">' + (b.status === "current" ? "Reading now" : (e.when ? "Finished " + esc(shortDate(e.when)) : "Finished — date not set")) + "</span>" +
           '<span class="tlcard__what">' + esc(b.title) + "</span>" +
@@ -3083,6 +3120,9 @@ document.addEventListener("click", async function(e){
     if(!nm0){ if(nameEl) nameEl.focus(); say("Put your name in first.", "bad"); return; }
 
     var mine = down ? "dislikes" : "endorsements", other = down ? "endorsements" : "dislikes";
+    /* older records predate dislikes entirely */
+    if(!Array.isArray(er[mine])) er[mine] = [];
+    if(!Array.isArray(er[other])) er[other] = [];
     var already = function(list){
       return (er[list] || []).some(function(x){ return x.name.toLowerCase() === nm0.toLowerCase(); });
     };
@@ -3538,7 +3578,7 @@ function acceptSubmission(item){
       genres: normaliseGenres(p.genres),
       by: String(p.by || "").slice(0, 60), status: "pending", at: String(item.at || "").slice(0, 10),
       cover: safeUrl(p.cover), blurb: String(p.blurb || ""), summarySource: String(p.summarySource || "own"),
-      shortlist: false, reviews: [], endorsements: []
+      shortlist: false, reviews: [], endorsements: [], dislikes: []
     }));
   }else if(item.kind === "join"){
     var nm = String(p.name || "").trim();
@@ -3685,6 +3725,8 @@ async function chooseACHit(i){
   sugAI = "";
   setSugMode(sugMode === "own" ? "own" : "fetched");
   renderSugCover();
+  /* these fields were filled in code, which fires no input event */
+  syncSearchLinks();
 }
 function renderSugCover(){
   $("sCoverPick").innerHTML =
@@ -3766,7 +3808,10 @@ async function askAIForDetails(){
       $("sGenres").value = normaliseGenres(d.genres).join(", ");
       filled.push("genres");
     }
-    if(typeof d.ageMin === "number" && typeof d.ageMax === "number"){
+    /* the backend asks for zeroes when it isn't sure, so an empty answer must
+       not wipe the slider down to 0-0 */
+    if(typeof d.ageMin === "number" && typeof d.ageMax === "number" &&
+       d.ageMax > 0 && d.ageMax >= d.ageMin){
       dualState.sAge = { lo: clampAge(d.ageMin, 0), hi: clampAge(d.ageMax, AGE_TOP) };
       var loEl = document.querySelector('#sAgeSlider input[data-end="lo"]');
       var hiEl = document.querySelector('#sAgeSlider input[data-end="hi"]');
