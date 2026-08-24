@@ -1,5 +1,5 @@
 {
-  "rev": 1053,
+  "rev": 1054,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -289,6 +289,19 @@
       "place": "Ferdinand",
       "chapters": "Cosplay Party",
       "pages": "",
+      "done": false,
+      "summary": "",
+      "predictions": [],
+      "points": []
+    },
+    {
+      "id": "mt-mt7qhuwhfxm8v",
+      "bookId": "bk-ck",
+      "date": "2026-08-18",
+      "time": "19:00",
+      "place": "Online - Discord",
+      "chapters": "Section 4 Chapter 17-23",
+      "pages": "80",
       "done": false,
       "summary": "",
       "predictions": [],
