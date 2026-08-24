@@ -1,5 +1,5 @@
 {
-  "rev": 1052,
+  "rev": 1053,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -280,6 +280,19 @@
           "by": ""
         }
       ]
+    },
+    {
+      "id": "mt-mt7qevhwoo6bp",
+      "bookId": "bk-ck",
+      "date": "2026-09-12",
+      "time": "15:00",
+      "place": "Ferdinand",
+      "chapters": "Cosplay Party",
+      "pages": "",
+      "done": false,
+      "summary": "",
+      "predictions": [],
+      "points": []
     }
   ],
   "recs": [
