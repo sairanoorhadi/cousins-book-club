@@ -1,5 +1,5 @@
 {
-  "rev": 1020,
+  "rev": 1021,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -169,6 +169,19 @@
       "chapters": "Complete",
       "pages": "",
       "done": true,
+      "summary": "",
+      "predictions": [],
+      "points": []
+    },
+    {
+      "id": "mt-mt7bmjmu7e7iv",
+      "bookId": "bk-ck",
+      "date": "2026-09-06",
+      "time": "15:00",
+      "place": "Ferdinand",
+      "chapters": "Chapter 32-45",
+      "pages": "",
+      "done": false,
       "summary": "",
       "predictions": [],
       "points": []
