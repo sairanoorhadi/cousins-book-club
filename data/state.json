@@ -1,5 +1,5 @@
 {
-  "rev": 1072,
+  "rev": 1073,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -234,7 +234,7 @@
       "date": "2026-07-02",
       "time": "19:00",
       "place": "",
-      "chapters": "Complete",
+      "chapters": "Section 6",
       "pages": "",
       "done": true,
       "summary": "",
@@ -544,7 +544,7 @@
         "Romance"
       ],
       "level": "Ages 12+",
-      "by": "Pareesa",
+      "by": "Haala",
       "status": "approved",
       "at": "",
       "cover": "https://covers.openlibrary.org/b/id/15091070-L.jpg",
