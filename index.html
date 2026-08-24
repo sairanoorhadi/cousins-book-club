@@ -261,8 +261,10 @@ img{max-width:100%;display:block}
 /* ============ modal ============ */
 .scrim{position:fixed;inset:0;z-index:100;background:rgba(12,8,32,.66);background:color-mix(in srgb, var(--ink) 62%, transparent);display:flex;align-items:flex-start;justify-content:center;padding:32px 18px;overflow:auto;backdrop-filter:blur(2px)}
 .scrim[hidden]{display:none}
+#badgeScrim{z-index:110}
 #meetScrim{z-index:120}
 #bookScrim{z-index:130}
+#memberScrim{z-index:140}
 .modal{width:100%;max-width:820px;background:var(--paper);border:2px solid var(--edge);border-radius:12px;box-shadow:8px 8px 0 var(--stamp);overflow:hidden}
 .modal--wide{max-width:980px}
 .modal__bar{display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:2px solid var(--edge);background:var(--surface);position:sticky;top:0;z-index:2}
@@ -327,6 +329,97 @@ img{max-width:100%;display:block}
 .checkgrid label{display:flex;align-items:center;gap:7px;border:1.5px solid var(--hairline);border-radius:999px;padding:5px 13px;font-size:14px;cursor:pointer;background:var(--surface)}
 .checkgrid input{accent-color:var(--grape)}
 .divider{height:2px;background:var(--edge);border:0;margin:26px 0}
+
+/* ============ carousels ============ */
+.cyc{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cyc__lab{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.cycbtn{width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:2px 2px 0 var(--stamp);font-family:var(--f-display);font-weight:700;font-size:15px;line-height:1;padding:0}
+.cycbtn:hover:not([disabled]){background:var(--grape);color:var(--on-grape)}
+.cycbtn[disabled]{opacity:.32;cursor:not-allowed;box-shadow:none}
+.cyc__dots{display:flex;gap:6px;margin-left:2px}
+.cyc__dot{width:9px;height:9px;padding:0;border-radius:50%;border:1.5px solid var(--edge);background:var(--surface);cursor:pointer}
+.cyc__dot[aria-current="true"]{background:var(--flare)}
+.meetcard__top .cyc__lab{color:inherit;opacity:.92}
+.meetcard__top .cycbtn{border-color:var(--edge);background:var(--surface);color:var(--ink)}
+.meetcard__top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.meetcard__top .cyc{margin-left:auto}
+.swipe{touch-action:pan-y}
+
+/* ============ dual range ============ */
+.dualrange{position:relative;height:34px;margin-top:4px}
+.dualrange__track{position:absolute;left:0;right:0;top:14px;height:7px;border-radius:999px;background:var(--sunk);border:1.5px solid var(--edge)}
+.dualrange__fill{position:absolute;top:14px;height:7px;background:var(--surf);border-top:1.5px solid var(--edge);border-bottom:1.5px solid var(--edge)}
+.dualrange input[type=range]{position:absolute;left:0;top:9px;width:100%;height:18px;margin:0;background:transparent;pointer-events:none;-webkit-appearance:none;appearance:none}
+.dualrange input[type=range]:focus{outline:none}
+.dualrange input[type=range]::-webkit-slider-runnable-track{height:18px;background:transparent;border:0}
+.dualrange input[type=range]::-moz-range-track{height:18px;background:transparent;border:0}
+.dualrange input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:19px;height:19px;border-radius:50%;background:var(--grape);border:2px solid var(--edge);box-shadow:1px 1px 0 var(--stamp);cursor:grab}
+.dualrange input[type=range]::-moz-range-thumb{pointer-events:auto;width:19px;height:19px;border-radius:50%;background:var(--grape);border:2px solid var(--edge);cursor:grab}
+.dualrange input[type=range]:focus-visible::-webkit-slider-thumb{outline:3px solid var(--grape);outline-offset:2px}
+.dualrange__out{font-family:var(--f-mono);font-size:13px;margin-top:2px}
+
+/* ============ cover search ============ */
+.covergrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:12px;margin-top:14px}
+.coverpick{padding:0;border:2px solid transparent;border-radius:6px;background:none;cursor:pointer;display:block}
+.coverpick img{width:100%;aspect-ratio:2/3;object-fit:cover;border:2px solid var(--edge);border-radius:5px;box-shadow:2px 2px 0 var(--stamp)}
+.coverpick:hover img,.coverpick:focus-visible img{box-shadow:4px 4px 0 var(--stamp);transform:translate(-2px,-2px)}
+.coverpick__src{display:block;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px;text-align:center}
+
+/* ============ autocomplete ============ */
+.ac{position:relative}
+.ac__menu{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--surface);border:2px solid var(--edge);border-radius:6px;box-shadow:var(--shadow-sm);max-height:274px;overflow:auto}
+.ac__menu[hidden]{display:none}
+.ac__opt{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:9px 12px;background:none;border:0;border-bottom:1.5px solid var(--hairline);cursor:pointer}
+.ac__opt:last-child{border-bottom:0}
+.ac__opt:hover,.ac__opt[data-on="1"]{background:var(--sunk)}
+.ac__opt img{width:28px;height:42px;object-fit:cover;border:1.5px solid var(--edge);border-radius:3px;flex:none}
+.ac__t{font-family:var(--f-display);font-weight:700;font-size:14px;line-height:1.2}
+.ac__a{display:block;color:var(--muted);font-size:13px;font-style:italic}
+
+/* ============ segmented ============ */
+.seg{display:inline-flex;border:2px solid var(--edge);border-radius:var(--r);background:var(--sunk);padding:4px;gap:3px;flex-wrap:wrap}
+.segbtn{font-family:var(--f-display);font-weight:700;font-size:12.5px;padding:6px 12px;border:2px solid transparent;border-radius:5px;background:transparent;cursor:pointer;color:var(--muted)}
+.segbtn[aria-pressed="true"]{background:var(--surface);border-color:var(--edge);color:var(--ink)}
+
+/* ============ rec filters ============ */
+.filters{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-sm);padding:16px 18px;margin-bottom:24px}
+.filters__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}
+.filters__foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.filters__count{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-left:auto}
+.genrepick{display:flex;flex-wrap:wrap;gap:7px;max-height:118px;overflow:auto;padding:2px}
+.genrechip{font-family:var(--f-mono);font-size:11.5px;padding:4px 11px;border:1.5px solid var(--hairline);border-radius:999px;background:var(--surface);cursor:pointer;color:var(--muted)}
+.genrechip[aria-pressed="true"]{background:var(--grape);color:var(--on-grape);border-color:var(--edge)}
+
+/* ============ endorsements ============ */
+.reccard__second{position:absolute;top:7px;right:7px;display:inline-flex;align-items:center;gap:4px;background:var(--zest);color:var(--on-zest);border:2px solid var(--edge);border-radius:999px;padding:2px 9px;font-family:var(--f-mono);font-size:11px;font-weight:500;box-shadow:2px 2px 0 var(--stamp)}
+.reccard__short{position:absolute;top:7px;left:7px;background:var(--flare);color:var(--on-flare);border:2px solid var(--edge);border-radius:999px;padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
+.seconds{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.secondchip{font-family:var(--f-mono);font-size:11.5px;padding:3px 10px;border:1.5px solid var(--edge);border-radius:999px;background:var(--sunk)}
+.endorse{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;border:2px dashed var(--edge);border-radius:var(--r);padding:12px 14px;background:var(--sunk)}
+.endorse .input{flex:1 1 180px;width:auto}
+
+/* ============ reader reviews ============ */
+.rreview{border-left:3px solid var(--surf);padding-left:14px;margin-top:14px}
+.rreview__t{font-size:15.5px;font-style:italic}
+.rreview__b{margin-top:5px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* ============ rating pair ============ */
+.ratepair{display:flex;flex-wrap:wrap;gap:10px 26px;align-items:center}
+.ratebox__k{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:3px}
+
+/* ============ badge modal ============ */
+.badgeart{width:132px;height:132px;flex:none;border-radius:50%;border:3px solid var(--edge);overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+.badgeart img{width:100%;height:100%;object-fit:cover}
+.badgeart span{font-family:var(--f-display);font-weight:800;font-size:44px}
+.meetbtns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+
+/* ============ inbox ============ */
+.inboxrow{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:16px 18px;box-shadow:var(--shadow-sm)}
+.inboxrow + .inboxrow{margin-top:12px}
+.inboxrow__head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.kind{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1.5px solid var(--edge);background:var(--sunk)}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 12px;font-size:14.5px}
+.kv .k{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-top:3px}
 
 /* ============ status ============ */
 .status{position:fixed;right:18px;bottom:18px;z-index:200;font-family:var(--f-mono);font-size:12px;border:2px solid var(--edge);border-radius:999px;padding:8px 16px;background:var(--surface);box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:8px;max-width:min(92vw,420px)}
@@ -688,10 +781,10 @@ img{max-width:100%;display:block}
     <div class="wrap">
       <div class="banner" id="roBanner" hidden></div>
       <div class="hero__grid">
-        <div class="hero__main">
+        <div class="hero__main swipe" id="heroSwipe">
           <div class="hero__cover cover-wrap" id="heroCover"></div>
           <div>
-            <p class="eyebrow">Currently reading &middot; <span id="heroTagline"></span></p>
+            <div class="cyc" id="heroCyc"></div>
             <h1 id="heroTitle">—</h1>
             <p class="hero__author" id="heroAuthor"></p>
             <div class="hero__facts tagbank" id="heroFacts"></div>
@@ -704,8 +797,8 @@ img{max-width:100%;display:block}
           </div>
         </div>
         <div class="stack" style="gap:18px">
-          <aside class="meetcard">
-            <div class="meetcard__top"><p class="eyebrow">Next meeting</p></div>
+          <aside class="meetcard swipe" id="meetSwipe">
+            <div class="meetcard__top"><p class="eyebrow" id="meetEyebrow">Next meeting</p><span class="cyc" id="meetCyc"></span></div>
             <div class="meetcard__body" id="heroMeetBody"></div>
           </aside>
           <aside class="upnext" id="upNext"></aside>
@@ -732,32 +825,50 @@ img{max-width:100%;display:block}
       <div class="section__head">
         <p class="eyebrow">The pile</p>
         <h2>Recommendations</h2>
-        <p>Hover a cover for genres and reading level, click it for the summary. Anyone with a GitHub account can put a book forward.</p>
+        <p>Hover a cover for genres and reading level, click it for the summary, and second the ones you want the club to read next. Anyone can put a book forward &mdash; no account needed.</p>
       </div>
       <div class="tabbar" role="tablist" aria-label="Recommendations">
         <button class="tabbtn" role="tab" id="tab-recs" aria-controls="panel-recs" aria-selected="true" type="button">Recommendations</button>
+        <button class="tabbtn" role="tab" id="tab-short" aria-controls="panel-short" aria-selected="false" type="button">Next Book &ndash; Shortlist</button>
         <button class="tabbtn" role="tab" id="tab-suggest" aria-controls="panel-suggest" aria-selected="false" type="button">Suggest a Book</button>
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-recs" aria-labelledby="tab-recs">
+        <div class="filters" id="recFilters"></div>
         <div class="recgrid" id="recGrid"></div>
+      </div>
+      <div class="tabpanel" role="tabpanel" id="panel-short" aria-labelledby="tab-short" hidden>
+        <p class="focusnote" style="margin-bottom:18px">The books in the running for the next read. The organiser shortlists them from the recommendations.</p>
+        <div class="recgrid" id="shortGrid"></div>
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-suggest" aria-labelledby="tab-suggest" hidden>
         <form class="formcard stack" id="suggestForm" style="gap:18px">
           <div>
             <h3 style="font-size:22px">Put a book forward</h3>
-            <p class="hint" style="margin-top:8px">This opens a suggestion on the club&rsquo;s GitHub page. The organiser reads it and adds the ones the club wants. You&rsquo;ll need a free GitHub account to send it.</p>
+            <p class="hint" style="margin-top:8px">Start typing a title and pick it from the list &mdash; the author, page count, genres and summary fill themselves in. Everything stays editable. The organiser reads submissions and publishes the ones the club wants.</p>
           </div>
           <div class="formgrid">
-            <div class="field"><label for="sTitle">Book title</label><input class="input" id="sTitle" name="title" required maxlength="140"></div>
+            <div class="field ac"><label for="sTitle">Book title</label>
+              <input class="input" id="sTitle" name="title" required maxlength="140" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="sTitleMenu">
+              <div class="ac__menu" id="sTitleMenu" role="listbox" hidden></div></div>
             <div class="field"><label for="sAuthor">Author</label><input class="input" id="sAuthor" name="author" required maxlength="140"></div>
             <div class="field"><label for="sPages">Page count</label><input class="input" id="sPages" name="pages" type="number" min="1" max="20000" inputmode="numeric"></div>
-            <div class="field"><label for="sLevel">Reading level</label><select class="select" id="sLevel" name="level"></select></div>
+            <div class="field"><label for="sBy">Your name</label><input class="input" id="sBy" name="by" required maxlength="60"></div>
           </div>
-          <div class="field"><label for="sGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label><input class="input" id="sGenres" name="genres" placeholder="Young Adult, Fantasy" maxlength="200"></div>
-          <div class="field"><label for="sBlurb">What&rsquo;s it about?</label><textarea class="textarea" id="sBlurb" name="blurb" placeholder="A few sentences — no spoilers." maxlength="1600"></textarea></div>
-          <div class="field"><label for="sBy">Your name</label><input class="input" id="sBy" name="by" required maxlength="60"></div>
+          <div class="field"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span></label>
+            <div id="sAgeSlider"></div></div>
+          <div class="field"><label for="sGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label><input class="input" id="sGenres" name="genres" placeholder="Young Adult, Fantasy" maxlength="300"></div>
+          <div class="field"><label>Cover</label><div id="sCoverPick"></div></div>
+          <div class="field"><label>Summary</label>
+            <div class="seg" id="sSumMode" style="margin-bottom:10px">
+              <button class="segbtn" type="button" data-summode="fetched" aria-pressed="true">From the book listing</button>
+              <button class="segbtn" type="button" data-summode="ai" aria-pressed="false">Write one for me</button>
+              <button class="segbtn" type="button" data-summode="own" aria-pressed="false">I&rsquo;ll write my own</button>
+            </div>
+            <textarea class="textarea" id="sBlurb" name="blurb" placeholder="A few sentences — no spoilers." maxlength="2400"></textarea>
+            <p class="hint" id="sSumHint">Pulled from the book listing when you pick a title. Edit it however you like.</p>
+          </div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-            <button class="btn btn--surf" type="submit" id="suggestSubmit">Open a suggestion on GitHub</button>
+            <button class="btn btn--surf" type="submit" id="suggestSubmit">Send it to the organiser</button>
             <span class="hint" id="suggestNote"></span>
           </div>
         </form>
@@ -774,9 +885,15 @@ img{max-width:100%;display:block}
           <h2>Badges</h2>
           <p>Every book the club has finished, as a growing tree or a straight timeline. Hover a badge for its dates, click it for who read it &mdash; or focus on one member to see only their books.</p>
         </div>
-        <div class="tabbar" role="tablist" aria-label="Badge view">
-          <button class="tabbtn" role="tab" id="tab-tree" aria-controls="panel-tree" aria-selected="true" type="button">Tree</button>
-          <button class="tabbtn" role="tab" id="tab-time" aria-controls="panel-time" aria-selected="false" type="button">Timeline</button>
+        <div class="stack" style="gap:12px;align-items:flex-end">
+          <div class="tabbar" role="tablist" aria-label="Badge view">
+            <button class="tabbtn" role="tab" id="tab-tree" aria-controls="panel-tree" aria-selected="true" type="button">Tree</button>
+            <button class="tabbtn" role="tab" id="tab-time" aria-controls="panel-time" aria-selected="false" type="button">Timeline</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn btn--sm btn--surf" type="button" data-memform="join">Ask to join</button>
+            <button class="btn btn--sm btn--ghost" type="button" data-memform="profile">Update my profile</button>
+          </div>
         </div>
       </div>
       <div class="focusbar" id="focusBar"></div>
@@ -787,7 +904,6 @@ img{max-width:100%;display:block}
       <div class="tabpanel" role="tabpanel" id="panel-time" aria-labelledby="tab-time" hidden>
         <div class="timeline" id="timeBox"></div>
       </div>
-      <div class="crew" id="crewBox" hidden></div>
     </div>
   </section>
 
@@ -811,6 +927,20 @@ img{max-width:100%;display:block}
     <div class="modal__body" id="bookModalBody"></div>
   </div>
 </div>
+<div class="scrim" id="badgeScrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="badgeModalTitle">
+    <div class="modal__bar"><h2 id="badgeModalTitle">Badge</h2>
+      <button class="xbtn" type="button" data-close="badgeScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body" id="badgeModalBody"></div>
+  </div>
+</div>
+<div class="scrim" id="memberScrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="memberModalTitle">
+    <div class="modal__bar"><h2 id="memberModalTitle">The club</h2>
+      <button class="xbtn" type="button" data-close="memberScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body" id="memberModalBody"></div>
+  </div>
+</div>
 <div class="scrim" id="adminScrim" hidden>
   <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
     <div class="modal__bar"><h2 id="adminModalTitle">Organiser tools</h2>
@@ -827,7 +957,6 @@ img{max-width:100%;display:block}
 
 var state = null, readOnly = true, isAdmin = false, saveBusy = false;
 var HUES = ["flare","zest","surf","sky","grape"];
-var LEVELS = ["Ages 6-8","Ages 8-11","Ages 9-12","Ages 10-13","Ages 12+","Ages 13+","Ages 14+","Ages 15+","Ages 16+","Adult"];
 var $ = function(id){ return document.getElementById(id); };
 
 function esc(s){
@@ -843,6 +972,48 @@ function hueFor(key){
 function initials(s){
   var w = String(s||"?").trim().split(/\s+/);
   return ((w[0]||"?")[0] + (w.length>1 ? w[w.length-1][0] : "")).toUpperCase();
+}
+function surname(name){
+  var w = String(name || "").trim().split(/\s+/);
+  return (w.length ? w[w.length-1] : "").toLowerCase();
+}
+
+/* ---------- reading level as an age range ----------
+   Stored as ageMin/ageMax on 0-100. An ageMax of 100 means "and up",
+   so 18-100 reads back as "Ages 18+". */
+var AGE_TOP = 100;
+function clampAge(n, fallback){
+  n = Math.round(Number(n));
+  if(isNaN(n)) return fallback;
+  return Math.max(0, Math.min(AGE_TOP, n));
+}
+function parseLevel(s){
+  s = String(s || "");
+  var span = s.match(/(\d+)\s*[-–]\s*(\d+)/);
+  if(span) return { min: clampAge(span[1], 0), max: clampAge(span[2], AGE_TOP) };
+  var open = s.match(/(\d+)\s*\+/);
+  if(open) return { min: clampAge(open[1], 0), max: AGE_TOP };
+  var one = s.match(/(\d+)/);
+  if(one) return { min: clampAge(one[1], 0), max: AGE_TOP };
+  if(/adult/i.test(s)) return { min: 18, max: AGE_TOP };
+  return { min: 0, max: AGE_TOP };
+}
+function levelText(o){
+  var lo = clampAge(o && o.ageMin, 0), hi = clampAge(o && o.ageMax, AGE_TOP);
+  if(hi > lo && hi >= AGE_TOP) return "Ages " + lo + "+";
+  if(hi <= lo) return "Ages " + lo + "+";
+  return "Ages " + lo + "-" + hi;
+}
+function withAges(o){
+  if(typeof o.ageMin !== "number" || typeof o.ageMax !== "number"){
+    var p = parseLevel(o.level);
+    o.ageMin = p.min; o.ageMax = p.max;
+  }
+  o.ageMin = clampAge(o.ageMin, 0);
+  o.ageMax = clampAge(o.ageMax, AGE_TOP);
+  if(o.ageMax < o.ageMin) o.ageMax = o.ageMin;
+  o.level = levelText(o);
+  return o;
 }
 
 /* ---------- dates ---------- */
@@ -867,6 +1038,35 @@ function daysUntil(iso){
   var d = parseDate(iso); if(!d) return null;
   var n = new Date(); n.setHours(0,0,0,0);
   return Math.round((d - n) / 86400000);
+}
+/* the meeting's actual start instant, so the countdown can talk in hours */
+function meetingStart(m){
+  var d = parseDate(m && m.date); if(!d) return null;
+  var p = String((m && m.time) || "").split(":");
+  var h = Number(p[0]), mi = Number(p[1]);
+  d.setHours(isNaN(h) ? 0 : h, isNaN(mi) ? 0 : mi, 0, 0);
+  return d;
+}
+function countdownText(m){
+  var start = meetingStart(m);
+  if(!start) return "";
+  var ms = start - new Date();
+  if(ms < 0){
+    var agoDays = Math.round(-ms / 86400000);
+    if(agoDays >= 1) return agoDays + " day" + (agoDays === 1 ? "" : "s") + " ago";
+    var agoHrs = Math.floor(-ms / 3600000);
+    if(agoHrs >= 1) return agoHrs + " hour" + (agoHrs === 1 ? "" : "s") + " ago";
+    return "Happening now";
+  }
+  var mins = Math.floor(ms / 60000);
+  if(mins < 1) return "Starting now";
+  if(mins < 60) return "In " + mins + " minute" + (mins === 1 ? "" : "s");
+  var hrs = Math.floor(mins / 60);
+  /* under a full day to go, count in hours rather than rounding to a day */
+  if(hrs < 24) return "In " + hrs + " hour" + (hrs === 1 ? "" : "s");
+  var days = Math.floor(hrs / 24);
+  if(days === 1) return "Tomorrow";
+  return "In " + days + " days";
 }
 function todayISO(){
   var n = new Date();
@@ -900,9 +1100,12 @@ var SERIES = {
 function migrate(s){
   s.club = s.club || { name:"Book Club", tagline:"" };
   if(typeof s.club.logo !== "string") s.club.logo = "";
+  if(typeof s.club.formEndpoint !== "string") s.club.formEndpoint = "";
+  if(typeof s.club.contactEmail !== "string") s.club.contactEmail = "";
   if(!Array.isArray(s.books)) s.books = [];
   if(!Array.isArray(s.meetings)) s.meetings = [];
   if(!Array.isArray(s.recs)) s.recs = [];
+  if(!Array.isArray(s.inbox)) s.inbox = [];
   delete s.adminPin;   /* the PIN is meaningless in a public repo; the GitHub token is the real gate */
   if(!Array.isArray(s.members)) s.members = [];
   s.members.forEach(function(m){
@@ -911,6 +1114,16 @@ function migrate(s){
     if(typeof m.joined !== "string") m.joined = "";
     if(typeof m.fable !== "string") m.fable = "";
     if(typeof m.goodreads !== "string") m.goodreads = "";
+    /* Addresses are deliberately not kept here — this repo is public and some
+       members are children. The submissions endpoint holds the address
+       privately and the repo carries only an opaque reference plus a masked
+       hint. `email` survives on older records so they keep working, and the
+       Members tab flags it for removal. */
+    if(typeof m.email !== "string") m.email = "";
+    if(typeof m.notifyRef !== "string") m.notifyRef = "";
+    if(typeof m.emailHint !== "string") m.emailHint = "";
+    /* book ids this member wants meeting emails about; "*" means every meeting */
+    if(!Array.isArray(m.notify)) m.notify = [];
   });
   (s.books || []).forEach(function(b){
     if(typeof b.cover !== "string") b.cover = "";
@@ -925,17 +1138,30 @@ function migrate(s){
       else { b.series = ""; b.seriesIndex = 1; }
     }
     if(typeof b.seriesIndex !== "number") b.seriesIndex = 1;
+    if(typeof b.order !== "number") b.order = 0;
+    withAges(b);
+    if(b.review && typeof b.review.community !== "number") b.review.community = 0;
   });
   (s.recs || []).forEach(function(r){
     if(typeof r.cover !== "string") r.cover = "";
     if(!r.by) r.by = REC_BY[String(r.title||"").toLowerCase().trim()] || "";
     if(typeof r.at !== "string") r.at = "";
+    if(typeof r.shortlist !== "boolean") r.shortlist = false;
+    if(typeof r.summarySource !== "string") r.summarySource = "own";
+    if(!Array.isArray(r.reviews)) r.reviews = [];
+    if(!Array.isArray(r.endorsements)) r.endorsements = [];
+    r.endorsements = r.endorsements.map(function(e){
+      return typeof e === "string" ? { name: e, at: "" } : { name: String(e && e.name || "").trim(), at: String(e && e.at || "") };
+    }).filter(function(e){ return e.name; });
+    withAges(r);
   });
   (s.meetings || []).forEach(function(m){
     if(typeof m.pages !== "string") m.pages = "";
     if(typeof m.chapters !== "string") m.chapters = "";
     if(!Array.isArray(m.predictions)) m.predictions = [];
     if(!Array.isArray(m.points)) m.points = [];
+    /* which notification emails have already gone out for this meeting */
+    if(!m.sent || typeof m.sent !== "object") m.sent = {};
   });
   return s;
 }
@@ -1032,6 +1258,54 @@ function downloadState(){
   setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
 
+/* ---------- public submissions ----------
+   Anyone can send a suggestion, a join request, a profile change, a second or a
+   notification signup without a GitHub account. The site POSTs to the club's
+   submissions endpoint (see docs/notifications.md); the endpoint appends to
+   data/inbox.json, which the organiser reviews under Organiser tools. */
+var inbox = [];
+function endpoint(){ return safeUrl(state && state.club && state.club.formEndpoint); }
+async function submitPublic(kind, payload){
+  var url = endpoint();
+  if(!url) return { ok: false, reason: "unconfigured" };
+  try{
+    var res = await fetch(url, {
+      method: "POST",
+      /* text/plain keeps this a simple CORS request, which Apps Script accepts without a preflight */
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ kind: kind, payload: payload, at: new Date().toISOString() })
+    });
+    if(!res.ok) return { ok: false, reason: "http", status: res.status };
+    return { ok: true };
+  }catch(e){ return { ok: false, reason: "network" }; }
+}
+async function loadInbox(){
+  try{
+    var res = await fetch("data/inbox.json", { cache: "no-store" });
+    if(!res.ok) return [];
+    var j = await res.json();
+    return Array.isArray(j && j.items) ? j.items : [];
+  }catch(e){ return []; }
+}
+/* seconds that arrived through the endpoint show up straight away, before the
+   organiser has folded them into state.json */
+function applyInbox(){
+  inbox.forEach(function(it){
+    if(!it || it.kind !== "endorse" || it.handled) return;
+    var p = it.payload || {}, r = recById(p.recId);
+    if(!r) return;
+    var name = String(p.name || "").trim();
+    if(!name) return;
+    var dupe = (r.endorsements || []).some(function(e){ return e.name.toLowerCase() === name.toLowerCase(); });
+    if(!dupe) r.endorsements.push({ name: name, at: it.at || "" });
+  });
+}
+function submitFailMsg(res){
+  if(res.reason === "unconfigured") return "Submissions aren’t switched on yet — the organiser needs to add an endpoint under Settings.";
+  if(res.reason === "network") return "Couldn’t reach the club’s inbox. Check your connection and try again.";
+  return "The club’s inbox returned an error (" + (res.status || "?") + "). Try again in a moment.";
+}
+
 /* ---------- image picker ---------- */
 function pickImage(maxW, type, cb){
   var inp = document.createElement("input");
@@ -1061,8 +1335,107 @@ function pickImage(maxW, type, cb){
   inp.click();
 }
 
+/* ---------- looking books up on the open web ----------
+   Goodreads retired its public API in 2020, so the metadata here comes from
+   Google Books (titles, page counts, descriptions) and Open Library (richer
+   subject lists and a second source of cover art). Both allow browser calls. */
+function httpsify(u){ return String(u || "").replace(/^http:/i, "https:"); }
+function gbCover(u){ return httpsify(u).replace(/&edge=curl/g, "").replace(/zoom=\d/, "zoom=2"); }
+function stripTags(s){ return String(s || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim(); }
+
+async function searchBooks(q){
+  q = String(q || "").trim();
+  if(q.length < 3) return [];
+  try{
+    var res = await fetch("https://www.googleapis.com/books/v1/volumes?maxResults=8&q=" + encodeURIComponent(q), { cache: "no-store" });
+    if(!res.ok) return [];
+    var j = await res.json();
+    return (j.items || []).map(function(it){
+      var v = it.volumeInfo || {}, img = v.imageLinks || {};
+      return {
+        title: v.title || "",
+        author: (v.authors || []).join(", "),
+        pages: Number(v.pageCount) || null,
+        genres: (v.categories || []).slice(),
+        blurb: stripTags(v.description),
+        cover: gbCover(img.thumbnail || img.smallThumbnail || ""),
+        year: String(v.publishedDate || "").slice(0, 4),
+        mature: v.maturityRating === "MATURE"
+      };
+    }).filter(function(x){ return x.title; });
+  }catch(e){ return []; }
+}
+
+/* Open Library's subject list is the closest free stand-in for Goodreads shelves */
+async function openLibraryExtras(title, author){
+  try{
+    var url = "https://openlibrary.org/search.json?limit=1&fields=subject,number_of_pages_median,cover_i,first_publish_year" +
+      "&title=" + encodeURIComponent(title) + (author ? "&author=" + encodeURIComponent(author) : "");
+    var res = await fetch(url, { cache: "no-store" });
+    if(!res.ok) return null;
+    var d = ((await res.json()).docs || [])[0];
+    if(!d) return null;
+    return {
+      genres: (d.subject || []).filter(function(s){ return s.length < 28 && !/^(accessible|protected daisy|in library|overdrive|nyt)/i.test(s); }).slice(0, 8),
+      pages: Number(d.number_of_pages_median) || null,
+      cover: d.cover_i ? "https://covers.openlibrary.org/b/id/" + d.cover_i + "-L.jpg" : ""
+    };
+  }catch(e){ return null; }
+}
+
+/* title + author + book cover, top five, pick one */
+async function searchCovers(title, author){
+  var out = [], seen = {};
+  function add(url, src){
+    url = httpsify(url);
+    if(!url || seen[url]) return;
+    seen[url] = 1;
+    out.push({ url: url, src: src });
+  }
+  var q = [title, author].filter(Boolean).join(" ");
+  (await searchBooks(q)).forEach(function(b){ if(b.cover) add(b.cover, "Google Books"); });
+  try{
+    var res = await fetch("https://openlibrary.org/search.json?limit=6&fields=cover_i&q=" + encodeURIComponent(q), { cache: "no-store" });
+    if(res.ok){
+      ((await res.json()).docs || []).forEach(function(d){
+        if(d.cover_i) add("https://covers.openlibrary.org/b/id/" + d.cover_i + "-L.jpg", "Open Library");
+      });
+    }
+  }catch(e){}
+  return out.slice(0, 5);
+}
+
+/* ---------- cover picker widget ---------- */
+var coverHooks = {};
+function coverSearchHTML(scope, query, onPick){
+  coverHooks[scope] = { query: query, pick: onPick };
+  return '<div data-coverscope="' + esc(scope) + '">' +
+    '<button class="btn btn--sm btn--sky" type="button" data-coversearch="' + esc(scope) + '">Search the web for a cover</button>' +
+    '<div data-coverresults="' + esc(scope) + '"></div></div>';
+}
+async function runCoverSearch(scope){
+  var hook = coverHooks[scope];
+  var host = document.querySelector('[data-coverresults="' + scope + '"]');
+  if(!hook || !host) return;
+  var q = hook.query() || {};
+  if(!String(q.title || "").trim()){ say("Type a book title first.", "bad"); return; }
+  host.innerHTML = '<p class="hint" style="margin-top:10px">Searching&hellip;</p>';
+  var hits = await searchCovers(q.title, q.author);
+  host.innerHTML = hits.length
+    ? '<div class="covergrid">' + hits.map(function(h, i){
+        return '<button class="coverpick" type="button" data-coverurl="' + esc(h.url) + '" data-cscope="' + esc(scope) + '">' +
+          '<img src="' + esc(h.url) + '" alt="Cover option ' + (i + 1) + '" loading="lazy">' +
+          '<span class="coverpick__src">' + esc(h.src) + "</span></button>";
+      }).join("") + '</div><p class="hint" style="margin-top:10px">Click the one you want.</p>'
+    : '<p class="hint" style="margin-top:10px">No covers found. Try adding the author&rsquo;s name, or upload one instead.</p>';
+}
+
 /* ---------- lookups ---------- */
-function currentBook(){ return state.books.filter(function(b){ return b.status === "current"; })[0] || null; }
+function currentBooks(){
+  return state.books.filter(function(b){ return b.status === "current"; })
+    .sort(function(a,b){ return (Number(a.order)||0) - (Number(b.order)||0); });
+}
+function currentBook(){ return currentBooks()[0] || null; }
 function nextBooks(){ return state.books.filter(function(b){ return b.status === "next"; }); }
 function pastBooks(){
   return state.books.filter(function(b){ return b.status === "past"; }).slice().sort(function(x,y){
@@ -1074,11 +1447,28 @@ function pastBooks(){
 function bookById(id){ return state.books.filter(function(b){ return b.id === id; })[0] || null; }
 function meetingById(id){ return state.meetings.filter(function(m){ return m.id === id; })[0] || null; }
 function meetingForBook(id){ return state.meetings.filter(function(m){ return m.bookId === id; })[0] || null; }
-function nextMeeting(){
-  return state.meetings.filter(function(m){ return !m.done; })
-    .sort(function(a,b){ return String(a.date||"9999").localeCompare(String(b.date||"9999")); })[0] || null;
+function meetingsForBook(id){
+  return state.meetings.filter(function(m){ return m.bookId === id; })
+    .sort(function(a,b){ return String(a.date||"9999").localeCompare(String(b.date||"9999")); });
 }
+function upcomingMeetings(){
+  return state.meetings.filter(function(m){ return !m.done; })
+    .sort(function(a,b){ return String(a.date||"9999").localeCompare(String(b.date||"9999")); });
+}
+function nextMeeting(){ return upcomingMeetings()[0] || null; }
 function approvedRecs(){ return state.recs.filter(function(r){ return r.status === "approved"; }); }
+function shortlistRecs(){ return approvedRecs().filter(function(r){ return r.shortlist; }); }
+function endorseCount(r){ return (r.endorsements || []).length; }
+function allGenres(){
+  var seen = {}, out = [];
+  approvedRecs().forEach(function(r){
+    (r.genres || []).forEach(function(g){
+      var k = g.toLowerCase();
+      if(!seen[k]){ seen[k] = 1; out.push(g); }
+    });
+  });
+  return out.sort(function(a,b){ return a.localeCompare(b); });
+}
 function pendingRecs(){ return state.recs.filter(function(r){ return r.status === "pending"; }); }
 function recById(id){ return state.recs.filter(function(r){ return r.id === id; })[0] || null; }
 function memberById(id){ return state.members.filter(function(m){ return m.id === id; })[0] || null; }
@@ -1089,6 +1479,17 @@ function stars(n, small){
     '<span class="stars__off">★★★★★</span>' +
     '<span class="stars__on" style="width:' + (n / 5 * 100) + '%">★★★★★</span></span>' +
     '<span class="stars__num">' + n.toFixed(1) + " / 5</span>";
+}
+/* the club's verdict, and the wider community's beside it when the organiser has entered one */
+function ratingPair(rev, small){
+  rev = rev || {};
+  var out = '<span class="ratebox"><span class="ratebox__k">The club</span>' +
+    '<span class="review__stars">' + stars(rev.rating, small) + "</span></span>";
+  if(Number(rev.community) > 0){
+    out += '<span class="ratebox"><span class="ratebox__k">Community</span>' +
+      '<span class="review__stars">' + stars(rev.community, small) + "</span></span>";
+  }
+  return '<div class="ratepair">' + out + "</div>";
 }
 function safeUrl(u){
   u = String(u || "").trim();
@@ -1115,12 +1516,34 @@ function discHTML(b, extra){
 }
 
 /* ---------- render: hero ---------- */
+var heroIdx = 0, meetIdx = 0;
+function cycHTML(kind, idx, total, label){
+  if(total <= 1) return label ? '<span class="cyc__lab">' + esc(label) + "</span>" : "";
+  var dots = "";
+  for(var i = 0; i < total; i++){
+    dots += '<button class="cyc__dot" type="button" data-cycto="' + kind + '" data-i="' + i + '" ' +
+      'aria-current="' + (i === idx) + '" aria-label="Show ' + (i + 1) + ' of ' + total + '"></button>';
+  }
+  return (label ? '<span class="cyc__lab">' + esc(label) + "</span>" : "") +
+    '<span class="cyc__lab">' + (idx + 1) + " / " + total + "</span>" +
+    '<button class="cycbtn" type="button" data-cyc="' + kind + '" data-d="-1" aria-label="Previous">&#8249;</button>' +
+    '<button class="cycbtn" type="button" data-cyc="' + kind + '" data-d="1" aria-label="Next">&#8250;</button>' +
+    '<span class="cyc__dots">' + dots + "</span>";
+}
 function renderHero(){
-  var book = currentBook(), meet = nextMeeting();
+  var books = currentBooks();
+  if(heroIdx >= books.length) heroIdx = 0;
+  var book = books[heroIdx] || null;
+  var ups = upcomingMeetings();
+  if(meetIdx >= ups.length) meetIdx = 0;
+  var meet = ups[meetIdx] || null;
   $("brandName").textContent = state.club.name;
   $("footClub").textContent = state.club.name;
   document.title = state.club.name;
-  $("heroTagline").textContent = state.club.tagline || "";
+  var tagline = state.club.tagline || "";
+  $("heroCyc").innerHTML =
+    '<span class="cyc__lab">Currently reading' + (tagline ? " &middot; " + esc(tagline) : "") + "</span>" +
+    cycHTML("hero", heroIdx, books.length, "");
   var mark = $("brandMark");
   mark.className = "brand__mark" + (state.club.logo ? " has-logo" : "");
   mark.innerHTML = state.club.logo ? '<img src="' + esc(state.club.logo) + '" alt="">' : "";
@@ -1139,7 +1562,7 @@ function renderHero(){
     $("heroTitle").textContent = book.title;
     $("heroAuthor").textContent = "by " + book.author;
     var facts = ['<span class="tag tag--zest mono">' + esc(book.pages || "?") + " pages</span>",
-                 '<span class="tag tag--surf">' + esc(book.level || "All ages") + "</span>"];
+                 '<span class="tag tag--surf">' + esc(levelText(book)) + "</span>"];
     (book.genres || []).forEach(function(g){ facts.push('<span class="tag">' + esc(g) + "</span>"); });
     $("heroFacts").innerHTML = facts.join("");
     $("heroBlurb").textContent = book.blurb || "";
@@ -1156,27 +1579,35 @@ function renderHero(){
   }
 
   var body = $("heroMeetBody");
+  $("meetEyebrow").textContent = meetIdx === 0 ? "Next meeting" : "Later meeting";
+  $("meetCyc").innerHTML = cycHTML("meet", meetIdx, ups.length, "");
   if(!meet){
     body.innerHTML = '<p class="empty">No meeting scheduled. The organiser can add one from Organiser tools.</p>';
   }else{
-    var mb = bookById(meet.bookId), dleft = daysUntil(meet.date), cd = "";
-    if(dleft === 0) cd = "Today"; else if(dleft === 1) cd = "Tomorrow";
-    else if(dleft > 1) cd = "In " + dleft + " days";
-    else if(dleft !== null) cd = Math.abs(dleft) + " days ago";
+    var mb = bookById(meet.bookId) || recById(meet.bookId), cd = countdownText(meet);
     body.innerHTML =
       '<div class="meetcard__date">' + esc(longDate(meet.date)) + "</div>" +
-      (cd ? '<div class="countdown">' + esc(cd) + "</div>" : "") +
+      (cd ? '<div class="countdown" id="meetCountdown">' + esc(cd) + "</div>" : "") +
       '<div class="meetcard__row"><span class="k">Time</span><span>' + esc(prettyTime(meet.time) || "TBC") + "</span></div>" +
       '<div class="meetcard__row"><span class="k">Where</span><span>' + esc(meet.place || "TBC") + "</span></div>" +
       '<div class="meetcard__row"><span class="k">Book</span><span>' + esc(mb ? mb.title : "TBC") + "</span></div>" +
       '<div class="meetcard__row"><span class="k">Chapters</span><span>' + esc(meet.chapters || "TBC") + "</span></div>" +
       '<div class="meetcard__row"><span class="k">Pages</span><span class="mono">' + esc(meet.pages || "TBC") + "</span></div>" +
-      '<div style="margin-top:18px"><button class="btn btn--sky btn--sm" type="button" data-meet="' + esc(meet.id) + '">Predictions &amp; discussion points</button></div>';
+      '<div style="margin-top:18px;display:flex;gap:9px;flex-wrap:wrap">' +
+        '<button class="btn btn--sky btn--sm" type="button" data-meet="' + esc(meet.id) + '">Predictions &amp; discussion points</button>' +
+        '<button class="btn btn--ghost btn--sm" type="button" data-memform="notify" data-nbook="' + esc(meet.bookId) + '">Email me about this</button>' +
+      "</div>";
   }
   renderUpNext();
   $("footStats").textContent = pastBooks().length + " finished · " + nextBooks().length + " queued · " +
     approvedRecs().length + " recommended · " + state.members.length + " members";
 }
+/* keep the countdown honest without re-rendering the whole hero */
+setInterval(function(){
+  var el = $("meetCountdown"); if(!el || !state) return;
+  var ups = upcomingMeetings(), m = ups[meetIdx];
+  if(m) el.textContent = countdownText(m);
+}, 30000);
 function renderUpNext(){
   var q = nextBooks(), host = $("upNext");
   if(!q.length){ host.hidden = true; host.innerHTML = ""; return; }
@@ -1205,12 +1636,12 @@ function renderShelf(){
       "<div><h3>" + esc(b.title) + "</h3>" +
         '<p class="shelfrow__author">by ' + esc(b.author) + (when ? " · finished " + esc(shortDate(when)) : "") + "</p>" +
         '<div class="tagbank" style="margin-top:10px">' +
-          '<span class="tag tag--surf">' + esc(b.level || "All ages") + "</span>" +
+          '<span class="tag tag--surf">' + esc(levelText(b)) + "</span>" +
           '<span class="tag tag--zest mono">' + esc(b.pages || "?") + " pages</span>" +
           (b.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
         "</div>" +
         (rev
-          ? '<div class="review"><div class="review__stars">' + stars(b.review.rating) + "</div>" +
+          ? '<div class="review">' + ratingPair(b.review) +
             '<p class="review__text">' + esc(b.review.text || "") + "</p>" +
             '<p class="review__by">' + esc(b.review.by || "The club") + "</p></div>"
           : '<p class="empty" style="margin-top:12px">No club review written yet.</p>') +
@@ -1222,24 +1653,138 @@ function renderShelf(){
   }).join("");
 }
 
+/* ---------- dual-handle range ---------- */
+var dualState = {}, dualHooks = {};
+function dualRangeHTML(id, lo, hi, hook){
+  dualState[id] = { lo: clampAge(lo, 0), hi: clampAge(hi, AGE_TOP) };
+  if(hook) dualHooks[id] = hook; else delete dualHooks[id];
+  return '<div class="dualrange" data-dualid="' + esc(id) + '">' +
+      '<span class="dualrange__track"></span>' +
+      '<span class="dualrange__fill" data-dualfill style="left:' + dualState[id].lo + '%;width:' + Math.max(0, dualState[id].hi - dualState[id].lo) + '%"></span>' +
+      '<input type="range" min="0" max="' + AGE_TOP + '" step="1" value="' + dualState[id].lo + '" data-dual="' + esc(id) + '" data-end="lo" aria-label="Youngest age">' +
+      '<input type="range" min="0" max="' + AGE_TOP + '" step="1" value="' + dualState[id].hi + '" data-dual="' + esc(id) + '" data-end="hi" aria-label="Oldest age">' +
+    "</div>" +
+    '<p class="dualrange__out" data-dualout="' + esc(id) + '">' + esc(levelText({ ageMin: dualState[id].lo, ageMax: dualState[id].hi })) + "</p>";
+}
+function dualValue(id){ return dualState[id] || { lo: 0, hi: AGE_TOP }; }
+function syncDual(id){
+  var wrap = document.querySelector('[data-dualid="' + id + '"]'), s = dualValue(id);
+  if(wrap){
+    var fill = wrap.querySelector("[data-dualfill]");
+    /* the scale runs 0-100, so a value doubles as its own percentage */
+    if(fill){ fill.style.left = s.lo + "%"; fill.style.width = Math.max(0, s.hi - s.lo) + "%"; }
+  }
+  var out = document.querySelector('[data-dualout="' + id + '"]');
+  if(out) out.textContent = levelText({ ageMin: s.lo, ageMax: s.hi });
+}
+document.addEventListener("input", function(e){
+  var n = e.target;
+  if(!n || !n.getAttribute) return;
+  var id = n.getAttribute("data-dual");
+  if(!id) return;
+  var s = dualState[id] || (dualState[id] = { lo: 0, hi: AGE_TOP });
+  var v = clampAge(n.value, 0);
+  if(n.getAttribute("data-end") === "lo"){ s.lo = Math.min(v, s.hi); n.value = s.lo; }
+  else { s.hi = Math.max(v, s.lo); n.value = s.hi; }
+  syncDual(id);
+  if(dualHooks[id]) dualHooks[id]();
+});
+
 /* ---------- render: recommendations ---------- */
-function renderRecs(){
-  var list = approvedRecs(), host = $("recGrid");
-  if(!list.length){
+var recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP };
+function recMatches(r){
+  if(recFilter.by && r.by !== recFilter.by) return false;
+  if(recFilter.genres.length){
+    var have = (r.genres || []).map(function(g){ return g.toLowerCase(); });
+    var hit = recFilter.genres.some(function(g){ return have.indexOf(g.toLowerCase()) !== -1; });
+    if(!hit) return false;
+  }
+  /* keep anything whose age band overlaps the band being asked for */
+  if(r.ageMin > recFilter.ageMax || r.ageMax < recFilter.ageMin) return false;
+  return true;
+}
+function sortRecs(list){
+  var by = recFilter.sort;
+  return list.slice().sort(function(a, b){
+    if(by === "title") return a.title.localeCompare(b.title);
+    if(by === "author") return surname(a.author).localeCompare(surname(b.author)) || a.title.localeCompare(b.title);
+    /* default: most-seconded first, then by the author's last name */
+    return (endorseCount(b) - endorseCount(a)) ||
+      surname(a.author).localeCompare(surname(b.author)) ||
+      a.title.localeCompare(b.title);
+  });
+}
+function renderRecFilters(){
+  var host = $("recFilters");
+  if(!host) return;
+  var people = [];
+  approvedRecs().forEach(function(r){ if(r.by && people.indexOf(r.by) === -1) people.push(r.by); });
+  people.sort(function(a,b){ return a.localeCompare(b); });
+  var genres = allGenres();
+  var shown = sortRecs(approvedRecs().filter(recMatches)).length;
+  host.innerHTML =
+    '<div class="filters__grid">' +
+      '<div class="field"><label for="fBy">Suggested by</label><select class="select" id="fBy">' +
+        '<option value="">Everyone</option>' +
+        people.map(function(p){ return '<option value="' + esc(p) + '"' + (recFilter.by === p ? " selected" : "") + ">" + esc(p) + "</option>"; }).join("") +
+      "</select></div>" +
+      '<div class="field"><label for="fSort">Order</label><select class="select" id="fSort">' +
+        [["top","Most seconded"],["title","A-Z by title"],["author","A-Z by author surname"]].map(function(o){
+          return '<option value="' + o[0] + '"' + (recFilter.sort === o[0] ? " selected" : "") + ">" + esc(o[1]) + "</option>";
+        }).join("") +
+      "</select></div>" +
+      '<div class="field"><label>Age rating</label>' + dualRangeHTML("filterAge", recFilter.ageMin, recFilter.ageMax, function(){
+        var v = dualValue("filterAge");
+        recFilter.ageMin = v.lo; recFilter.ageMax = v.hi;
+        renderRecGrid();
+        var c = $("recCount"); if(c) c.textContent = sortRecs(approvedRecs().filter(recMatches)).length + " of " + approvedRecs().length + " shown";
+      }) + "</div>" +
+    "</div>" +
+    (genres.length
+      ? '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(pick any number)</span></label>' +
+        '<div class="genrepick">' + genres.map(function(g){
+          return '<button class="genrechip" type="button" data-fgenre="' + esc(g) + '" aria-pressed="' +
+            (recFilter.genres.indexOf(g) !== -1) + '">' + esc(g) + "</button>";
+        }).join("") + "</div></div>"
+      : "") +
+    '<div class="filters__foot">' +
+      '<button class="btn btn--sm btn--ghost" type="button" id="fReset">Clear filters</button>' +
+      '<span class="filters__count" id="recCount">' + shown + " of " + approvedRecs().length + " shown</span>" +
+    "</div>";
+}
+function recCardHTML(r){
+  var n = endorseCount(r);
+  return '<button class="reccard cover-wrap" type="button" data-rec="' + esc(r.id) + '" aria-label="' + esc(r.title + " by " + r.author + " — open summary") + '">' +
+    coverHTML(r) +
+    (r.shortlist ? '<span class="reccard__short">Shortlist</span>' : "") +
+    (n ? '<span class="reccard__second" title="' + esc(n + " second" + (n === 1 ? "" : "s")) + '">+' + n + "</span>" : "") +
+    '<span class="reccard__foot"><span>' + esc(r.pages || "?") + " pp</span>" +
+      '<span class="reccard__by">' + (r.by ? esc(r.by) : "&nbsp;") + "</span></span>" +
+    '<span class="reccard__reveal">' +
+      '<span class="k">Genres</span><span class="v">' + esc((r.genres || []).join(" · ") || "Unlisted") + "</span>" +
+      '<span class="k">Level</span><span class="v">' + esc(levelText(r)) + "</span>" +
+      '<span class="k">Seconds</span><span class="v">' + (n || "none yet") + "</span>" +
+    "</span></button>";
+}
+function renderRecGrid(){
+  var host = $("recGrid"), all = approvedRecs();
+  if(!all.length){
     host.innerHTML = '<p class="empty">No recommendations approved yet. Use the Suggest a Book tab to put one forward.</p>';
     return;
   }
-  host.innerHTML = list.map(function(r){
-    return '<button class="reccard cover-wrap" type="button" data-rec="' + esc(r.id) + '" aria-label="' + esc(r.title + " by " + r.author + " — open summary") + '">' +
-      coverHTML(r) +
-      '<span class="reccard__foot"><span>' + esc(r.pages || "?") + " pp</span>" +
-        '<span class="reccard__by">' + (r.by ? esc(r.by) : "&nbsp;") + "</span></span>" +
-      '<span class="reccard__reveal">' +
-        '<span class="k">Genres</span><span class="v">' + esc((r.genres || []).join(" · ") || "Unlisted") + "</span>" +
-        '<span class="k">Level</span><span class="v">' + esc(r.level || "All ages") + "</span>" +
-      "</span></button>";
-  }).join("");
+  var list = sortRecs(all.filter(recMatches));
+  host.innerHTML = list.length
+    ? list.map(recCardHTML).join("")
+    : '<p class="empty">Nothing matches those filters. Try clearing them.</p>';
 }
+function renderShortlist(){
+  var host = $("shortGrid"); if(!host) return;
+  var list = sortRecs(shortlistRecs());
+  host.innerHTML = list.length
+    ? list.map(recCardHTML).join("")
+    : '<p class="empty">Nothing shortlisted yet. The organiser marks contenders under Organiser tools → Recommendations.</p>';
+}
+function renderRecs(){ renderRecFilters(); renderRecGrid(); renderShortlist(); }
 
 /* ---------- render: badges ---------- */
 var focusId = null;
@@ -1392,26 +1937,6 @@ function memberLinks(m, style){
     (g ? '<a class="crewlink" href="' + esc(g) + '" target="_blank" rel="noopener noreferrer">Goodreads</a>' : "") +
     "</span>";
 }
-function showCrew(bookId){
-  var b = bookById(bookId); if(!b) return;
-  var box = $("crewBox");
-  var list = (b.members || []).map(memberById).filter(Boolean);
-  box.hidden = false;
-  box.innerHTML =
-    '<p class="eyebrow">Who read it</p>' +
-    '<h3 style="font-size:21px;margin-top:6px">' + esc(b.title) + "</h3>" +
-    '<p class="hint" style="margin-top:5px">' + esc(tipDates(b)) + "</p>" +
-    (list.length
-      ? '<div class="crew__list">' + list.map(function(m){
-          var h = hueFor(m.id);
-          return '<span class="crewchip"><span class="crewchip__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
-            (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
-            '<span class="crewchip__n">' + esc(m.name) + "</span>" + memberLinks(m, "") + "</span>";
-        }).join("") + "</div>"
-      : '<p class="empty" style="margin-top:12px">No members recorded for this book yet — set them in Organiser tools → Reading list.</p>');
-  box.scrollIntoView({ behavior:"smooth", block:"nearest" });
-}
-
 /* ---------- tooltips ---------- */
 document.addEventListener("mouseover", function(e){
   var n = e.target.closest && e.target.closest("[data-tip]");
@@ -1441,14 +1966,16 @@ function openScrim(id){
   document.body.style.overflow = "hidden";
   var f = $(id).querySelector(".xbtn"); if(f) f.focus();
 }
+var SCRIMS = ["memberScrim","bookScrim","meetScrim","badgeScrim","adminScrim"];
 function closeScrim(id){
   $(id).hidden = true;
-  if($("meetScrim").hidden && $("bookScrim").hidden && $("adminScrim").hidden) document.body.style.overflow = "";
+  if(SCRIMS.every(function(s){ return $(s).hidden; })) document.body.style.overflow = "";
   if(lastFocus && lastFocus.focus) lastFocus.focus();
 }
 document.addEventListener("keydown", function(e){
   if(e.key !== "Escape") return;
-  ["bookScrim","meetScrim","adminScrim"].some(function(id){ if($(id).hidden) return false; closeScrim(id); return true; });
+  /* topmost first, so Escape peels the stack one layer at a time */
+  SCRIMS.some(function(id){ if($(id).hidden) return false; closeScrim(id); return true; });
 });
 document.addEventListener("click", function(e){
   var c = e.target.closest && e.target.closest("[data-close]");
@@ -1505,6 +2032,7 @@ function meetingHTML(m, b){
 }
 
 function openBookDetail(o, kind){
+  var seconds = kind === "rec" ? (o.endorsements || []) : [];
   $("bookModalTitle").textContent = o.title;
   $("bookModalBody").innerHTML =
     '<div style="display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap">' +
@@ -1515,19 +2043,131 @@ function openBookDetail(o, kind){
         '<p style="color:var(--muted);font-style:italic;margin-top:6px">by ' + esc(o.author) + "</p>" +
         '<div class="tagbank" style="margin-top:16px">' +
           '<span class="tag tag--zest mono">' + esc(o.pages || "?") + " pages</span>" +
-          '<span class="tag tag--surf">' + esc(o.level || "All ages") + "</span>" +
+          '<span class="tag tag--surf">' + esc(levelText(o)) + "</span>" +
           (o.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
         "</div>" +
         (o.by ? '<p class="review__by" style="margin-top:14px">Recommended by ' + esc(o.by) + "</p>" : "") +
+        (seconds.length
+          ? '<p class="review__by" style="margin-top:10px">Seconded by</p><div class="seconds">' +
+            seconds.map(function(e){ return '<span class="secondchip">' + esc(e.name) + "</span>"; }).join("") + "</div>"
+          : "") +
       "</div></div>" +
+    (kind === "rec"
+      ? '<div class="endorse">' +
+          '<span style="font-family:var(--f-display);font-weight:700;font-size:14px">Want the club to read this?</span>' +
+          '<input class="input" type="text" id="endorseName" placeholder="Your name" maxlength="60" autocomplete="name">' +
+          '<button class="btn btn--sm btn--zest" type="button" data-endorse="' + esc(o.id) + '">Second it</button>' +
+        "</div>"
+      : "") +
     '<hr class="divider">' +
     '<p style="white-space:pre-wrap">' + esc(o.blurb || "No summary written yet.") + "</p>" +
-    (o.review && (o.review.text || Number(o.review.rating) > 0)
-      ? '<div class="review" style="margin-top:22px"><div class="review__stars">' + stars(o.review.rating) + "</div>" +
+    ((o.reviews || []).length
+      ? '<hr class="divider"><p class="eyebrow">What other readers said</p>' +
+        '<p class="hint" style="margin-top:6px">Spoiler-free, added by whoever put the book forward.</p>' +
+        o.reviews.slice(0, 3).map(function(rv){
+          return '<div class="rreview"><p class="rreview__t">&ldquo;' + esc(rv.text) + "&rdquo;</p>" +
+            '<p class="rreview__b">' + esc(rv.by || "A reader") + (rv.source ? " &middot; " + esc(rv.source) : "") + "</p></div>";
+        }).join("")
+      : "") +
+    (o.review && (o.review.text || Number(o.review.rating) > 0 || Number(o.review.community) > 0)
+      ? '<div class="review" style="margin-top:22px">' + ratingPair(o.review) +
         '<p class="review__text">' + esc(o.review.text || "") + "</p>" +
         '<p class="review__by">' + esc(o.review.by || "The club") + "</p></div>"
       : "");
   openScrim("bookScrim");
+}
+
+/* ---------- badge popup ---------- */
+function openBadge(bookId){
+  var b = bookById(bookId); if(!b) return;
+  var hue = hueFor(b.id || b.title);
+  var crew = (b.members || []).map(memberById).filter(Boolean);
+  var meets = meetingsForBook(b.id);
+  var rev = b.review && (b.review.text || Number(b.review.rating) > 0 || Number(b.review.community) > 0);
+  $("badgeModalTitle").textContent = b.title;
+  $("badgeModalBody").innerHTML =
+    '<div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">' +
+      '<span class="badgeart" style="--c:var(--' + hue + ');--cf:var(--on-' + hue + ')">' +
+        (b.badge ? '<img src="' + esc(b.badge) + '" alt="Badge for ' + esc(b.title) + '">' : "<span>" + esc(initials(b.title)) + "</span>") +
+      "</span>" +
+      '<div style="flex:1 1 260px;min-width:0">' +
+        '<p class="eyebrow">' + (b.status === "current" ? "Reading now" : "Badge earned") + "</p>" +
+        '<h3 style="font-size:27px;margin-top:8px">' + esc(b.title) + "</h3>" +
+        '<p style="color:var(--muted);font-style:italic;margin-top:6px">by ' + esc(b.author) + "</p>" +
+        '<p class="hint" style="margin-top:8px">' + esc(tipDates(b)) + "</p>" +
+        '<p class="review__by" style="margin-top:16px">Who read it</p>' +
+        (crew.length
+          ? '<div class="crew__list" style="margin-top:10px">' + crew.map(function(m){
+              var h = hueFor(m.id);
+              return '<span class="crewchip"><span class="crewchip__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
+                (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
+                '<span class="crewchip__n">' + esc(m.name) + "</span>" + memberLinks(m, "") + "</span>";
+            }).join("") + "</div>"
+          : '<p class="empty" style="margin-top:8px">No members recorded for this book yet.</p>') +
+      "</div></div>" +
+    '<hr class="divider">' +
+    '<p class="eyebrow">The club&rsquo;s review</p>' +
+    (rev
+      ? '<div class="review" style="margin-top:12px">' + ratingPair(b.review) +
+        '<p class="review__text">' + esc(b.review.text || "") + "</p>" +
+        '<p class="review__by">' + esc(b.review.by || "The club") + "</p></div>"
+      : '<p class="empty" style="margin-top:10px">No club review written yet.</p>') +
+    '<hr class="divider">' +
+    '<p class="eyebrow">Meetings</p>' +
+    (meets.length
+      ? '<div class="meetbtns">' + meets.map(function(m){
+          return '<button class="btn btn--sm btn--grape" type="button" data-meet="' + esc(m.id) + '">' +
+            esc(shortDate(m.date)) + " Meeting</button>";
+        }).join("") + "</div>"
+      : '<p class="empty" style="margin-top:10px">No meetings recorded for this book.</p>');
+  openScrim("badgeScrim");
+}
+
+/* ---------- member requests ---------- */
+function openMemberForm(kind, bookId){
+  var titles = { join: "Ask to join the club", profile: "Update my profile", notify: "Email me about meetings" };
+  $("memberModalTitle").textContent = titles[kind] || "The club";
+  var notifiable = currentBooks().concat(nextBooks());
+  var body =
+    (kind === "join"
+      ? '<p class="eyebrow">New member</p><h3 style="font-size:24px;margin:8px 0 6px">Ask to join</h3>' +
+        '<p class="hint">The organiser gets your request and adds you to the club. No account needed.</p>'
+      : kind === "profile"
+      ? '<p class="eyebrow">Existing member</p><h3 style="font-size:24px;margin:8px 0 6px">Request a change</h3>' +
+        '<p class="hint">Say what you want changed on your profile and the organiser will apply it.</p>'
+      : '<p class="eyebrow">Reminders</p><h3 style="font-size:24px;margin:8px 0 6px">Meeting emails</h3>' +
+        '<p class="hint">You&rsquo;ll get an email when a meeting is scheduled, another five days before, and a nudge thirty minutes before it starts.</p>' +
+        '<p class="hint" style="margin-top:8px"><strong>If you&rsquo;re under 13, use a parent&rsquo;s address</strong> and check with them first.</p>') +
+    '<div class="formgrid" style="margin-top:20px">' +
+      (kind === "profile" && state.members.length
+        ? '<div class="field"><label for="mfWho">You are</label><select class="select" id="mfWho">' +
+          state.members.map(function(m){ return '<option value="' + esc(m.id) + '">' + esc(m.name) + "</option>"; }).join("") +
+          "</select></div>"
+        : '<div class="field"><label for="mfName">Your name</label><input class="input" id="mfName" maxlength="60" autocomplete="name"></div>') +
+      '<div class="field"><label for="mfEmail">Email</label><input class="input" id="mfEmail" type="email" maxlength="160" autocomplete="email"></div>' +
+      (kind === "join" || kind === "profile"
+        ? '<div class="field"><label for="mfFable">Fable profile</label><input class="input" id="mfFable" type="url" placeholder="https://fable.co/..." maxlength="300"></div>' +
+          '<div class="field"><label for="mfGoodreads">Goodreads profile</label><input class="input" id="mfGoodreads" type="url" placeholder="https://www.goodreads.com/user/show/..." maxlength="300"></div>'
+        : "") +
+    "</div>" +
+    (kind === "notify"
+      ? '<div class="field" style="margin-top:16px"><label>Which meetings</label><div class="checkgrid">' +
+          '<label><input type="checkbox" data-notify="*"' + (bookId ? "" : " checked") + ">Every meeting</label>" +
+          notifiable.map(function(b){
+            return '<label><input type="checkbox" data-notify="' + esc(b.id) + '"' + (bookId === b.id ? " checked" : "") + ">" + esc(b.title) + "</label>";
+          }).join("") +
+        "</div></div>"
+      : '<div class="field" style="margin-top:16px"><label for="mfNote">' +
+        (kind === "join" ? "Anything you&rsquo;d like to say" : "What should change?") + "</label>" +
+        '<textarea class="textarea" id="mfNote" maxlength="1200" placeholder="' +
+        (kind === "join" ? "Which cousin are you, what do you like reading?" : "New name, new photo, updated links…") + '"></textarea></div>') +
+    '<p class="hint" style="margin-top:16px">Your email address is kept privately by the organiser and is never published on this site or written into the club&rsquo;s public files. Ask them any time to delete it.</p>' +
+    '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:14px">' +
+      '<button class="btn btn--surf" type="button" data-memsend="' + esc(kind) + '">Send it</button>' +
+      '<span class="hint" id="mfNote2"></span>' +
+    "</div>";
+  $("memberModalBody").innerHTML = body;
+  openScrim("memberScrim");
 }
 
 /* ---------- admin ---------- */
@@ -1535,8 +2175,10 @@ var adminTab = "shelf", openEditors = {};
 function openAdmin(){ renderAdmin(); openScrim("adminScrim"); }
 function renderAdmin(){
   var pend = pendingRecs().length;
+  var waiting = inbox.filter(function(i){ return i && !i.handled; }).length;
   var tabs = [["shelf","Reading list"],["recs","Recommendations" + (pend ? " (" + pend + ")" : "")],
-              ["meetings","Meetings"],["members","Members"],["settings","Settings"]];
+              ["meetings","Meetings"],["members","Members"],
+              ["inbox","Inbox" + (waiting ? " (" + waiting + ")" : "")],["settings","Settings"]];
   $("adminModalBody").innerHTML =
     (readOnly ? '<div class="banner" style="display:block">This view is read-only, so nothing you change here will be saved for others.</div>' : "") +
     '<div class="tabbar" style="margin-bottom:24px">' +
@@ -1550,6 +2192,7 @@ function renderAdminPane(){
     : adminTab === "recs" ? paneRecs()
     : adminTab === "meetings" ? paneMeetings()
     : adminTab === "members" ? paneMembers()
+    : adminTab === "inbox" ? paneInbox()
     : paneSettings();
 }
 
@@ -1576,8 +2219,7 @@ function bookEditor(b){
         '<div class="field"><label>Title</label><input class="input" type="text" value="' + esc(b.title) + '" data-bfield="title" data-bid="' + esc(b.id) + '" maxlength="140"></div>' +
         '<div class="field"><label>Author</label><input class="input" type="text" value="' + esc(b.author) + '" data-bfield="author" data-bid="' + esc(b.id) + '" maxlength="140"></div>' +
         '<div class="field"><label>Pages</label><input class="input" type="number" min="1" max="20000" value="' + esc(b.pages || "") + '" data-bfield="pages" data-bid="' + esc(b.id) + '"></div>' +
-        '<div class="field"><label>Reading level</label><select class="select" data-bfield="level" data-bid="' + esc(b.id) + '">' +
-          LEVELS.map(function(l){ return "<option" + (l === b.level ? " selected" : "") + ">" + esc(l) + "</option>"; }).join("") + "</select></div>" +
+        '<div class="field"><label>Reading level</label>' + dualRangeHTML("bk:" + b.id, b.ageMin, b.ageMax) + "</div>" +
         '<div class="field"><label>Series</label><input class="input" type="text" value="' + esc(b.series || "") + '" data-bfield="series" data-bid="' + esc(b.id) + '" placeholder="Leave blank if standalone" maxlength="120"></div>' +
         '<div class="field"><label>Book number in series</label><input class="input" type="number" min="1" max="99" value="' + esc(b.seriesIndex || 1) + '" data-bfield="seriesIndex" data-bid="' + esc(b.id) + '"></div>' +
         '<div class="field"><label>Started</label><input class="input" type="date" value="' + esc(b.started || "") + '" data-bfield="started" data-bid="' + esc(b.id) + '"></div>' +
@@ -1592,6 +2234,12 @@ function bookEditor(b){
         imgField("Book cover", "bcover", b.id, b.cover, false) +
         imgField("Book badge", "bbadge", b.id, b.badge, true) +
       "</div>" +
+      '<div style="margin-top:12px">' + coverSearchHTML("bk:" + b.id, function(){
+        var p = $("adminPane");
+        var tn = p && p.querySelector('[data-bfield="title"][data-bid="' + b.id + '"]');
+        var an = p && p.querySelector('[data-bfield="author"][data-bid="' + b.id + '"]');
+        return { title: tn ? tn.value : b.title, author: an ? an.value : b.author };
+      }, function(url){ setImage("bcover", b.id, url); }) + "</div>" +
       '<div class="field" style="margin-top:16px"><label>Who read it</label>' +
         (state.members.length
           ? '<div class="checkgrid">' + state.members.map(function(m){
@@ -1605,6 +2253,11 @@ function bookEditor(b){
             '<input type="range" min="0" max="5" step="0.1" value="' + clampRating(r.rating) + '" data-bfield="rating" data-bid="' + esc(b.id) + '" aria-label="Club rating out of 5">' +
             '<span class="ratepick__out" data-rateout="' + esc(b.id) + '">' + clampRating(r.rating).toFixed(1) + " / 5</span>" +
             '<span data-ratestars="' + esc(b.id) + '">' + stars(r.rating, true) + "</span></div></div>" +
+          '<div class="field"><label>Community rating</label><div class="ratepick">' +
+            '<input type="range" min="0" max="5" step="0.1" value="' + clampRating(r.community) + '" data-bfield="community" data-bid="' + esc(b.id) + '" aria-label="Community rating out of 5">' +
+            '<span class="ratepick__out" data-rateout="c:' + esc(b.id) + '">' + clampRating(r.community).toFixed(1) + " / 5</span>" +
+            '<span data-ratestars="c:' + esc(b.id) + '">' + stars(r.community, true) + "</span></div>" +
+            '<p class="hint">What readers elsewhere gave it — set it to 0 to hide it.</p></div>' +
           '<div class="field"><label>Reviewed by</label><input class="input" type="text" value="' + esc(r.by || "") + '" data-bfield="by" data-bid="' + esc(b.id) + '" placeholder="The club" maxlength="60"></div></div>' +
           '<div class="field" style="margin-top:14px"><label>Club review</label>' +
             '<textarea class="textarea" data-bfield="text" data-bid="' + esc(b.id) + '" placeholder="What did the group make of it?">' + esc(r.text || "") + "</textarea></div>"
@@ -1631,17 +2284,20 @@ function laneRow(b, opts){
     bookEditor(b) + "</div>";
 }
 function paneShelf(){
-  var now = currentBook(), q = nextBooks(), done = pastBooks(), out = "";
-  if(now || q.length){
+  var nowList = currentBooks(), q = nextBooks(), done = pastBooks(), out = "";
+  if(nowList.length || q.length){
     var up = q.length ? q[0].title : null;
-    out += '<div class="rotate"><p>' + (now ? "Currently reading <strong>" + esc(now.title) + "</strong>. " : "") +
+    var nowNames = nowList.map(function(b){ return "<strong>" + esc(b.title) + "</strong>"; }).join(" and ");
+    out += '<div class="rotate"><p>' + (nowList.length ? "Currently reading " + nowNames + ". " : "") +
       (up ? "Next up is <strong>" + esc(up) + "</strong>." : "Nothing queued yet — add a book to Up next below.") + "</p>" +
       (up ? '<button class="btn btn--flare" type="button" data-advance="1" style="margin-left:auto">' +
-        (now ? "Finish it &amp; start " : "Start ") + esc(up) + "</button>" : "") + "</div>";
+        (nowList.length ? "Finish " + (nowList.length > 1 ? "them" : "it") + " &amp; start " : "Start ") + esc(up) + "</button>" : "") + "</div>";
   }
   out += '<div class="lane"><div class="lane__label"><h4>Currently reading</h4><span class="rule"></span></div>' +
-    (now ? laneRow(now, { now:true, acts:[["next","Back to Up next"],["past","Mark finished","btn--surf"]] })
-         : '<p class="empty">No current book. Use “Start reading” on a queued book, or add one below.</p>') + "</div>";
+    (nowList.length
+      ? nowList.map(function(b){ return laneRow(b, { now:true, acts:[["next","Back to Up next"],["past","Mark finished","btn--surf"]] }); }).join("") +
+        '<p class="hint" style="margin-top:10px">More than one book here means the site shows a slider so people can flip between them.</p>'
+      : '<p class="empty">No current book. Use “Start reading” on a queued book, or add one below. You can have several on the go at once.</p>') + "</div>";
   out += '<div class="lane"><div class="lane__label"><h4>Up next</h4><span class="rule"></span></div>' +
     (q.length ? q.map(function(b,i){ return laneRow(b, { order:true, first:i===0, last:i===q.length-1,
         acts:[["current","Start reading","btn--flare"],["past","Mark finished"]] }); }).join("")
@@ -1654,8 +2310,7 @@ function paneShelf(){
       '<div class="field"><label for="abTitle">Title</label><input class="input" id="abTitle" type="text" maxlength="140"></div>' +
       '<div class="field"><label for="abAuthor">Author</label><input class="input" id="abAuthor" type="text" maxlength="140"></div>' +
       '<div class="field"><label for="abPages">Pages</label><input class="input" id="abPages" type="number" min="1" max="20000"></div>' +
-      '<div class="field"><label for="abLevel">Reading level</label><select class="select" id="abLevel">' +
-        LEVELS.map(function(l){ return "<option" + (l === "Ages 12+" ? " selected" : "") + ">" + esc(l) + "</option>"; }).join("") + "</select></div>" +
+      '<div class="field"><label>Reading level</label>' + dualRangeHTML("addBook", 12, AGE_TOP) + "</div>" +
       '<div class="field"><label for="abSeries">Series</label><input class="input" id="abSeries" type="text" placeholder="Blank if standalone" maxlength="120"></div>' +
       '<div class="field"><label for="abLane">Goes to</label><select class="select" id="abLane">' +
         '<option value="next">Up next</option><option value="current">Currently reading</option><option value="past">Finished</option></select></div>' +
@@ -1684,17 +2339,36 @@ function recEditor(r){
       '<div class="field"><label>Title</label><input class="input" type="text" value="' + esc(r.title) + '" data-rfield="title" data-rid="' + esc(r.id) + '" maxlength="140"></div>' +
       '<div class="field"><label>Author</label><input class="input" type="text" value="' + esc(r.author) + '" data-rfield="author" data-rid="' + esc(r.id) + '" maxlength="140"></div>' +
       '<div class="field"><label>Pages</label><input class="input" type="number" min="1" max="20000" value="' + esc(r.pages || "") + '" data-rfield="pages" data-rid="' + esc(r.id) + '"></div>' +
-      '<div class="field"><label>Reading level</label><select class="select" data-rfield="level" data-rid="' + esc(r.id) + '">' +
-        LEVELS.map(function(l){ return "<option" + (l === r.level ? " selected" : "") + ">" + esc(l) + "</option>"; }).join("") + "</select></div>" +
+      '<div class="field"><label>Reading level</label>' + dualRangeHTML("rc:" + r.id, r.ageMin, r.ageMax) + "</div>" +
       '<div class="field"><label>Recommended by</label><input class="input" type="text" value="' + esc(r.by || "") + '" data-rfield="by" data-rid="' + esc(r.id) + '" maxlength="60"></div>' +
     "</div>" +
     '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
-      '<input class="input" type="text" value="' + esc((r.genres || []).join(", ")) + '" data-rfield="genres" data-rid="' + esc(r.id) + '" maxlength="200"></div>' +
+      '<input class="input" type="text" value="' + esc((r.genres || []).join(", ")) + '" data-rfield="genres" data-rid="' + esc(r.id) + '" maxlength="300"></div>' +
     '<div class="field" style="margin-top:14px"><label>Summary</label>' +
       '<textarea class="textarea" data-rfield="blurb" data-rid="' + esc(r.id) + '">' + esc(r.blurb || "") + "</textarea></div>" +
+    '<div class="field" style="margin-top:14px"><label>Reader reviews <span style="text-transform:none;letter-spacing:0">(spoiler-free, one per line as "quote — who said it")</span></label>' +
+      '<textarea class="textarea" data-rfield="reviews" data-rid="' + esc(r.id) + '" placeholder="Could not put it down — A reader">' +
+      esc((r.reviews || []).map(function(rv){ return rv.text + (rv.by ? " — " + rv.by : ""); }).join("\n")) + "</textarea>" +
+      '<p class="hint">Up to three show on the book&rsquo;s page.</p></div>' +
     '<div class="formgrid" style="margin-top:18px">' + imgField("Book cover", "rcover", r.id, r.cover, false) + "</div>" +
-    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
+    '<div style="margin-top:12px">' + coverSearchHTML("rc:" + r.id, function(){
+      var p = $("adminPane");
+      var tn = p && p.querySelector('[data-rfield="title"][data-rid="' + r.id + '"]');
+      var an = p && p.querySelector('[data-rfield="author"][data-rid="' + r.id + '"]');
+      return { title: tn ? tn.value : r.title, author: an ? an.value : r.author };
+    }, function(url){ setImage("rcover", r.id, url); }) + "</div>" +
+    ((r.endorsements || []).length
+      ? '<div class="field" style="margin-top:16px"><label>Seconded by</label><div class="seconds">' +
+        r.endorsements.map(function(en, i){
+          return '<span class="secondchip">' + esc(en.name) +
+            ' <button type="button" data-unsecond="' + esc(r.id) + '" data-i="' + i + '" aria-label="Remove ' + esc(en.name) + '" ' +
+            'style="border:0;background:none;cursor:pointer;padding:0 0 0 4px">&times;</button></span>';
+        }).join("") + "</div></div>"
+      : "") +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center">' +
       '<button class="btn btn--sm btn--zest" type="button" data-rsave="' + esc(r.id) + '">Save changes</button>' +
+      '<button class="btn btn--sm ' + (r.shortlist ? "btn--flare" : "btn--ghost") + '" type="button" data-rshort="' + esc(r.id) + '">' +
+        (r.shortlist ? "On the shortlist" : "Add to shortlist") + "</button>" +
       '<button class="btn btn--sm btn--ghost" type="button" data-rdel="' + esc(r.id) + '" style="margin-left:auto">Delete permanently</button>' +
     "</div></div></details>";
 }
@@ -1706,7 +2380,7 @@ function paneRecs(){
     ? pend.map(function(r){
         return '<div class="pending"><div><h4>' + esc(r.title) + "</h4>" +
           '<p style="color:var(--muted);font-style:italic;margin-top:4px">by ' + esc(r.author) + " · " + esc(r.pages || "?") + " pages</p>" +
-          '<div class="tagbank" style="margin-top:10px"><span class="tag mono">' + esc(r.level || "All ages") + "</span>" +
+          '<div class="tagbank" style="margin-top:10px"><span class="tag mono">' + esc(levelText(r)) + "</span>" +
             (r.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") + "</div>" +
           '<p style="margin-top:12px;font-size:15.5px">' + esc(r.blurb || "No summary given.") + "</p>" +
           '<p class="review__by">Submitted by ' + esc(r.by || "anonymous") + (r.at ? " · " + esc(shortDate(r.at)) : "") + "</p></div>" +
@@ -1790,6 +2464,24 @@ function paneMembers(){
               '<div class="field"><label>Fable profile</label><input class="input" type="url" value="' + esc(m.fable || "") + '" data-mmfield="fable" data-mmid="' + esc(m.id) + '" placeholder="https://fable.co/..." maxlength="300"></div>' +
               '<div class="field"><label>Goodreads profile</label><input class="input" type="url" value="' + esc(m.goodreads || "") + '" data-mmfield="goodreads" data-mmid="' + esc(m.id) + '" placeholder="https://www.goodreads.com/user/show/..." maxlength="300"></div>' +
             "</div>" +
+            '<div class="field" style="margin-top:14px"><label>Meeting emails</label><div class="checkgrid">' +
+              '<label><input type="checkbox" data-mnotify="*" data-mmid="' + esc(m.id) + '"' +
+                ((m.notify || []).indexOf("*") !== -1 ? " checked" : "") + ">Every meeting</label>" +
+              currentBooks().concat(nextBooks()).map(function(b){
+                return '<label><input type="checkbox" data-mnotify="' + esc(b.id) + '" data-mmid="' + esc(m.id) + '"' +
+                  ((m.notify || []).indexOf(b.id) !== -1 ? " checked" : "") + ">" + esc(b.title) + "</label>";
+              }).join("") +
+            "</div>" +
+            (m.notifyRef
+              ? '<p class="hint">Sending to <strong>' + esc(m.emailHint || "their address") + '</strong> &mdash; held privately by the submissions endpoint, not stored here. Reference <code>' + esc(m.notifyRef) + "</code>.</p>"
+              : '<p class="hint">No address on file. They can add one themselves with <strong>Email me about this</strong> on the meeting card; it never touches this repo.</p>') +
+            "</div>" +
+            (m.email
+              ? '<div class="banner" style="display:block;margin-top:14px;background:var(--flare);color:var(--on-flare)">' +
+                "<strong>" + esc(m.email) + "</strong> is written into <code>data/state.json</code>, which is public. " +
+                "Remove it and ask them to sign up from the site instead." +
+                '<div style="margin-top:10px"><button class="btn btn--sm" type="button" data-memwipe="' + esc(m.id) + '">Remove the address</button></div></div>'
+              : "") +
             '<div style="margin-top:14px"><button class="btn btn--sm btn--zest" type="button" data-memsave="' + esc(m.id) + '">Save</button></div></div>';
         }).join("")
       : '<p class="empty">No members yet. Add the first one below — members show up on the timeline and can be tagged on each book.</p>') +
@@ -1828,9 +2520,64 @@ function paneSettings(){
       '<p class="hint" style="margin-top:10px">Every save commits <code>data/state.json</code> to <code>' + esc(GH.branch) + '</code>, and the published site refreshes about a minute later.</p>' +
     "</div>" +
 
+    '<hr class="divider"><p class="eyebrow">Submissions &amp; email</p><h3 style="font-size:20px;margin:8px 0 16px">Letting people take part without a GitHub account</h3>' +
+    '<div class="adminrow">' +
+      '<div class="field"><label for="setEndpoint">Submissions endpoint</label>' +
+        '<input class="input mono" id="setEndpoint" type="url" value="' + esc(state.club.formEndpoint || "") + '" placeholder="https://script.google.com/macros/s/…/exec" maxlength="400"></div>' +
+      '<div class="field" style="margin-top:14px"><label for="setEmail">Organiser email</label>' +
+        '<input class="input" id="setEmail" type="email" value="' + esc(state.club.contactEmail || "") + '" placeholder="you@example.com" maxlength="160"></div>' +
+      '<div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">' +
+        '<button class="btn btn--sm btn--zest" type="button" id="setEndpointSave">Save endpoint</button>' +
+        '<button class="btn btn--sm btn--ghost" type="button" id="setEndpointTest">Test it</button></div>' +
+      '<p class="hint" style="margin-top:14px">With this set, book suggestions, join requests, profile changes, seconds and meeting-email signups all go straight to the club inbox &mdash; nobody needs a GitHub account. It also sends the meeting reminders: one when a meeting is scheduled, one five days before and one thirty minutes before. Setup steps are in <code>docs/notifications.md</code>.</p>' +
+      (endpoint() ? "" : '<p class="hint" style="margin-top:10px">Until it&rsquo;s set, the Suggest a Book form falls back to opening a GitHub issue, and seconding is switched off.</p>') +
+    "</div>" +
+
     '<hr class="divider"><p class="eyebrow">Suggestions</p><h3 style="font-size:20px;margin:8px 0 16px">Books people have put forward</h3>' +
-    '<div class="adminrow"><p style="font-size:15.5px">The Suggest a Book form opens a GitHub issue on the repo. Read them there, then add the ones you want from the Recommendations tab.</p>' +
+    '<div class="adminrow"><p style="font-size:15.5px">Submissions land under the Inbox tab. Anything sent the old way, as a GitHub issue, is still on the repo.</p>' +
       '<div style="margin-top:14px"><a class="btn btn--sm btn--sky" href="https://github.com/' + esc(GH.owner + "/" + GH.repo) + '/issues?q=is%3Aissue+is%3Aopen" target="_blank" rel="noopener noreferrer">Open suggestions on GitHub</a></div></div>';
+}
+
+function paneInbox(){
+  var waiting = inbox.filter(function(i){ return i && !i.handled; });
+  var labels = { suggest:"Book suggestion", join:"Join request", profile:"Profile change", endorse:"Second", notify:"Meeting emails" };
+  var out = '<p class="eyebrow">From the site</p><h3 style="font-size:22px;margin:8px 0 6px">' +
+    (waiting.length ? waiting.length + " waiting" : "Nothing waiting") + "</h3>" +
+    '<p class="hint" style="margin-bottom:18px">Everything people sent without a GitHub account. Accepting a suggestion drops it into Recommendations as a pending submission; accepting a join request adds the member.</p>';
+  if(!endpoint()){
+    return out + '<p class="empty">No submissions endpoint set yet — add one under Settings and the inbox starts filling up.</p>';
+  }
+  if(!waiting.length) return out + '<p class="empty">The inbox is empty. New submissions show up here within a minute of being sent.</p>';
+  out += waiting.map(function(it){
+    var p = it.payload || {};
+    var rows = Object.keys(p).filter(function(k){ return p[k] !== "" && p[k] != null; }).map(function(k){
+      var v = p[k];
+      if(Array.isArray(v)) v = v.join(", ");
+      return '<span class="k">' + esc(k) + "</span><span>" + esc(String(v)) + "</span>";
+    }).join("");
+    return '<div class="inboxrow"><div class="inboxrow__head">' +
+      '<span class="kind">' + esc(labels[it.kind] || it.kind) + "</span>" +
+      '<span class="lanerow__meta">' + esc(it.at ? shortDate(String(it.at).slice(0, 10)) : "") + "</span>" +
+      '<span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">' +
+        (it.kind === "suggest" || it.kind === "join" || it.kind === "notify"
+          ? '<button class="btn btn--sm btn--surf" type="button" data-inaccept="' + esc(it.id) + '">Accept</button>' : "") +
+        '<button class="btn btn--sm btn--ghost" type="button" data-indismiss="' + esc(it.id) + '">Dismiss</button>' +
+      "</span></div>" +
+      '<div class="kv">' + rows + "</div></div>";
+  }).join("");
+  return out;
+}
+
+/* one review per line, "the quote — who said it" */
+function parseReviewLines(text){
+  return String(text || "").split("\n").map(function(line){
+    var s = line.trim(); if(!s) return null;
+    var cut = s.lastIndexOf(" — ");
+    if(cut === -1) cut = s.lastIndexOf(" - ");
+    return cut > 0
+      ? { text: s.slice(0, cut).trim(), by: s.slice(cut + 3).trim(), source: "" }
+      : { text: s, by: "", source: "" };
+  }).filter(Boolean).slice(0, 3);
 }
 
 /* ---------- image actions ---------- */
@@ -1845,11 +2592,14 @@ async function setImage(kind, id, url){
 /* ---------- events ---------- */
 document.addEventListener("input", function(e){
   var n = e.target;
-  if(!n || !n.getAttribute || n.getAttribute("data-bfield") !== "rating") return;
-  var id = n.getAttribute("data-bid"), v = clampRating(n.value), pane = $("adminPane");
+  if(!n || !n.getAttribute) return;
+  var f = n.getAttribute("data-bfield");
+  if(f !== "rating" && f !== "community") return;
+  var key = (f === "community" ? "c:" : "") + n.getAttribute("data-bid");
+  var v = clampRating(n.value), pane = $("adminPane");
   if(!pane) return;
-  var out = pane.querySelector('[data-rateout="' + id + '"]');
-  var st = pane.querySelector('[data-ratestars="' + id + '"]');
+  var out = pane.querySelector('[data-rateout="' + key + '"]');
+  var st = pane.querySelector('[data-ratestars="' + key + '"]');
   if(out) out.textContent = v.toFixed(1) + " / 5";
   if(st) st.innerHTML = stars(v, true);
 });
@@ -1857,13 +2607,133 @@ document.addEventListener("click", async function(e){
   var t = e.target; if(!t || !t.closest) return;
   var el;
 
+  /* carousels */
+  if((el = t.closest("[data-cyc]"))){
+    var ck = el.getAttribute("data-cyc"), cd = Number(el.getAttribute("data-d")) || 1;
+    if(ck === "hero"){
+      var hn = currentBooks().length || 1;
+      heroIdx = (heroIdx + cd + hn) % hn;
+    }else{
+      var mn = upcomingMeetings().length || 1;
+      meetIdx = (meetIdx + cd + mn) % mn;
+    }
+    renderHero();
+    return;
+  }
+  if((el = t.closest("[data-cycto]"))){
+    var ti = Number(el.getAttribute("data-i")) || 0;
+    if(el.getAttribute("data-cycto") === "hero") heroIdx = ti; else meetIdx = ti;
+    renderHero();
+    return;
+  }
+
+  /* cover search */
+  if((el = t.closest("[data-coversearch]"))){ await runCoverSearch(el.getAttribute("data-coversearch")); return; }
+  if((el = t.closest("[data-coverurl]"))){
+    var hk = coverHooks[el.getAttribute("data-cscope")];
+    if(hk && hk.pick) hk.pick(el.getAttribute("data-coverurl"));
+    return;
+  }
+
+  /* recommendation filters */
+  if((el = t.closest("[data-fgenre]"))){
+    var g = el.getAttribute("data-fgenre"), at = recFilter.genres.indexOf(g);
+    if(at === -1) recFilter.genres.push(g); else recFilter.genres.splice(at, 1);
+    renderRecs();
+    return;
+  }
+  if(t.closest("#fReset")){
+    recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP };
+    renderRecs();
+    return;
+  }
+
+  /* seconding a recommendation */
+  if((el = t.closest("[data-endorse]"))){
+    var er = recById(el.getAttribute("data-endorse")); if(!er) return;
+    var nameEl = $("endorseName"), nm0 = nameEl ? nameEl.value.trim() : "";
+    if(!nm0){ if(nameEl) nameEl.focus(); say("Put your name in first.", "bad"); return; }
+    if((er.endorsements || []).some(function(x){ return x.name.toLowerCase() === nm0.toLowerCase(); })){
+      say("You've already seconded this one.", "ok");
+      return;
+    }
+    if(endpoint()){
+      say("Sending…", "busy", true);
+      var eres = await submitPublic("endorse", { recId: er.id, title: er.title, name: nm0 });
+      if(!eres.ok){ say(submitFailMsg(eres), "bad"); return; }
+      er.endorsements.push({ name: nm0, at: new Date().toISOString() });
+      say("Seconded. Thanks!", "ok");
+    }else if(!readOnly){
+      er.endorsements.push({ name: nm0, at: new Date().toISOString() });
+      if(!await save("Seconding…")) return;
+    }else{
+      say(submitFailMsg({ reason: "unconfigured" }), "bad");
+      return;
+    }
+    openBookDetail(er, "rec");
+    renderRecs();
+    return;
+  }
+
+  /* member requests */
+  if((el = t.closest("[data-memform]"))){
+    openMemberForm(el.getAttribute("data-memform"), el.getAttribute("data-nbook") || "");
+    return;
+  }
+  if((el = t.closest("[data-memsend]"))){
+    var mk = el.getAttribute("data-memsend");
+    var pay = { email: ($("mfEmail") ? $("mfEmail").value.trim() : "") };
+    if($("mfWho")){
+      var who = memberById($("mfWho").value);
+      pay.member = who ? who.name : ""; pay.memberId = $("mfWho") ? $("mfWho").value : "";
+    }else if($("mfName")){ pay.name = $("mfName").value.trim(); }
+    if($("mfFable")) pay.fable = $("mfFable").value.trim();
+    if($("mfGoodreads")) pay.goodreads = $("mfGoodreads").value.trim();
+    if($("mfNote")) pay.note = $("mfNote").value.trim();
+    if(mk === "notify"){
+      pay.books = [];
+      Array.prototype.forEach.call($("memberModalBody").querySelectorAll("[data-notify]"), function(c){
+        if(c.checked) pay.books.push(c.getAttribute("data-notify"));
+      });
+      pay.titles = pay.books.map(function(id){ var b = bookById(id); return b ? b.title : "Every meeting"; });
+      if(!pay.books.length){ say("Pick at least one.", "bad"); return; }
+      if(!pay.email){ if($("mfEmail")) $("mfEmail").focus(); say("An email address is needed for reminders.", "bad"); return; }
+    }
+    if(!pay.name && !pay.member){ if($("mfName")) $("mfName").focus(); say("Put your name in first.", "bad"); return; }
+    say("Sending…", "busy", true);
+    var mres = await submitPublic(mk, pay);
+    if(!mres.ok){ say(submitFailMsg(mres), "bad"); return; }
+    say("Sent — the organiser will pick it up.", "ok");
+    closeScrim("memberScrim");
+    return;
+  }
+
+  /* inbox */
+  if((el = t.closest("[data-inaccept]"))){
+    var iid0 = el.getAttribute("data-inaccept");
+    var item = inbox.filter(function(x){ return x && x.id === iid0; })[0];
+    if(!item) return;
+    acceptSubmission(item);
+    state.inbox.push(iid0);
+    if(await save("Accepting…")){ item.handled = true; renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-indismiss]"))){
+    var iid1 = el.getAttribute("data-indismiss");
+    state.inbox.push(iid1);
+    if(await save("Dismissing…")){
+      inbox.forEach(function(x){ if(x && x.id === iid1) x.handled = true; });
+      renderAdmin();
+    }
+    return;
+  }
+
   if((el = t.closest("[data-focus]"))){
     focusId = el.getAttribute("data-focus") || null;
-    $("crewBox").hidden = true;
     renderFocus(); renderTree(); renderTimeline();
     return;
   }
-  if((el = t.closest("[data-badge]"))){ showCrew(el.getAttribute("data-badge")); return; }
+  if((el = t.closest("[data-badge]"))){ openBadge(el.getAttribute("data-badge")); return; }
   if((el = t.closest("[data-meet]"))){ openMeeting(el.getAttribute("data-meet")); return; }
   if((el = t.closest("[data-rec]"))){ var rr0 = recById(el.getAttribute("data-rec")); if(rr0) openBookDetail(rr0, "rec"); return; }
   if((el = t.closest("[data-book]"))){ var bk0 = bookById(el.getAttribute("data-book")); if(bk0) openBookDetail(bk0, "book"); return; }
@@ -1932,11 +2802,27 @@ document.addEventListener("click", async function(e){
     var rs = recById(el.getAttribute("data-rsave")); if(!rs) return;
     var rp = $("adminPane");
     var rget = function(f){ return rp.querySelector('[data-rfield="' + f + '"][data-rid="' + rs.id + '"]'); };
-    ["title","author","by","level","blurb"].forEach(function(f){ var n = rget(f); if(n) rs[f] = f === "blurb" ? n.value : n.value.trim(); });
+    ["title","author","by","blurb"].forEach(function(f){ var n = rget(f); if(n) rs[f] = f === "blurb" ? n.value : n.value.trim(); });
     var rpg = rget("pages"); if(rpg) rs.pages = Number(rpg.value) || null;
     var rgn = rget("genres"); if(rgn) rs.genres = rgn.value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+    var rAge = dualValue("rc:" + rs.id);
+    rs.ageMin = rAge.lo; rs.ageMax = rAge.hi; rs.level = levelText(rs);
+    var rrv = rget("reviews");
+    if(rrv) rs.reviews = parseReviewLines(rrv.value);
     if(!rs.title) rs.title = "Untitled";
     if(await save("Saving…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-rshort]"))){
+    var sr = recById(el.getAttribute("data-rshort")); if(!sr) return;
+    sr.shortlist = !sr.shortlist;
+    if(await save(sr.shortlist ? "Shortlisting…" : "Removing from shortlist…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-unsecond]"))){
+    var ur = recById(el.getAttribute("data-unsecond")); if(!ur) return;
+    ur.endorsements.splice(Number(el.getAttribute("data-i")), 1);
+    if(await save("Removing…")){ renderAll(); renderAdmin(); }
     return;
   }
 
@@ -1945,10 +2831,12 @@ document.addEventListener("click", async function(e){
     var bb = bookById(el.getAttribute("data-bsave")); if(!bb) return;
     var p2 = $("adminPane");
     var get = function(f){ return p2.querySelector('[data-bfield="' + f + '"][data-bid="' + bb.id + '"]'); };
-    ["title","author","level","series","started","finished","blurb"].forEach(function(f){
+    ["title","author","series","started","finished","blurb"].forEach(function(f){
       var n = get(f); if(n) bb[f] = f === "blurb" ? n.value : n.value.trim();
     });
     if(!bb.title) bb.title = "Untitled";
+    var bAge = dualValue("bk:" + bb.id);
+    bb.ageMin = bAge.lo; bb.ageMax = bAge.hi; bb.level = levelText(bb);
     var pg = get("pages"); if(pg) bb.pages = Number(pg.value) || null;
     var si = get("seriesIndex"); if(si) bb.seriesIndex = Number(si.value) || 1;
     var pp = get("progressPage"); if(pp) bb.progressPage = Math.max(0, Number(pp.value) || 0);
@@ -1958,11 +2846,12 @@ document.addEventListener("click", async function(e){
       bb.members = [];
       Array.prototype.forEach.call(picks, function(c){ if(c.checked) bb.members.push(c.getAttribute("data-bmember")); });
     }
-    var rt = get("text"), rr2 = get("rating"), rb = get("by");
-    if(rt || rr2 || rb){
+    var rt = get("text"), rr2 = get("rating"), rb = get("by"), rc = get("community");
+    if(rt || rr2 || rb || rc){
       bb.review = bb.review || {};
       if(rt) bb.review.text = rt.value;
       if(rr2) bb.review.rating = clampRating(rr2.value);
+      if(rc) bb.review.community = clampRating(rc.value);
       if(rb) bb.review.by = rb.value.trim();
     }
     if(await save("Saving…")){ renderAll(); renderAdmin(); }
@@ -1971,17 +2860,23 @@ document.addEventListener("click", async function(e){
   if((el = t.closest("[data-setstatus]"))){
     var want = el.getAttribute("data-setstatus"), sb = bookById(el.getAttribute("data-bid")); if(!sb) return;
     var wasCurrent = sb.status === "current";
-    if(want === "current") state.books.forEach(function(b){ if(b.status === "current") b.status = "past"; });
     sb.status = want;
     if(want === "past" && !sb.finished) sb.finished = todayISO();
-    if(want === "current" && !sb.started) sb.started = todayISO();
-    if(wasCurrent && want !== "current"){ var q3 = nextBooks(); if(q3.length){ q3[0].status = "current"; if(!q3[0].started) q3[0].started = todayISO(); } }
+    if(want === "current"){
+      if(!sb.started) sb.started = todayISO();
+      sb.order = currentBooks().length;
+    }
+    /* only pull the queue forward when the last current book leaves the shelf */
+    if(wasCurrent && want !== "current" && !currentBooks().length){
+      var q3 = nextBooks();
+      if(q3.length){ q3[0].status = "current"; if(!q3[0].started) q3[0].started = todayISO(); }
+    }
     if(await save("Updating…")){ renderAll(); renderAdmin(); }
     return;
   }
   if(t.closest("[data-advance]")){
-    var cur = currentBook(), queue = nextBooks();
-    if(cur){ cur.status = "past"; if(!cur.finished) cur.finished = todayISO(); }
+    var queue = nextBooks();
+    currentBooks().forEach(function(cur){ cur.status = "past"; if(!cur.finished) cur.finished = todayISO(); });
     if(queue.length){ queue[0].status = "current"; if(!queue[0].started) queue[0].started = todayISO(); }
     if(await save("Moving the list on…")){ renderAll(); renderAdmin(); }
     return;
@@ -1999,15 +2894,15 @@ document.addEventListener("click", async function(e){
   if(t.closest("#abAdd")){
     var ttl = $("abTitle").value.trim(); if(!ttl){ $("abTitle").focus(); return; }
     var lane = $("abLane").value;
-    if(lane === "current") state.books.forEach(function(b){ if(b.status === "current") b.status = "past"; });
-    state.books.push({
+    var abAge = dualValue("addBook");
+    state.books.push(withAges({
       id: uid("bk"), title: ttl, author: $("abAuthor").value.trim(), pages: Number($("abPages").value) || null,
-      level: $("abLevel").value, series: $("abSeries").value.trim(), seriesIndex: 1,
+      ageMin: abAge.lo, ageMax: abAge.hi, series: $("abSeries").value.trim(), seriesIndex: 1,
       genres: $("abGenres").value.split(",").map(function(s){ return s.trim(); }).filter(Boolean),
       blurb: $("abBlurb").value.trim(), status: lane, cover:"", badge:"",
       started: lane === "current" ? todayISO() : "", finished: lane === "past" ? todayISO() : "",
-      progressPage: 0, members: []
-    });
+      progressPage: 0, members: [], order: state.books.length
+    }));
     if(await save("Adding…")){ renderAll(); renderAdmin(); }
     return;
   }
@@ -2020,9 +2915,7 @@ document.addEventListener("click", async function(e){
   if((el = t.closest("[data-promote]"))){
     var sel = $("promoSel"); if(!sel) return;
     var pr = recById(sel.value); if(!pr) return;
-    var mode = el.getAttribute("data-promote");
-    if(mode === "current") state.books.forEach(function(b){ if(b.status === "current") b.status = "past"; });
-    adoptRec(pr, mode);
+    adoptRec(pr, el.getAttribute("data-promote"));
     if(await save("Moving to the reading list…")){ renderAll(); renderAdmin(); }
     return;
   }
@@ -2077,6 +2970,7 @@ document.addEventListener("click", async function(e){
   if(t.closest("#amAdd")){
     var nm = $("amName").value.trim(); if(!nm){ $("amName").focus(); return; }
     state.members.push({ id: uid("mb"), name: nm, joined: $("amJoined").value, avatar: "",
+      email: "", notifyRef: "", emailHint: "", notify: [],
       fable: $("amFable").value.trim(), goodreads: $("amGoodreads").value.trim() });
     if(await save("Adding member…")){ renderAll(); renderAdmin(); }
     return;
@@ -2090,7 +2984,21 @@ document.addEventListener("click", async function(e){
     if(jj) mem.joined = jj.value;
     if(ff) mem.fable = ff.value.trim();
     if(gg) mem.goodreads = gg.value.trim();
+    var nboxes = mpn.querySelectorAll('[data-mnotify][data-mmid="' + mem.id + '"]');
+    if(nboxes.length){
+      mem.notify = [];
+      Array.prototype.forEach.call(nboxes, function(c){ if(c.checked) mem.notify.push(c.getAttribute("data-mnotify")); });
+    }
     if(await save("Saving…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-memwipe]"))){
+    var wipe = memberById(el.getAttribute("data-memwipe")); if(!wipe) return;
+    wipe.email = "";
+    if(await save("Removing the address…")){
+      say("Removed. It stays in the repo's history — see docs/notifications.md if that matters.", "ok");
+      renderAll(); renderAdmin();
+    }
     return;
   }
   if((el = t.closest("[data-memdel]"))){
@@ -2140,6 +3048,25 @@ document.addEventListener("click", async function(e){
     if(await save("Saving settings…")){ renderAll(); renderAdmin(); }
     return;
   }
+  if(t.closest("#setEndpointSave")){
+    var epv = $("setEndpoint").value.trim();
+    if(epv && !safeUrl(epv)){ say("That needs to be a full https:// address.", "bad"); return; }
+    state.club.formEndpoint = epv;
+    state.club.contactEmail = $("setEmail").value.trim();
+    if(await save("Saving settings…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if(t.closest("#setEndpointTest")){
+    var tv = safeUrl($("setEndpoint").value.trim() || state.club.formEndpoint);
+    if(!tv){ say("Paste the endpoint address first.", "bad"); return; }
+    say("Testing…", "busy", true);
+    try{
+      var tr = await fetch(tv, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" },
+        body: JSON.stringify({ kind:"ping", payload:{}, at:new Date().toISOString() }) });
+      say(tr.ok ? "The endpoint answered — submissions will reach you." : "The endpoint answered with an error (" + tr.status + ").", tr.ok ? "ok" : "bad");
+    }catch(e2){ say("Couldn’t reach that address. Check it’s deployed with access set to “Anyone”.", "bad"); }
+    return;
+  }
 
   /* nav */
   if(t.closest("#heroDetails") || t.closest("#heroTitle")){
@@ -2151,14 +3078,63 @@ document.addEventListener("click", async function(e){
   if(t.closest("#heroJumpRecs")){ document.getElementById("recs").scrollIntoView({ behavior:"smooth" }); return; }
 });
 
+/* fold an inbox item into the club's own data */
+function acceptSubmission(item){
+  var p = item.payload || {};
+  if(item.kind === "suggest"){
+    if(recById(item.id)) return;
+    state.recs.push(withAges({
+      id: item.id, title: String(p.title || "Untitled").slice(0, 140), author: String(p.author || "").slice(0, 140),
+      pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
+      genres: Array.isArray(p.genres) ? p.genres : String(p.genres || "").split(",").map(function(s){ return s.trim(); }).filter(Boolean),
+      by: String(p.by || "").slice(0, 60), status: "pending", at: String(item.at || "").slice(0, 10),
+      cover: safeUrl(p.cover), blurb: String(p.blurb || ""), summarySource: String(p.summarySource || "own"),
+      shortlist: false, reviews: [], endorsements: []
+    }));
+  }else if(item.kind === "join"){
+    var nm = String(p.name || "").trim();
+    if(!nm) return;
+    if(state.members.some(function(m){ return m.name.toLowerCase() === nm.toLowerCase(); })) return;
+    /* only the reference and the masked hint — never the address itself */
+    state.members.push({ id: uid("mb"), name: nm.slice(0, 60), joined: todayISO(), avatar: "",
+      email: "", notifyRef: String(p.emailRef || ""), emailHint: String(p.emailHint || ""), notify: [],
+      fable: safeUrl(p.fable), goodreads: safeUrl(p.goodreads) });
+  }else if(item.kind === "notify"){
+    var who = String(p.name || "").trim(), ref = String(p.emailRef || "").trim();
+    if(!ref) return;
+    var mem = state.members.filter(function(m){
+      return (who && m.name.toLowerCase() === who.toLowerCase()) || (m.notifyRef && m.notifyRef === ref);
+    })[0];
+    if(!mem){
+      mem = { id: uid("mb"), name: who || "New subscriber", joined: "", avatar: "",
+        email: "", notifyRef: "", emailHint: "", notify: [], fable: "", goodreads: "" };
+      state.members.push(mem);
+    }
+    mem.notifyRef = ref;
+    mem.emailHint = String(p.emailHint || "");
+    (Array.isArray(p.books) ? p.books : []).forEach(function(id){
+      if(mem.notify.indexOf(id) === -1) mem.notify.push(id);
+    });
+  }
+}
+
 function adoptRec(rec, status){
-  var copy = { id: rec.id, title: rec.title, author: rec.author, pages: rec.pages, genres: rec.genres || [],
-    level: rec.level, blurb: rec.blurb, status: status, cover: rec.cover || "", badge: "",
+  var copy = withAges({ id: rec.id, title: rec.title, author: rec.author, pages: rec.pages, genres: rec.genres || [],
+    ageMin: rec.ageMin, ageMax: rec.ageMax, blurb: rec.blurb, status: status, cover: rec.cover || "", badge: "",
     series: "", seriesIndex: 1, started: status === "current" ? todayISO() : "",
-    finished: status === "past" ? todayISO() : "", progressPage: 0, members: [] };
+    finished: status === "past" ? todayISO() : "", progressPage: 0, members: [],
+    order: currentBooks().length });
   if(!bookById(copy.id)) state.books.push(copy);
   state.recs = state.recs.filter(function(x){ return x.id !== rec.id; });
 }
+
+/* the two filter dropdowns */
+document.addEventListener("change", function(e){
+  var n = e.target;
+  if(!n || !n.id) return;
+  if(n.id === "fBy"){ recFilter.by = n.value; renderRecs(); }
+  else if(n.id === "fSort"){ recFilter.sort = n.value; renderRecs(); }
+});
 
 /* ---------- tabs ---------- */
 function tabGroup(ids, prefix){
@@ -2172,33 +3148,172 @@ function tabGroup(ids, prefix){
     });
   });
 }
-tabGroup(["recs","suggest"], "tab-");
+tabGroup(["recs","short","suggest"], "tab-");
 tabGroup(["tree","time"], "tab-");
 
-/* ---------- submission: opens a GitHub issue ---------- */
-$("suggestForm").addEventListener("submit", function(e){
+/* ---------- the Suggest a Book form ---------- */
+var sugMode = "fetched", sugCover = "", sugFetched = "", sugAI = "", sugOwn = "";
+var acHits = [], acTimer = null;
+
+function setSugMode(mode){
+  sugMode = mode;
+  Array.prototype.forEach.call($("sSumMode").querySelectorAll("[data-summode]"), function(b){
+    b.setAttribute("aria-pressed", String(b.getAttribute("data-summode") === mode));
+  });
+  var box = $("sBlurb"), hint = $("sSumHint");
+  if(mode === "fetched"){
+    box.value = sugFetched;
+    hint.textContent = sugFetched
+      ? "Pulled from the book listing. Edit it however you like."
+      : "Pick a title above and the published summary drops in here.";
+  }else if(mode === "ai"){
+    box.value = sugAI;
+    hint.textContent = "Written fresh from the title and author. Edit it however you like.";
+    if(!sugAI) requestAISummary();
+  }else{
+    box.value = sugOwn;
+    hint.textContent = "All yours. A few sentences, no spoilers.";
+  }
+}
+async function requestAISummary(){
+  var title = $("sTitle").value.trim(), author = $("sAuthor").value.trim();
+  if(!title){ $("sSumHint").textContent = "Type a title first, then try again."; return; }
+  if(!endpoint()){
+    $("sSumHint").textContent = "Writing summaries isn\u2019t switched on \u2014 ask the organiser, or write your own.";
+    return;
+  }
+  $("sSumHint").textContent = "Writing a summary\u2026";
+  var url = endpoint();
+  try{
+    var res = await fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ kind: "summarise", payload: { title: title, author: author }, at: new Date().toISOString() }) });
+    var j = res.ok ? await res.json() : null;
+    if(j && j.summary){
+      sugAI = String(j.summary).trim();
+      if(sugMode === "ai"){ $("sBlurb").value = sugAI; }
+      $("sSumHint").textContent = "Written fresh from the title and author. Edit it however you like.";
+    }else{
+      $("sSumHint").textContent = "Couldn\u2019t write one just now \u2014 try the other options.";
+    }
+  }catch(e){
+    $("sSumHint").textContent = "Couldn\u2019t reach the club\u2019s inbox. Try the other options.";
+  }
+}
+function closeAC(){
+  $("sTitleMenu").hidden = true;
+  $("sTitle").setAttribute("aria-expanded", "false");
+}
+function renderAC(){
+  var menu = $("sTitleMenu");
+  if(!acHits.length){ closeAC(); return; }
+  menu.innerHTML = acHits.map(function(h, i){
+    return '<button class="ac__opt" type="button" role="option" data-achit="' + i + '">' +
+      (h.cover ? '<img src="' + esc(h.cover) + '" alt="" loading="lazy">' : "") +
+      '<span><span class="ac__t">' + esc(h.title) + "</span>" +
+      '<span class="ac__a">' + esc(h.author || "unknown author") + (h.year ? " \u00b7 " + esc(h.year) : "") + "</span></span></button>";
+  }).join("");
+  menu.hidden = false;
+  $("sTitle").setAttribute("aria-expanded", "true");
+}
+async function chooseACHit(i){
+  var h = acHits[i]; if(!h) return;
+  closeAC();
+  $("sTitle").value = h.title;
+  $("sAuthor").value = h.author;
+  if(h.pages) $("sPages").value = h.pages;
+  sugFetched = h.blurb || "";
+  sugCover = h.cover || "";
+  var genres = (h.genres || []).slice();
+  /* Google Books hints at maturity; Open Library fills out the shelf-style genres */
+  if(h.mature){ dualState.sAge = { lo: 18, hi: AGE_TOP }; syncDual("sAge"); }
+  var extras = await openLibraryExtras(h.title, h.author);
+  if(extras){
+    if(!h.pages && extras.pages) $("sPages").value = extras.pages;
+    extras.genres.forEach(function(g){
+      if(!genres.some(function(x){ return x.toLowerCase() === g.toLowerCase(); })) genres.push(g);
+    });
+    if(!sugCover && extras.cover) sugCover = extras.cover;
+  }
+  $("sGenres").value = genres.slice(0, 10).join(", ");
+  sugAI = "";
+  setSugMode(sugMode === "own" ? "own" : "fetched");
+  renderSugCover();
+}
+function renderSugCover(){
+  $("sCoverPick").innerHTML =
+    (sugCover ? '<span class="cover-wrap" style="width:70px;display:inline-block;margin-bottom:10px"><span class="cover"><img src="' + esc(sugCover) + '" alt=""></span></span>' : "") +
+    coverSearchHTML("suggest", function(){ return { title: $("sTitle").value, author: $("sAuthor").value }; },
+      function(url){ sugCover = url; renderSugCover(); });
+}
+function initSuggestForm(){
+  $("sAgeSlider").innerHTML = dualRangeHTML("sAge", 12, AGE_TOP);
+  renderSugCover();
+  setSugMode("fetched");
+}
+$("sTitle").addEventListener("input", function(){
+  clearTimeout(acTimer);
+  var q = $("sTitle").value.trim();
+  if(q.length < 3){ acHits = []; closeAC(); return; }
+  acTimer = setTimeout(async function(){
+    acHits = (await searchBooks(q)).slice(0, 6);
+    renderAC();
+  }, 320);
+});
+$("sTitle").addEventListener("blur", function(){ setTimeout(closeAC, 180); });
+$("sBlurb").addEventListener("input", function(){
+  var v = $("sBlurb").value;
+  if(sugMode === "fetched") sugFetched = v;
+  else if(sugMode === "ai") sugAI = v;
+  else sugOwn = v;
+});
+document.addEventListener("click", async function(e){
+  var el = e.target.closest && e.target.closest("[data-achit]");
+  if(el){ await chooseACHit(Number(el.getAttribute("data-achit"))); return; }
+  var sm = e.target.closest && e.target.closest("[data-summode]");
+  if(sm){ setSugMode(sm.getAttribute("data-summode")); return; }
+});
+
+$("suggestForm").addEventListener("submit", async function(e){
   e.preventDefault();
   var el = e.target.elements;
   var title = el.title.value.trim(), author = el.author.value.trim(), by = el.by.value.trim();
   if(!title || !author || !by) return;
+  var age = dualValue("sAge");
+  var genres = el.genres.value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+  var blurb = el.blurb.value.trim();
+  var note = $("suggestNote");
+
+  if(endpoint()){
+    note.textContent = "Sending\u2026";
+    var res = await submitPublic("suggest", {
+      title: title, author: author, pages: Number(el.pages.value) || null,
+      ageMin: age.lo, ageMax: age.hi, level: levelText({ ageMin: age.lo, ageMax: age.hi }),
+      genres: genres, blurb: blurb, summarySource: sugMode, cover: sugCover, by: by
+    });
+    if(!res.ok){ note.textContent = submitFailMsg(res); return; }
+    note.textContent = "Sent. The organiser will take a look.";
+    e.target.reset();
+    sugFetched = sugAI = sugOwn = sugCover = "";
+    initSuggestForm();
+    return;
+  }
+
+  /* no endpoint configured yet \u2014 fall back to the old GitHub issue route */
   var lines = [
-    "**Title:** " + title,
-    "**Author:** " + author,
+    "**Title:** " + title, "**Author:** " + author,
     "**Pages:** " + (el.pages.value.trim() || "not given"),
-    "**Reading level:** " + el.level.value,
-    "**Genres:** " + (el.genres.value.trim() || "not given"),
-    "",
-    "**What it\u2019s about**",
-    el.blurb.value.trim() || "(not given)",
-    "",
-    "\u2014 suggested by " + by
+    "**Reading level:** " + levelText({ ageMin: age.lo, ageMax: age.hi }),
+    "**Genres:** " + (genres.join(", ") || "not given"),
+    "**Cover:** " + (sugCover || "not given"),
+    "", "**What it\u2019s about**", blurb || "(not given)",
+    "", "\u2014 suggested by " + by
   ];
   var url = "https://github.com/" + GH.owner + "/" + GH.repo + "/issues/new" +
     "?labels=" + encodeURIComponent("book suggestion") +
     "&title=" + encodeURIComponent("Book suggestion: " + title) +
     "&body=" + encodeURIComponent(lines.join("\n"));
   window.open(url, "_blank", "noopener");
-  $("suggestNote").textContent = "Opening GitHub \u2014 press \u201cCreate\u201d there to send it.";
+  note.textContent = "Submissions aren\u2019t switched on yet, so this opens GitHub \u2014 press \u201cCreate\u201d there to send it.";
 });
 
 /* ---------- boot ---------- */
@@ -2208,9 +3323,14 @@ function renderAll(){
 }
 
 (async function boot(){
-  $("sLevel").innerHTML = LEVELS.map(function(l){ return "<option" + (l === "Ages 12+" ? " selected" : "") + ">" + esc(l) + "</option>"; }).join("");
   await loadState();
+  inbox = await loadInbox();
+  var handled = {};
+  (state.inbox || []).forEach(function(id){ handled[id] = 1; });
+  inbox.forEach(function(it){ if(it && handled[it.id]) it.handled = true; });
+  applyInbox();
   refreshWriteMode();
+  initSuggestForm();
   renderAll();
   window.addEventListener("resize", function(){ renderTree(); });
 })();
