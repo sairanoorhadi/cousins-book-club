@@ -1,5 +1,5 @@
 {
-  "rev": 1039,
+  "rev": 1040,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -160,6 +160,31 @@
       "order": 0,
       "ageMin": 14,
       "ageMax": 100
+    },
+    {
+      "id": "bk-mt7pvx697h34g",
+      "title": "Bridge to Terabithia",
+      "author": "Katherine Paterson",
+      "pages": 128,
+      "ageMin": 9,
+      "ageMax": 12,
+      "series": "",
+      "seriesIndex": 1,
+      "genres": [
+        "Classic",
+        "Realistic Fiction",
+        "Children's"
+      ],
+      "blurb": "The story tells about the blooming friendship between two kids, Jesse Aarons, and his new neighbour, Leslie Burke, two lonely kids.",
+      "status": "current",
+      "cover": "",
+      "badge": "",
+      "started": "2026-08-24",
+      "finished": "",
+      "progressPage": 0,
+      "members": [],
+      "order": 2,
+      "level": "Ages 9-12"
     }
   ],
   "meetings": [
