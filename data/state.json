@@ -1,5 +1,5 @@
 {
-  "rev": 1047,
+  "rev": 1048,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -266,7 +266,13 @@
       "pages": "45",
       "done": false,
       "summary": "",
-      "predictions": [],
+      "predictions": [
+        {
+          "id": "pred-mt7qd0vppvf5w",
+          "text": "The Girl is going to beat Jess in the race",
+          "by": "Everyone"
+        }
+      ],
       "points": []
     }
   ],
