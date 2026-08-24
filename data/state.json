@@ -1,5 +1,5 @@
 {
-  "rev": 1075,
+  "rev": 1076,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -264,7 +264,7 @@
       "place": "Camping",
       "chapters": "1-5",
       "pages": "45",
-      "done": true,
+      "done": false,
       "summary": "",
       "predictions": [
         {
