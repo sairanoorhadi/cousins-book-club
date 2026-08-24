@@ -1,5 +1,5 @@
 {
-  "rev": 1067,
+  "rev": 1068,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -155,7 +155,7 @@
         "rating": 5,
         "text": "Thrilling and Captivating. Did not see anything comming",
         "by": "The club",
-        "community": 4.4
+        "community": 4.5
       },
       "order": 0,
       "ageMin": 14,
