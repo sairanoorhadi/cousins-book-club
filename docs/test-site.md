@@ -58,11 +58,17 @@ own data file, the endpoint being off, the warning band, the tab title — is
 decided inside `index.html` itself, by a flag that line sets.
 
 So promoting a tested change is a plain copy of one file, with nothing to
-re-apply by hand and nothing to forget. It's rebuilt with:
+re-apply by hand and nothing to forget.
 
 ```
-node tools/build-dev.js
+node tools/build-dev.js     # live page -> test page, adds the marker
+node tools/promote-dev.js   # test page -> live page, takes it out again
 ```
 
-which refuses to write anything if `index.html` no longer has the flag, rather
-than quietly producing a test site that behaves like the real one.
+`build-dev` refuses to write if `index.html` no longer has the flag, rather than
+quietly producing a test site that behaves like the real one. `promote-dev`
+refuses if the marker is missing or appears twice, and `--dry` says what it
+would do without writing.
+
+While something is waiting for you, the two files deliberately differ: the test
+page is ahead. That's the review in progress.
