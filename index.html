@@ -191,13 +191,20 @@ img{max-width:100%;display:block}
 .tree{position:relative;width:100%;aspect-ratio:16/10;min-height:380px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
 .tree__svg{position:absolute;inset:0;width:100%;height:100%}
 .tree__node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;cursor:pointer;z-index:2}
-.tree__disc{width:74px;height:74px;border-radius:50%;border:3px solid var(--edge);overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm);transition:transform .14s ease}
-.tree__node:hover .tree__disc,.tree__node:focus-visible .tree__disc{transform:scale(1.08)}
-.tree__disc img{width:100%;height:100%;object-fit:cover}
-.tree__disc span{font-family:var(--f-display);font-weight:800;font-size:26px}
+/* Book badges are diamonds: a square turned 45°, with its contents turned back
+   so art and initials stay upright. The club hub in the middle stays a circle. */
+.tree__disc{width:66px;height:66px;border-radius:8px;border:3px solid var(--edge);overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm);transform:rotate(45deg);transition:transform .14s ease}
+.tree__disc > *{transform:rotate(-45deg)}
+.tree__node:hover .tree__disc,.tree__node:focus-visible .tree__disc{transform:rotate(45deg) scale(1.08)}
+.tree__disc img{width:142%;height:142%;object-fit:cover}
+.tree__disc span{font-family:var(--f-display);font-weight:800;font-size:22px}
 .tree__disc--now{border-style:dashed}
-.tree__disc--hub{width:106px;height:106px;border-width:3px;background:var(--flare);color:var(--on-flare)}
+.tree__disc--hub{width:106px;height:106px;border-width:3px;border-radius:50%;background:var(--flare);color:var(--on-flare);transform:none}
+.tree__disc--hub > *{transform:none}
+.tree__disc--hub img{width:100%;height:100%}
 .tree__disc--hub span{font-size:15px;text-align:center;line-height:1.1;padding:6px;letter-spacing:-.01em}
+/* the diamond's corners eat into the caption, so give it room */
+.tree__node .tree__cap{margin-top:8px}
 .tree__cap{font-family:var(--f-display);font-weight:700;font-size:12px;max-width:118px;text-align:center;line-height:1.2;color:var(--ink);background:var(--surface);border:1.5px solid var(--hairline);border-radius:5px;padding:3px 7px}
 .tip{position:absolute;z-index:5;transform:translate(-50%,-100%);background:var(--ink);color:var(--paper);border-radius:6px;padding:8px 11px;font-family:var(--f-mono);font-size:11px;line-height:1.5;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s ease}
 .tip[data-on="1"]{opacity:1}
@@ -205,8 +212,13 @@ img{max-width:100%;display:block}
 .timeline{position:relative;padding-left:44px}
 .timeline::before{content:"";position:absolute;left:15px;top:6px;bottom:6px;width:3px;background:var(--hairline)}
 .tlrow{position:relative;padding:0 0 26px}
-.tlrow__dot{position:absolute;left:-44px;top:2px;width:34px;height:34px;border-radius:50%;border:2.5px solid var(--edge);overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:13px}
-.tlrow__dot img{width:100%;height:100%;object-fit:cover}
+.tlrow__dot{position:absolute;left:-42px;top:4px;width:28px;height:28px;border-radius:4px;border:2.5px solid var(--edge);overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:11px;transform:rotate(45deg)}
+.tlrow__dot > *,.tlrow__dot img{transform:rotate(-45deg)}
+.tlrow__dot img{width:142%;height:142%;object-fit:cover}
+/* members on the timeline keep a round marker — only books earn a diamond */
+.tlrow__dot--member{border-radius:50%;transform:none;width:34px;height:34px;top:2px;left:-44px;font-size:13px}
+.tlrow__dot--member > *,.tlrow__dot--member img{transform:none}
+.tlrow__dot--member img{width:100%;height:100%}
 .tlcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:14px 17px;box-shadow:var(--shadow-sm);text-align:left;width:100%;cursor:pointer;font-family:var(--f-body);transition:transform .12s ease}
 .tlcard:hover{transform:translateX(3px)}
 .tlcard--flat{cursor:default;box-shadow:none;border-style:dashed;background:transparent}
@@ -261,10 +273,11 @@ img{max-width:100%;display:block}
 /* ============ modal ============ */
 .scrim{position:fixed;inset:0;z-index:100;background:rgba(12,8,32,.66);background:color-mix(in srgb, var(--ink) 62%, transparent);display:flex;align-items:flex-start;justify-content:center;padding:32px 18px;overflow:auto;backdrop-filter:blur(2px)}
 .scrim[hidden]{display:none}
-#badgeScrim{z-index:110}
+#badgeScrim,#prevScrim{z-index:110}
 #meetScrim{z-index:120}
 #bookScrim{z-index:130}
-#memberScrim{z-index:140}
+#memberScrim,#meScrim{z-index:140}
+#loginScrim{z-index:150}
 .modal{width:100%;max-width:820px;background:var(--paper);border:2px solid var(--edge);border-radius:12px;box-shadow:8px 8px 0 var(--stamp);overflow:hidden}
 .modal--wide{max-width:980px}
 .modal__bar{display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:2px solid var(--edge);background:var(--surface);position:sticky;top:0;z-index:2}
@@ -376,13 +389,18 @@ img{max-width:100%;display:block}
 .ac__t{font-family:var(--f-display);font-weight:700;font-size:14px;line-height:1.2}
 .ac__a{display:block;color:var(--muted);font-size:13px;font-style:italic}
 
+.lookupfix{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;border:2px dashed var(--edge);border-radius:var(--r);background:var(--sunk);padding:10px 14px;font-size:15px}
+
 /* ============ segmented ============ */
 .seg{display:inline-flex;border:2px solid var(--edge);border-radius:var(--r);background:var(--sunk);padding:4px;gap:3px;flex-wrap:wrap}
 .segbtn{font-family:var(--f-display);font-weight:700;font-size:12.5px;padding:6px 12px;border:2px solid transparent;border-radius:5px;background:transparent;cursor:pointer;color:var(--muted)}
 .segbtn[aria-pressed="true"]{background:var(--surface);border-color:var(--edge);color:var(--ink)}
 
 /* ============ rec filters ============ */
-.filters{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-sm);padding:16px 18px;margin-bottom:24px}
+.filters{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-sm);padding:14px 18px;margin-bottom:24px}
+.filters__box{margin:0}
+.filters__box > summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filters__box > summary .filters__count{margin-left:auto}
 .filters__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}
 .filters__foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
 .filters__count{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-left:auto}
@@ -391,7 +409,37 @@ img{max-width:100%;display:block}
 .genrechip[aria-pressed="true"]{background:var(--grape);color:var(--on-grape);border-color:var(--edge)}
 
 /* ============ endorsements ============ */
-.reccard__second{position:absolute;top:7px;right:7px;display:inline-flex;align-items:center;gap:4px;background:var(--zest);color:var(--on-zest);border:2px solid var(--edge);border-radius:999px;padding:2px 9px;font-family:var(--f-mono);font-size:11px;font-weight:500;box-shadow:2px 2px 0 var(--stamp)}
+/* the vote pill: a score at rest, + and − once you reach for it */
+.reccard-wrap{position:relative}
+.vote{position:absolute;top:7px;right:7px;z-index:3;display:inline-flex;align-items:center;overflow:hidden;
+  background:var(--surface);color:var(--ink);border:2px solid var(--edge);border-radius:999px;
+  box-shadow:2px 2px 0 var(--stamp);font-family:var(--f-mono);font-size:11.5px;
+  transition:width .16s cubic-bezier(.22,1,.36,1)}
+.vote--up{background:var(--zest);color:var(--on-zest)}
+.vote--down{background:var(--flare);color:var(--on-flare)}
+.vote__score{padding:3px 9px;min-width:30px;text-align:center;font-variant-numeric:tabular-nums}
+.vote__btn{width:0;padding:0;border:0;overflow:hidden;background:transparent;color:inherit;cursor:pointer;
+  font-family:var(--f-display);font-weight:800;font-size:15px;line-height:1;
+  transition:width .16s cubic-bezier(.22,1,.36,1)}
+.reccard-wrap:hover .vote__score,.vote:focus-within .vote__score{display:none}
+.reccard-wrap:hover .vote__btn,.vote:focus-within .vote__btn{width:30px;height:24px}
+/* the card lifts on hover; the pill rides along with it */
+.reccard-wrap:hover .vote{transform:translate(-3px,-3px)}
+/* On a touch screen there is no hover, so the +/− would never appear. Show the
+   score and both buttons together instead — most of the club is on a phone. */
+@media (hover:none),(pointer:coarse){
+  .reccard-wrap:hover .vote{transform:none}
+  .vote__score{padding:3px 7px;min-width:22px}
+  .vote__btn,.reccard-wrap:hover .vote__btn{width:28px;height:24px}
+  .vote__btn--up{border-left:1.5px solid var(--edge)}
+}
+.vote__btn--up:hover{background:var(--surf);color:var(--on-surf)}
+.vote__btn--down:hover{background:var(--flare);color:var(--on-flare)}
+.vote__btn--up{border-right:1.5px solid var(--edge)}
+.secondchip--down{background:var(--flare);color:var(--on-flare)}
+.endorse[data-lean="down"]{border-color:var(--flare)}
+.endorse[data-lean="up"]{border-color:var(--surf)}
+.partytag{display:inline-block;margin-top:12px;background:var(--grape);color:var(--on-grape);border:2px solid var(--edge);border-radius:999px;padding:3px 12px;font-family:var(--f-display);font-weight:700;font-size:12.5px}
 .reccard__short{position:absolute;top:7px;left:7px;background:var(--flare);color:var(--on-flare);border:2px solid var(--edge);border-radius:999px;padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
 .seconds{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
 .secondchip{font-family:var(--f-mono);font-size:11.5px;padding:3px 10px;border:1.5px solid var(--edge);border-radius:999px;background:var(--sunk)}
@@ -408,10 +456,33 @@ img{max-width:100%;display:block}
 .ratebox__k{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:3px}
 
 /* ============ badge modal ============ */
-.badgeart{width:132px;height:132px;flex:none;border-radius:50%;border:3px solid var(--edge);overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
-.badgeart img{width:100%;height:100%;object-fit:cover}
-.badgeart span{font-family:var(--f-display);font-weight:800;font-size:44px}
+.badgeart{width:118px;height:118px;flex:none;border-radius:10px;border:3px solid var(--edge);overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transform:rotate(45deg);margin:22px}
+.badgeart > *{transform:rotate(-45deg)}
+.badgeart img{width:142%;height:142%;object-fit:cover}
+.badgeart span{font-family:var(--f-display);font-weight:800;font-size:38px}
 .meetbtns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+
+/* ============ party photos ============ */
+.photogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.photo{margin:0;position:relative}
+.photo img{width:100%;aspect-ratio:4/3;object-fit:cover;border:2px solid var(--edge);border-radius:6px;box-shadow:2px 2px 0 var(--stamp);cursor:zoom-in;background:var(--sunk)}
+.photo img:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--stamp)}
+.photo figcaption{display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.photo__x{margin-left:auto;border:1.5px solid var(--hairline);border-radius:50%;width:19px;height:19px;line-height:1;padding:0;background:var(--surface);color:var(--muted);cursor:pointer}
+.photo__x:hover{background:var(--flare);color:var(--on-flare);border-color:var(--edge)}
+#lightbox{z-index:160;align-items:center;padding:24px}
+.lightbox__inner{position:relative;max-width:min(1100px,94vw)}
+.lightbox__inner img{max-width:100%;max-height:86vh;border:3px solid var(--edge);border-radius:8px;box-shadow:var(--shadow);background:var(--surface)}
+.lightbox__inner .xbtn{position:absolute;top:-14px;right:-14px;z-index:2}
+
+/* ============ account ============ */
+.huepick{display:flex;flex-wrap:wrap;gap:9px}
+.huechip{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--hairline);border-radius:999px;background:var(--surface);padding:5px 14px 5px 6px;cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--muted)}
+.huechip span{width:22px;height:22px;border-radius:50%;border:2px solid var(--edge);background:var(--c);flex:none}
+.huechip:hover{color:var(--ink);border-color:var(--edge)}
+.huechip[aria-pressed="true"]{border-color:var(--edge);color:var(--ink);background:var(--sunk);box-shadow:2px 2px 0 var(--stamp)}
+.whoami{display:inline-flex;align-items:center;gap:8px}
+.whoami__pic{width:22px;height:22px;border-radius:50%;border:2px solid var(--edge);background:var(--c,var(--sky));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:10px;flex:none}
 
 /* ============ inbox ============ */
 .inboxrow{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:16px 18px;box-shadow:var(--shadow-sm)}
@@ -443,7 +514,8 @@ img{max-width:100%;display:block}
   .pending{grid-template-columns:1fr}
   .pending__acts{flex-direction:row}
   .tree{aspect-ratio:1/1.05;min-height:460px}
-  .tree__disc{width:56px;height:56px}
+  .tree__disc{width:50px;height:50px}
+  .tree__disc span{font-size:17px}
   .tree__disc--hub{width:84px;height:84px}
   .tree__cap{font-size:10.5px;max-width:92px}
 }
@@ -770,6 +842,7 @@ img{max-width:100%;display:block}
       <a href="#shelf">Previous Books</a>
       <a href="#recs">Recommendations</a>
       <a href="#badges">Badges</a>
+      <button class="btn btn--sm btn--ghost" id="loginOpen" type="button">Sign in</button>
       <button class="btn btn--sm btn--grape" id="adminOpen" type="button">Admin</button>
     </nav>
   </div>
@@ -792,7 +865,7 @@ img{max-width:100%;display:block}
             <p class="hero__blurb" id="heroBlurb"></p>
             <div class="hero__cta">
               <button class="btn btn--flare" id="heroDetails" type="button">See meeting notes &rarr;</button>
-              <button class="btn btn--ghost" id="heroJumpRecs" type="button">Browse recommendations</button>
+              <button class="btn btn--ghost" id="heroPrevMeets" type="button">Previous meetings</button>
             </div>
           </div>
         </div>
@@ -857,6 +930,14 @@ img{max-width:100%;display:block}
           <div class="field"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span></label>
             <div id="sAgeSlider"></div></div>
           <div class="field"><label for="sGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label><input class="input" id="sGenres" name="genres" placeholder="Young Adult, Fantasy" maxlength="300"></div>
+          <div class="field"><label>Look it up</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn--sm btn--sky" type="button" id="sLookup">Search the web for this book</button>
+              <button class="btn btn--sm btn--grape" type="button" id="sAskAI">Fill in the details for me</button>
+              <a class="btn btn--sm btn--ghost" id="sGoodreads" href="https://www.goodreads.com" target="_blank" rel="noopener noreferrer">Open on Goodreads</a>
+              <a class="btn btn--sm btn--ghost" id="sGoogle" href="https://www.google.com" target="_blank" rel="noopener noreferrer">Google it</a>
+            </div>
+            <div id="sLookupOut"></div></div>
           <div class="field"><label>Cover</label><div id="sCoverPick"></div></div>
           <div class="field"><label>Summary</label>
             <div class="seg" id="sSumMode" style="margin-bottom:10px">
@@ -927,6 +1008,33 @@ img{max-width:100%;display:block}
     <div class="modal__body" id="bookModalBody"></div>
   </div>
 </div>
+<div class="scrim" id="lightbox" hidden>
+  <div class="lightbox__inner">
+    <button class="xbtn" type="button" data-close="lightbox" aria-label="Close">&times;</button>
+    <img id="lightboxImg" alt="">
+  </div>
+</div>
+<div class="scrim" id="loginScrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" style="max-width:520px">
+    <div class="modal__bar"><h2 id="loginModalTitle">Members</h2>
+      <button class="xbtn" type="button" data-close="loginScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body" id="loginModalBody"></div>
+  </div>
+</div>
+<div class="scrim" id="meScrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="meModalTitle">
+    <div class="modal__bar"><h2 id="meModalTitle">Your account</h2>
+      <button class="xbtn" type="button" data-close="meScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body" id="meModalBody"></div>
+  </div>
+</div>
+<div class="scrim" id="prevScrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="prevModalTitle">
+    <div class="modal__bar"><h2 id="prevModalTitle">Previous meetings</h2>
+      <button class="xbtn" type="button" data-close="prevScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body" id="prevModalBody"></div>
+  </div>
+</div>
 <div class="scrim" id="badgeScrim" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="badgeModalTitle">
     <div class="modal__bar"><h2 id="badgeModalTitle">Badge</h2>
@@ -973,9 +1081,92 @@ function initials(s){
   var w = String(s||"?").trim().split(/\s+/);
   return ((w[0]||"?")[0] + (w.length>1 ? w[w.length-1][0] : "")).toUpperCase();
 }
+/* a member's colour: whatever they picked, else one derived from their id */
+function memberHue(m){
+  if(!m) return "sky";
+  return HUES.indexOf(m.hue) !== -1 ? m.hue : hueFor(m.id);
+}
 function surname(name){
   var w = String(name || "").trim().split(/\s+/);
   return (w.length ? w[w.length-1] : "").toLowerCase();
+}
+
+/* ---------- genres ----------
+   Two jobs. First, book APIs hand back category paths like
+   "Juvenile Fiction / Humorous Stories" — those get split into their parts.
+   Second, the same genre arrives under several names: comedy and humour, sci-fi
+   and science fiction. Those collapse onto one label so the filter lists them
+   once instead of three times. Only genuine synonyms and spelling variants are
+   merged — sub-genres stay distinct, so Fantasy and Grishaverse remain
+   separate. Anything unrecognised is kept exactly as typed. */
+var GENRE_ALIASES = {};
+[
+  ["Humour", ["humor","humour","comedy","comedic","funny","comic","humorous","humorous stories"]],
+  ["Science Fiction", ["sci-fi","scifi","sci fi","science-fiction","sf"]],
+  ["Young Adult", ["ya","teen","teens","teen fiction","young-adult","young adult fiction"]],
+  ["Middle Grade", ["mg","middle-grade","middle grade fiction"]],
+  ["Children's", ["childrens","children","kids","kid","children's fiction","childrens fiction"]],
+  ["Historical Fiction", ["historical","historical-fiction","period fiction"]],
+  ["Literary Fiction", ["literary","literature","literary-fiction"]],
+  ["Coming-of-Age", ["coming of age","coming-of-age","bildungsroman","growing up"]],
+  ["Mystery", ["mysteries","detective","detective fiction","whodunit","whodunnit"]],
+  ["Crime", ["crime fiction","criminal"]],
+  ["Thriller", ["thrillers","suspense","psychological thriller"]],
+  ["Horror", ["scary","spooky","frightening","horror stories"]],
+  ["Dystopian", ["dystopia","dystopian fiction","distopian"]],
+  ["Romance", ["romantic","love story","love stories","romances"]],
+  ["Adventure", ["action","action & adventure","action and adventure","action-adventure","adventures"]],
+  ["Classic", ["classics","classic literature","classic fiction"]],
+  ["Fantasy", ["fantasy fiction"]],
+  ["Graphic Novel", ["graphic novels","comics","comic books","comic book"]],
+  ["Nonfiction", ["non-fiction","non fiction","nonfiction"]],
+  ["Biography", ["biographies","biographical"]],
+  ["Memoir", ["memoirs","autobiography","autobiographies"]],
+  ["Fairy Tale", ["fairytale","fairy tales","fairytales","folk tale","folk tales","folklore"]],
+  ["Retelling", ["retellings","re-telling","reimagining"]],
+  ["Magical Realism", ["magic realism","magical-realism"]],
+  ["Poetry", ["poems","poem","verse","novel in verse"]],
+  ["Short Stories", ["short story","anthology","anthologies","collection"]],
+  ["WWII", ["ww2","wwii","world war ii","world war 2","world war two","second world war"]],
+  ["Sports", ["sport","sporting"]],
+  ["Animals", ["animal","animal stories"]],
+  ["Family", ["family life","families"]],
+  ["Ghost Stories", ["ghost story","ghosts","haunting"]],
+  ["Survival", ["survival stories"]],
+  ["School", ["school stories","boarding school"]]
+].forEach(function(pair){
+  GENRE_ALIASES[pair[0].toLowerCase()] = pair[0];
+  pair[1].forEach(function(alias){ GENRE_ALIASES[alias] = pair[0]; });
+});
+/* Shelving labels rather than genres. "Juvenile Fiction" in particular covers
+   everything from picture books to teen novels, so it says nothing the age
+   slider isn't already saying — and guessing at Young Adult from it would
+   mislabel an eight-year-old's book. */
+var GENRE_NOISE = {
+  "general": 1, "fiction": 1, "other": 1, "misc": 1, "miscellaneous": 1, "": 1,
+  "juvenile fiction": 1, "juvenile": 1, "juvenile nonfiction": 1
+};
+
+function canonGenre(raw){
+  var key = String(raw || "").trim().toLowerCase().replace(/\s+/g, " ").replace(/[.]+$/, "");
+  if(!key) return "";
+  return GENRE_ALIASES[key] || String(raw).trim();
+}
+/* one flat, de-duplicated list from whatever shape the genres arrived in */
+function normaliseGenres(list){
+  var out = [], seen = {};
+  (Array.isArray(list) ? list : String(list || "").split(",")).forEach(function(entry){
+    /* category paths from the book APIs come through as "A / B / C" */
+    String(entry || "").split(/\s*[\/>|]\s*/).forEach(function(part){
+      var g = canonGenre(part);
+      if(!g || GENRE_NOISE[g.toLowerCase()]) return;
+      var k = g.toLowerCase();
+      if(seen[k]) return;
+      seen[k] = 1;
+      out.push(g);
+    });
+  });
+  return out.slice(0, 12);
 }
 
 /* ---------- reading level as an age range ----------
@@ -1121,6 +1312,7 @@ function migrate(s){
        Members tab flags it for removal. */
     if(typeof m.email !== "string") m.email = "";
     if(typeof m.notifyRef !== "string") m.notifyRef = "";
+    if(typeof m.hue !== "string") m.hue = "";
     if(typeof m.emailHint !== "string") m.emailHint = "";
     /* book ids this member wants meeting emails about; "*" means every meeting */
     if(!Array.isArray(m.notify)) m.notify = [];
@@ -1139,6 +1331,7 @@ function migrate(s){
     }
     if(typeof b.seriesIndex !== "number") b.seriesIndex = 1;
     if(typeof b.order !== "number") b.order = 0;
+    b.genres = normaliseGenres(b.genres);
     withAges(b);
     if(b.review && typeof b.review.community !== "number") b.review.community = 0;
   });
@@ -1147,17 +1340,25 @@ function migrate(s){
     if(!r.by) r.by = REC_BY[String(r.title||"").toLowerCase().trim()] || "";
     if(typeof r.at !== "string") r.at = "";
     if(typeof r.shortlist !== "boolean") r.shortlist = false;
+    r.genres = normaliseGenres(r.genres);
     if(typeof r.summarySource !== "string") r.summarySource = "own";
     if(!Array.isArray(r.reviews)) r.reviews = [];
     if(!Array.isArray(r.endorsements)) r.endorsements = [];
-    r.endorsements = r.endorsements.map(function(e){
-      return typeof e === "string" ? { name: e, at: "" } : { name: String(e && e.name || "").trim(), at: String(e && e.at || "") };
-    }).filter(function(e){ return e.name; });
+    if(!Array.isArray(r.dislikes)) r.dislikes = [];
+    ["endorsements","dislikes"].forEach(function(k){
+      r[k] = r[k].map(function(e){
+        return typeof e === "string" ? { name: e, at: "" } : { name: String(e && e.name || "").trim(), at: String(e && e.at || "") };
+      }).filter(function(e){ return e.name; });
+    });
     withAges(r);
   });
   (s.meetings || []).forEach(function(m){
     if(typeof m.pages !== "string") m.pages = "";
     if(typeof m.chapters !== "string") m.chapters = "";
+    /* "meeting" is the usual discussion; "party" is a celebration after a book
+       the club loved — no chapters, no pages, and photos of the night */
+    if(m.kind !== "party") m.kind = "meeting";
+    if(!Array.isArray(m.photos)) m.photos = [];
     if(!Array.isArray(m.predictions)) m.predictions = [];
     if(!Array.isArray(m.points)) m.points = [];
     /* which notification emails have already gone out for this meeting */
@@ -1296,14 +1497,112 @@ function applyInbox(){
     if(!r) return;
     var name = String(p.name || "").trim();
     if(!name) return;
-    var dupe = (r.endorsements || []).some(function(e){ return e.name.toLowerCase() === name.toLowerCase(); });
-    if(!dupe) r.endorsements.push({ name: name, at: it.at || "" });
+    var list = p.vote === "down" ? "dislikes" : "endorsements";
+    var other = list === "dislikes" ? "endorsements" : "dislikes";
+    if(!Array.isArray(r[list])) r[list] = [];
+    if(!Array.isArray(r[other])) r[other] = [];
+    /* someone who changed their mind sent a second vote — move them across
+       rather than letting them count on both sides */
+    r[other] = r[other].filter(function(e){ return e.name.toLowerCase() !== name.toLowerCase(); });
+    var dupe = r[list].some(function(e){ return e.name.toLowerCase() === name.toLowerCase(); });
+    if(!dupe) r[list].push({ name: name, at: it.at || "" });
   });
 }
 function submitFailMsg(res){
   if(res.reason === "unconfigured") return "Submissions aren’t switched on yet — the organiser needs to add an endpoint under Settings.";
   if(res.reason === "network") return "Couldn’t reach the club’s inbox. Check your connection and try again.";
   return "The club’s inbox returned an error (" + (res.status || "?") + "). Try again in a moment.";
+}
+
+/* ---------- signing in ----------
+   No passwords: a member types their email, gets a six-digit code, and types it
+   back. The endpoint holds the session; the browser only keeps the token. Being
+   signed in changes what the page offers, never what it trusts — every
+   privileged action is checked again at the endpoint. */
+var SESSION_KEY = "marginNotes.session";
+var me = null;   /* the signed-in member's profile, or null */
+
+function sessionToken(){
+  try{ return localStorage.getItem(SESSION_KEY) || ""; }catch(e){ return ""; }
+}
+function setSessionToken(v){
+  try{ if(v) localStorage.setItem(SESSION_KEY, v); else localStorage.removeItem(SESSION_KEY); }catch(e){}
+}
+async function callEndpoint(kind, payload){
+  var url = endpoint();
+  if(!url) return { ok: false, error: "unconfigured" };
+  try{
+    var res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ kind: kind, payload: payload || {}, at: new Date().toISOString() })
+    });
+    if(!res.ok) return { ok: false, error: "http " + res.status };
+    return await res.json();
+  }catch(e){ return { ok: false, error: "network" }; }
+}
+async function restoreSession(){
+  var token = sessionToken();
+  if(!token || !endpoint()) return;
+  var res = await callEndpoint("session", { token: token });
+  if(res && res.ok) me = res.profile;
+  else setSessionToken("");
+}
+async function signOut(){
+  var token = sessionToken();
+  setSessionToken("");
+  me = null;
+  if(token) callEndpoint("logout", { token: token });
+  renderAll();
+  say("Signed out.", "ok");
+}
+/* the member's own record, when the organiser has added them to the club */
+function myMember(){ return me && me.memberId ? memberById(me.memberId) : null; }
+function myName(){ return (me && (me.name || "")) || ""; }
+
+var loginStep = "email", loginEmail = "";
+function openLogin(){
+  loginStep = "email";
+  renderLogin();
+  openScrim("loginScrim");
+}
+function renderLogin(){
+  var body = $("loginModalBody");
+  if(!endpoint()){
+    body.innerHTML = '<p class="empty">Signing in isn&rsquo;t switched on yet — the organiser needs to set the club&rsquo;s endpoint under Settings.</p>';
+    return;
+  }
+  if(me){
+    body.innerHTML =
+      '<p class="eyebrow">Signed in</p>' +
+      '<h3 style="font-size:24px;margin:8px 0 6px">' + esc(myName() || me.emailHint) + "</h3>" +
+      '<p class="hint">' + esc(me.emailHint) + (me.isMember ? "" : " &mdash; not on the members list yet, so the badge tree doesn't show you") + "</p>" +
+      '<div style="margin-top:20px"><button class="btn btn--ghost" type="button" id="loginOut">Sign out</button></div>';
+    return;
+  }
+  if(loginStep === "email"){
+    body.innerHTML =
+      '<p class="eyebrow">Members</p><h3 style="font-size:24px;margin:8px 0 6px">Sign in</h3>' +
+      '<p class="hint">Pop in your email and we&rsquo;ll send you a six-digit code. There&rsquo;s no password to remember or forget.</p>' +
+      '<div class="field" style="margin-top:18px"><label for="loginEmail">Email</label>' +
+        '<input class="input" id="loginEmail" type="email" autocomplete="email" maxlength="160" value="' + esc(loginEmail) + '"></div>' +
+      '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px">' +
+        '<button class="btn btn--surf" type="button" id="loginSend">Send me a code</button>' +
+        '<span class="hint" id="loginNote"></span></div>' +
+      '<p class="hint" style="margin-top:16px">Your address is kept privately by the organiser and never published on this site.</p>';
+  }else{
+    body.innerHTML =
+      '<p class="eyebrow">Check your email</p><h3 style="font-size:24px;margin:8px 0 6px">Enter your code</h3>' +
+      '<p class="hint">Sent to ' + esc(loginEmail) + ". It works for ten minutes.</p>" +
+      '<div class="field" style="margin-top:18px"><label for="loginCode">Six-digit code</label>' +
+        '<input class="input mono" id="loginCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" ' +
+        'style="font-size:26px;letter-spacing:.32em;text-align:center"></div>' +
+      '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px">' +
+        '<button class="btn btn--surf" type="button" id="loginCheck">Sign in</button>' +
+        '<button class="btn btn--ghost btn--sm" type="button" id="loginBack">Use a different email</button>' +
+        '<span class="hint" id="loginNote"></span></div>';
+    setTimeout(function(){ var c = $("loginCode"); if(c) c.focus(); }, 60);
+  }
 }
 
 /* ---------- image picker ---------- */
@@ -1383,6 +1682,64 @@ async function openLibraryExtras(title, author){
   }catch(e){ return null; }
 }
 
+/* Look a title up properly: candidates from both sources, merged, with the
+   closest title first. Catches typos, because both APIs match loosely — typing
+   "Bridge to Terebithia" still surfaces "Bridge to Terabithia", and we say so. */
+function editDistance(a, b){
+  a = a.toLowerCase(); b = b.toLowerCase();
+  var prev = [], cur = [], i, j;
+  for(j = 0; j <= b.length; j++) prev[j] = j;
+  for(i = 1; i <= a.length; i++){
+    cur[0] = i;
+    for(j = 1; j <= b.length; j++){
+      cur[j] = Math.min(prev[j] + 1, cur[j-1] + 1, prev[j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    }
+    prev = cur.slice();
+  }
+  return prev[b.length];
+}
+/* true when the title already contains what was typed — nothing to correct */
+function titleHasQuery(query, title){
+  query = String(query || "").toLowerCase().trim();
+  title = String(title || "").toLowerCase().trim();
+  return !!query && title.indexOf(query) !== -1;
+}
+function titleCloseness(query, title){
+  query = String(query || "").toLowerCase().trim();
+  title = String(title || "").toLowerCase().trim();
+  if(!query) return 99;
+  if(title === query) return 0;
+  if(title.indexOf(query) === 0) return 0.5;
+  if(title.indexOf(query) !== -1) return 1;
+  /* scale the distance by length, so a slip in a long title still counts as close */
+  return editDistance(query, title.slice(0, query.length + 6)) / Math.max(4, query.length) * 6;
+}
+async function lookupBook(query){
+  var hits = await searchBooks(query);
+  hits.forEach(function(h){ h.near = titleCloseness(query, h.title); });
+  hits.sort(function(a, b){ return a.near - b.near; });
+  var best = hits[0] || null;
+  return {
+    hits: hits.slice(0, 6),
+    /* Offer a correction only when the best match doesn't contain what was
+       typed but is still close to it — a slip or two, not a different book.
+       A one-character slip in a long title scores around 0.3, so the ceiling
+       has to sit above that. */
+    correction: best && !titleHasQuery(query, best.title) && best.near < 1.5 ? best.title : "",
+    /* every distinct author across the matches, so they can pick the right edition */
+    authors: hits.map(function(h){ return h.author; }).filter(function(a, i, all){
+      return a && all.indexOf(a) === i;
+    }).slice(0, 5)
+  };
+}
+/* somewhere to go and check by hand */
+function goodreadsSearch(title, author){
+  return "https://www.goodreads.com/search?q=" + encodeURIComponent([title, author].filter(Boolean).join(" "));
+}
+function googleSearch(title, author){
+  return "https://www.google.com/search?q=" + encodeURIComponent([title, author, "book"].filter(Boolean).join(" "));
+}
+
 /* title + author + book cover, top five, pick one */
 async function searchCovers(title, author){
   var out = [], seen = {};
@@ -1393,16 +1750,49 @@ async function searchCovers(title, author){
     out.push({ url: url, src: src });
   }
   var q = [title, author].filter(Boolean).join(" ");
-  (await searchBooks(q)).forEach(function(b){ if(b.cover) add(b.cover, "Google Books"); });
+  /* Two passes at Google Books: the plain phrase, then a field-qualified one.
+     The qualified query surfaces other editions — different jackets for the
+     same book — which is usually what you actually want to choose between. */
+  var queries = [q];
+  if(title) queries.push('intitle:"' + title + '"' + (author ? ' inauthor:"' + author + '"' : ""));
+  for(var i = 0; i < queries.length; i++){
+    (await searchBooks(queries[i])).forEach(function(b){ if(b.cover) add(b.cover, "Google Books"); });
+    if(out.length >= 5) break;
+  }
   try{
-    var res = await fetch("https://openlibrary.org/search.json?limit=6&fields=cover_i&q=" + encodeURIComponent(q), { cache: "no-store" });
+    var res = await fetch("https://openlibrary.org/search.json?limit=10&fields=cover_i,edition_key&q=" + encodeURIComponent(q), { cache: "no-store" });
     if(res.ok){
       ((await res.json()).docs || []).forEach(function(d){
         if(d.cover_i) add("https://covers.openlibrary.org/b/id/" + d.cover_i + "-L.jpg", "Open Library");
+        /* edition covers give a few more jackets for the same title */
+        (d.edition_key || []).slice(0, 2).forEach(function(k){
+          add("https://covers.openlibrary.org/b/olid/" + k + "-L.jpg", "Open Library");
+        });
       });
     }
   }catch(e){}
   return out.slice(0, 5);
+}
+
+/* Google Images, by way of the club's endpoint. Google has no open image API —
+   the one programmable route is a Custom Search engine, which needs a key, and
+   a key in a public page is a key anyone can spend. So the request goes to the
+   Apps Script, which holds the key and passes the results back. Without it set
+   up, the two book databases above still answer. */
+async function googleImageCovers(title, author){
+  var url = endpoint();
+  if(!url || !title) return [];
+  try{
+    var res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ kind: "images", payload: { title: title, author: author }, at: new Date().toISOString() })
+    });
+    if(!res.ok) return [];
+    var j = await res.json();
+    return (j && j.images || []).map(function(u){ return { url: httpsify(u), src: "Google Images" }; })
+      .filter(function(x){ return x.url; });
+  }catch(e){ return []; }
 }
 
 /* ---------- cover picker widget ---------- */
@@ -1410,7 +1800,17 @@ var coverHooks = {};
 function coverSearchHTML(scope, query, onPick){
   coverHooks[scope] = { query: query, pick: onPick };
   return '<div data-coverscope="' + esc(scope) + '">' +
-    '<button class="btn btn--sm btn--sky" type="button" data-coversearch="' + esc(scope) + '">Search the web for a cover</button>' +
+    '<div style="display:flex;gap:9px;flex-wrap:wrap">' +
+      '<button class="btn btn--sm btn--sky" type="button" data-coversearch="' + esc(scope) + '">Search the web for a cover</button>' +
+      '<button class="btn btn--sm btn--ghost" type="button" data-coverpaste="' + esc(scope) + '">Paste an image link</button>' +
+    "</div>" +
+    '<div data-coverpastebox="' + esc(scope) + '" hidden style="margin-top:10px">' +
+      '<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">' +
+        '<input class="input mono" type="url" data-coverurlbox="' + esc(scope) + '" placeholder="https://…/cover.jpg" style="flex:1 1 240px;width:auto" maxlength="600">' +
+        '<button class="btn btn--sm btn--zest" type="button" data-coveruse="' + esc(scope) + '">Use it</button>' +
+      "</div>" +
+      '<p class="hint" style="margin-top:8px">Found a cover anywhere on the web? Right-click it, copy the image address, and paste it here.</p>' +
+    "</div>" +
     '<div data-coverresults="' + esc(scope) + '"></div></div>';
 }
 async function runCoverSearch(scope){
@@ -1420,7 +1820,15 @@ async function runCoverSearch(scope){
   var q = hook.query() || {};
   if(!String(q.title || "").trim()){ say("Type a book title first.", "bad"); return; }
   host.innerHTML = '<p class="hint" style="margin-top:10px">Searching&hellip;</p>';
-  var hits = await searchCovers(q.title, q.author);
+  /* Google Images first when it's available — it finds jackets the book
+     databases don't have — then the two book sources fill the rest of the five */
+  var hits = await googleImageCovers(q.title, q.author);
+  var seen = {};
+  hits.forEach(function(h){ seen[h.url] = 1; });
+  (await searchCovers(q.title, q.author)).forEach(function(h){
+    if(!seen[h.url]){ seen[h.url] = 1; hits.push(h); }
+  });
+  hits = hits.slice(0, 5);
   host.innerHTML = hits.length
     ? '<div class="covergrid">' + hits.map(function(h, i){
         return '<button class="coverpick" type="button" data-coverurl="' + esc(h.url) + '" data-cscope="' + esc(scope) + '">' +
@@ -1451,18 +1859,54 @@ function meetingsForBook(id){
   return state.meetings.filter(function(m){ return m.bookId === id; })
     .sort(function(a,b){ return String(a.date||"9999").localeCompare(String(b.date||"9999")); });
 }
+/* A meeting is behind us once it's been marked finished, or once it's actually
+   over — the organiser shouldn't have to tick a box to stop last week's meeting
+   appearing as the next one. "Over" means a few hours after it started, so the
+   card doesn't blank out while everyone is still sitting in the meeting; with
+   no time set at all, it stands until the end of that day. */
+var MEETING_RUNS_HOURS = 3;
+function meetingEnd(m){
+  var start = meetingStart(m);
+  if(!start) return null;
+  var end = new Date(start);
+  if(m && m.time) end.setHours(end.getHours() + MEETING_RUNS_HOURS);
+  else end.setHours(23, 59, 59, 999);
+  return end;
+}
+function meetingIsPast(m){
+  if(m.done) return true;
+  var end = meetingEnd(m);
+  return !!end && end < new Date();
+}
 function upcomingMeetings(){
-  return state.meetings.filter(function(m){ return !m.done; })
+  return state.meetings.filter(function(m){ return !meetingIsPast(m); })
     .sort(function(a,b){ return String(a.date||"9999").localeCompare(String(b.date||"9999")); });
+}
+/* the meeting card follows whichever current book is on screen */
+function upcomingForBook(bookId){
+  if(!bookId) return upcomingMeetings();
+  return upcomingMeetings().filter(function(m){ return m.bookId === bookId; });
+}
+function pastMeetingsForBook(bookId){
+  return state.meetings.filter(function(m){ return m.bookId === bookId && meetingIsPast(m); })
+    .sort(function(a,b){ return String(b.date||"").localeCompare(String(a.date||"")); });
 }
 function nextMeeting(){ return upcomingMeetings()[0] || null; }
 function approvedRecs(){ return state.recs.filter(function(r){ return r.status === "approved"; }); }
 function shortlistRecs(){ return approvedRecs().filter(function(r){ return r.shortlist; }); }
 function endorseCount(r){ return (r.endorsements || []).length; }
+function dislikeCount(r){ return (r.dislikes || []).length; }
+/* what the shelf is ordered by, and what the corner badge shows */
+function recScore(r){ return endorseCount(r) - dislikeCount(r); }
+function scoreLabel(r){
+  var n = recScore(r);
+  return n > 0 ? "+" + n : String(n);
+}
+/* one chip per genre, with near-identical names already folded together */
 function allGenres(){
   var seen = {}, out = [];
   approvedRecs().forEach(function(r){
-    (r.genres || []).forEach(function(g){
+    normaliseGenres(r.genres).forEach(function(g){
       var k = g.toLowerCase();
       if(!seen[k]){ seen[k] = 1; out.push(g); }
     });
@@ -1486,7 +1930,7 @@ function ratingPair(rev, small){
   var out = '<span class="ratebox"><span class="ratebox__k">The club</span>' +
     '<span class="review__stars">' + stars(rev.rating, small) + "</span></span>";
   if(Number(rev.community) > 0){
-    out += '<span class="ratebox"><span class="ratebox__k">Community</span>' +
+    out += '<span class="ratebox"><span class="ratebox__k">Reading Community</span>' +
       '<span class="review__stars">' + stars(rev.community, small) + "</span></span>";
   }
   return '<div class="ratepair">' + out + "</div>";
@@ -1534,7 +1978,9 @@ function renderHero(){
   var books = currentBooks();
   if(heroIdx >= books.length) heroIdx = 0;
   var book = books[heroIdx] || null;
-  var ups = upcomingMeetings();
+  /* the meeting card belongs to the book on screen — its meetings only, and
+     only the ones still to come */
+  var ups = book ? upcomingForBook(book.id) : upcomingMeetings();
   if(meetIdx >= ups.length) meetIdx = 0;
   var meet = ups[meetIdx] || null;
   $("brandName").textContent = state.club.name;
@@ -1579,23 +2025,34 @@ function renderHero(){
   }
 
   var body = $("heroMeetBody");
-  $("meetEyebrow").textContent = meetIdx === 0 ? "Next meeting" : "Later meeting";
+  var isParty = meet && meet.kind === "party";
+  $("meetEyebrow").textContent = !meet ? "Next meeting"
+    : isParty ? (meetIdx === 0 ? "Next party" : "Later party")
+    : (meetIdx === 0 ? "Next meeting" : "Later meeting");
   $("meetCyc").innerHTML = cycHTML("meet", meetIdx, ups.length, "");
   if(!meet){
-    body.innerHTML = '<p class="empty">No meeting scheduled. The organiser can add one from Organiser tools.</p>';
+    body.innerHTML = book
+      ? '<p class="empty">Nothing scheduled for ' + esc(book.title) + " yet.</p>"
+      : '<p class="empty">No meeting scheduled. The organiser can add one from Organiser tools.</p>';
   }else{
     var mb = bookById(meet.bookId) || recById(meet.bookId), cd = countdownText(meet);
     body.innerHTML =
       '<div class="meetcard__date">' + esc(longDate(meet.date)) + "</div>" +
       (cd ? '<div class="countdown" id="meetCountdown">' + esc(cd) + "</div>" : "") +
+      (isParty ? '<div class="partytag">🎉 Party</div>' : "") +
       '<div class="meetcard__row"><span class="k">Time</span><span>' + esc(prettyTime(meet.time) || "TBC") + "</span></div>" +
       '<div class="meetcard__row"><span class="k">Where</span><span>' + esc(meet.place || "TBC") + "</span></div>" +
       '<div class="meetcard__row"><span class="k">Book</span><span>' + esc(mb ? mb.title : "TBC") + "</span></div>" +
-      '<div class="meetcard__row"><span class="k">Chapters</span><span>' + esc(meet.chapters || "TBC") + "</span></div>" +
-      '<div class="meetcard__row"><span class="k">Pages</span><span class="mono">' + esc(meet.pages || "TBC") + "</span></div>" +
+      /* a party has no reading attached to it */
+      (isParty ? "" :
+        '<div class="meetcard__row"><span class="k">Chapters</span><span>' + esc(meet.chapters || "TBC") + "</span></div>" +
+        '<div class="meetcard__row"><span class="k">Pages</span><span class="mono">' + esc(meet.pages || "TBC") + "</span></div>") +
       '<div style="margin-top:18px;display:flex;gap:9px;flex-wrap:wrap">' +
-        '<button class="btn btn--sky btn--sm" type="button" data-meet="' + esc(meet.id) + '">Predictions &amp; discussion points</button>' +
-        '<button class="btn btn--ghost btn--sm" type="button" data-memform="notify" data-nbook="' + esc(meet.bookId) + '">Email me about this</button>' +
+        '<button class="btn btn--sky btn--sm" type="button" data-meet="' + esc(meet.id) + '">' +
+          (isParty ? "Party notes" : "Predictions &amp; discussion points") + "</button>" +
+        (me
+          ? '<button class="btn btn--ghost btn--sm" type="button" id="meetManageNotify">Manage my reminders</button>'
+          : '<button class="btn btn--ghost btn--sm" type="button" data-memform="notify" data-nbook="' + esc(meet.bookId) + '">Email me about this</button>') +
       "</div>";
   }
   renderUpNext();
@@ -1605,7 +2062,8 @@ function renderHero(){
 /* keep the countdown honest without re-rendering the whole hero */
 setInterval(function(){
   var el = $("meetCountdown"); if(!el || !state) return;
-  var ups = upcomingMeetings(), m = ups[meetIdx];
+  var b = currentBooks()[heroIdx];
+  var m = (b ? upcomingForBook(b.id) : upcomingMeetings())[meetIdx];
   if(m) el.textContent = countdownText(m);
 }, 30000);
 function renderUpNext(){
@@ -1692,11 +2150,13 @@ document.addEventListener("input", function(e){
 
 /* ---------- render: recommendations ---------- */
 var recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP };
+var filtersOpen = false;
 function recMatches(r){
   if(recFilter.by && r.by !== recFilter.by) return false;
   if(recFilter.genres.length){
-    var have = (r.genres || []).map(function(g){ return g.toLowerCase(); });
-    var hit = recFilter.genres.some(function(g){ return have.indexOf(g.toLowerCase()) !== -1; });
+    /* compare on the merged names, so picking "Humour" also finds "comedy" */
+    var have = normaliseGenres(r.genres).map(function(g){ return g.toLowerCase(); });
+    var hit = recFilter.genres.some(function(g){ return have.indexOf(canonGenre(g).toLowerCase()) !== -1; });
     if(!hit) return false;
   }
   /* keep anything whose age band overlaps the band being asked for */
@@ -1708,8 +2168,8 @@ function sortRecs(list){
   return list.slice().sort(function(a, b){
     if(by === "title") return a.title.localeCompare(b.title);
     if(by === "author") return surname(a.author).localeCompare(surname(b.author)) || a.title.localeCompare(b.title);
-    /* default: most-seconded first, then by the author's last name */
-    return (endorseCount(b) - endorseCount(a)) ||
+    /* default: most endorsed first (dislikes count against), then author surname */
+    return (recScore(b) - recScore(a)) ||
       surname(a.author).localeCompare(surname(b.author)) ||
       a.title.localeCompare(b.title);
   });
@@ -1722,14 +2182,22 @@ function renderRecFilters(){
   people.sort(function(a,b){ return a.localeCompare(b); });
   var genres = allGenres();
   var shown = sortRecs(approvedRecs().filter(recMatches)).length;
+  var active = (recFilter.by ? 1 : 0) + recFilter.genres.length +
+    (recFilter.ageMin > 0 || recFilter.ageMax < AGE_TOP ? 1 : 0);
+  /* press-to-open, like the editors on the admin side; stays open once you've
+     set something, so the filters you applied don't hide themselves */
   host.innerHTML =
+    '<details class="editor filters__box"' + (filtersOpen || active ? " open" : "") + '>' +
+    '<summary data-filtertoggle>Filter &amp; sort' + (active ? " · " + active + " active" : "") +
+      ' <span class="filters__count">' + shown + " of " + approvedRecs().length + " shown</span></summary>" +
+    '<div class="editor__body">' +
     '<div class="filters__grid">' +
       '<div class="field"><label for="fBy">Suggested by</label><select class="select" id="fBy">' +
         '<option value="">Everyone</option>' +
         people.map(function(p){ return '<option value="' + esc(p) + '"' + (recFilter.by === p ? " selected" : "") + ">" + esc(p) + "</option>"; }).join("") +
       "</select></div>" +
       '<div class="field"><label for="fSort">Order</label><select class="select" id="fSort">' +
-        [["top","Most seconded"],["title","A-Z by title"],["author","A-Z by author surname"]].map(function(o){
+        [["top","Most endorsements"],["title","A-Z by title"],["author","A-Z by author surname"]].map(function(o){
           return '<option value="' + o[0] + '"' + (recFilter.sort === o[0] ? " selected" : "") + ">" + esc(o[1]) + "</option>";
         }).join("") +
       "</select></div>" +
@@ -1750,21 +2218,32 @@ function renderRecFilters(){
     '<div class="filters__foot">' +
       '<button class="btn btn--sm btn--ghost" type="button" id="fReset">Clear filters</button>' +
       '<span class="filters__count" id="recCount">' + shown + " of " + approvedRecs().length + " shown</span>" +
-    "</div>";
+    "</div></div></details>";
 }
 function recCardHTML(r){
-  var n = endorseCount(r);
-  return '<button class="reccard cover-wrap" type="button" data-rec="' + esc(r.id) + '" aria-label="' + esc(r.title + " by " + r.author + " — open summary") + '">' +
-    coverHTML(r) +
-    (r.shortlist ? '<span class="reccard__short">Shortlist</span>' : "") +
-    (n ? '<span class="reccard__second" title="' + esc(n + " second" + (n === 1 ? "" : "s")) + '">+' + n + "</span>" : "") +
-    '<span class="reccard__foot"><span>' + esc(r.pages || "?") + " pp</span>" +
-      '<span class="reccard__by">' + (r.by ? esc(r.by) : "&nbsp;") + "</span></span>" +
-    '<span class="reccard__reveal">' +
-      '<span class="k">Genres</span><span class="v">' + esc((r.genres || []).join(" · ") || "Unlisted") + "</span>" +
-      '<span class="k">Level</span><span class="v">' + esc(levelText(r)) + "</span>" +
-      '<span class="k">Seconds</span><span class="v">' + (n || "none yet") + "</span>" +
-    "</span></button>";
+  var up = endorseCount(r), down = dislikeCount(r), score = recScore(r);
+  /* The card itself is the button that opens the book. The vote control sits on
+     top of it as a sibling, not a nested button — nesting buttons is invalid and
+     swallows the clicks. It shows the running score and opens out on hover. */
+  return '<div class="reccard-wrap">' +
+    '<button class="reccard cover-wrap" type="button" data-rec="' + esc(r.id) + '" aria-label="' + esc(r.title + " by " + r.author + " — open summary") + '">' +
+      coverHTML(r) +
+      (r.shortlist ? '<span class="reccard__short">Shortlist</span>' : "") +
+      '<span class="reccard__foot"><span>' + esc(r.pages || "?") + " pp</span>" +
+        '<span class="reccard__by">' + (r.by ? esc(r.by) : "&nbsp;") + "</span></span>" +
+      '<span class="reccard__reveal">' +
+        '<span class="k">Genres</span><span class="v">' + esc((r.genres || []).join(" · ") || "Unlisted") + "</span>" +
+        '<span class="k">Level</span><span class="v">' + esc(levelText(r)) + "</span>" +
+        '<span class="k">Endorsed</span><span class="v">' + (up || "none yet") + (down ? " · " + down + " against" : "") + "</span>" +
+      "</span>" +
+    "</button>" +
+    '<span class="vote' + (score > 0 ? " vote--up" : score < 0 ? " vote--down" : "") + '">' +
+      '<span class="vote__score">' + esc(score === 0 ? "±" : scoreLabel(r)) + "</span>" +
+      '<button class="vote__btn vote__btn--up" type="button" data-vote="up" data-rid="' + esc(r.id) + '" ' +
+        'aria-label="' + esc("Endorse " + r.title) + '" title="Endorse">+</button>' +
+      '<button class="vote__btn vote__btn--down" type="button" data-vote="down" data-rid="' + esc(r.id) + '" ' +
+        'aria-label="' + esc("Say " + r.title + " is not for you") + '" title="Not for me">&minus;</button>' +
+    "</span></div>";
 }
 function renderRecGrid(){
   var host = $("recGrid"), all = approvedRecs();
@@ -1800,7 +2279,7 @@ function renderFocus(){
   bar.innerHTML = '<span class="focusbar__lab">Focus</span>' +
     '<button class="focuschip focuschip--all" type="button" data-focus="" aria-pressed="' + (!focusId) + '">Whole club</button>' +
     state.members.map(function(m){
-      var h = hueFor(m.id);
+      var h = memberHue(m);
       return '<button class="focuschip" type="button" data-focus="' + esc(m.id) + '" aria-pressed="' + (focusId === m.id) + '">' +
         '<span class="focuschip__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
           (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
@@ -1831,7 +2310,7 @@ function branches(){
 function hubHTML(){
   var fm = focusMember();
   if(fm){
-    var h = hueFor(fm.id);
+    var h = memberHue(fm);
     return '<span class="tree__disc tree__disc--hub" style="--c:var(--' + h + ');--cf:var(--on-' + h + ');background:var(--' + h + ')">' +
       (fm.avatar ? '<img src="' + esc(fm.avatar) + '" alt="">' : "<span>" + esc(fm.name) + "</span>") + "</span>";
   }
@@ -1910,17 +2389,19 @@ function renderTimeline(){
     if(e.kind === "book"){
       var b = e.book, hue = hueFor(b.id);
       return '<div class="tlrow">' +
+        /* the initials need their own element, or the diamond's counter-rotation
+           misses them and they sit at 45° */
         '<span class="tlrow__dot" style="--c:var(--' + hue + ');--cf:var(--on-' + hue + ')">' +
-          (b.badge ? '<img src="' + esc(b.badge) + '" alt="">' : esc(initials(b.title))) + "</span>" +
+          (b.badge ? '<img src="' + esc(b.badge) + '" alt="">' : "<span>" + esc(initials(b.title)) + "</span>") + "</span>" +
         '<button class="tlcard" type="button" data-badge="' + esc(b.id) + '" data-tip="' + esc(tipDates(b)) + '">' +
           '<span class="tlcard__when">' + (b.status === "current" ? "Reading now" : (e.when ? "Finished " + esc(shortDate(e.when)) : "Finished — date not set")) + "</span>" +
           '<span class="tlcard__what">' + esc(b.title) + "</span>" +
           '<span class="tlcard__sub">' + esc(b.author) + " · " + esc(tipDates(b)) + "</span>" +
         "</button></div>";
     }
-    var mm = e.member, mh = hueFor(mm.id);
+    var mm = e.member, mh = memberHue(mm);
     return '<div class="tlrow">' +
-      '<span class="tlrow__dot" style="--c:var(--' + mh + ');--cf:var(--on-' + mh + ')">' +
+      '<span class="tlrow__dot tlrow__dot--member" style="--c:var(--' + mh + ');--cf:var(--on-' + mh + ')">' +
         (mm.avatar ? '<img src="' + esc(mm.avatar) + '" alt="">' : esc(initials(mm.name))) + "</span>" +
       '<div class="tlcard tlcard--flat">' +
         '<span class="tlcard__when">' + (mm.joined ? "Joined " + esc(shortDate(mm.joined)) : "Member") + "</span>" +
@@ -1937,6 +2418,17 @@ function memberLinks(m, style){
     (g ? '<a class="crewlink" href="' + esc(g) + '" target="_blank" rel="noopener noreferrer">Goodreads</a>' : "") +
     "</span>";
 }
+/* Drive serves images from more than one host and has changed which one works.
+   If the first form fails, quietly try the other before giving up. */
+document.addEventListener("error", function(e){
+  var n = e.target;
+  if(!n || n.tagName !== "IMG" || !n.getAttribute) return;
+  var alt = n.getAttribute("data-fallback");
+  if(!alt) return;
+  n.removeAttribute("data-fallback");
+  n.src = alt;
+}, true);
+
 /* ---------- tooltips ---------- */
 document.addEventListener("mouseover", function(e){
   var n = e.target.closest && e.target.closest("[data-tip]");
@@ -1966,7 +2458,7 @@ function openScrim(id){
   document.body.style.overflow = "hidden";
   var f = $(id).querySelector(".xbtn"); if(f) f.focus();
 }
-var SCRIMS = ["memberScrim","bookScrim","meetScrim","badgeScrim","adminScrim"];
+var SCRIMS = ["lightbox","loginScrim","meScrim","memberScrim","bookScrim","meetScrim","prevScrim","badgeScrim","adminScrim"];
 function closeScrim(id){
   $(id).hidden = true;
   if(SCRIMS.every(function(s){ return $(s).hidden; })) document.body.style.overflow = "";
@@ -1989,6 +2481,7 @@ function openMeeting(id){
   $("meetModalTitle").textContent = (b ? b.title : "Meeting") + " — " + shortDate(m.date);
   $("meetModalBody").innerHTML = meetingHTML(m, b);
   openScrim("meetScrim");
+  if(m.kind === "party") loadPhotos(m.id);
 }
 function noteList(items, kind, mid){
   if(!items || !items.length) return '<p class="empty">' + (kind === "pred" ? "No predictions yet. Call it before you read it." : "No discussion points yet.") + "</p>";
@@ -2000,39 +2493,56 @@ function noteList(items, kind, mid){
   }).join("") + "</ul>";
 }
 function meetingHTML(m, b){
-  return '<p class="eyebrow">' + (m.done ? "Past meeting" : "Upcoming meeting") + "</p>" +
+  var party = m.kind === "party";
+  return '<p class="eyebrow">' +
+      (party ? (m.done ? "Party" : "Upcoming party") : (m.done ? "Past meeting" : "Upcoming meeting")) + "</p>" +
     '<h3 style="font-size:26px;margin-top:8px">' + esc(b ? b.title : "Meeting notes") + "</h3>" +
     (b ? '<p style="color:var(--muted);font-style:italic;margin-top:5px">by ' + esc(b.author) + "</p>" : "") +
     '<div class="tagbank" style="margin-top:16px">' +
       '<span class="tag tag--sky">' + esc(longDate(m.date)) + "</span>" +
       (m.time ? '<span class="tag mono">' + esc(prettyTime(m.time)) + "</span>" : "") +
       (m.place ? '<span class="tag">' + esc(m.place) + "</span>" : "") +
+      (party ? '<span class="tag tag--grape">🎉 Party</span>' : "") +
       (m.chapters ? '<span class="tag tag--zest">' + esc(m.chapters) + "</span>" : "") +
       (m.pages ? '<span class="tag tag--grape mono">pp. ' + esc(m.pages) + "</span>" : "") +
     "</div>" +
-    '<section class="noteblock noteblock--pred"><div class="noteblock__head"><h3>Predictions</h3></div><div class="noteblock__body">' +
-      noteList(m.predictions, "pred", m.id) +
-      (readOnly ? "" : '<div class="addrow"><input class="input" type="text" placeholder="What do you think happens?" data-add="pred-text" maxlength="400">' +
-        '<input class="input input--who" type="text" placeholder="Your name" data-add="pred-by" maxlength="60">' +
-        '<button class="btn btn--sm btn--grape" type="button" data-addbtn="pred" data-mid="' + esc(m.id) + '">Add</button></div>') +
-    "</div></section>" +
-    '<section class="noteblock noteblock--disc"><div class="noteblock__head"><h3>Discussion points</h3></div><div class="noteblock__body">' +
-      noteList(m.points, "disc", m.id) +
-      (readOnly ? "" : '<div class="addrow"><input class="input" type="text" placeholder="A question worth arguing about" data-add="disc-text" maxlength="400">' +
-        '<input class="input input--who" type="text" placeholder="Added by" data-add="disc-by" maxlength="60">' +
-        '<button class="btn btn--sm btn--surf" type="button" data-addbtn="disc" data-mid="' + esc(m.id) + '">Add</button></div>') +
-    "</div></section>" +
-    '<section class="noteblock noteblock--sum"><div class="noteblock__head"><h3>What happened at the meeting</h3></div><div class="noteblock__body">' +
+    /* a party is a celebration, not a reading session — no predictions to make
+       and no chapters to argue about */
+    (party ? "" :
+      '<section class="noteblock noteblock--pred"><div class="noteblock__head"><h3>Predictions</h3></div><div class="noteblock__body">' +
+        noteList(m.predictions, "pred", m.id) +
+        (readOnly ? "" : '<div class="addrow"><input class="input" type="text" placeholder="What do you think happens?" data-add="pred-text" maxlength="400">' +
+          '<input class="input input--who" type="text" placeholder="Your name" data-add="pred-by" maxlength="60">' +
+          '<button class="btn btn--sm btn--grape" type="button" data-addbtn="pred" data-mid="' + esc(m.id) + '">Add</button></div>') +
+      "</div></section>" +
+      '<section class="noteblock noteblock--disc"><div class="noteblock__head"><h3>Discussion points</h3></div><div class="noteblock__body">' +
+        noteList(m.points, "disc", m.id) +
+        (readOnly ? "" : '<div class="addrow"><input class="input" type="text" placeholder="A question worth arguing about" data-add="disc-text" maxlength="400">' +
+          '<input class="input input--who" type="text" placeholder="Added by" data-add="disc-by" maxlength="60">' +
+          '<button class="btn btn--sm btn--surf" type="button" data-addbtn="disc" data-mid="' + esc(m.id) + '">Add</button></div>') +
+      "</div></section>") +
+    (party
+      ? '<section class="noteblock"><div class="noteblock__head" style="background:var(--grape);color:var(--on-grape)"><h3>Photos</h3></div>' +
+        '<div class="noteblock__body" id="partyPhotos" data-photomeet="' + esc(m.id) + '">' +
+        '<p class="hint">Loading&hellip;</p></div></section>'
+      : "") +
+    '<section class="noteblock noteblock--sum"><div class="noteblock__head"><h3>' +
+      (party ? "How the party went" : "What happened at the meeting") + "</h3></div><div class=\"noteblock__body\">" +
       (isAdmin
-        ? '<textarea class="textarea" id="sumBox" style="min-height:190px" placeholder="Write up the meeting — who argued what, where the room split, what to carry forward.">' + esc(m.summary || "") + "</textarea>" +
+        ? '<textarea class="textarea" id="sumBox" style="min-height:190px" placeholder="' +
+            (party ? "Who came, what you ate, what everyone argued about anyway." : "Write up the meeting — who argued what, where the room split, what to carry forward.") +
+          '">' + esc(m.summary || "") + "</textarea>" +
           '<div style="margin-top:12px"><button class="btn btn--sm btn--zest" type="button" data-savesum="' + esc(m.id) + '">Save summary</button></div>'
         : (m.summary ? '<p style="white-space:pre-wrap">' + esc(m.summary) + "</p>"
-                     : '<p class="empty">' + (m.done ? "No summary written yet." : "Written up after the meeting.") + "</p>")) +
+                     : '<p class="empty">' + (m.done ? "No summary written yet." : "Written up afterwards.") + "</p>")) +
     "</div></section>";
 }
 
-function openBookDetail(o, kind){
-  var seconds = kind === "rec" ? (o.endorsements || []) : [];
+/* `focus` is "up" or "down" when the reader came in via a card's +/- shortcut,
+   so the matching field is open and waiting for their name */
+function openBookDetail(o, kind, focus){
+  var ups = kind === "rec" ? (o.endorsements || []) : [];
+  var downs = kind === "rec" ? (o.dislikes || []) : [];
   $("bookModalTitle").textContent = o.title;
   $("bookModalBody").innerHTML =
     '<div style="display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap">' +
@@ -2047,16 +2557,21 @@ function openBookDetail(o, kind){
           (o.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
         "</div>" +
         (o.by ? '<p class="review__by" style="margin-top:14px">Recommended by ' + esc(o.by) + "</p>" : "") +
-        (seconds.length
-          ? '<p class="review__by" style="margin-top:10px">Seconded by</p><div class="seconds">' +
-            seconds.map(function(e){ return '<span class="secondchip">' + esc(e.name) + "</span>"; }).join("") + "</div>"
+        (ups.length
+          ? '<p class="review__by" style="margin-top:10px">Endorsed by</p><div class="seconds">' +
+            ups.map(function(e){ return '<span class="secondchip">' + esc(e.name) + "</span>"; }).join("") + "</div>"
+          : "") +
+        (downs.length
+          ? '<p class="review__by" style="margin-top:10px">Not for</p><div class="seconds">' +
+            downs.map(function(e){ return '<span class="secondchip secondchip--down">' + esc(e.name) + "</span>"; }).join("") + "</div>"
           : "") +
       "</div></div>" +
     (kind === "rec"
       ? '<div class="endorse">' +
-          '<span style="font-family:var(--f-display);font-weight:700;font-size:14px">Want the club to read this?</span>' +
+          '<span style="font-family:var(--f-display);font-weight:700;font-size:14px">What do you think of this one?</span>' +
           '<input class="input" type="text" id="endorseName" placeholder="Your name" maxlength="60" autocomplete="name">' +
-          '<button class="btn btn--sm btn--zest" type="button" data-endorse="' + esc(o.id) + '">Second it</button>' +
+          '<button class="btn btn--sm btn--zest" type="button" data-endorse="' + esc(o.id) + '">Endorse it</button>' +
+          '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Not for me</button>' +
         "</div>"
       : "") +
     '<hr class="divider">' +
@@ -2075,6 +2590,118 @@ function openBookDetail(o, kind){
         '<p class="review__by">' + esc(o.review.by || "The club") + "</p></div>"
       : "");
   openScrim("bookScrim");
+  /* came in from a card's + or − : put the cursor straight in the name box */
+  if(focus){
+    var box = $("endorseName");
+    if(box){
+      box.focus();
+      box.placeholder = focus === "down" ? "Your name — not for you" : "Your name — endorsing";
+      var keep = box.closest(".endorse");
+      if(keep) keep.setAttribute("data-lean", focus);
+    }
+  }
+}
+
+/* ---------- party photos ----------
+   Stored on the organiser's Drive, not in this repo: base64 images would bloat
+   state.json and git would keep them forever. Anyone can look; only a
+   signed-in member can add one or take their own down. */
+var photoCache = {};
+
+/* Drive has changed its direct-image URL more than once, so try the current
+   form and fall back to the older one if the browser can't load it. */
+function photoSrc(id){ return "https://drive.google.com/thumbnail?id=" + encodeURIComponent(id) + "&sz=w1400"; }
+function photoAlt(id){ return "https://lh3.googleusercontent.com/d/" + encodeURIComponent(id); }
+
+async function loadPhotos(meetingId){
+  var host = $("partyPhotos");
+  if(!host || host.getAttribute("data-photomeet") !== meetingId) return;
+  if(!endpoint()){
+    host.innerHTML = '<p class="empty">Photos need the club&rsquo;s endpoint set up.</p>';
+    return;
+  }
+  var res = await callEndpoint("photo-list", { meetingId: meetingId });
+  photoCache[meetingId] = (res && res.ok && res.photos) || [];
+  renderPhotos(meetingId);
+}
+function renderPhotos(meetingId){
+  var host = $("partyPhotos");
+  if(!host || host.getAttribute("data-photomeet") !== meetingId) return;
+  var list = photoCache[meetingId] || [];
+  host.innerHTML =
+    (list.length
+      ? '<div class="photogrid">' + list.map(function(p){
+          return '<figure class="photo">' +
+            '<img src="' + esc(photoSrc(p.id)) + '" alt="' + esc("Party photo from " + (p.by || "a member")) + '" ' +
+              'loading="lazy" data-fallback="' + esc(photoAlt(p.id)) + '" data-photoview="' + esc(p.id) + '">' +
+            '<figcaption>' + esc(p.by || "") +
+              (me ? ' <button type="button" class="photo__x" data-photodel="' + esc(p.id) + '" data-mid="' + esc(meetingId) + '" aria-label="Remove this photo">&times;</button>' : "") +
+            "</figcaption></figure>";
+        }).join("") + "</div>"
+      : '<p class="empty">No photos from this one yet.</p>') +
+    (me
+      ? '<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">' +
+          '<button class="btn btn--sm btn--grape" type="button" data-photoadd="' + esc(meetingId) + '">Add photos</button>' +
+          '<span class="hint" id="photoNote">Anyone visiting the site can see these.</span></div>'
+      : '<p class="hint" style="margin-top:12px">Sign in to add photos.</p>');
+}
+/* several at once, shrunk in the browser before they go anywhere */
+function pickPhotos(cb){
+  var inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "image/*"; inp.multiple = true;
+  inp.addEventListener("change", function(){
+    var files = Array.prototype.slice.call(inp.files || []);
+    if(!files.length) return;
+    var out = [], done = 0;
+    files.slice(0, 10).forEach(function(f, i){
+      var fr = new FileReader();
+      fr.onload = function(){
+        var img = new Image();
+        img.onload = function(){
+          var w = Math.min(1400, img.width), h = Math.max(1, Math.round(img.height * (w / img.width)));
+          var c = document.createElement("canvas"); c.width = w; c.height = h;
+          var g = c.getContext("2d");
+          g.fillStyle = "#fff"; g.fillRect(0, 0, w, h);
+          g.drawImage(img, 0, 0, w, h);
+          out[i] = c.toDataURL("image/jpeg", 0.82);
+          if(++done === Math.min(files.length, 10)) cb(out.filter(Boolean));
+        };
+        img.onerror = function(){ if(++done === Math.min(files.length, 10)) cb(out.filter(Boolean)); };
+        img.src = fr.result;
+      };
+      fr.onerror = function(){ if(++done === Math.min(files.length, 10)) cb(out.filter(Boolean)); };
+      fr.readAsDataURL(f);
+    });
+  });
+  inp.click();
+}
+
+/* ---------- previous meetings ----------
+   A tab per past meeting, labelled by what it covered; clicking one opens the
+   usual meeting notes on top. */
+function meetingTabLabel(m){
+  if(m.kind === "party") return "🎉 Party";
+  if(m.chapters) return m.chapters;
+  if(m.pages) return "pp. " + m.pages;
+  return shortDate(m.date);
+}
+function openPreviousMeetings(bookId){
+  var b = bookById(bookId); if(!b) return;
+  var past = pastMeetingsForBook(bookId);
+  $("prevModalTitle").textContent = b.title + " — previous meetings";
+  $("prevModalBody").innerHTML = past.length
+    ? '<p class="eyebrow">Covered so far</p>' +
+      '<p class="hint" style="margin:6px 0 18px">Pick a session to read its notes.</p>' +
+      '<div class="tabbar" style="width:100%">' + past.map(function(m){
+        return '<button class="tabbtn" type="button" data-prevmeet="' + esc(m.id) + '">' +
+          esc(meetingTabLabel(m)) + "</button>";
+      }).join("") + "</div>" +
+      '<div class="meetbtns" style="margin-top:20px">' + past.map(function(m){
+        return '<button class="btn btn--sm btn--ghost" type="button" data-prevmeet="' + esc(m.id) + '">' +
+          esc(shortDate(m.date)) + (m.kind === "party" ? " · party" : "") + "</button>";
+      }).join("") + "</div>"
+    : '<p class="empty">No meetings have happened for ' + esc(b.title) + " yet.</p>";
+  openScrim("prevScrim");
 }
 
 /* ---------- badge popup ---------- */
@@ -2098,7 +2725,7 @@ function openBadge(bookId){
         '<p class="review__by" style="margin-top:16px">Who read it</p>' +
         (crew.length
           ? '<div class="crew__list" style="margin-top:10px">' + crew.map(function(m){
-              var h = hueFor(m.id);
+              var h = memberHue(m);
               return '<span class="crewchip"><span class="crewchip__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
                 (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
                 '<span class="crewchip__n">' + esc(m.name) + "</span>" + memberLinks(m, "") + "</span>";
@@ -2116,11 +2743,128 @@ function openBadge(bookId){
     '<p class="eyebrow">Meetings</p>' +
     (meets.length
       ? '<div class="meetbtns">' + meets.map(function(m){
-          return '<button class="btn btn--sm btn--grape" type="button" data-meet="' + esc(m.id) + '">' +
-            esc(shortDate(m.date)) + " Meeting</button>";
+          var party = m.kind === "party";
+          return '<button class="btn btn--sm ' + (party ? "btn--flare" : "btn--grape") + '" type="button" data-meet="' + esc(m.id) + '">' +
+            (party ? "🎉 " : "") + esc(shortDate(m.date)) + (party ? " Party" : " Meeting") + "</button>";
         }).join("") + "</div>"
       : '<p class="empty" style="margin-top:10px">No meetings recorded for this book.</p>');
   openScrim("badgeScrim");
+}
+
+/* One vote each way per person. Changing your mind moves you across rather than
+   counting on both sides. Returns true when the vote landed. */
+async function castVote(rec, down, name){
+  var mine = down ? "dislikes" : "endorsements", other = down ? "endorsements" : "dislikes";
+  if(!Array.isArray(rec[mine])) rec[mine] = [];
+  if(!Array.isArray(rec[other])) rec[other] = [];
+  var has = function(list){
+    return rec[list].some(function(x){ return x.name.toLowerCase() === name.toLowerCase(); });
+  };
+  if(has(mine)){
+    say(down ? "You've already passed on this one." : "You've already endorsed this one.", "ok");
+    return false;
+  }
+  if(endpoint()){
+    say("Sending…", "busy", true);
+    var res = await submitPublic("endorse", { recId: rec.id, title: rec.title, name: name, vote: down ? "down" : "up" });
+    if(!res.ok){ say(submitFailMsg(res), "bad"); return false; }
+  }else if(readOnly){
+    say(submitFailMsg({ reason: "unconfigured" }), "bad");
+    return false;
+  }
+  rec[other] = rec[other].filter(function(x){ return x.name.toLowerCase() !== name.toLowerCase(); });
+  rec[mine].push({ name: name, at: new Date().toISOString() });
+  if(endpoint()) say(down ? "Noted — thanks, " + name + "." : "Endorsed. Thanks, " + name + "!", "ok");
+  else if(!await save(down ? "Saving…" : "Endorsing…")) return false;
+  renderRecs();
+  return true;
+}
+
+/* ---------- your account ---------- */
+var HUE_NAMES = { flare: "Pink", zest: "Amber", surf: "Teal", sky: "Blue", grape: "Purple" };
+var myNotify = [];
+
+function myRecs(){
+  var name = myName().toLowerCase();
+  if(!name) return [];
+  return state.recs.filter(function(r){ return String(r.by || "").toLowerCase() === name; });
+}
+async function openMe(){
+  if(!me){ openLogin(); return; }
+  var res = await callEndpoint("notify-get", { token: sessionToken() });
+  myNotify = (res && res.ok && res.books) || [];
+  renderMe();
+  openScrim("meScrim");
+}
+function renderMe(){
+  var mem = myMember();
+  var mine = myRecs();
+  var live = mine.filter(function(r){ return r.status === "approved"; });
+  var short = mine.filter(function(r){ return r.shortlist; });
+  /* recommendations of theirs the club went on to read */
+  var read = state.books.filter(function(b){
+    return mine.some(function(r){ return r.id === b.id; }) ||
+      (myName() && String(b.recBy || "").toLowerCase() === myName().toLowerCase());
+  });
+  var total = mine.length + read.length;
+  var pct = total ? Math.round((live.length + read.length) / total * 100) : 0;
+
+  /* everything the club could email about */
+  var books = currentBooks().concat(nextBooks());
+  var all = myNotify.indexOf("*") !== -1;
+
+  $("meModalTitle").textContent = myName() || "Your account";
+  $("meModalBody").innerHTML =
+    '<p class="eyebrow">Signed in as</p>' +
+    '<h3 style="font-size:24px;margin:8px 0 4px">' + esc(myName() || me.emailHint) + "</h3>" +
+    '<p class="hint">' + esc(me.emailHint) + "</p>" +
+
+    '<hr class="divider"><p class="eyebrow">Meeting emails</p>' +
+    '<p class="hint" style="margin:6px 0 14px">One when a meeting is scheduled, one five days before, one thirty minutes before.</p>' +
+    '<div class="checkgrid">' +
+      '<label><input type="checkbox" data-mynotify="*"' + (all ? " checked" : "") + ">Every meeting, including books we haven&rsquo;t started</label>" +
+      books.map(function(b){
+        return '<label><input type="checkbox" data-mynotify="' + esc(b.id) + '"' +
+          ((all || myNotify.indexOf(b.id) !== -1) ? " checked" : "") + (all ? " disabled" : "") + ">" + esc(b.title) + "</label>";
+      }).join("") +
+    "</div>" +
+    (books.length ? "" : '<p class="empty" style="margin-top:10px">No books on the go to subscribe to yet.</p>') +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px">' +
+      '<button class="btn btn--sm btn--zest" type="button" id="meNotifySave">Save my reminders</button>' +
+      '<button class="btn btn--sm btn--ghost" type="button" id="meNotifyNone">Turn them all off</button>' +
+      '<span class="hint" id="meNotifyNote"></span>' +
+    "</div>" +
+
+    '<hr class="divider"><p class="eyebrow">Your badge colour</p>' +
+    (mem
+      ? '<p class="hint" style="margin:6px 0 12px">This is the colour beside your name on the badge tree.</p>' +
+        '<div class="huepick">' +
+          Object.keys(HUE_NAMES).map(function(h){
+            return '<button class="huechip" type="button" data-myhue="' + h + '" aria-pressed="' +
+              ((mem.hue || hueFor(mem.id)) === h) + '" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')" ' +
+              'title="' + esc(HUE_NAMES[h]) + '"><span></span>' + esc(HUE_NAMES[h]) + "</button>";
+          }).join("") +
+        "</div>" +
+        '<div style="margin-top:12px"><span class="hint" id="meHueNote"></span></div>'
+      : '<p class="empty" style="margin:6px 0">Once the organiser adds you to the members list you can pick a colour here.</p>') +
+
+    '<hr class="divider"><p class="eyebrow">Your recommendations</p>' +
+    (total
+      ? '<div class="progress" style="margin-top:12px;max-width:none"><div class="progress__bar">' +
+          '<div class="progress__fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="progress__label"><span>' + live.length + " live · " + short.length + " shortlisted · " + read.length + " read by the club</span>" +
+        "<span>" + pct + "%</span></div></div>" +
+        '<div class="tagbank" style="margin-top:14px">' +
+          mine.slice(0, 12).map(function(r){
+            var n = recScore(r);
+            return '<span class="tag' + (r.shortlist ? " tag--flare" : r.status === "approved" ? " tag--surf" : "") + '">' +
+              esc(r.title) + (n ? " " + esc(scoreLabel(r)) : "") + "</span>";
+          }).join("") +
+        "</div>"
+      : '<p class="empty" style="margin-top:8px">Nothing put forward yet. The Suggest a Book tab is where to start &mdash; your name goes in automatically now.</p>') +
+
+    '<hr class="divider"><div style="display:flex;gap:10px;flex-wrap:wrap">' +
+      '<button class="btn btn--ghost" type="button" id="loginOut">Sign out</button></div>';
 }
 
 /* ---------- member requests ---------- */
@@ -2253,8 +2997,8 @@ function bookEditor(b){
             '<input type="range" min="0" max="5" step="0.1" value="' + clampRating(r.rating) + '" data-bfield="rating" data-bid="' + esc(b.id) + '" aria-label="Club rating out of 5">' +
             '<span class="ratepick__out" data-rateout="' + esc(b.id) + '">' + clampRating(r.rating).toFixed(1) + " / 5</span>" +
             '<span data-ratestars="' + esc(b.id) + '">' + stars(r.rating, true) + "</span></div></div>" +
-          '<div class="field"><label>Community rating</label><div class="ratepick">' +
-            '<input type="range" min="0" max="5" step="0.1" value="' + clampRating(r.community) + '" data-bfield="community" data-bid="' + esc(b.id) + '" aria-label="Community rating out of 5">' +
+          '<div class="field"><label>Reading Community rating</label><div class="ratepick">' +
+            '<input type="range" min="0" max="5" step="0.1" value="' + clampRating(r.community) + '" data-bfield="community" data-bid="' + esc(b.id) + '" aria-label="Reading Community rating out of 5">' +
             '<span class="ratepick__out" data-rateout="c:' + esc(b.id) + '">' + clampRating(r.community).toFixed(1) + " / 5</span>" +
             '<span data-ratestars="c:' + esc(b.id) + '">' + stars(r.community, true) + "</span></div>" +
             '<p class="hint">What readers elsewhere gave it — set it to 0 to hide it.</p></div>' +
@@ -2357,14 +3101,16 @@ function recEditor(r){
       var an = p && p.querySelector('[data-rfield="author"][data-rid="' + r.id + '"]');
       return { title: tn ? tn.value : r.title, author: an ? an.value : r.author };
     }, function(url){ setImage("rcover", r.id, url); }) + "</div>" +
-    ((r.endorsements || []).length
-      ? '<div class="field" style="margin-top:16px"><label>Seconded by</label><div class="seconds">' +
-        r.endorsements.map(function(en, i){
-          return '<span class="secondchip">' + esc(en.name) +
-            ' <button type="button" data-unsecond="' + esc(r.id) + '" data-i="' + i + '" aria-label="Remove ' + esc(en.name) + '" ' +
-            'style="border:0;background:none;cursor:pointer;padding:0 0 0 4px">&times;</button></span>';
-        }).join("") + "</div></div>"
-      : "") +
+    [["endorsements","Endorsed by",""],["dislikes","Not for"," secondchip--down"]].map(function(g){
+      var list = r[g[0]] || [];
+      if(!list.length) return "";
+      return '<div class="field" style="margin-top:16px"><label>' + g[1] + '</label><div class="seconds">' +
+        list.map(function(en, i){
+          return '<span class="secondchip' + g[2] + '">' + esc(en.name) +
+            ' <button type="button" data-unvote="' + esc(g[0]) + '" data-rid="' + esc(r.id) + '" data-i="' + i + '" ' +
+            'aria-label="Remove ' + esc(en.name) + '" style="border:0;background:none;cursor:pointer;padding:0 0 0 4px">&times;</button></span>';
+        }).join("") + "</div></div>";
+    }).join("") +
     '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center">' +
       '<button class="btn btn--sm btn--zest" type="button" data-rsave="' + esc(r.id) + '">Save changes</button>' +
       '<button class="btn btn--sm ' + (r.shortlist ? "btn--flare" : "btn--ghost") + '" type="button" data-rshort="' + esc(r.id) + '">' +
@@ -2413,32 +3159,58 @@ function paneRecs(){
   return out;
 }
 
+var meetBookFilter = "";
 function paneMeetings(){
-  var ms = state.meetings.slice().sort(function(a,b){ return String(b.date||"").localeCompare(String(a.date||"")); });
+  var all = state.meetings.slice().sort(function(a,b){ return String(b.date||"").localeCompare(String(a.date||"")); });
   var opts = state.books.concat(approvedRecs()).map(function(b){ return { id:b.id, label:b.title + " — " + b.author }; });
-  return '<p class="eyebrow">Schedule</p><h3 style="font-size:22px;margin:8px 0 18px">Meetings</h3>' +
-    ms.map(function(m){
+  /* only books that actually have meetings, so the chips stay short */
+  var withMeets = [];
+  all.forEach(function(m){ if(withMeets.indexOf(m.bookId) === -1) withMeets.push(m.bookId); });
+  if(meetBookFilter && withMeets.indexOf(meetBookFilter) === -1) meetBookFilter = "";
+  var ms = meetBookFilter ? all.filter(function(m){ return m.bookId === meetBookFilter; }) : all;
+
+  return '<p class="eyebrow">Schedule</p><h3 style="font-size:22px;margin:8px 0 14px">Meetings</h3>' +
+    (withMeets.length > 1
+      ? '<div class="focusbar" style="margin-bottom:18px"><span class="focusbar__lab">Book</span>' +
+        '<button class="focuschip focuschip--all" type="button" data-mfilter="" aria-pressed="' + (!meetBookFilter) + '">All books</button>' +
+        withMeets.map(function(id){
+          var bb = bookById(id) || recById(id);
+          return '<button class="focuschip focuschip--all" type="button" data-mfilter="' + esc(id) + '" aria-pressed="' +
+            (meetBookFilter === id) + '">' + esc(bb ? bb.title : "Unassigned") + "</button>";
+        }).join("") + "</div>"
+      : "") +
+    (ms.length ? ms.map(function(m){
       var b = bookById(m.bookId) || recById(m.bookId);
+      var party = m.kind === "party";
       return '<div class="adminrow"><div class="adminrow__head"><strong>' + esc(b ? b.title : "Unassigned") + "</strong>" +
-        '<span class="pill ' + (m.done ? "pill--done" : "pill--up") + '">' + (m.done ? "Finished" : "Upcoming") + "</span></div>" +
+        '<span class="pill ' + (m.done ? "pill--done" : "pill--up") + '">' + (m.done ? "Finished" : "Upcoming") + "</span>" +
+        (party ? '<span class="pill" style="color:var(--grape)">Party</span>' : "") + "</div>" +
         '<div class="formgrid">' +
+          '<div class="field"><label>Kind</label><select class="select" data-mfield="kind" data-mid="' + esc(m.id) + '">' +
+            '<option value="meeting"' + (party ? "" : " selected") + '>Meeting</option>' +
+            '<option value="party"' + (party ? " selected" : "") + '>Party</option></select></div>' +
           '<div class="field"><label>Date</label><input class="input" type="date" value="' + esc(m.date || "") + '" data-mfield="date" data-mid="' + esc(m.id) + '"></div>' +
           '<div class="field"><label>Time</label><input class="input" type="time" value="' + esc(m.time || "") + '" data-mfield="time" data-mid="' + esc(m.id) + '"></div>' +
           '<div class="field"><label>Where</label><input class="input" type="text" value="' + esc(m.place || "") + '" data-mfield="place" data-mid="' + esc(m.id) + '" maxlength="140"></div>' +
-          '<div class="field"><label>Chapters covered</label><input class="input" type="text" value="' + esc(m.chapters || "") + '" data-mfield="chapters" data-mid="' + esc(m.id) + '" placeholder="Chapters 1-15" maxlength="140"></div>' +
-          '<div class="field"><label>Pages covered</label><input class="input" type="text" value="' + esc(m.pages || "") + '" data-mfield="pages" data-mid="' + esc(m.id) + '" placeholder="1-240" maxlength="60"></div>' +
+          /* a party has no reading attached, so those two fields go away */
+          (party ? "" :
+            '<div class="field"><label>Chapters covered</label><input class="input" type="text" value="' + esc(m.chapters || "") + '" data-mfield="chapters" data-mid="' + esc(m.id) + '" placeholder="Chapters 1-15" maxlength="140"></div>' +
+            '<div class="field"><label>Pages covered</label><input class="input" type="text" value="' + esc(m.pages || "") + '" data-mfield="pages" data-mid="' + esc(m.id) + '" placeholder="1-240" maxlength="60"></div>') +
           '<div class="field"><label>Book</label><select class="select" data-mfield="bookId" data-mid="' + esc(m.id) + '">' +
             opts.map(function(o){ return '<option value="' + esc(o.id) + '"' + (o.id === m.bookId ? " selected" : "") + ">" + esc(o.label) + "</option>"; }).join("") + "</select></div>" +
         "</div>" +
+        (party ? '<p class="hint" style="margin-top:12px">Photo uploads for parties are coming with the member login.</p>' : "") +
         '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
           '<button class="btn btn--sm btn--zest" type="button" data-msave="' + esc(m.id) + '">Save changes</button>' +
           '<button class="btn btn--sm btn--ghost" type="button" data-mdone="' + esc(m.id) + '">' + (m.done ? "Reopen" : "Mark finished") + "</button>" +
           '<button class="btn btn--sm btn--ghost" type="button" data-meet="' + esc(m.id) + '">Open notes</button>' +
           '<button class="btn btn--sm btn--ghost" type="button" data-mdel="' + esc(m.id) + '" style="margin-left:auto">Delete</button>' +
         "</div></div>";
-    }).join("") +
+    }).join("") : '<p class="empty">No meetings for that book yet.</p>') +
     '<hr class="divider"><p class="eyebrow">Add</p><h3 style="font-size:20px;margin:8px 0 16px">Schedule a new meeting</h3>' +
     '<div class="adminrow"><div class="formgrid">' +
+      '<div class="field"><label for="nmKind">Kind</label><select class="select" id="nmKind">' +
+        '<option value="meeting">Meeting</option><option value="party">Party</option></select></div>' +
       '<div class="field"><label for="nmDate">Date</label><input class="input" type="date" id="nmDate" value="' + todayISO() + '"></div>' +
       '<div class="field"><label for="nmTime">Time</label><input class="input" type="time" id="nmTime" value="19:00"></div>' +
       '<div class="field"><label for="nmPlace">Where</label><input class="input" type="text" id="nmPlace" maxlength="140"></div>' +
@@ -2607,14 +3379,119 @@ document.addEventListener("click", async function(e){
   var t = e.target; if(!t || !t.closest) return;
   var el;
 
+  /* party photos */
+  if((el = t.closest("[data-photoadd]"))){
+    var pmid = el.getAttribute("data-photoadd");
+    pickPhotos(async function(urls){
+      var note = $("photoNote");
+      for(var i = 0; i < urls.length; i++){
+        if(note) note.textContent = "Uploading " + (i + 1) + " of " + urls.length + "…";
+        var res = await callEndpoint("photo-add", { token: sessionToken(), meetingId: pmid, dataUrl: urls[i] });
+        if(!res.ok){
+          if(note) note.textContent = res.error === "signed out" ? "Your session ran out — sign in again." : "Couldn't add that one: " + res.error;
+          break;
+        }
+        (photoCache[pmid] = photoCache[pmid] || []).push(res.photo);
+      }
+      renderPhotos(pmid);
+      say("Photos added.", "ok");
+    });
+    return;
+  }
+  if((el = t.closest("[data-photodel]"))){
+    var dpid = el.getAttribute("data-photodel"), dmid = el.getAttribute("data-mid");
+    var dres = await callEndpoint("photo-delete", { token: sessionToken(), meetingId: dmid, id: dpid });
+    if(!dres.ok){
+      say(dres.error === "not yours" ? "That one isn't yours to remove." : "Couldn't remove that photo.", "bad");
+      return;
+    }
+    photoCache[dmid] = (photoCache[dmid] || []).filter(function(p){ return p.id !== dpid; });
+    renderPhotos(dmid);
+    return;
+  }
+  if((el = t.closest("[data-photoview]"))){
+    $("lightboxImg").src = el.getAttribute("src");
+    $("lightboxImg").alt = el.getAttribute("alt") || "";
+    openScrim("lightbox");
+    return;
+  }
+
+  /* signing in */
+  if(t.closest("#loginOpen") || t.closest("#meetManageNotify")){ if(me) await openMe(); else openLogin(); return; }
+  if(t.closest("#loginOut")){ closeScrim($("meScrim").hidden ? "loginScrim" : "meScrim"); await signOut(); return; }
+  if(t.closest("#loginBack")){ loginStep = "email"; renderLogin(); return; }
+  if(t.closest("#loginSend")){
+    var lem = $("loginEmail").value.trim();
+    if(!lem || lem.indexOf("@") < 1){ $("loginEmail").focus(); say("That doesn't look like an email address.", "bad"); return; }
+    $("loginNote").textContent = "Sending…";
+    var lres = await callEndpoint("login-request", { email: lem });
+    if(!lres.ok){ $("loginNote").textContent = "Couldn't send a code just now."; return; }
+    loginEmail = lem; loginStep = "code"; renderLogin();
+    return;
+  }
+  if(t.closest("#loginCheck")){
+    var lcode = $("loginCode").value.trim();
+    if(lcode.length < 6){ $("loginCode").focus(); return; }
+    $("loginNote").textContent = "Checking…";
+    var vres = await callEndpoint("login-verify", { email: loginEmail, code: lcode });
+    if(!vres.ok){
+      $("loginNote").textContent = vres.error === "expired" ? "That code has expired — send a new one."
+        : vres.error === "wrong" ? "Not right. " + (vres.left ? vres.left + " tries left." : "Send a new code.")
+        : "Couldn't sign you in.";
+      return;
+    }
+    setSessionToken(vres.token);
+    me = vres.profile;
+    closeScrim("loginScrim");
+    renderAll();
+    say("Signed in as " + (myName() || me.emailHint) + ".", "ok");
+    return;
+  }
+  if(t.closest("#meNotifySave") || t.closest("#meNotifyNone")){
+    var none = !!t.closest("#meNotifyNone");
+    var want = [];
+    if(!none){
+      Array.prototype.forEach.call($("meModalBody").querySelectorAll("[data-mynotify]"), function(c){
+        if(c.checked) want.push(c.getAttribute("data-mynotify"));
+      });
+      /* "every meeting" already covers the rest */
+      if(want.indexOf("*") !== -1) want = ["*"];
+    }
+    $("meNotifyNote").textContent = "Saving…";
+    var nres = await callEndpoint("notify-set", { token: sessionToken(), books: want, name: myName() });
+    if(!nres.ok){ $("meNotifyNote").textContent = "Couldn't save that."; return; }
+    myNotify = nres.books || want;
+    renderMe();
+    say(myNotify.length ? "Reminders updated." : "Reminders switched off.", "ok");
+    return;
+  }
+  if((el = t.closest("[data-myhue]"))){
+    var hue = el.getAttribute("data-myhue");
+    var hres = await callEndpoint("profile-set", { token: sessionToken(), hue: hue });
+    if(!hres.ok){
+      var note = $("meHueNote");
+      if(note) note.textContent = hres.error === "busy, try again"
+        ? "Someone else was saving — try again in a moment." : "Couldn't change that.";
+      return;
+    }
+    var mm3 = myMember();
+    if(mm3) mm3.hue = hue;
+    me.hue = hue;
+    renderMe(); renderAll();
+    say("Badge colour updated.", "ok");
+    return;
+  }
+
   /* carousels */
   if((el = t.closest("[data-cyc]"))){
     var ck = el.getAttribute("data-cyc"), cd = Number(el.getAttribute("data-d")) || 1;
     if(ck === "hero"){
       var hn = currentBooks().length || 1;
       heroIdx = (heroIdx + cd + hn) % hn;
+      meetIdx = 0;   /* the meeting card follows the book, so start at its next one */
     }else{
-      var mn = upcomingMeetings().length || 1;
+      var hb = currentBooks()[heroIdx];
+      var mn = (hb ? upcomingForBook(hb.id) : upcomingMeetings()).length || 1;
       meetIdx = (meetIdx + cd + mn) % mn;
     }
     renderHero();
@@ -2622,7 +3499,8 @@ document.addEventListener("click", async function(e){
   }
   if((el = t.closest("[data-cycto]"))){
     var ti = Number(el.getAttribute("data-i")) || 0;
-    if(el.getAttribute("data-cycto") === "hero") heroIdx = ti; else meetIdx = ti;
+    if(el.getAttribute("data-cycto") === "hero"){ heroIdx = ti; meetIdx = 0; }
+    else meetIdx = ti;
     renderHero();
     return;
   }
@@ -2632,6 +3510,24 @@ document.addEventListener("click", async function(e){
   if((el = t.closest("[data-coverurl]"))){
     var hk = coverHooks[el.getAttribute("data-cscope")];
     if(hk && hk.pick) hk.pick(el.getAttribute("data-coverurl"));
+    return;
+  }
+  if((el = t.closest("[data-coverpaste]"))){
+    var pscope = el.getAttribute("data-coverpaste");
+    var pbox = document.querySelector('[data-coverpastebox="' + pscope + '"]');
+    if(pbox){
+      pbox.hidden = !pbox.hidden;
+      if(!pbox.hidden){ var f = pbox.querySelector("input"); if(f) f.focus(); }
+    }
+    return;
+  }
+  if((el = t.closest("[data-coveruse]"))){
+    var uscope = el.getAttribute("data-coveruse");
+    var ubox = document.querySelector('[data-coverurlbox="' + uscope + '"]');
+    var uurl = safeUrl(ubox ? ubox.value : "");
+    if(!uurl){ say("That needs to be a full https:// image address.", "bad"); if(ubox) ubox.focus(); return; }
+    var uhook = coverHooks[uscope];
+    if(uhook && uhook.pick) uhook.pick(uurl);
     return;
   }
 
@@ -2644,34 +3540,39 @@ document.addEventListener("click", async function(e){
   }
   if(t.closest("#fReset")){
     recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP };
+    filtersOpen = true;
     renderRecs();
     return;
   }
+  if(t.closest("[data-filtertoggle]")){
+    /* <summary> toggles itself; just remember which way for the next render */
+    var box = t.closest("details");
+    filtersOpen = box ? !box.open : !filtersOpen;
+    return;
+  }
 
-  /* seconding a recommendation */
-  if((el = t.closest("[data-endorse]"))){
-    var er = recById(el.getAttribute("data-endorse")); if(!er) return;
+  /* a tab in the previous-meetings popup */
+  if((el = t.closest("[data-prevmeet]"))){ openMeeting(el.getAttribute("data-prevmeet")); return; }
+
+  /* The +/− shortcut on a card. Signed in, that's the whole interaction — the
+     vote is cast under their own name. Otherwise it opens the book with the
+     right field waiting for a name. */
+  if((el = t.closest("[data-vote]"))){
+    var vr = recById(el.getAttribute("data-rid"));
+    if(!vr) return;
+    var dir = el.getAttribute("data-vote");
+    if(me && myName()){ await castVote(vr, dir === "down", myName()); return; }
+    openBookDetail(vr, "rec", dir);
+    return;
+  }
+
+  /* endorsing or turning down a recommendation */
+  if((el = t.closest("[data-endorse]")) || (el = t.closest("[data-dislike]"))){
+    var down = el.hasAttribute("data-dislike");
+    var er = recById(el.getAttribute(down ? "data-dislike" : "data-endorse")); if(!er) return;
     var nameEl = $("endorseName"), nm0 = nameEl ? nameEl.value.trim() : "";
     if(!nm0){ if(nameEl) nameEl.focus(); say("Put your name in first.", "bad"); return; }
-    if((er.endorsements || []).some(function(x){ return x.name.toLowerCase() === nm0.toLowerCase(); })){
-      say("You've already seconded this one.", "ok");
-      return;
-    }
-    if(endpoint()){
-      say("Sending…", "busy", true);
-      var eres = await submitPublic("endorse", { recId: er.id, title: er.title, name: nm0 });
-      if(!eres.ok){ say(submitFailMsg(eres), "bad"); return; }
-      er.endorsements.push({ name: nm0, at: new Date().toISOString() });
-      say("Seconded. Thanks!", "ok");
-    }else if(!readOnly){
-      er.endorsements.push({ name: nm0, at: new Date().toISOString() });
-      if(!await save("Seconding…")) return;
-    }else{
-      say(submitFailMsg({ reason: "unconfigured" }), "bad");
-      return;
-    }
-    openBookDetail(er, "rec");
-    renderRecs();
+    if(await castVote(er, down, nm0)) openBookDetail(er, "rec");
     return;
   }
 
@@ -2777,6 +3678,7 @@ document.addEventListener("click", async function(e){
 
   if(t.closest("#adminOpen")){ openAdmin(); return; }
   if((el = t.closest("[data-atab]"))){ adminTab = el.getAttribute("data-atab"); renderAdmin(); return; }
+  if((el = t.closest("[data-mfilter]"))){ meetBookFilter = el.getAttribute("data-mfilter"); renderAdminPane(); return; }
   if((el = t.closest("[data-editfor]"))){ var eid = el.getAttribute("data-editfor"); openEditors[eid] = !openEditors[eid]; return; }
 
   /* recommendations admin */
@@ -2804,7 +3706,7 @@ document.addEventListener("click", async function(e){
     var rget = function(f){ return rp.querySelector('[data-rfield="' + f + '"][data-rid="' + rs.id + '"]'); };
     ["title","author","by","blurb"].forEach(function(f){ var n = rget(f); if(n) rs[f] = f === "blurb" ? n.value : n.value.trim(); });
     var rpg = rget("pages"); if(rpg) rs.pages = Number(rpg.value) || null;
-    var rgn = rget("genres"); if(rgn) rs.genres = rgn.value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+    var rgn = rget("genres"); if(rgn) rs.genres = normaliseGenres(rgn.value);
     var rAge = dualValue("rc:" + rs.id);
     rs.ageMin = rAge.lo; rs.ageMax = rAge.hi; rs.level = levelText(rs);
     var rrv = rget("reviews");
@@ -2819,9 +3721,10 @@ document.addEventListener("click", async function(e){
     if(await save(sr.shortlist ? "Shortlisting…" : "Removing from shortlist…")){ renderAll(); renderAdmin(); }
     return;
   }
-  if((el = t.closest("[data-unsecond]"))){
-    var ur = recById(el.getAttribute("data-unsecond")); if(!ur) return;
-    ur.endorsements.splice(Number(el.getAttribute("data-i")), 1);
+  if((el = t.closest("[data-unvote]"))){
+    var ur = recById(el.getAttribute("data-rid")); if(!ur) return;
+    var ulist = el.getAttribute("data-unvote");
+    (ur[ulist] || []).splice(Number(el.getAttribute("data-i")), 1);
     if(await save("Removing…")){ renderAll(); renderAdmin(); }
     return;
   }
@@ -2840,7 +3743,7 @@ document.addEventListener("click", async function(e){
     var pg = get("pages"); if(pg) bb.pages = Number(pg.value) || null;
     var si = get("seriesIndex"); if(si) bb.seriesIndex = Number(si.value) || 1;
     var pp = get("progressPage"); if(pp) bb.progressPage = Math.max(0, Number(pp.value) || 0);
-    var gn = get("genres"); if(gn) bb.genres = gn.value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+    var gn = get("genres"); if(gn) bb.genres = normaliseGenres(gn.value);
     var picks = p2.querySelectorAll('[data-bmember][data-bid="' + bb.id + '"]');
     if(picks.length){
       bb.members = [];
@@ -2898,7 +3801,7 @@ document.addEventListener("click", async function(e){
     state.books.push(withAges({
       id: uid("bk"), title: ttl, author: $("abAuthor").value.trim(), pages: Number($("abPages").value) || null,
       ageMin: abAge.lo, ageMax: abAge.hi, series: $("abSeries").value.trim(), seriesIndex: 1,
-      genres: $("abGenres").value.split(",").map(function(s){ return s.trim(); }).filter(Boolean),
+      genres: normaliseGenres($("abGenres").value),
       blurb: $("abBlurb").value.trim(), status: lane, cover:"", badge:"",
       started: lane === "current" ? todayISO() : "", finished: lane === "past" ? todayISO() : "",
       progressPage: 0, members: [], order: state.books.length
@@ -2924,10 +3827,12 @@ document.addEventListener("click", async function(e){
   if((el = t.closest("[data-msave]"))){
     var mm2 = meetingById(el.getAttribute("data-msave")); if(!mm2) return;
     var mp = $("adminPane");
-    ["date","time","place","chapters","pages","bookId"].forEach(function(f){
+    ["kind","date","time","place","chapters","pages","bookId"].forEach(function(f){
       var n = mp.querySelector('[data-mfield="' + f + '"][data-mid="' + mm2.id + '"]');
       if(n) mm2[f] = n.value;
     });
+    /* a party carries no chapters or pages */
+    if(mm2.kind === "party"){ mm2.chapters = ""; mm2.pages = ""; }
     if(await save("Saving meeting…")){ renderAll(); renderAdmin(); }
     return;
   }
@@ -2957,10 +3862,13 @@ document.addEventListener("click", async function(e){
   if(t.closest("#nmAdd")){
     var nb = $("nmBook").value;
     if(!bookById(nb)){ var src = recById(nb); if(src) adoptRec(src, currentBook() ? "next" : "current"); }
+    var nKind = $("nmKind") ? $("nmKind").value : "meeting";
     state.meetings.push({
-      id: uid("mt"), bookId: nb, date: $("nmDate").value, time: $("nmTime").value,
-      place: $("nmPlace").value.trim(), chapters: $("nmChap").value.trim(), pages: $("nmPages").value.trim(),
-      done: false, summary: "", predictions: [], points: []
+      id: uid("mt"), bookId: nb, kind: nKind, date: $("nmDate").value, time: $("nmTime").value,
+      place: $("nmPlace").value.trim(),
+      chapters: nKind === "party" ? "" : $("nmChap").value.trim(),
+      pages: nKind === "party" ? "" : $("nmPages").value.trim(),
+      done: false, summary: "", photos: [], predictions: [], points: []
     });
     if(await save("Adding meeting…")){ renderAll(); renderAdmin(); }
     return;
@@ -3068,14 +3976,22 @@ document.addEventListener("click", async function(e){
     return;
   }
 
-  /* nav */
+  /* nav — these follow whichever current book the carousel is showing */
   if(t.closest("#heroDetails") || t.closest("#heroTitle")){
-    var cb2 = currentBook(), nm2 = (cb2 && meetingForBook(cb2.id)) || nextMeeting();
+    var cb2 = currentBooks()[heroIdx];
+    if(!cb2){ var any = nextMeeting(); if(any) openMeeting(any.id); return; }
+    /* the next meeting for this book, falling back to its most recent one */
+    var nm2 = upcomingForBook(cb2.id)[0] || pastMeetingsForBook(cb2.id)[0];
     if(nm2) openMeeting(nm2.id);
+    else say("No meetings for " + cb2.title + " yet.", "busy");
     return;
   }
-  if(t.closest("#heroCover")){ var cb3 = currentBook(); if(cb3) openBookDetail(cb3, "book"); return; }
-  if(t.closest("#heroJumpRecs")){ document.getElementById("recs").scrollIntoView({ behavior:"smooth" }); return; }
+  if(t.closest("#heroCover")){ var cb3 = currentBooks()[heroIdx]; if(cb3) openBookDetail(cb3, "book"); return; }
+  if(t.closest("#heroPrevMeets")){
+    var cb4 = currentBooks()[heroIdx];
+    if(cb4) openPreviousMeetings(cb4.id);
+    return;
+  }
 });
 
 /* fold an inbox item into the club's own data */
@@ -3086,10 +4002,10 @@ function acceptSubmission(item){
     state.recs.push(withAges({
       id: item.id, title: String(p.title || "Untitled").slice(0, 140), author: String(p.author || "").slice(0, 140),
       pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
-      genres: Array.isArray(p.genres) ? p.genres : String(p.genres || "").split(",").map(function(s){ return s.trim(); }).filter(Boolean),
+      genres: normaliseGenres(p.genres),
       by: String(p.by || "").slice(0, 60), status: "pending", at: String(item.at || "").slice(0, 10),
       cover: safeUrl(p.cover), blurb: String(p.blurb || ""), summarySource: String(p.summarySource || "own"),
-      shortlist: false, reviews: [], endorsements: []
+      shortlist: false, reviews: [], endorsements: [], dislikes: []
     }));
   }else if(item.kind === "join"){
     var nm = String(p.name || "").trim();
@@ -3229,15 +4145,15 @@ async function chooseACHit(i){
   var extras = await openLibraryExtras(h.title, h.author);
   if(extras){
     if(!h.pages && extras.pages) $("sPages").value = extras.pages;
-    extras.genres.forEach(function(g){
-      if(!genres.some(function(x){ return x.toLowerCase() === g.toLowerCase(); })) genres.push(g);
-    });
+    genres = genres.concat(extras.genres);
     if(!sugCover && extras.cover) sugCover = extras.cover;
   }
-  $("sGenres").value = genres.slice(0, 10).join(", ");
+  $("sGenres").value = normaliseGenres(genres).join(", ");
   sugAI = "";
   setSugMode(sugMode === "own" ? "own" : "fetched");
   renderSugCover();
+  /* these fields were filled in code, which fires no input event */
+  syncSearchLinks();
 }
 function renderSugCover(){
   $("sCoverPick").innerHTML =
@@ -3249,6 +4165,100 @@ function initSuggestForm(){
   $("sAgeSlider").innerHTML = dualRangeHTML("sAge", 12, AGE_TOP);
   renderSugCover();
   setSugMode("fetched");
+  $("sLookupOut").innerHTML = "";
+  syncSearchLinks();
+}
+/* keep the two "go and look" links pointed at whatever's typed */
+function syncSearchLinks(){
+  var t = $("sTitle").value.trim(), a = $("sAuthor").value.trim();
+  $("sGoodreads").href = goodreadsSearch(t, a);
+  $("sGoogle").href = googleSearch(t, a);
+}
+/* the explicit "search the web" pass: correct the title, offer the authors it
+   found, and fill in everything it can */
+async function runLookup(){
+  var q = $("sTitle").value.trim(), out = $("sLookupOut");
+  if(!q){ $("sTitle").focus(); return; }
+  out.innerHTML = '<p class="hint" style="margin-top:10px">Searching&hellip;</p>';
+  var res = await lookupBook(q);
+  if(!res.hits.length){
+    out.innerHTML = '<p class="hint" style="margin-top:10px">Nothing found. Check the spelling, or fill it in yourself and carry on.</p>';
+    return;
+  }
+  out.innerHTML =
+    (res.correction
+      ? '<div class="lookupfix"><span>Did you mean <strong>' + esc(res.correction) + "</strong>?</span>" +
+        '<button class="btn btn--sm btn--zest" type="button" data-usehit="0">Use it</button></div>'
+      : "") +
+    '<p class="hint" style="margin-top:10px">' + res.hits.length + " match" + (res.hits.length === 1 ? "" : "es") + " &mdash; pick the right edition:</p>" +
+    '<div class="ac__menu" style="position:static;margin-top:8px" role="listbox">' +
+      res.hits.map(function(h, i){
+        return '<button class="ac__opt" type="button" role="option" data-usehit="' + i + '">' +
+          (h.cover ? '<img src="' + esc(h.cover) + '" alt="" loading="lazy">' : "") +
+          '<span><span class="ac__t">' + esc(h.title) + "</span>" +
+          '<span class="ac__a">' + esc(h.author || "unknown author") +
+            (h.year ? " · " + esc(h.year) : "") + (h.pages ? " · " + h.pages + " pp" : "") + "</span></span></button>";
+      }).join("") +
+    "</div>";
+  lookupHits = res.hits;
+}
+var lookupHits = [];
+
+/* The details pass: page count, age rating, genres and a summary in one go.
+   Google's AI Overview has no API and can't be read from a page, so this asks
+   Claude the same question through the club's endpoint and fills in the answer.
+   Everything it returns stays editable. */
+async function askAIForDetails(){
+  var title = $("sTitle").value.trim(), author = $("sAuthor").value.trim();
+  var out = $("sLookupOut");
+  if(!title){ $("sTitle").focus(); return; }
+  if(!endpoint()){
+    out.innerHTML = '<p class="hint" style="margin-top:10px">This needs the club&rsquo;s endpoint set up — ask the organiser. The web search above works without it.</p>';
+    return;
+  }
+  out.innerHTML = '<p class="hint" style="margin-top:10px">Looking it up&hellip;</p>';
+  try{
+    var res = await fetch(endpoint(), {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ kind: "details", payload: { title: title, author: author }, at: new Date().toISOString() })
+    });
+    var j = res.ok ? await res.json() : null;
+    if(!j || !j.ok){
+      out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t look that one up. Try the web search, or fill it in yourself.</p>';
+      return;
+    }
+    var d = j.details || {}, filled = [];
+    if(d.author && !author){ $("sAuthor").value = d.author; filled.push("author"); }
+    if(Number(d.pages) > 0){ $("sPages").value = Number(d.pages); filled.push("page count"); }
+    if(Array.isArray(d.genres) && d.genres.length){
+      $("sGenres").value = normaliseGenres(d.genres).join(", ");
+      filled.push("genres");
+    }
+    /* the backend asks for zeroes when it isn't sure, so an empty answer must
+       not wipe the slider down to 0-0 */
+    if(typeof d.ageMin === "number" && typeof d.ageMax === "number" &&
+       d.ageMax > 0 && d.ageMax >= d.ageMin){
+      dualState.sAge = { lo: clampAge(d.ageMin, 0), hi: clampAge(d.ageMax, AGE_TOP) };
+      var loEl = document.querySelector('#sAgeSlider input[data-end="lo"]');
+      var hiEl = document.querySelector('#sAgeSlider input[data-end="hi"]');
+      if(loEl) loEl.value = dualState.sAge.lo;
+      if(hiEl) hiEl.value = dualState.sAge.hi;
+      syncDual("sAge");
+      filled.push("age rating");
+    }
+    if(d.summary){
+      sugAI = String(d.summary).trim();
+      if(sugMode !== "own") setSugMode("ai");
+    }
+    syncSearchLinks();
+    out.innerHTML = '<p class="hint" style="margin-top:10px">' +
+      (filled.length ? "Filled in the " + filled.join(", ") + ". " : "") +
+      "Written by Claude from what it knows about the book, so give it a glance before you send it &mdash; everything here is editable." +
+      (d.confident === false ? " It wasn't sure about this one, so do check." : "") + "</p>";
+  }catch(e){
+    out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t reach the club&rsquo;s inbox. Try the web search instead.</p>';
+  }
 }
 $("sTitle").addEventListener("input", function(){
   clearTimeout(acTimer);
@@ -3271,7 +4281,23 @@ document.addEventListener("click", async function(e){
   if(el){ await chooseACHit(Number(el.getAttribute("data-achit"))); return; }
   var sm = e.target.closest && e.target.closest("[data-summode]");
   if(sm){ setSugMode(sm.getAttribute("data-summode")); return; }
+  if(e.target.closest && e.target.closest("#sLookup")){ await runLookup(); return; }
+  if(e.target.closest && e.target.closest("#sAskAI")){ await askAIForDetails(); return; }
+  var uh = e.target.closest && e.target.closest("[data-usehit]");
+  if(uh){
+    var pick = lookupHits[Number(uh.getAttribute("data-usehit"))];
+    if(pick){
+      acHits = lookupHits;
+      await chooseACHit(Number(uh.getAttribute("data-usehit")));
+      $("sLookupOut").innerHTML = '<p class="hint" style="margin-top:10px">Filled in from &ldquo;' +
+        esc(pick.title) + '&rdquo;. Change anything that looks wrong.</p>';
+      syncSearchLinks();
+    }
+    return;
+  }
 });
+$("sAuthor").addEventListener("input", syncSearchLinks);
+$("sTitle").addEventListener("input", syncSearchLinks);
 
 $("suggestForm").addEventListener("submit", async function(e){
   e.preventDefault();
@@ -3279,7 +4305,7 @@ $("suggestForm").addEventListener("submit", async function(e){
   var title = el.title.value.trim(), author = el.author.value.trim(), by = el.by.value.trim();
   if(!title || !author || !by) return;
   var age = dualValue("sAge");
-  var genres = el.genres.value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+  var genres = normaliseGenres(el.genres.value);
   var blurb = el.blurb.value.trim();
   var note = $("suggestNote");
 
@@ -3317,8 +4343,29 @@ $("suggestForm").addEventListener("submit", async function(e){
 });
 
 /* ---------- boot ---------- */
+function renderWhoami(){
+  var btn = $("loginOpen");
+  if(!btn) return;
+  if(!endpoint()){ btn.hidden = true; return; }
+  btn.hidden = false;
+  if(me){
+    var mem = myMember(), h = mem ? memberHue(mem) : "sky";
+    btn.className = "btn btn--sm btn--ghost";
+    btn.innerHTML = '<span class="whoami"><span class="whoami__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
+      esc(initials(myName() || "?")) + "</span>" + esc((myName() || "Account").split(" ")[0]) + "</span>";
+    btn.title = "Your account";
+  }else{
+    btn.className = "btn btn--sm btn--ghost";
+    btn.textContent = "Sign in";
+    btn.title = "Sign in to manage your reminders";
+  }
+  /* a signed-in member's name goes straight into the suggestion form */
+  var by = $("sBy");
+  if(by && me && myName() && !by.value) by.value = myName();
+}
 function renderAll(){
   if(focusId && !memberById(focusId)) focusId = null;
+  renderWhoami();
   renderHero(); renderShelf(); renderRecs(); renderFocus(); renderTree(); renderTimeline();
 }
 
@@ -3329,6 +4376,7 @@ function renderAll(){
   (state.inbox || []).forEach(function(id){ handled[id] = 1; });
   inbox.forEach(function(it){ if(it && handled[it.id]) it.handled = true; });
   applyInbox();
+  await restoreSession();
   refreshWriteMode();
   initSuggestForm();
   renderAll();

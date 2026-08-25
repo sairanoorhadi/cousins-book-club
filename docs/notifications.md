@@ -46,10 +46,30 @@ Add script property, once for each row:
 | --- | --- |
 | `GITHUB_TOKEN` | the token from step 1 |
 | `ORGANISER_EMAIL` | where new submissions should be emailed |
-| `ANTHROPIC_API_KEY` | *optional* — only for the "Write one for me" summaries |
+| `ANTHROPIC_API_KEY` | *optional* — "Write one for me" and "Fill in the details for me" |
+| `GOOGLE_API_KEY` | *optional* — Google Images cover search |
+| `GOOGLE_CSE_ID` | *optional* — the search engine id that goes with it |
 
-Leave `ANTHROPIC_API_KEY` out and that one button politely says the feature
-isn't switched on. Everything else works without it.
+The optional three each switch on one button. Leave them out and that button
+says the feature isn't set up; everything else works regardless.
+
+### Google Images for covers (optional)
+
+Google has no open image API. The one programmable route is a **Programmable
+Search Engine**, and it needs a key — which is exactly why this goes through
+the script rather than the page: a key in a public web page is a key anyone can
+spend.
+
+1. Create a search engine at <https://programmablesearchengine.google.com/>.
+   Set it to **search the entire web** and turn **Image search** on.
+2. Copy its **Search engine ID** into `GOOGLE_CSE_ID`.
+3. Get an API key at <https://console.cloud.google.com/apis/credentials>, enable
+   the **Custom Search API** for the project, and put the key in
+   `GOOGLE_API_KEY`.
+
+The free tier is 100 searches a day, which is far more than a book club will
+use. Without it, cover search still works — it just uses Google Books and Open
+Library only.
 
 ## 4. Deploy it
 
@@ -74,6 +94,76 @@ press **Run**. That schedules `sendMeetingEmails` every five minutes.
 
 To check the GitHub side is wired up, run `testGitHub` and look at the log —
 it should report reading `state.json`.
+
+## Already set this up? Update the script
+
+Signing in was added after the first version. To switch it on:
+
+1. Open your script at <https://script.google.com>.
+2. Replace all of `Code.gs` with the current version from this repo.
+3. **Deploy → Manage deployments → edit (pencil) → Version: New version → Deploy.**
+
+The URL stays the same, so nothing changes on the site. No new keys are needed
+— sign-in codes go out through the same mail permission the reminders already
+use.
+
+## Signing in
+
+Members sign in with a **six-digit code emailed to them**. There are no
+passwords anywhere in this system: nothing to leak, nothing to reset, and no
+password database for a club that includes children.
+
+- A code lasts ten minutes and dies after five wrong guesses.
+- Codes are stored hashed, with a salt unique to your script.
+- A session lasts thirty days and lives in the script; the browser only holds
+  an opaque token.
+- Asking for a code always gives the same answer, so nobody can use the form to
+  work out who is a member.
+
+Being signed in only changes what the site *offers*. Every action that matters
+is checked again at the endpoint against the session, so an edited browser
+gets nothing.
+
+### What signing in gets a member
+
+- **Their own reminders**, changed whenever they like — a book at a time, or
+  every meeting including books the club hasn't started. This takes effect
+  straight away.
+- **Their name filled in** when they put a book forward.
+- **One-click endorsing**, without typing their name each time.
+- **A progress panel** for the books they've recommended.
+- **A badge colour** they pick themselves.
+
+Changing a badge colour is the one member action that writes to
+`data/state.json`. The script does it under a lock and retries once if the
+organiser happened to save at the same moment; if both land together, whoever
+was second is told to try again rather than overwriting.
+
+## Party photos
+
+A meeting can be a **Party**, and a party can have photos.
+
+- **Anyone visiting the site can see them.** That's a deliberate choice by the
+  club, not an accident.
+- **Only a signed-in member can add one**, and only remove their own — you, as
+  organiser, can remove any.
+- They're stored in a Drive folder called *Cousins Book Club photos*, created
+  automatically the first time someone uploads, and shared as
+  "anyone with the link can view".
+
+They are **not** committed to this repo, for two practical reasons: images as
+base64 would bloat `data/state.json` and slow every save, and git would keep
+them forever even after they were deleted. On Drive, deleting one actually
+deletes it — from the site and from the folder.
+
+Photos are shrunk to 1400px wide in the browser before they're sent, up to ten
+at a time, forty per party.
+
+### Removing a photo for good
+
+Delete it from the party's notes on the site. That trashes the Drive file too.
+If you'd rather clear a whole party, open the Drive folder and delete the files
+there — the site drops anything it can't load.
 
 ## Where the addresses live
 
