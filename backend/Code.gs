@@ -1103,6 +1103,65 @@ function testGitHub() {
 }
 
 /**
+ * Run from the editor when email is going out and you want to know why.
+ * Logs every subscription from both places they can live, every meeting still
+ * due to send, and what each has already sent. Sends nothing.
+ */
+function whoGetsEmails() {
+  var out = [];
+  var store = PropertiesService.getScriptProperties();
+
+  /* Subscriptions live in two places and it is easy to check only one:
+     members who signed in and chose their own books are here... */
+  var dir = directory();
+  var names = Object.keys(dir);
+  out.push('=== Signed-in members, subscriptions kept in this script ===');
+  if (!names.length) out.push('  (nobody has signed in)');
+  names.forEach(function (email) {
+    var e = dir[email] || {};
+    var books = e.books || [];
+    out.push('  ' + email + '  ->  ' +
+      (books.indexOf('*') !== -1 ? 'EVERY meeting'
+        : books.length ? books.length + ' book(s): ' + books.join(', ')
+        : 'nothing'));
+  });
+
+  /* ...and members the organiser ticked by hand are in the repo. */
+  var state = {};
+  try { state = JSON.parse(ghGetFile(STATE_PATH).content || '{}'); } catch (err) {}
+  out.push('', '=== Ticked by hand under Admin \u2192 Members ===');
+  var ticked = (state.members || []).filter(function (m) { return (m.notify || []).length; });
+  if (!ticked.length) out.push('  (nobody)');
+  ticked.forEach(function (m) {
+    out.push('  ' + m.name + '  ->  ' +
+      (m.notify.indexOf('*') !== -1 ? 'EVERY meeting' : m.notify.join(', ')) +
+      (m.notifyRef ? '' : '   [no address held, so gets nothing]'));
+  });
+
+  out.push('', '=== Meetings still due to send ===');
+  var now = new Date();
+  var any = false;
+  (state.meetings || []).forEach(function (m) {
+    if (m.done || !m.date) return;
+    var start = meetingStart(m);
+    if (!start || start < now) return;
+    any = true;
+    var book = (state.books || []).filter(function (b) { return b.id === m.bookId; })[0];
+    var sent = {};
+    try { sent = JSON.parse(store.getProperty('sent:' + m.id) || '{}'); } catch (err) {}
+    out.push('  ' + m.date + '  ' + (book ? book.title : m.bookId) +
+      '   goes to ' + recipients(state.members || [], m.bookId).length + ' address(es)' +
+      '   already sent: ' + (['scheduled', 'days', 'soon'].filter(function (k) { return sent[k]; }).join(', ') || 'nothing yet'));
+  });
+  if (!any) out.push('  (none \u2014 nothing more will go out)');
+
+  out.push('', 'To stop your own: open the site, click your badge, ' +
+    '\u201cTurn them all off\u201d. To stop everyone\u2019s: delete the ' +
+    'sendMeetingEmails trigger under the clock icon.');
+  Logger.log(out.join('\n'));
+}
+
+/**
  * Run from the editor to see who is signed up for meeting emails. The
  * addresses live only here, so this log is the way to read them back. Nothing
  * is written anywhere — close the log and they're private again.
