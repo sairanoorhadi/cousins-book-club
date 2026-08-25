@@ -589,7 +589,32 @@ function appendToInbox(item) {
    urgent. One email a week, on Sunday evening, covering what arrived and what
    is still waiting — and nothing at all in a quiet week. */
 
-var DIGEST_HOUR = 18;   /* 6pm, in the script's own timezone */
+/* When the round-up goes out. Both are optional Script Properties, so the day
+   and time can change without touching this file:
+
+     DIGEST_DAY   MONDAY … SUNDAY   (default SUNDAY)
+     DIGEST_HOUR  0-23              (default 18, i.e. 6pm)
+
+   Both are read in the script's own timezone — File → Project Settings shows
+   which one that is. Changing either only takes effect when setUpTrigger runs
+   again; the trigger holds its own copy of the schedule. */
+var DIGEST_DAY_DEFAULT = 'SUNDAY';
+var DIGEST_HOUR_DEFAULT = 18;
+
+function digestDay() {
+  var want = prop('DIGEST_DAY').trim().toUpperCase();
+  return ScriptApp.WeekDay[want] ? want : DIGEST_DAY_DEFAULT;
+}
+function digestHour() {
+  var raw = prop('DIGEST_HOUR').trim();
+  var n = Math.floor(Number(raw));
+  return (raw && isFinite(n) && n >= 0 && n <= 23) ? n : DIGEST_HOUR_DEFAULT;
+}
+function digestSchedule() {
+  var h = digestHour();
+  return digestDay().charAt(0) + digestDay().slice(1).toLowerCase() + ' at ' +
+    (h % 12 === 0 ? 12 : h % 12) + (h < 12 ? 'am' : 'pm');
+}
 
 function inboxItems() {
   try {
@@ -705,6 +730,9 @@ function weeklyDigest() {
 function previewDigest() {
   var to = propEmail('ORGANISER_EMAIL');
   Logger.log(to ? 'Would send to ' + to : 'ORGANISER_EMAIL is not set to a real address.');
+  Logger.log('Scheduled for ' + digestSchedule() + '. ' + (digestInstalled()
+    ? 'The trigger is installed.'
+    : 'NO TRIGGER YET \u2014 run setUpTrigger once to install it.'));
   var items = inboxItems(), handled = handledIds();
   Logger.log(items.length + ' items in the inbox, ' +
     items.filter(function (it) { return !it.handled && handled.indexOf(it.id) === -1; }).length + ' still waiting.');
@@ -1056,9 +1084,16 @@ function setUpTrigger() {
     if (fn === 'sendMeetingEmails' || fn === 'weeklyDigest') ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('sendMeetingEmails').timeBased().everyMinutes(5).create();
-  /* the round-up, Sunday evening */
+  /* the round-up — DIGEST_DAY / DIGEST_HOUR if they're set, else Sunday 6pm */
   ScriptApp.newTrigger('weeklyDigest').timeBased()
-    .onWeekDay(ScriptApp.WeekDay.SUNDAY).atHour(DIGEST_HOUR).create();
+    .onWeekDay(ScriptApp.WeekDay[digestDay()]).atHour(digestHour()).create();
+  Logger.log('Meeting emails: every 5 minutes. Round-up: ' + digestSchedule() + '.');
+}
+
+function digestInstalled() {
+  return ScriptApp.getProjectTriggers().some(function (t) {
+    return t.getHandlerFunction() === 'weeklyDigest';
+  });
 }
 
 /** Run once from the editor to check the GitHub token works. */
