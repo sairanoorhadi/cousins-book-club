@@ -1,5 +1,5 @@
 {
-  "rev": 1083,
+  "rev": 1084,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -18,7 +18,8 @@
       "email": "",
       "notifyRef": "",
       "emailHint": "",
-      "notify": []
+      "notify": [],
+      "hue": ""
     },
     {
       "id": "mb-pareesa",
@@ -30,7 +31,8 @@
       "email": "",
       "notifyRef": "",
       "emailHint": "",
-      "notify": []
+      "notify": [],
+      "hue": ""
     },
     {
       "id": "mb-mt3zx2lgcj3x8",
@@ -42,7 +44,8 @@
       "email": "",
       "notifyRef": "",
       "emailHint": "",
-      "notify": []
+      "notify": [],
+      "hue": ""
     },
     {
       "id": "mb-mt3zy8m6cxe9o",
@@ -54,7 +57,8 @@
       "email": "",
       "notifyRef": "",
       "emailHint": "",
-      "notify": []
+      "notify": [],
+      "hue": ""
     },
     {
       "id": "mb-mt40250262772",
@@ -66,7 +70,8 @@
       "email": "",
       "notifyRef": "",
       "emailHint": "",
-      "notify": []
+      "notify": [],
+      "hue": ""
     },
     {
       "id": "mb-mt7aqa7gpa2ok",
@@ -78,7 +83,8 @@
       "email": "",
       "notifyRef": "",
       "emailHint": "",
-      "notify": []
+      "notify": [],
+      "hue": ""
     },
     {
       "id": "mb-mt7aqkzhkhcew",
@@ -90,7 +96,8 @@
       "email": "",
       "notifyRef": "",
       "emailHint": "",
-      "notify": []
+      "notify": [],
+      "hue": ""
     }
   ],
   "books": [
@@ -226,7 +233,9 @@
           "by": "Saira"
         }
       ],
-      "sent": {}
+      "sent": {},
+      "kind": "meeting",
+      "photos": []
     },
     {
       "id": "mt-soc",
@@ -240,7 +249,9 @@
       "summary": "",
       "predictions": [],
       "points": [],
-      "sent": {}
+      "sent": {},
+      "kind": "meeting",
+      "photos": []
     },
     {
       "id": "mt-mt7bmjmu7e7iv",
@@ -254,7 +265,9 @@
       "summary": "",
       "predictions": [],
       "points": [],
-      "sent": {}
+      "sent": {},
+      "kind": "meeting",
+      "photos": []
     },
     {
       "id": "mt-mt7pzygrjatre",
@@ -280,7 +293,9 @@
           "by": ""
         }
       ],
-      "sent": {}
+      "sent": {},
+      "kind": "meeting",
+      "photos": []
     },
     {
       "id": "mt-mt7qevhwoo6bp",
@@ -288,13 +303,15 @@
       "date": "2026-09-12",
       "time": "15:00",
       "place": "Ferdinand",
-      "chapters": "Cosplay Party",
+      "chapters": "",
       "pages": "",
       "done": false,
       "summary": "",
       "predictions": [],
       "points": [],
-      "sent": {}
+      "sent": {},
+      "kind": "party",
+      "photos": []
     },
     {
       "id": "mt-mt7qhuwhfxm8v",
@@ -319,7 +336,9 @@
           "by": ""
         }
       ],
-      "sent": {}
+      "sent": {},
+      "kind": "meeting",
+      "photos": []
     }
   ],
   "recs": [
@@ -344,7 +363,8 @@
       "reviews": [],
       "endorsements": [],
       "ageMin": 13,
-      "ageMax": 100
+      "ageMax": 100,
+      "dislikes": []
     },
     {
       "id": "rc-1984",
@@ -367,7 +387,8 @@
       "reviews": [],
       "endorsements": [],
       "ageMin": 15,
-      "ageMax": 100
+      "ageMax": 100,
+      "dislikes": []
     },
     {
       "id": "rc-kite",
@@ -376,7 +397,7 @@
       "pages": 371,
       "genres": [
         "Literary Fiction",
-        "Historical",
+        "Historical Fiction",
         "Coming-of-Age"
       ],
       "level": "Ages 16+",
@@ -390,7 +411,8 @@
       "reviews": [],
       "endorsements": [],
       "ageMin": 16,
-      "ageMax": 100
+      "ageMax": 100,
+      "dislikes": []
     },
     {
       "id": "rc-mockingbird",
@@ -413,7 +435,8 @@
       "reviews": [],
       "endorsements": [],
       "ageMin": 13,
-      "ageMax": 100
+      "ageMax": 100,
+      "dislikes": []
     },
     {
       "id": "rc-elevator",
@@ -441,7 +464,8 @@
         }
       ],
       "ageMin": 8,
-      "ageMax": 11
+      "ageMax": 11,
+      "dislikes": []
     },
     {
       "id": "rc-champion",
@@ -464,7 +488,8 @@
       "reviews": [],
       "endorsements": [],
       "ageMin": 9,
-      "ageMax": 12
+      "ageMax": 12,
+      "dislikes": []
     },
     {
       "id": "rc-grace",
@@ -487,7 +512,8 @@
       "reviews": [],
       "endorsements": [],
       "ageMin": 10,
-      "ageMax": 13
+      "ageMax": 13,
+      "dislikes": []
     },
     {
       "id": "rc-trouts",
@@ -510,7 +536,8 @@
       "reviews": [],
       "endorsements": [],
       "ageMin": 8,
-      "ageMax": 12
+      "ageMax": 12,
+      "dislikes": []
     },
     {
       "id": "rc-pandas",
@@ -533,7 +560,8 @@
       "reviews": [],
       "endorsements": [],
       "ageMin": 9,
-      "ageMax": 12
+      "ageMax": 12,
+      "dislikes": []
     },
     {
       "id": "rc-heartless",
@@ -557,7 +585,8 @@
       "reviews": [],
       "endorsements": [],
       "ageMin": 12,
-      "ageMax": 100
+      "ageMax": 100,
+      "dislikes": []
     }
   ],
   "inbox": []
