@@ -10,6 +10,17 @@
         "name": "Saira",
         "vote": "down"
       }
+    },
+    {
+      "id": "endorse-b97977f3-e2c",
+      "kind": "endorse",
+      "at": "2026-08-25T14:52:14.512Z",
+      "payload": {
+        "recId": "rc-heartless",
+        "title": "Heartless",
+        "name": "Saira",
+        "vote": "up"
+      }
     }
   ]
 }
