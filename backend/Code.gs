@@ -405,8 +405,12 @@ function profileSet(payload) {
 
   var wantName = payload.name ? String(payload.name).slice(0, 60) : '';
   var wantHue = String(payload.hue || '').slice(0, 20);
+  /* one of the five house hues, or a hex the member picked themselves */
   var allowed = ['flare', 'zest', 'surf', 'sky', 'grape', ''];
-  if (allowed.indexOf(wantHue) === -1) return { ok: false, error: 'bad colour' };
+  if (allowed.indexOf(wantHue) === -1 && !/^#[0-9a-fA-F]{6}$/.test(wantHue)) {
+    return { ok: false, error: 'bad colour' };
+  }
+  if (wantHue.charAt(0) === '#') wantHue = wantHue.toLowerCase();
 
   if (!propKey('GITHUB_TOKEN', '')) return { ok: false, error: 'no github token' };
 
