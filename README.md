@@ -87,3 +87,11 @@ This repo is public, which GitHub Pages requires on a free account. Everything i
 **Email addresses are the exception, and are deliberately kept out.** Some of the club are children, so an address never reaches this repo: the submissions endpoint holds it privately inside the organiser's Google account, and the repo carries only an opaque reference and a masked hint (`s••••@gmail.com`). The admin panel has no field to type an address into, and meeting reminders go out bcc so no child sees another's. Reading them back, and deleting one on request, is covered in `docs/notifications.md`.
 
 The **Admin** button is visible to everyone and the panel opens for anyone who clicks it, but nothing can be saved without the GitHub token above. There is no password, because a password checked inside a public page is not a password — anyone can read it in the page source. The token is the real lock, and it never leaves the browser it was pasted into.
+
+## Trying changes before they go live
+
+There is a test copy of the site at
+[`/dev/`](https://sairanoorhadi.github.io/cousins-book-club/dev/), with its own
+data file and a hard-to-miss band across the top. Changes land there first and
+only reach the real page once they've been checked. See
+[docs/test-site.md](docs/test-site.md).
