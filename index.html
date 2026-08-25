@@ -986,7 +986,6 @@ img{max-width:100%;display:block}
           </div>
           <div class="field"><label>Look it up</label>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-              <button class="btn btn--sm btn--sky" type="button" id="sLookup">Search the web for this book</button>
               <button class="btn btn--sm btn--grape" type="button" id="sAskAI">Fill in the details for me</button>
               <a class="btn btn--sm btn--ghost" id="sGoodreads" href="https://www.goodreads.com" target="_blank" rel="noopener noreferrer">Open on Goodreads</a>
               <a class="btn btn--sm btn--ghost" id="sGoogle" href="https://www.google.com" target="_blank" rel="noopener noreferrer">Google it</a>
@@ -995,9 +994,9 @@ img{max-width:100%;display:block}
           <div class="field"><label>Cover</label><div id="sCoverPick"></div></div>
           <div class="field"><label>Summary</label>
             <div class="seg" id="sSumMode" style="margin-bottom:10px">
-              <button class="segbtn" type="button" data-summode="fetched" aria-pressed="true">From the book listing</button>
+              <button class="segbtn" type="button" data-summode="own" aria-pressed="true">I&rsquo;ll write my own</button>
+              <button class="segbtn" type="button" data-summode="fetched" aria-pressed="false">From the book listing</button>
               <button class="segbtn" type="button" data-summode="ai" aria-pressed="false">Write one for me</button>
-              <button class="segbtn" type="button" data-summode="own" aria-pressed="false">I&rsquo;ll write my own</button>
             </div>
             <textarea class="textarea" id="sBlurb" name="blurb" placeholder="A few sentences — no spoilers." maxlength="2400"></textarea>
             <p class="hint" id="sSumHint">Pulled from the book listing when you pick a title. Edit it however you like.</p>
@@ -4545,7 +4544,7 @@ tabGroup(["recs","short","suggest"], "tab-");
 tabGroup(["tree","time"], "tab-");
 
 /* ---------- the Suggest a Book form ---------- */
-var sugMode = "fetched", sugCover = "", sugFetched = "", sugAI = "", sugOwn = "";
+var sugMode = "own", sugCover = "", sugFetched = "", sugAI = "", sugOwn = "";
 var acHits = [], acTimer = null;
 
 function setSugMode(mode){
@@ -4558,7 +4557,7 @@ function setSugMode(mode){
     box.value = sugFetched;
     hint.textContent = sugFetched
       ? "Pulled from the book listing. Edit it however you like."
-      : "Pick a title above and the published summary drops in here.";
+      : "Nothing found for this one yet \u2014 press \u201cFill in the details for me\u201d first.";
   }else if(mode === "ai"){
     box.value = sugAI;
     hint.textContent = "Written fresh from the title and author. Edit it however you like.";
@@ -4672,7 +4671,7 @@ async function chooseACHit(i){
     if(!$("sRatingBy").value) $("sRatingBy").value = "Google Books";
   }
   sugAI = "";
-  setSugMode(sugMode === "own" ? "own" : "fetched");
+  setSugMode(sugMode);
   renderSugCover();
   /* the picked title's other authors stay on offer, in case this was the wrong one */
   authorHits = authorCandidates(acHits, h.title);
@@ -4689,7 +4688,7 @@ function renderSugCover(){
 function initSuggestForm(){
   $("sAgeSlider").innerHTML = dualRangeHTML("sAge", 12, AGE_TOP);
   renderSugCover();
-  setSugMode("fetched");
+  setSugMode("own");
   $("sLookupOut").innerHTML = "";
   syncSearchLinks();
 }
@@ -4701,32 +4700,6 @@ function syncSearchLinks(){
 }
 /* the explicit "search the web" pass: correct the title, offer the authors it
    found, and fill in everything it can */
-async function runLookup(){
-  var q = $("sTitle").value.trim(), out = $("sLookupOut");
-  if(!q){ $("sTitle").focus(); return; }
-  out.innerHTML = '<p class="hint" style="margin-top:10px">Searching&hellip;</p>';
-  var res = await lookupBook(q);
-  if(!res.hits.length){
-    out.innerHTML = '<p class="hint" style="margin-top:10px">Nothing found. Check the spelling, or fill it in yourself and carry on.</p>';
-    return;
-  }
-  out.innerHTML =
-    (res.correction
-      ? '<div class="lookupfix"><span>Did you mean <strong>' + esc(res.correction) + "</strong>?</span>" +
-        '<button class="btn btn--sm btn--zest" type="button" data-usehit="0">Use it</button></div>'
-      : "") +
-    '<p class="hint" style="margin-top:10px">' + res.hits.length + " match" + (res.hits.length === 1 ? "" : "es") + " &mdash; pick the right edition:</p>" +
-    '<div class="ac__menu" style="position:static;margin-top:8px" role="listbox">' +
-      res.hits.map(function(h, i){
-        return '<button class="ac__opt" type="button" role="option" data-usehit="' + i + '">' +
-          (h.cover ? '<img src="' + esc(h.cover) + '" alt="" loading="lazy">' : "") +
-          '<span><span class="ac__t">' + esc(h.title) + "</span>" +
-          '<span class="ac__a">' + esc(h.author || "unknown author") +
-            (h.year ? " · " + esc(h.year) : "") + (h.pages ? " · " + h.pages + " pp" : "") + "</span></span></button>";
-      }).join("") +
-    "</div>";
-  lookupHits = res.hits;
-}
 var lookupHits = [];
 
 /* The details pass: page count, age rating, genres and a summary in one go.
@@ -4766,10 +4739,13 @@ async function askAIForDetails(){
   out.innerHTML = '<p class="hint" style="margin-top:10px">Looking it up&hellip;</p>';
   var filled = [], notes = [];
 
-  /* 1. the closest match on Google Books */
-  var hits = await searchBooks([title, author].filter(Boolean).join(" "));
-  hits.forEach(function(h){ h.near = titleCloseness(title, h.title); });
-  hits.sort(function(a, b){ return a.near - b.near; });
+  /* 1. the closest match on Google Books. lookupBook rather than searchBooks,
+        because the typo correction used to live on the search button and that
+        button has gone — this is the only lookup now, so it carries it. */
+  var found = await lookupBook([title, author].filter(Boolean).join(" "));
+  var hits = found.hits;
+  lookupHits = hits;
+  var correction = found.correction;
   /* offer every author the search found, rather than silently taking the first */
   authorHits = authorCandidates(hits, title);
   if(author){
@@ -4808,7 +4784,6 @@ async function askAIForDetails(){
   }
   var band = ageFromShelving(genres, best && best.mature);
   if(band){ setAgeSlider(band.lo, band.hi); filled.push("age rating"); }
-  if(sugFetched && sugMode !== "own") setSugMode("fetched");
 
   if(!best && !extras){
     out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t find that one. Check the spelling, or fill it in yourself &mdash; the Goodreads and Google links are right there.</p>';
@@ -4835,10 +4810,8 @@ async function askAIForDetails(){
           setAgeSlider(d.ageMin, d.ageMax);
           if(filled.indexOf("age rating") === -1) filled.push("age rating");
         }
-        if(d.summary){
-          sugAI = String(d.summary).trim();
-          if(sugMode !== "own") setSugMode("ai");
-        }
+        /* deliberately not touching the summary — that only happens when
+           someone presses "Write one for me" */
         refined = true;
         if(d.confident === false) notes.push("It wasn't certain about this one, so do check.");
       }else if(j && j.error === "no api key"){
@@ -4850,10 +4823,18 @@ async function askAIForDetails(){
   syncSearchLinks();
   renderAuthorPick();
   var uniq = filled.filter(function(f, i){ return filled.indexOf(f) === i; });
-  out.innerHTML = '<p class="hint" style="margin-top:10px">' +
+  out.innerHTML =
+    (correction
+      ? '<div class="lookupfix"><span>Did you mean <strong>' + esc(correction) + "</strong>?</span>" +
+        '<button class="btn btn--sm btn--zest" type="button" data-usehit="0">Use it</button></div>'
+      : "") +
+    '<p class="hint" style="margin-top:10px">' +
     (uniq.length ? "Filled in the " + uniq.join(", ") + ". " : "Nothing new to fill in. ") +
     (refined ? "Checked against Google Books, Open Library and Claude. " : "From Google Books and Open Library. ") +
     "Everything here is editable &mdash; give it a glance before you send it." +
+    /* the summary is nobody's business but theirs, so say what's on offer
+       rather than dropping it in */
+    (sugFetched ? " There&rsquo;s a published summary too &mdash; pick <strong>From the book listing</strong> below if you want it." : "") +
     (notes.length ? " " + esc(notes.join(" ")) : "") + "</p>";
 }
 $("sTitle").addEventListener("input", function(){
@@ -4877,7 +4858,6 @@ document.addEventListener("click", async function(e){
   if(el){ await chooseACHit(Number(el.getAttribute("data-achit"))); return; }
   var sm = e.target.closest && e.target.closest("[data-summode]");
   if(sm){ setSugMode(sm.getAttribute("data-summode")); return; }
-  if(e.target.closest && e.target.closest("#sLookup")){ await runLookup(); return; }
   if(e.target.closest && e.target.closest("#sAskAI")){ await askAIForDetails(); return; }
   var ap = e.target.closest && e.target.closest("[data-authpick]");
   if(ap){
