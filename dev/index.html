@@ -1488,6 +1488,11 @@ var DEV = !!window.__DEV_SITE;
    only the commit path has to say so out loud. */
 var DATA_PATH = DEV ? "dev/data/state.json" : "data/state.json";
 
+/* The version of backend/Code.gs this page expects. Bump both together. The
+   Settings "Test it" button compares them, so a stale deployment says so
+   instead of being inferred from odd behaviour weeks later. */
+var SCRIPT_VERSION = "2026-08-25b";
+
 /* ---------- save: commit the state file to GitHub ---------- */
 var GH = { owner: "sairanoorhadi", repo: "cousins-book-club", branch: "main", path: DATA_PATH };
 var TOKEN_KEY = "marginNotes.ghToken";
@@ -4466,11 +4471,26 @@ document.addEventListener("click", async function(e){
     /* "session" with a junk token is harmless — no email, nothing saved — but
        only a script with the sign-in code in it recognises the word, so the
        answer tells us whether the DEPLOYED copy is current. A plain ping
-       can't: every version has ever answered that. */
+       can't on its own: every version has ever answered that. */
     var probe = await callEndpoint("session", { token: "probe" }, tv);
     var trouble = endpointTrouble(probe.error);
-    if(trouble) say(trouble, "bad");
-    else say("The endpoint answered and it's the current script — sign-in and submissions will work.", "ok");
+    if(trouble){ say(trouble, "bad"); return; }
+    /* Now the version, because "recognises the word" only proves it is newer
+       than sign-in — the script has changed a lot since. The /exec URL serves
+       whichever version was last deployed, and an editor full of new code
+       above an old deployment looks identical from out here. */
+    var pong = await callEndpoint("ping", {}, tv);
+    var v = pong && pong.version;
+    if(!v){
+      say("It answered, but it's an older deployment — it doesn't know its own version. " +
+        "In Apps Script: Deploy \u2192 Manage deployments \u2192 edit the one whose URL matches the box above " +
+        "\u2192 Version: New version \u2192 Deploy.", "bad");
+    }else if(v !== SCRIPT_VERSION){
+      say("It answered, but it's running version " + v + " and this site expects " + SCRIPT_VERSION +
+        ". Deploy a new version of the script.", "bad");
+    }else{
+      say("The endpoint answered, version " + v + " \u2014 up to date.", "ok");
+    }
     return;
   }
 

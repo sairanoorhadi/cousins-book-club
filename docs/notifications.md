@@ -290,6 +290,22 @@ Read the subject line to tell the two senders apart:
 | *Cousins Book Club: meeting scheduled / N days to go / starting in N minutes* | a meeting reminder | unsubscribe (below), or delete the `sendMeetingEmails` trigger |
 | *Book club — N new this week* | the weekly round-up | change `DIGEST_DAY`/`DIGEST_HOUR`, or delete the `weeklyDigest` trigger |
 | *Summary of failures for Google Apps Script* | Google telling you the script errored | fix the error; the log under the clock icon says what it was |
+| *Book club — new suggest / join / endorse …* | **an old deployment.** This email was removed — see below | deploy a new version |
+
+### "Book club — new endorse" and friends
+
+That one-email-per-submission notice no longer exists in the script. Getting one
+means the `/exec` URL is still serving an **older deployment** — the editor and
+the deployment are separate things, and new code sitting in the editor above an
+old deployment looks identical from the outside.
+
+Check it in one click: **Admin → Settings → Test it**. It now reports the
+deployed version and says whether it matches what the site expects.
+
+To fix: **Deploy → Manage deployments**. There may be more than one entry — edit
+the one whose URL matches the address in Admin → Settings, set **Version: New
+version**, and Deploy. Editing a different deployment changes nothing the site
+can see.
 
 To unsubscribe yourself: open the site, click your badge, **Turn them all off**.
 To unsubscribe someone else: untick their books under Admin → Members. To stop

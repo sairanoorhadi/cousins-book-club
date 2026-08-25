@@ -15,6 +15,11 @@
 
 /* ------------------------------------------------------------------ config */
 
+/* Bump this whenever this file changes. The /exec URL serves whichever version
+   was last DEPLOYED, not what is in the editor, and the two drifting apart is
+   invisible from the outside — so the site asks for this and shows it. */
+var SCRIPT_VERSION = '2026-08-25b';
+
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
 var REPO_BRANCH = 'main';
@@ -62,7 +67,7 @@ function doPost(e) {
   var payload = body.payload || {};
 
   /* The site's "Test it" button. */
-  if (kind === 'ping') return json({ ok: true, pong: true });
+  if (kind === 'ping') return json({ ok: true, pong: true, version: SCRIPT_VERSION });
 
   /* Signing in, and the things only a signed-in member can do. */
   if (kind === 'login-request') return json(loginRequest(payload));
