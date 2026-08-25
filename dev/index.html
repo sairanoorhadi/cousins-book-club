@@ -986,7 +986,8 @@ img{max-width:100%;display:block}
             <div class="field"><label for="sBy">Your name</label><input class="input" id="sBy" name="by" required maxlength="60"></div>
           </div>
           <div class="field"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span>
-              <button class="btn btn--sm btn--grape agecheck" type="button" id="sAgeCheck">Check online &amp; with AI</button></label>
+              <button class="btn btn--sm btn--sky agecheck" type="button" id="sAgeCheck">Check online</button>
+              <button class="btn btn--sm btn--grape agecheck" type="button" id="sAgeAI">Ask AI</button></label>
             <div id="sAgeSlider"></div>
             <p class="hint" id="sAgeNote" hidden></p></div>
           <div class="field"><label for="sGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label><input class="input" id="sGenres" name="genres" placeholder="Young Adult, Fantasy" maxlength="300"></div>
@@ -4766,60 +4767,74 @@ function setAgeSlider(lo, hi){
   syncDual("sAge");
 }
 
-/* The age rating on its own, on demand.
-   The shelving categories answer for most books, but plenty of listings carry
-   none — and that is exactly when a reading level matters, because whoever is
-   filling the form has nothing to go on either. So: shelves first, and if they
-   can't say, ask Claude through the club's endpoint. Either way the answer says
-   where it came from, because "Ages 13+" from a guess and from a publisher are
-   not the same claim. */
-async function checkAgeRating(){
-  var title = $("sTitle").value.trim(), author = $("sAuthor").value.trim();
+/* The age rating on its own, on demand — two buttons, because they answer
+   different questions. "Check online" is what shops and libraries shelve it
+   under: free, no key, and the right answer when there is one. "Ask AI" is a
+   reading of the book itself, for the many listings that carry no shelving at
+   all — which is exactly when whoever is filling the form has nothing to go on
+   either. Keeping them apart means you choose which you are getting, and the
+   note always says which answered: "Ages 13+" from a publisher and from a
+   model are not the same claim. */
+function ageStart(){
+  var title = $("sTitle").value.trim();
   var note = $("sAgeNote");
-  if(!title){ $("sTitle").focus(); return; }
+  if(!title){ $("sTitle").focus(); return null; }
   note.hidden = false;
   note.textContent = "Checking\u2026";
+  return { title: title, author: $("sAuthor").value.trim(), note: note };
+}
+function ageApply(lo, hi, said){
+  setAgeSlider(lo, hi);
+  $("sAgeNote").textContent = "Set to " + levelText({ ageMin: lo, ageMax: hi }) + ". " + said;
+}
 
-  /* 1. the shelves, from whatever the form already knows plus a fresh look */
+/* What the book databases shelve it under. */
+async function ageFromWeb(){
+  var c = ageStart(); if(!c) return;
+
   var genres = normaliseGenres($("sGenres").value);
   var mature = false;
-  var hits = await searchBooks([title, author].filter(Boolean).join(" "));
+  var hits = await searchBooks([c.title, c.author].filter(Boolean).join(" "));
   if(hits.length){
-    hits.forEach(function(h){ h.near = titleCloseness(title, h.title); });
+    hits.forEach(function(h){ h.near = titleCloseness(c.title, h.title); });
     hits.sort(function(a, b){ return a.near - b.near; });
     genres = genres.concat(hits[0].genres || []);
     mature = !!hits[0].mature;
   }
-  var extras = await openLibraryExtras(title, author);
+  var extras = await openLibraryExtras(c.title, c.author);
   if(extras) genres = genres.concat(extras.genres || []);
 
   var band = ageFromShelving(genres, mature);
   if(band){
-    setAgeSlider(band.lo, band.hi);
-    note.textContent = "Set to " + levelText({ ageMin: band.lo, ageMax: band.hi }) +
-      ", from how shops and libraries shelve it. Drag the handles if you disagree.";
+    ageApply(band.lo, band.hi, "That\u2019s how shops and libraries shelve it. Drag the handles if you disagree.");
     return;
   }
+  c.note.textContent = hits.length || extras
+    ? "Found the book, but nothing says what age it\u2019s for \u2014 try \u201cAsk AI\u201d, or set it yourself."
+    : "Couldn\u2019t find that one online \u2014 try \u201cAsk AI\u201d, or set it yourself.";
+}
 
-  /* 2. nothing shelved it, so ask */
+/* What Claude makes of the book, asked through the club's endpoint. */
+async function ageFromAI(){
+  var c = ageStart(); if(!c) return;
+
   if(!endpoint()){
-    note.textContent = "The listings don\u2019t say what age it\u2019s for, and asking " +
-      "the AI isn\u2019t switched on \u2014 set the reading level yourself.";
+    c.note.textContent = "Asking the AI isn\u2019t switched on \u2014 use \u201cCheck online\u201d, or set the level yourself.";
     return;
   }
-  var j = await callEndpoint("details", { title: title, author: author });
+  var j = await callEndpoint("details", { title: c.title, author: c.author });
   if(j && j.ok && j.details &&
      typeof j.details.ageMin === "number" && typeof j.details.ageMax === "number" &&
      j.details.ageMax > 0 && j.details.ageMax >= j.details.ageMin){
-    setAgeSlider(j.details.ageMin, j.details.ageMax);
-    note.textContent = "Set to " + levelText({ ageMin: j.details.ageMin, ageMax: j.details.ageMax }) +
-      ". Nothing shelved this one, so that\u2019s Claude\u2019s reading of it" +
-      (j.details.confident === false ? ", and it wasn\u2019t certain \u2014 do check." : " \u2014 worth a check.");
+    ageApply(j.details.ageMin, j.details.ageMax,
+      j.details.confident === false
+        ? "That\u2019s Claude\u2019s reading, and it wasn\u2019t certain \u2014 do check."
+        : "That\u2019s Claude\u2019s reading of it \u2014 worth a check.");
     return;
   }
-  note.textContent = j && j.error === "no api key"
-    ? "The listings don\u2019t say, and the AI isn\u2019t switched on \u2014 set it yourself."
-    : "Couldn\u2019t work out an age for this one \u2014 set it yourself.";
+  c.note.textContent = j && j.error === "no api key"
+    ? "Asking the AI isn\u2019t switched on \u2014 use \u201cCheck online\u201d, or set the level yourself."
+    : "The AI couldn\u2019t put an age on this one \u2014 try \u201cCheck online\u201d, or set it yourself.";
 }
 
 /* "Fill in the details for me".
@@ -4958,7 +4973,8 @@ document.addEventListener("click", async function(e){
   var sm = e.target.closest && e.target.closest("[data-summode]");
   if(sm){ setSugMode(sm.getAttribute("data-summode")); return; }
   if(e.target.closest && e.target.closest("#sAskAI")){ await askAIForDetails(); return; }
-  if(e.target.closest && e.target.closest("#sAgeCheck")){ await checkAgeRating(); return; }
+  if(e.target.closest && e.target.closest("#sAgeCheck")){ await ageFromWeb(); return; }
+  if(e.target.closest && e.target.closest("#sAgeAI")){ await ageFromAI(); return; }
   var ap = e.target.closest && e.target.closest("[data-authpick]");
   if(ap){
     var who = authorHits[Number(ap.getAttribute("data-authpick"))];
