@@ -98,6 +98,17 @@
         "name": "Saira",
         "vote": "none"
       }
+    },
+    {
+      "id": "endorse-610d8192-b4c",
+      "kind": "endorse",
+      "at": "2026-08-25T15:52:45.803Z",
+      "payload": {
+        "recId": "rc-trouts",
+        "title": "Look Out for the Fitzgerald-Trouts",
+        "name": "Saira",
+        "vote": "none"
+      }
     }
   ]
 }
