@@ -71,6 +71,15 @@ The free tier is 100 searches a day, which is far more than a book club will
 use. Without it, cover search still works — it just uses Google Books and Open
 Library only.
 
+> **Paste the value, not the description.** The right-hand column below says
+> what each key is *for*; the value box wants the key itself. Pasting the
+> description in is easy to do and hard to spot afterwards — an
+> `ORGANISER_EMAIL` reading "where new submissions should be emailed" is not
+> empty, so it reaches the mail call and throws, which takes the whole reminder
+> run down with it. The script now checks the shape of each value and ignores
+> anything that clearly isn't the real thing, but it can only fall back to
+> "unset" — the feature stays off until a real value is there.
+
 ## 4. Deploy it
 
 1. **Deploy** → **New deployment** → type **Web app**.

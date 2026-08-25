@@ -32,6 +32,22 @@ function prop(name) {
   return PropertiesService.getScriptProperties().getProperty(name) || '';
 }
 
+/* It is easy to paste this file's description of a property into the value box
+   instead of the value itself. A wrong-shaped value is worse than a missing
+   one: missing is handled everywhere ("no api key", organiser email skipped),
+   whereas "where new submissions should be emailed" reaches MailApp and throws,
+   taking the whole reminder run down with it. So check the shape and treat
+   anything that clearly isn't the real thing as not set. */
+function propEmail(name) {
+  var v = prop(name).trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? v : '';
+}
+function propKey(name, prefix) {
+  var v = prop(name).trim();
+  if (!v || v.indexOf(' ') !== -1) return '';        // a sentence, not a key
+  return (prefix && v.indexOf(prefix) !== 0) ? '' : v;
+}
+
 /* ------------------------------------------------------------ web endpoint */
 
 function doPost(e) {
@@ -340,7 +356,7 @@ function claimMember(payload) {
   /* This one has to write to the repo, so a dead token stops it dead —
      unlike signing in, which shrugs a failed read off. Say so plainly
      rather than letting the whole call blow up into an error page. */
-  if (!prop('GITHUB_TOKEN')) return { ok: false, error: 'no github token' };
+  if (!propKey('GITHUB_TOKEN', '')) return { ok: false, error: 'no github token' };
 
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -392,7 +408,7 @@ function profileSet(payload) {
   var allowed = ['flare', 'zest', 'surf', 'sky', 'grape', ''];
   if (allowed.indexOf(wantHue) === -1) return { ok: false, error: 'bad colour' };
 
-  if (!prop('GITHUB_TOKEN')) return { ok: false, error: 'no github token' };
+  if (!propKey('GITHUB_TOKEN', '')) return { ok: false, error: 'no github token' };
 
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -520,7 +536,7 @@ function photoDelete(payload) {
 
   var meetingId = String(payload.meetingId || '');
   var id = String(payload.id || '');
-  var organiser = normEmail(prop('ORGANISER_EMAIL'));
+  var organiser = normEmail(propEmail('ORGANISER_EMAIL'));
 
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -563,7 +579,7 @@ function appendToInbox(item) {
 }
 
 function notifyOrganiser(item) {
-  var to = prop('ORGANISER_EMAIL');
+  var to = propEmail('ORGANISER_EMAIL');
   if (!to) return;
   var lines = Object.keys(item.payload).map(function (k) {
     var v = item.payload[k];
@@ -630,7 +646,7 @@ function ghPutFile(path, text, sha, message) {
 /* ----------------------------------------------------------- AI summaries */
 
 function summarise(payload) {
-  var key = prop('ANTHROPIC_API_KEY');
+  var key = propKey('ANTHROPIC_API_KEY', 'sk-ant-');
   if (!key) return { ok: false, error: 'no api key' };
 
   var title = String(payload.title || '').slice(0, 200);
@@ -679,7 +695,7 @@ function summarise(payload) {
    returns the answer as structured fields the form can drop straight in. */
 
 function bookDetails(payload) {
-  var key = prop('ANTHROPIC_API_KEY');
+  var key = propKey('ANTHROPIC_API_KEY', 'sk-ant-');
   if (!key) return { ok: false, error: 'no api key' };
 
   var title = String(payload.title || '').slice(0, 200);
@@ -753,8 +769,8 @@ function bookDetails(payload) {
    this returns nothing and the site falls back to the book databases. */
 
 function imageSearch(payload) {
-  var key = prop('GOOGLE_API_KEY');
-  var cx = prop('GOOGLE_CSE_ID');
+  var key = propKey('GOOGLE_API_KEY', 'AIza');
+  var cx = propKey('GOOGLE_CSE_ID', '');
   if (!key || !cx) return [];
 
   var title = String(payload.title || '').slice(0, 200);
@@ -909,7 +925,7 @@ function intro(m, book, start, clubName) {
 /* Everyone goes in bcc, so no recipient learns anyone else's address. */
 function send(to, subject, body) {
   MailApp.sendEmail({
-    to: prop('ORGANISER_EMAIL') || to[0],
+    to: propEmail('ORGANISER_EMAIL') || to[0],
     bcc: to.join(','),
     subject: subject,
     body: body

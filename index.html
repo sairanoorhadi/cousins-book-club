@@ -2157,36 +2157,62 @@ function renderShelf(){
 }
 
 /* ---------- dual-handle range ---------- */
-var dualState = {}, dualHooks = {};
-function dualRangeHTML(id, lo, hi, hook){
-  dualState[id] = { lo: clampAge(lo, 0), hi: clampAge(hi, AGE_TOP) };
+var dualState = {}, dualHooks = {}, dualScale = {};
+/* The age slider was the only one for a while, so this used to be hard-wired to
+   0-100 and to age wording. `scale` lifts that out: a max, a step, the labels
+   the two thumbs get, and how to word the answer. */
+var AGE_SCALE = { max: AGE_TOP, step: 1, loLabel: "Youngest age", hiLabel: "Oldest age",
+  format: function(s){ return levelText({ ageMin: s.lo, ageMax: s.hi }); } };
+var PAGE_TOP = 1000;
+var PAGE_SCALE = { max: PAGE_TOP, step: 25, loLabel: "Fewest pages", hiLabel: "Most pages",
+  format: function(s){
+    if(s.lo <= 0 && s.hi >= PAGE_TOP) return "Any length";
+    if(s.lo <= 0) return "Under " + s.hi + " pages";
+    if(s.hi >= PAGE_TOP) return s.lo + "+ pages";
+    return s.lo + "\u2013" + s.hi + " pages";
+  } };
+function dualScaleFor(id){ return dualScale[id] || AGE_SCALE; }
+function clampTo(v, top, fallback){
+  var n = Math.round(Number(v));
+  if(!isFinite(n)) n = fallback;
+  return Math.max(0, Math.min(top, n));
+}
+function dualRangeHTML(id, lo, hi, hook, scale){
+  scale = scale || AGE_SCALE;
+  dualScale[id] = scale;
+  dualState[id] = { lo: clampTo(lo, scale.max, 0), hi: clampTo(hi, scale.max, scale.max) };
   if(hook) dualHooks[id] = hook; else delete dualHooks[id];
+  var pc = function(v){ return (v / scale.max) * 100; };
   return '<div class="dualrange" data-dualid="' + esc(id) + '">' +
       '<span class="dualrange__track"></span>' +
-      '<span class="dualrange__fill" data-dualfill style="left:' + dualState[id].lo + '%;width:' + Math.max(0, dualState[id].hi - dualState[id].lo) + '%"></span>' +
-      '<input type="range" min="0" max="' + AGE_TOP + '" step="1" value="' + dualState[id].lo + '" data-dual="' + esc(id) + '" data-end="lo" aria-label="Youngest age">' +
-      '<input type="range" min="0" max="' + AGE_TOP + '" step="1" value="' + dualState[id].hi + '" data-dual="' + esc(id) + '" data-end="hi" aria-label="Oldest age">' +
+      '<span class="dualrange__fill" data-dualfill style="left:' + pc(dualState[id].lo) + '%;width:' +
+        Math.max(0, pc(dualState[id].hi) - pc(dualState[id].lo)) + '%"></span>' +
+      '<input type="range" min="0" max="' + scale.max + '" step="' + scale.step + '" value="' + dualState[id].lo +
+        '" data-dual="' + esc(id) + '" data-end="lo" aria-label="' + esc(scale.loLabel) + '">' +
+      '<input type="range" min="0" max="' + scale.max + '" step="' + scale.step + '" value="' + dualState[id].hi +
+        '" data-dual="' + esc(id) + '" data-end="hi" aria-label="' + esc(scale.hiLabel) + '">' +
     "</div>" +
-    '<p class="dualrange__out" data-dualout="' + esc(id) + '">' + esc(levelText({ ageMin: dualState[id].lo, ageMax: dualState[id].hi })) + "</p>";
+    '<p class="dualrange__out" data-dualout="' + esc(id) + '">' + esc(scale.format(dualState[id])) + "</p>";
 }
-function dualValue(id){ return dualState[id] || { lo: 0, hi: AGE_TOP }; }
+function dualValue(id){ return dualState[id] || { lo: 0, hi: dualScaleFor(id).max }; }
 function syncDual(id){
-  var wrap = document.querySelector('[data-dualid="' + id + '"]'), s = dualValue(id);
+  var wrap = document.querySelector('[data-dualid="' + id + '"]'), s = dualValue(id), scale = dualScaleFor(id);
   if(wrap){
     var fill = wrap.querySelector("[data-dualfill]");
-    /* the scale runs 0-100, so a value doubles as its own percentage */
-    if(fill){ fill.style.left = s.lo + "%"; fill.style.width = Math.max(0, s.hi - s.lo) + "%"; }
+    var lo = (s.lo / scale.max) * 100, hi = (s.hi / scale.max) * 100;
+    if(fill){ fill.style.left = lo + "%"; fill.style.width = Math.max(0, hi - lo) + "%"; }
   }
   var out = document.querySelector('[data-dualout="' + id + '"]');
-  if(out) out.textContent = levelText({ ageMin: s.lo, ageMax: s.hi });
+  if(out) out.textContent = scale.format(s);
 }
 document.addEventListener("input", function(e){
   var n = e.target;
   if(!n || !n.getAttribute) return;
   var id = n.getAttribute("data-dual");
   if(!id) return;
-  var s = dualState[id] || (dualState[id] = { lo: 0, hi: AGE_TOP });
-  var v = clampAge(n.value, 0);
+  var scale = dualScaleFor(id);
+  var s = dualState[id] || (dualState[id] = { lo: 0, hi: scale.max });
+  var v = clampTo(n.value, scale.max, 0);
   if(n.getAttribute("data-end") === "lo"){ s.lo = Math.min(v, s.hi); n.value = s.lo; }
   else { s.hi = Math.max(v, s.lo); n.value = s.hi; }
   syncDual(id);
@@ -2194,7 +2220,7 @@ document.addEventListener("input", function(e){
 });
 
 /* ---------- render: recommendations ---------- */
-var recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP };
+var recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP, pagesMin: 0, pagesMax: PAGE_TOP };
 var filtersOpen = false;
 function recMatches(r){
   if(recFilter.by && r.by !== recFilter.by) return false;
@@ -2207,7 +2233,20 @@ function recMatches(r){
   }
   /* keep anything whose age band overlaps the band being asked for */
   if(r.ageMin > recFilter.ageMax || r.ageMax < recFilter.ageMin) return false;
+  if(pagesNarrowed()){
+    /* a book nobody has filled a page count in for can't answer the question,
+       so it drops out — the count line says how many did, rather than
+       silently shrinking the shelf */
+    var pp = Number(r.pages);
+    if(!pp) return false;
+    if(pp < recFilter.pagesMin || pp > recFilter.pagesMax) return false;
+  }
   return true;
+}
+function pagesNarrowed(){ return recFilter.pagesMin > 0 || recFilter.pagesMax < PAGE_TOP; }
+/* approved books with no page count, which a narrowed page filter has to drop */
+function pagelessCount(){
+  return approvedRecs().filter(function(r){ return !Number(r.pages); }).length;
 }
 function sortRecs(list){
   var by = recFilter.sort;
@@ -2227,15 +2266,14 @@ function renderRecFilters(){
   approvedRecs().forEach(function(r){ if(r.by && people.indexOf(r.by) === -1) people.push(r.by); });
   people.sort(function(a,b){ return a.localeCompare(b); });
   var genres = allGenres();
-  var shown = sortRecs(approvedRecs().filter(recMatches)).length;
-  var active = (recFilter.by ? 1 : 0) + recFilter.genres.length +
-    (recFilter.ageMin > 0 || recFilter.ageMax < AGE_TOP ? 1 : 0);
+  var active = activeFilters();
   /* press-to-open, like the editors on the admin side; stays open once you've
      set something, so the filters you applied don't hide themselves */
   host.innerHTML =
     '<details class="editor filters__box"' + (filtersOpen || active ? " open" : "") + '>' +
-    '<summary data-filtertoggle>Filter &amp; sort' + (active ? " · " + active + " active" : "") +
-      ' <span class="filters__count">' + shown + " of " + approvedRecs().length + " shown</span></summary>" +
+    '<summary data-filtertoggle>Filter &amp; sort' +
+      '<span id="fActive">' + esc(activeLabel()) + "</span>" +
+      ' <span class="filters__count" id="recCountTop">' + esc(countLine()) + "</span></summary>" +
     '<div class="editor__body">' +
     '<div class="filters__grid">' +
       '<div class="field"><label for="fBy">Suggested by</label><select class="select" id="fBy">' +
@@ -2250,9 +2288,13 @@ function renderRecFilters(){
       '<div class="field"><label>Age rating</label>' + dualRangeHTML("filterAge", recFilter.ageMin, recFilter.ageMax, function(){
         var v = dualValue("filterAge");
         recFilter.ageMin = v.lo; recFilter.ageMax = v.hi;
-        renderRecGrid();
-        var c = $("recCount"); if(c) c.textContent = sortRecs(approvedRecs().filter(recMatches)).length + " of " + approvedRecs().length + " shown";
+        liveCount();
       }) + "</div>" +
+      '<div class="field"><label>Length</label>' + dualRangeHTML("filterPages", recFilter.pagesMin, recFilter.pagesMax, function(){
+        var v = dualValue("filterPages");
+        recFilter.pagesMin = v.lo; recFilter.pagesMax = v.hi;
+        liveCount();
+      }, PAGE_SCALE) + "</div>" +
     "</div>" +
     (genres.length
       ? '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(pick several to narrow &mdash; books must have all of them)</span></label>' +
@@ -2263,8 +2305,30 @@ function renderRecFilters(){
       : "") +
     '<div class="filters__foot">' +
       '<button class="btn btn--sm btn--ghost" type="button" id="fReset">Clear filters</button>' +
-      '<span class="filters__count" id="recCount">' + shown + " of " + approvedRecs().length + " shown</span>" +
+      '<span class="filters__count" id="recCount">' + esc(countLine()) + "</span>" +
     "</div></div></details>";
+}
+/* one wording for both the summary line and the foot, so they can't disagree */
+function countLine(){
+  var total = approvedRecs().length;
+  var line = sortRecs(approvedRecs().filter(recMatches)).length + " of " + total + " shown";
+  var noPages = pagesNarrowed() ? pagelessCount() : 0;
+  if(noPages) line += " \u00b7 " + noPages + " with no page count hidden";
+  return line;
+}
+function activeFilters(){
+  return (recFilter.by ? 1 : 0) + recFilter.genres.length +
+    (recFilter.ageMin > 0 || recFilter.ageMax < AGE_TOP ? 1 : 0) +
+    (pagesNarrowed() ? 1 : 0);
+}
+function activeLabel(){ var n = activeFilters(); return n ? " \u00b7 " + n + " active" : ""; }
+/* Redraw the shelf and both count lines without re-rendering the panel — that
+   would tear out the slider mid-drag. */
+function liveCount(){
+  renderRecGrid();
+  var line = countLine();
+  ["recCount", "recCountTop"].forEach(function(id){ var c = $(id); if(c) c.textContent = line; });
+  var a = $("fActive"); if(a) a.textContent = activeLabel();
 }
 function recCardHTML(r){
   var up = endorseCount(r), down = dislikeCount(r), score = recScore(r);
@@ -3661,7 +3725,7 @@ document.addEventListener("click", async function(e){
     return;
   }
   if(t.closest("#fReset")){
-    recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP };
+    recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP, pagesMin: 0, pagesMax: PAGE_TOP };
     filtersOpen = true;
     renderRecs();
     return;
