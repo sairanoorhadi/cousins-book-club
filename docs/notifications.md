@@ -249,6 +249,12 @@ in the script's own properties, so re-saving the site never re-sends anything.
     access isn't *Anyone*.
 - **Submissions stop arriving** — the GitHub token has expired. Make a new one
   and update `GITHUB_TOKEN`.
+- **"Couldn't link that just now" when a member picks their name** — same
+  cause. Linking a name writes to `data/state.json`, so it needs the GitHub
+  token; signing in doesn't, which is why sign-in can keep working while this
+  fails. Make a new token (step 1) and update `GITHUB_TOKEN` under
+  **Project Settings → Script properties**. No redeploy needed for a property
+  change.
 - **No meeting emails** — check the trigger still exists under the clock icon in
   the script editor, and that members have both an email address and a ticked
   box under Admin → Members.

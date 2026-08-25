@@ -1571,6 +1571,17 @@ function endpointTrouble(err){
   if(String(err || "").indexOf("http ") === 0) return "The script answered with an error (" + err + "). Re-deploy it and try again.";
   return "";
 }
+/* Linking a name has to write to the repo, so it fails in ways signing in
+   doesn't — signing in survives a dead GitHub token, this can't. */
+function claimTrouble(err){
+  if(err === "already claimed") return "Someone else has already linked that name.";
+  if(err === "busy, try again" || err === "busy") return "Someone was saving just then — try again.";
+  if(err === "no such member") return "That name isn't on the club's list any more. Reload the page.";
+  if(err === "signed out" || err === "no profile") return "Your sign-in has expired. Sign out and back in.";
+  if(err === "no github token" || err === "github" || err === "crashed")
+    return "The script couldn't save to the club's files. Its GitHub token is missing or has expired — make a new one and update GITHUB_TOKEN in the script (docs/notifications.md, step 1).";
+  return endpointTrouble(err) || "Couldn't link that just now.";
+}
 async function restoreSession(){
   var token = sessionToken();
   if(!token || !endpoint()) return;
@@ -2869,9 +2880,14 @@ function renderMe(){
                 '<span class="focuschip__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
                   (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
                 esc(m.name) + "</button>";
-            }).join("") + "</div>" +
-            '<p class="hint" style="margin-top:10px" id="meClaimNote">Not on the list? Use <strong>Sign up</strong> and the organiser will add you.</p>'
-          : '<p class="empty">Everyone on the list is already linked. Use <strong>Sign up</strong> and the organiser will add you.</p>')
+            }).join("") +
+              /* signing in hides the Sign up button, so the way out has to
+                 live here or there isn't one */
+              '<button class="focuschip focuschip--all" type="button" data-notme="1">' +
+                "I&rsquo;m not on this list</button>" + "</div>" +
+            '<p class="hint" style="margin-top:10px" id="meClaimNote">Pick <strong>I&rsquo;m not on this list</strong> and the organiser will add you.</p>'
+          : '<p class="empty">Everyone on the list is already linked. ' +
+            '<button class="btn btn--sm btn--surf" type="button" data-notme="1" style="margin-top:10px">Ask the organiser to add me</button></p>')
       : "") +
 
     '<hr class="divider"><p class="eyebrow">Meeting emails</p>' +
@@ -3547,15 +3563,20 @@ document.addEventListener("click", async function(e){
     say(myNotify.length ? "Reminders updated." : "Reminders switched off.", "ok");
     return;
   }
+  if(t.closest("[data-notme]")){
+    closeScrim("meScrim");
+    openMemberForm("join");
+    /* they're signed in, so we already know where to reach them */
+    if(me && me.email && $("mfEmail")) $("mfEmail").value = me.email;
+    if($("mfNote2")) $("mfNote2").textContent = "The organiser adds you, then your sign-in links itself.";
+    return;
+  }
   if((el = t.closest("[data-claim]"))){
     var cnote = $("meClaimNote");
     if(cnote) cnote.textContent = "Linking…";
     var cres = await callEndpoint("claim", { token: sessionToken(), memberId: el.getAttribute("data-claim") });
     if(!cres.ok){
-      if(cnote) cnote.textContent = cres.error === "already claimed"
-        ? "Someone else has already linked that name."
-        : cres.error === "busy, try again" ? "Someone was saving just then — try again."
-        : "Couldn't link that just now.";
+      if(cnote) cnote.textContent = claimTrouble(cres.error);
       return;
     }
     me = cres.profile;
