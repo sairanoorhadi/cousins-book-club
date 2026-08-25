@@ -1,5 +1,5 @@
 {
-  "rev": 1104,
+  "rev": 1098,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -19,7 +19,7 @@
       "notifyRef": "sub-84e7607a-09e",
       "emailHint": "s••••@gmail.com",
       "notify": [],
-      "hue": "zest"
+      "hue": ""
     },
     {
       "id": "mb-pareesa",
@@ -364,7 +364,9 @@
       "endorsements": [],
       "ageMin": 13,
       "ageMax": 100,
-      "dislikes": []
+      "dislikes": [],
+      "rating": 0,
+      "ratingSource": ""
     },
     {
       "id": "rc-1984",
@@ -388,7 +390,9 @@
       "endorsements": [],
       "ageMin": 15,
       "ageMax": 100,
-      "dislikes": []
+      "dislikes": [],
+      "rating": 0,
+      "ratingSource": ""
     },
     {
       "id": "rc-kite",
@@ -412,7 +416,9 @@
       "endorsements": [],
       "ageMin": 16,
       "ageMax": 100,
-      "dislikes": []
+      "dislikes": [],
+      "rating": 0,
+      "ratingSource": ""
     },
     {
       "id": "rc-mockingbird",
@@ -436,7 +442,9 @@
       "endorsements": [],
       "ageMin": 13,
       "ageMax": 100,
-      "dislikes": []
+      "dislikes": [],
+      "rating": 0,
+      "ratingSource": ""
     },
     {
       "id": "rc-elevator",
@@ -465,7 +473,9 @@
       ],
       "ageMin": 8,
       "ageMax": 11,
-      "dislikes": []
+      "dislikes": [],
+      "rating": 0,
+      "ratingSource": ""
     },
     {
       "id": "rc-champion",
@@ -489,7 +499,9 @@
       "endorsements": [],
       "ageMin": 9,
       "ageMax": 12,
-      "dislikes": []
+      "dislikes": [],
+      "rating": 0,
+      "ratingSource": ""
     },
     {
       "id": "rc-grace",
@@ -513,7 +525,9 @@
       "endorsements": [],
       "ageMin": 10,
       "ageMax": 13,
-      "dislikes": []
+      "dislikes": [],
+      "rating": 0,
+      "ratingSource": ""
     },
     {
       "id": "rc-trouts",
@@ -537,7 +551,9 @@
       "endorsements": [],
       "ageMin": 8,
       "ageMax": 12,
-      "dislikes": []
+      "dislikes": [],
+      "rating": 0,
+      "ratingSource": ""
     },
     {
       "id": "rc-pandas",
@@ -561,7 +577,9 @@
       "endorsements": [],
       "ageMin": 9,
       "ageMax": 12,
-      "dislikes": []
+      "dislikes": [],
+      "rating": 0,
+      "ratingSource": ""
     },
     {
       "id": "rc-heartless",
@@ -586,8 +604,14 @@
       "endorsements": [],
       "ageMin": 12,
       "ageMax": 100,
-      "dislikes": []
+      "dislikes": [],
+      "rating": 0,
+      "ratingSource": ""
     }
   ],
-  "inbox": []
+  "inbox": [
+    "endorse-c4024880-9bb",
+    "endorse-b97977f3-e2c",
+    "endorse-c7c56c32-916"
+  ]
 }
