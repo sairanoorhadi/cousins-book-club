@@ -270,6 +270,36 @@ Settings**. If that isn't your timezone, change it there.
 - Anthropic API: only used when someone presses **Write one for me**. A blurb is
   a fraction of a cent.
 
+## Still getting email you didn't expect?
+
+Run **`whoGetsEmails`** from the script editor. It sends nothing, and logs the
+three things that decide whether an email goes out:
+
+- **who is subscribed through the site** — members who signed in and picked
+  their own books. These are kept in the script, *not* in the repo, so looking
+  at `state.json` will not show them.
+- **who you ticked by hand** under Admin → Members, including anyone ticked
+  that the script holds no address for (they get nothing).
+- **which meetings are still due**, how many addresses each reaches, and which
+  of its three emails have already gone.
+
+Read the subject line to tell the two senders apart:
+
+| Subject starts | What it is | How to stop it |
+| --- | --- | --- |
+| *Cousins Book Club: meeting scheduled / N days to go / starting in N minutes* | a meeting reminder | unsubscribe (below), or delete the `sendMeetingEmails` trigger |
+| *Book club — N new this week* | the weekly round-up | change `DIGEST_DAY`/`DIGEST_HOUR`, or delete the `weeklyDigest` trigger |
+| *Summary of failures for Google Apps Script* | Google telling you the script errored | fix the error; the log under the clock icon says what it was |
+
+To unsubscribe yourself: open the site, click your badge, **Turn them all off**.
+To unsubscribe someone else: untick their books under Admin → Members. To stop
+meeting reminders for everyone, delete the `sendMeetingEmails` trigger — the
+round-up carries on regardless.
+
+Switching the trigger on for the first time sends the *"meeting scheduled"*
+email for every upcoming meeting at once, because none of them have a record of
+having sent it yet. That is a one-off, not a loop.
+
 ## If something stops working
 
 - **"Couldn't reach the club's inbox"** — the deployment's access is probably
