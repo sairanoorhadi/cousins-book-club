@@ -456,6 +456,8 @@ img{max-width:100%;display:block}
 .vote__btn--up:hover{background:var(--surf);color:var(--on-surf)}
 .vote__btn--down:hover{background:var(--flare);color:var(--on-flare)}
 .vote__btn--up{border-right:1.5px solid var(--edge)}
+.vote__btn[disabled]{opacity:.35;cursor:default}
+.vote__btn[disabled]:hover{background:none;color:inherit}
 .endorse[data-lean="down"]{border-color:var(--flare)}
 .endorse[data-lean="up"]{border-color:var(--surf)}
 .partytag{display:inline-block;margin-top:12px;background:var(--grape);color:var(--on-grape);border:2px solid var(--edge);border-radius:999px;padding:3px 12px;font-family:var(--f-display);font-weight:700;font-size:12.5px}
@@ -1589,6 +1591,7 @@ function applyInbox(){
       });
       return;
     }
+    if(p.vote !== "down" && isOwnRec(r, name)) return;
     var list = p.vote === "down" ? "dislikes" : "endorsements";
     var other = list === "dislikes" ? "endorsements" : "dislikes";
     /* someone who changed their mind sent a second vote — move them across
@@ -2416,6 +2419,7 @@ function liveCount(){
 }
 function recCardHTML(r){
   var up = endorseCount(r), down = dislikeCount(r), score = recScore(r);
+  var mineToo = !!myName() && isOwnRec(r, myName());
   /* The card itself is the button that opens the book. The vote control sits on
      top of it as a sibling, not a nested button — nesting buttons is invalid and
      swallows the clicks. It shows the running score and opens out on hover. */
@@ -2433,8 +2437,11 @@ function recCardHTML(r){
     "</button>" +
     '<span class="vote' + (score > 0 ? " vote--up" : score < 0 ? " vote--down" : "") + '">' +
       '<span class="vote__score">' + esc(score === 0 ? "±" : scoreLabel(r)) + "</span>" +
-      '<button class="vote__btn vote__btn--up" type="button" data-vote="up" data-rid="' + esc(r.id) + '" ' +
-        'aria-label="' + esc("Endorse " + r.title) + '" title="Endorse">+</button>' +
+      (mineToo
+        ? '<button class="vote__btn vote__btn--up" type="button" disabled ' +
+          'aria-label="' + esc("You put " + r.title + " forward") + '" title="Your own suggestion — it already counts">+</button>'
+        : '<button class="vote__btn vote__btn--up" type="button" data-vote="up" data-rid="' + esc(r.id) + '" ' +
+          'aria-label="' + esc("Endorse " + r.title) + '" title="Endorse">+</button>') +
       '<button class="vote__btn vote__btn--down" type="button" data-vote="down" data-rid="' + esc(r.id) + '" ' +
         'aria-label="' + esc("Say " + r.title + " is not for you") + '" title="Not for me">&minus;</button>' +
     "</span></div>";
@@ -2817,12 +2824,17 @@ function openBookDetail(o, kind, focus){
               '<button class="btn btn--sm btn--ghost" type="button" data-takeback="' + esc(o.id) + '">Take it back</button>' +
             "</div>";
           }
+          var own = !!myName() && isOwnRec(o, myName());
           return '<div class="endorse">' +
-            '<span style="font-family:var(--f-display);font-weight:700;font-size:14px">What do you think of this one?</span>' +
-            (me && myName() ? "" :
-              '<input class="input" type="text" id="endorseName" placeholder="Your name" maxlength="60" autocomplete="name">') +
-            '<button class="btn btn--sm btn--zest" type="button" data-endorse="' + esc(o.id) + '">Endorse it</button>' +
-            '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Not for me</button>' +
+            '<span style="font-family:var(--f-display);font-weight:700;font-size:14px">' +
+              (own ? "You put this one forward." : "What do you think of this one?") + "</span>" +
+            (own
+              ? '<span class="hint" style="flex:1 1 200px">Putting it forward counts as your endorsement, so you can\u2019t add another.</span>' +
+                '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Changed my mind</button>'
+              : (me && myName() ? "" :
+                  '<input class="input" type="text" id="endorseName" placeholder="Your name" maxlength="60" autocomplete="name">') +
+                '<button class="btn btn--sm btn--zest" type="button" data-endorse="' + esc(o.id) + '">Endorse it</button>' +
+                '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Not for me</button>') +
           "</div>";
         })()
       : "") +
@@ -3066,7 +3078,18 @@ function myVote(rec){
   if((rec.dislikes || []).some(function(x){ return x.name.toLowerCase() === n; })) return "down";
   return "";
 }
+/* You can't endorse your own suggestion — that's just voting for yourself, and
+   the shortlist is ordered by endorsements. Passing on it is still allowed;
+   changing your mind about a book you put forward is a fair thing to say. */
+function isOwnRec(rec, name){
+  var by = String(rec && rec.by || "").trim().toLowerCase();
+  return !!by && by === String(name || "").trim().toLowerCase();
+}
 async function castVote(rec, down, name){
+  if(!down && isOwnRec(rec, name)){
+    say("You put this one forward — it counts as your endorsement already.", "bad");
+    return false;
+  }
   var mine = down ? "dislikes" : "endorsements", other = down ? "endorsements" : "dislikes";
   if(!Array.isArray(rec[mine])) rec[mine] = [];
   if(!Array.isArray(rec[other])) rec[other] = [];
