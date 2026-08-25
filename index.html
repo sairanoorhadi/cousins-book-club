@@ -174,7 +174,10 @@ img{max-width:100%;display:block}
 
 /* ============ recommendations ============ */
 .recgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:20px}
-.reccard{position:relative;padding:0;border:0;background:none;cursor:pointer;display:block;text-align:left;transition:transform .14s ease}
+/* width:100% matters — a <button> sizes itself to its contents even at
+   display:block, and the cover inside has no intrinsic width. It used to be a
+   grid item, which stretched it; inside the vote wrapper it has to be told. */
+.reccard{position:relative;padding:0;border:0;background:none;cursor:pointer;display:block;width:100%;text-align:left;transition:transform .14s ease}
 .reccard:hover,.reccard:focus-visible{transform:translate(-3px,-3px)}
 .reccard .cover{box-shadow:var(--shadow-sm)}
 .reccard:hover .cover,.reccard:focus-visible .cover{box-shadow:6px 6px 0 var(--stamp)}
@@ -410,7 +413,9 @@ img{max-width:100%;display:block}
 
 /* ============ endorsements ============ */
 /* the vote pill: a score at rest, + and − once you reach for it */
-.reccard-wrap{position:relative}
+/* wraps the card so the vote pill can sit over it without nesting a button
+   inside a button — the card keeps its own size and behaviour */
+.reccard-wrap{position:relative;display:block;min-width:0}
 .vote{position:absolute;top:7px;right:7px;z-index:3;display:inline-flex;align-items:center;overflow:hidden;
   background:var(--surface);color:var(--ink);border:2px solid var(--edge);border-radius:999px;
   box-shadow:2px 2px 0 var(--stamp);font-family:var(--f-mono);font-size:11.5px;
