@@ -1,5 +1,5 @@
 {
-  "rev": 1088,
+  "rev": 1089,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -428,7 +428,7 @@
       "by": "Saira",
       "status": "approved",
       "at": "",
-      "cover": "",
+      "cover": "https://covers.openlibrary.org/b/id/14351077-L.jpg",
       "blurb": "Scout Finch grows up in Depression-era Alabama watching her father defend a Black man falsely accused of assault. A courtroom drama told from a child's shoulder height, where the neighbour everyone fears turns out to be the one paying attention.",
       "shortlist": false,
       "summarySource": "own",
