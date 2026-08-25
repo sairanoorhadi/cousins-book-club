@@ -57,6 +57,9 @@ img{max-width:100%;display:block}
 .empty{color:var(--muted);font-style:italic;font-size:15px}
 
 /* ============ buttons ============ */
+/* a class that sets `display` beats the UA's [hidden] rule, so `el.hidden = true`
+   was leaving buttons on screen — .btn was the one that mattered */
+[hidden]{display:none !important}
 .btn{display:inline-flex;align-items:center;gap:8px;justify-content:center;font-family:var(--f-display);font-weight:700;font-size:14px;padding:10px 18px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease}
 .btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--stamp)}
 .btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--stamp)}
@@ -385,6 +388,18 @@ img{max-width:100%;display:block}
 .ac{position:relative}
 .ac__menu{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--surface);border:2px solid var(--edge);border-radius:6px;box-shadow:var(--shadow-sm);max-height:274px;overflow:auto}
 .ac__menu[hidden]{display:none}
+/* the candidate authors a lookup turned up, under the author box */
+.authpick{margin-top:9px;display:flex;flex-direction:column;gap:6px}
+.authpick[hidden]{display:none}
+.authpick__lab{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.authrow{display:flex;align-items:center;gap:8px}
+.authrow__pick{flex:1 1 auto;text-align:left;border:2px solid var(--edge);border-radius:999px;background:var(--surface);cursor:pointer;padding:5px 13px;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--ink)}
+.authrow__pick:hover{background:var(--sunk)}
+.authrow__pick[aria-pressed="true"]{background:var(--surf);color:var(--on-surf);border-color:var(--surf)}
+.authrow__pick small{display:block;font-family:var(--f-mono);font-weight:400;font-size:10.5px;color:var(--muted);margin-top:1px}
+.authrow__pick[aria-pressed="true"] small{color:var(--on-surf);opacity:.85}
+.authrow__web{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--muted);text-decoration:none}
+.authrow__web:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
 .ac__opt{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:9px 12px;background:none;border:0;border-bottom:1.5px solid var(--hairline);cursor:pointer}
 .ac__opt:last-child{border-bottom:0}
 .ac__opt:hover,.ac__opt[data-on="1"]{background:var(--sunk)}
@@ -441,13 +456,20 @@ img{max-width:100%;display:block}
 .vote__btn--up:hover{background:var(--surf);color:var(--on-surf)}
 .vote__btn--down:hover{background:var(--flare);color:var(--on-flare)}
 .vote__btn--up{border-right:1.5px solid var(--edge)}
-.secondchip--down{background:var(--flare);color:var(--on-flare)}
 .endorse[data-lean="down"]{border-color:var(--flare)}
 .endorse[data-lean="up"]{border-color:var(--surf)}
 .partytag{display:inline-block;margin-top:12px;background:var(--grape);color:var(--on-grape);border:2px solid var(--edge);border-radius:999px;padding:3px 12px;font-family:var(--f-display);font-weight:700;font-size:12.5px}
 .reccard__short{position:absolute;top:7px;left:7px;background:var(--flare);color:var(--on-flare);border:2px solid var(--edge);border-radius:999px;padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
 .seconds{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
-.secondchip{font-family:var(--f-mono);font-size:11.5px;padding:3px 10px;border:1.5px solid var(--edge);border-radius:999px;background:var(--sunk)}
+.secondchip{font-family:var(--f-mono);font-size:11.5px;padding:3px 10px;border:1.5px solid var(--edge);border-radius:999px;background:var(--sunk);color:var(--ink)}
+/* this used to sit above .secondchip, so the base background quietly won and
+   the name came out near-invisible on the dark theme */
+/* the house pink only reaches 4.3:1 against white, so this chip gets a
+   deeper red of its own — the name has to be readable at 11.5px */
+.secondchip--down{background:#C81748;color:#FFFFFF;border-color:#C81748;font-weight:700}
+:root:not([data-theme="light"]) .secondchip--down{background:#FF8FA3;color:#2A0710;border-color:#FF8FA3}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .secondchip--down{background:#FF8FA3;color:#2A0710;border-color:#FF8FA3}}
+:root[data-theme="dark"] .secondchip--down{background:#FF8FA3;color:#2A0710;border-color:#FF8FA3}
 .endorse{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;border:2px dashed var(--edge);border-radius:var(--r);padding:12px 14px;background:var(--sunk)}
 .endorse .input{flex:1 1 180px;width:auto}
 
@@ -486,6 +508,17 @@ img{max-width:100%;display:block}
 .huechip span{width:22px;height:22px;border-radius:50%;border:2px solid var(--edge);background:var(--c);flex:none}
 .huechip:hover{color:var(--ink);border-color:var(--edge)}
 .huechip[aria-pressed="true"]{border-color:var(--edge);color:var(--ink);background:var(--sunk);box-shadow:2px 2px 0 var(--stamp)}
+.huechip--custom span{background:var(--c);background-image:linear-gradient(135deg,#E8285A,#F5A800,#0A9E88,#3257E0,#7C31D8)}
+.huechip--custom[aria-pressed="true"] span{background-image:none}
+.huecustom{margin-top:14px;border:2px dashed var(--edge);border-radius:var(--r);padding:14px;background:var(--sunk);display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+.huecustom input[type="color"]{width:130px;height:96px;padding:0;border:2px solid var(--edge);border-radius:var(--r);background:none;cursor:pointer}
+.huecustom__side{display:flex;flex-direction:column;gap:6px}
+.huecustom__lab{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.huecustom__side .input{width:130px;text-transform:uppercase}
+.huecustom__prev{display:inline-flex;align-items:center;justify-content:center;width:130px;height:34px;border:2px solid var(--edge);border-radius:999px;font-family:var(--f-display);font-weight:700;background:var(--c,var(--sunk));color:var(--cf,var(--ink))}
+.huecustom__acts{display:flex;gap:10px;flex-wrap:wrap}
+.focusbar__hint{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-left:6px}
+.tree__disc--shared span{font-size:12px;letter-spacing:.02em}
 /* the signed-in member's badge, in place of the sign in / sign up pair */
 .whoami{display:inline-flex;align-items:center;gap:8px;padding:4px 14px 4px 4px;background:var(--surface)}
 .whoami__pic{width:26px;height:26px;border-radius:50%;border:2px solid var(--edge);background:var(--c,var(--sky));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:11px;flex:none;overflow:hidden}
@@ -934,13 +967,21 @@ img{max-width:100%;display:block}
             <div class="field ac"><label for="sTitle">Book title</label>
               <input class="input" id="sTitle" name="title" required maxlength="140" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="sTitleMenu">
               <div class="ac__menu" id="sTitleMenu" role="listbox" hidden></div></div>
-            <div class="field"><label for="sAuthor">Author</label><input class="input" id="sAuthor" name="author" required maxlength="140"></div>
+            <div class="field"><label for="sAuthor">Author</label><input class="input" id="sAuthor" name="author" required maxlength="140">
+              <div class="authpick" id="sAuthorPick" hidden></div></div>
             <div class="field"><label for="sPages">Page count</label><input class="input" id="sPages" name="pages" type="number" min="1" max="20000" inputmode="numeric"></div>
             <div class="field"><label for="sBy">Your name</label><input class="input" id="sBy" name="by" required maxlength="60"></div>
           </div>
           <div class="field"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span></label>
             <div id="sAgeSlider"></div></div>
           <div class="field"><label for="sGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label><input class="input" id="sGenres" name="genres" placeholder="Young Adult, Fantasy" maxlength="300"></div>
+          <div class="formgrid">
+            <div class="field"><label for="sRating">Readers&rsquo; rating <span style="text-transform:none;letter-spacing:0">(out of 5)</span></label>
+              <input class="input" id="sRating" name="rating" type="number" min="0" max="5" step="0.01" inputmode="decimal" placeholder="4.1">
+              <p class="hint" style="margin-top:6px" id="sRatingNote">Read it off the book&rsquo;s Goodreads page and type it in &mdash; or let &ldquo;Fill in the details&rdquo; try.</p></div>
+            <div class="field"><label for="sRatingBy">Where it came from</label>
+              <input class="input" id="sRatingBy" name="ratingSource" maxlength="40" placeholder="Goodreads"></div>
+          </div>
           <div class="field"><label>Look it up</label>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
               <button class="btn btn--sm btn--sky" type="button" id="sLookup">Search the web for this book</button>
@@ -975,7 +1016,7 @@ img{max-width:100%;display:block}
         <div>
           <p class="eyebrow">The record</p>
           <h2>Badges</h2>
-          <p>Every book the club has finished, as a growing tree or a straight timeline. Hover a badge for its dates, click it for who read it &mdash; or focus on one member to see only their books.</p>
+          <p>Every book the club has finished, as a growing tree or a straight timeline. Hover a badge for its dates, click it for who read it &mdash; focus on one member to see only their books, or pick two to see what they read together.</p>
         </div>
         <div class="stack" style="gap:12px;align-items:flex-end">
           <div class="tabbar" role="tablist" aria-label="Badge view">
@@ -1096,6 +1137,34 @@ function initials(s){
 function memberHue(m){
   if(!m) return "sky";
   return HUES.indexOf(m.hue) !== -1 ? m.hue : hueFor(m.id);
+}
+/* A member's colour can be one of the five house hues or a hex they picked
+   themselves, so nothing may assume `var(--<name>)` any more. */
+function isHex(v){ return /^#[0-9a-f]{6}$/i.test(String(v || "").trim()); }
+function hueColour(m){ return isHex(m && m.hue) ? m.hue.trim() : "var(--" + memberHue(m) + ")"; }
+/* Black or white, whichever the eye can actually read on that background.
+   Comparing the two contrast ratios beats guessing a lightness threshold —
+   a mid green looks light but takes dark text by a factor of four. */
+function relLum(hex){
+  var n = parseInt(String(hex).slice(1), 16);
+  var lin = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(function(c){
+    c = c / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+}
+function contrast(a, b){
+  var x = relLum(a), y = relLum(b);
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+function onHex(hex){
+  return contrast(hex, "#161029") >= contrast(hex, "#FFFFFF") ? "#161029" : "#FFFFFF";
+}
+function hueOn(m){ return isHex(m && m.hue) ? onHex(m.hue.trim()) : "var(--on-" + memberHue(m) + ")"; }
+/* the style attribute every badge, chip and dot wants */
+function hueStyle(m, fill){
+  return 'style="--c:' + hueColour(m) + ";--cf:" + hueOn(m) +
+    (fill ? ";background:" + hueColour(m) : "") + '"';
 }
 function surname(name){
   var w = String(name || "").trim().split(/\s+/);
@@ -1356,6 +1425,9 @@ function migrate(s){
     if(!Array.isArray(r.reviews)) r.reviews = [];
     if(!Array.isArray(r.endorsements)) r.endorsements = [];
     if(!Array.isArray(r.dislikes)) r.dislikes = [];
+    /* what readers elsewhere gave it, put in by whoever suggested the book */
+    r.rating = clampRating(r.rating);
+    if(typeof r.ratingSource !== "string") r.ratingSource = "";
     ["endorsements","dislikes"].forEach(function(k){
       r[k] = r[k].map(function(e){
         return typeof e === "string" ? { name: e, at: "" } : { name: String(e && e.name || "").trim(), at: String(e && e.at || "") };
@@ -1508,10 +1580,17 @@ function applyInbox(){
     if(!r) return;
     var name = String(p.name || "").trim();
     if(!name) return;
+    if(!Array.isArray(r.endorsements)) r.endorsements = [];
+    if(!Array.isArray(r.dislikes)) r.dislikes = [];
+    /* "none" is someone taking their vote back — off both lists, nothing added */
+    if(p.vote === "none"){
+      ["endorsements", "dislikes"].forEach(function(k){
+        r[k] = r[k].filter(function(e){ return e.name.toLowerCase() !== name.toLowerCase(); });
+      });
+      return;
+    }
     var list = p.vote === "down" ? "dislikes" : "endorsements";
     var other = list === "dislikes" ? "endorsements" : "dislikes";
-    if(!Array.isArray(r[list])) r[list] = [];
-    if(!Array.isArray(r[other])) r[other] = [];
     /* someone who changed their mind sent a second vote — move them across
        rather than letting them count on both sides */
     r[other] = r[other].filter(function(e){ return e.name.toLowerCase() !== name.toLowerCase(); });
@@ -1700,6 +1779,10 @@ async function searchBooks(q){
         blurb: stripTags(v.description),
         cover: gbCover(img.thumbnail || img.smallThumbnail || ""),
         year: String(v.publishedDate || "").slice(0, 4),
+        /* Goodreads retired its public API in 2020, so this is the nearest
+           honest stand-in — and the form labels it as such */
+        rating: Number(v.averageRating) || 0,
+        ratingsCount: Number(v.ratingsCount) || 0,
         mature: v.maturityRating === "MATURE"
       };
     }).filter(function(x){ return x.title; });
@@ -1957,13 +2040,14 @@ function allGenres(){
 function pendingRecs(){ return state.recs.filter(function(r){ return r.status === "pending"; }); }
 function recById(id){ return state.recs.filter(function(r){ return r.id === id; })[0] || null; }
 function memberById(id){ return state.members.filter(function(m){ return m.id === id; })[0] || null; }
-function clampRating(n){ n = Number(n); if(isNaN(n)) n = 0; return Math.max(0, Math.min(5, Math.round(n * 10) / 10)); }
+/* two decimals, because that is how the rating sites quote them (4.35, not 4.4) */
+function clampRating(n){ n = Number(n); if(isNaN(n)) n = 0; return Math.max(0, Math.min(5, Math.round(n * 100) / 100)); }
 function stars(n, small){
   n = clampRating(n);
   return '<span class="stars' + (small ? " stars--sm" : "") + '" role="img" aria-label="' + n + ' out of 5">' +
     '<span class="stars__off">★★★★★</span>' +
     '<span class="stars__on" style="width:' + (n / 5 * 100) + '%">★★★★★</span></span>' +
-    '<span class="stars__num">' + n.toFixed(1) + " / 5</span>";
+    '<span class="stars__num">' + (n === Math.round(n * 10) / 10 ? n.toFixed(1) : n.toFixed(2)) + " / 5</span>";
 }
 /* the club's verdict, and the wider community's beside it when the organiser has entered one */
 function ratingPair(rev, small){
@@ -2376,33 +2460,57 @@ function renderShortlist(){
 function renderRecs(){ renderRecFilters(); renderRecGrid(); renderShortlist(); }
 
 /* ---------- render: badges ---------- */
-var focusId = null;
-function focusMember(){ return focusId ? memberById(focusId) : null; }
+/* Focus is a set, not one name: two or more picked shows only the books all of
+   them were on, which is the interesting question once a club has history. */
+var focusIds = [];
+var focusAuto = false;   /* chosen for them, not by them */
+var focusTouched = false;   /* set once they use the bar themselves */
+function focusMembers(){
+  return focusIds.map(memberById).filter(Boolean);
+}
+function focusMember(){ var f = focusMembers(); return f.length === 1 ? f[0] : null; }
 function readBooks(){
   var read = state.books.filter(function(b){ return b.status === "past" || b.status === "current"; });
-  if(focusId) read = read.filter(function(b){ return (b.members || []).indexOf(focusId) !== -1; });
+  if(focusIds.length){
+    /* every one of them, not any — the overlap */
+    read = read.filter(function(b){
+      var on = b.members || [];
+      return focusIds.every(function(id){ return on.indexOf(id) !== -1; });
+    });
+  }
   return read;
+}
+function andList(names){
+  if(names.length < 2) return names[0] || "";
+  return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
 }
 function renderFocus(){
   var bar = $("focusBar");
   if(!state.members.length){ bar.innerHTML = ""; $("focusNote").hidden = true; return; }
   bar.innerHTML = '<span class="focusbar__lab">Focus</span>' +
-    '<button class="focuschip focuschip--all" type="button" data-focus="" aria-pressed="' + (!focusId) + '">Whole club</button>' +
+    '<button class="focuschip focuschip--all" type="button" data-focus="" aria-pressed="' + (!focusIds.length) + '">Whole club</button>' +
     state.members.map(function(m){
-      var h = memberHue(m);
-      return '<button class="focuschip" type="button" data-focus="' + esc(m.id) + '" aria-pressed="' + (focusId === m.id) + '">' +
-        '<span class="focuschip__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
+      var on = focusIds.indexOf(m.id) !== -1;
+      return '<button class="focuschip" type="button" data-focus="' + esc(m.id) + '" aria-pressed="' + on + '">' +
+        '<span class="focuschip__pic" ' + hueStyle(m) + ">" +
           (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
         esc(m.name) + "</button>";
-    }).join("");
-  var note = $("focusNote"), fm = focusMember();
-  if(fm){
-    var n = readBooks().length;
-    note.hidden = false;
+    }).join("") +
+    '<span class="focusbar__hint">Pick more than one to see what they read together</span>';
+  var note = $("focusNote"), fm = focusMembers();
+  if(!fm.length){ note.hidden = true; return; }
+  var n = readBooks().length, names = andList(fm.map(function(m){ return m.name; }));
+  note.hidden = false;
+  if(fm.length === 1){
     note.textContent = n
-      ? "Showing the " + n + " book" + (n === 1 ? "" : "s") + " " + fm.name + " read."
-      : fm.name + " isn't tagged on any books yet — set that under Organiser tools → Reading list.";
-  }else{ note.hidden = true; }
+      ? (focusAuto ? "Showing your " : "Showing the ") + n + " book" + (n === 1 ? "" : "s") + " " +
+        (focusAuto ? "" : fm[0].name + " ") + "read."
+      : fm[0].name + " isn't tagged on any books yet — set that under Organiser tools → Reading list.";
+  }else{
+    note.textContent = n
+      ? "Showing the " + n + " book" + (n === 1 ? "" : "s") + " " + names + " all read."
+      : names + " haven't been on a book together yet.";
+  }
 }
 function branches(){
   var read = readBooks();
@@ -2418,10 +2526,20 @@ function branches(){
   return groups;
 }
 function hubHTML(){
+  var many = focusMembers();
+  if(many.length > 1){
+    /* a shared hub: their initials, on a slice of each of their colours */
+    var stops = many.map(function(m, i){
+      var c = hueColour(m), a = Math.round(i / many.length * 100), b = Math.round((i + 1) / many.length * 100);
+      return c + " " + a + "%, " + c + " " + b + "%";
+    }).join(", ");
+    return '<span class="tree__disc tree__disc--hub tree__disc--shared" ' +
+      'style="background:linear-gradient(135deg,' + stops + ')">' +
+      "<span>" + esc(many.map(function(m){ return initials(m.name); }).join(" + ")) + "</span></span>";
+  }
   var fm = focusMember();
   if(fm){
-    var h = memberHue(fm);
-    return '<span class="tree__disc tree__disc--hub" style="--c:var(--' + h + ');--cf:var(--on-' + h + ');background:var(--' + h + ')">' +
+    return '<span class="tree__disc tree__disc--hub" ' + hueStyle(fm, true) + ">" +
       (fm.avatar ? '<img src="' + esc(fm.avatar) + '" alt="">' : "<span>" + esc(fm.name) + "</span>") + "</span>";
   }
   return '<span class="tree__disc tree__disc--hub">' +
@@ -2491,7 +2609,7 @@ function renderTimeline(){
     var m = meetingForBook(b.id);
     events.push({ when: b.finished || (m && m.date) || "", kind: "book", book: b });
   });
-  var mem = focusId ? state.members.filter(function(m){ return m.id === focusId; }) : state.members;
+  var mem = focusIds.length ? focusMembers() : state.members;
   mem.forEach(function(m){ events.push({ when: m.joined || "", kind: "member", member: m }); });
   if(!events.length){ host.innerHTML = '<p class="empty">Nothing on the timeline yet.</p>'; return; }
   events.sort(function(a,b){ return String(b.when || "0000").localeCompare(String(a.when || "0000")); });
@@ -2509,9 +2627,9 @@ function renderTimeline(){
           '<span class="tlcard__sub">' + esc(b.author) + " · " + esc(tipDates(b)) + "</span>" +
         "</button></div>";
     }
-    var mm = e.member, mh = memberHue(mm);
+    var mm = e.member;
     return '<div class="tlrow">' +
-      '<span class="tlrow__dot tlrow__dot--member" style="--c:var(--' + mh + ');--cf:var(--on-' + mh + ')">' +
+      '<span class="tlrow__dot tlrow__dot--member" ' + hueStyle(mm) + ">" +
         (mm.avatar ? '<img src="' + esc(mm.avatar) + '" alt="">' : esc(initials(mm.name))) + "</span>" +
       '<div class="tlcard tlcard--flat">' +
         '<span class="tlcard__when">' + (mm.joined ? "Joined " + esc(shortDate(mm.joined)) : "Member") + "</span>" +
@@ -2667,6 +2785,11 @@ function openBookDetail(o, kind, focus){
           (o.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
         "</div>" +
         (o.by ? '<p class="review__by" style="margin-top:14px">Recommended by ' + esc(o.by) + "</p>" : "") +
+        (Number(o.rating) > 0
+          ? '<div class="ratepair" style="margin-top:12px"><span class="ratebox">' +
+            '<span class="ratebox__k">' + esc(o.ratingSource || "Readers") + "</span>" +
+            '<span class="review__stars">' + stars(o.rating, true) + "</span></span></div>"
+          : "") +
         (ups.length
           ? '<p class="review__by" style="margin-top:10px">Endorsed by</p><div class="seconds">' +
             ups.map(function(e){ return '<span class="secondchip">' + esc(e.name) + "</span>"; }).join("") + "</div>"
@@ -2677,12 +2800,31 @@ function openBookDetail(o, kind, focus){
           : "") +
       "</div></div>" +
     (kind === "rec"
-      ? '<div class="endorse">' +
-          '<span style="font-family:var(--f-display);font-weight:700;font-size:14px">What do you think of this one?</span>' +
-          '<input class="input" type="text" id="endorseName" placeholder="Your name" maxlength="60" autocomplete="name">' +
-          '<button class="btn btn--sm btn--zest" type="button" data-endorse="' + esc(o.id) + '">Endorse it</button>' +
-          '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Not for me</button>' +
-        "</div>"
+      ? (function(){
+          var standing = myVote(o);
+          if(standing){
+            /* signed in and already voted: the only thing left to offer is
+               changing it or taking it back */
+            return '<div class="endorse" data-lean="' + standing + '">' +
+              '<span style="font-family:var(--f-display);font-weight:700;font-size:14px">' +
+                (standing === "up" ? "You endorsed this." : "You said this one isn\u2019t for you.") + "</span>" +
+              '<button class="btn btn--sm ' + (standing === "up" ? "btn--ghost" : "btn--zest") +
+                '" type="button" data-endorse="' + esc(o.id) + '">' +
+                (standing === "up" ? "Endorse it" : "Change to endorse") + "</button>" +
+              '<button class="btn btn--sm ' + (standing === "down" ? "btn--ghost" : "btn--flare") +
+                '" type="button" data-dislike="' + esc(o.id) + '">' +
+                (standing === "down" ? "Not for me" : "Change to not for me") + "</button>" +
+              '<button class="btn btn--sm btn--ghost" type="button" data-takeback="' + esc(o.id) + '">Take it back</button>' +
+            "</div>";
+          }
+          return '<div class="endorse">' +
+            '<span style="font-family:var(--f-display);font-weight:700;font-size:14px">What do you think of this one?</span>' +
+            (me && myName() ? "" :
+              '<input class="input" type="text" id="endorseName" placeholder="Your name" maxlength="60" autocomplete="name">') +
+            '<button class="btn btn--sm btn--zest" type="button" data-endorse="' + esc(o.id) + '">Endorse it</button>' +
+            '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Not for me</button>' +
+          "</div>";
+        })()
       : "") +
     '<hr class="divider">' +
     '<p style="white-space:pre-wrap">' + esc(o.blurb || "No summary written yet.") + "</p>" +
@@ -2835,8 +2977,7 @@ function openBadge(bookId){
         '<p class="review__by" style="margin-top:16px">Who read it</p>' +
         (crew.length
           ? '<div class="crew__list" style="margin-top:10px">' + crew.map(function(m){
-              var h = memberHue(m);
-              return '<span class="crewchip"><span class="crewchip__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
+              return '<span class="crewchip"><span class="crewchip__pic" ' + hueStyle(m) + ">" +
                 (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
                 '<span class="crewchip__n">' + esc(m.name) + "</span>" + memberLinks(m, "") + "</span>";
             }).join("") + "</div>"
@@ -2863,6 +3004,68 @@ function openBadge(bookId){
 
 /* One vote each way per person. Changing your mind moves you across rather than
    counting on both sides. Returns true when the vote landed. */
+/* Taking a vote back. Signed-in only — it works by name, and only the person
+   whose name it is can prove they own it. */
+async function clearVote(rec, name){
+  ["endorsements", "dislikes"].forEach(function(k){ if(!Array.isArray(rec[k])) rec[k] = []; });
+  var had = rec.endorsements.concat(rec.dislikes).some(function(x){
+    return x.name.toLowerCase() === name.toLowerCase();
+  });
+  if(!had) return false;
+  if(endpoint()){
+    say("Sending…", "busy", true);
+    var res = await submitPublic("endorse", { recId: rec.id, title: rec.title, name: name, vote: "none" });
+    if(!res.ok){ say(submitFailMsg(res), "bad"); return false; }
+  }else if(readOnly){
+    say(submitFailMsg({ reason: "unconfigured" }), "bad");
+    return false;
+  }
+  ["endorsements", "dislikes"].forEach(function(k){
+    rec[k] = rec[k].filter(function(x){ return x.name.toLowerCase() !== name.toLowerCase(); });
+  });
+  return true;
+}
+async function saveMyHue(hue){
+  var hres = await callEndpoint("profile-set", { token: sessionToken(), hue: hue });
+  if(!hres.ok){
+    var note = $("meHueNote");
+    if(note) note.textContent = hres.error === "bad colour"
+      ? "The club's script hasn't been updated for custom colours yet — the five presets still work."
+      : hres.error === "busy, try again" ? "Someone else was saving — try again in a moment."
+      : claimTrouble(hres.error);
+    return false;
+  }
+  var mm3 = myMember();
+  if(mm3) mm3.hue = hue;
+  me.hue = hue;
+  renderMe(); renderAll();
+  say("Badge colour updated.", "ok");
+  return true;
+}
+/* the swatch and the hex box drive each other, and both drive the preview */
+function syncHuePreview(from){
+  var wheel = $("meHueWheel"), box = $("meHueHex"), prev = $("meHuePrev");
+  if(!wheel || !box || !prev) return;
+  var v = from === "hex" ? String(box.value || "").trim() : wheel.value;
+  if(v && v[0] !== "#") v = "#" + v;
+  if(!isHex(v)) return;
+  if(from === "hex") wheel.value = v.toLowerCase();
+  else box.value = v.toUpperCase();
+  prev.style.setProperty("--c", v);
+  prev.style.setProperty("--cf", onHex(v));
+}
+document.addEventListener("input", function(e){
+  if(!e.target || !e.target.id) return;
+  if(e.target.id === "meHueWheel") syncHuePreview("wheel");
+  if(e.target.id === "meHueHex") syncHuePreview("hex");
+});
+function myVote(rec){
+  var n = myName().toLowerCase();
+  if(!n) return "";
+  if((rec.endorsements || []).some(function(x){ return x.name.toLowerCase() === n; })) return "up";
+  if((rec.dislikes || []).some(function(x){ return x.name.toLowerCase() === n; })) return "down";
+  return "";
+}
 async function castVote(rec, down, name){
   var mine = down ? "dislikes" : "endorsements", other = down ? "endorsements" : "dislikes";
   if(!Array.isArray(rec[mine])) rec[mine] = [];
@@ -2892,6 +3095,10 @@ async function castVote(rec, down, name){
 
 /* ---------- your account ---------- */
 var HUE_NAMES = { flare: "Pink", zest: "Amber", surf: "Teal", sky: "Blue", grape: "Purple" };
+/* <input type="color"> can't take a CSS variable, so the wheel needs literals
+   to open on. These are the light-theme values of the five house hues. */
+var HUE_HEX = { flare: "#E8285A", zest: "#F5A800", surf: "#0A9E88", sky: "#3257E0", grape: "#7C31D8" };
+function hexOfHue(name){ return HUE_HEX[name] || "#3257E0"; }
 var myNotify = [];
 
 function myRecs(){
@@ -2939,9 +3146,8 @@ function renderMe(){
         (unlinked.length
           ? '<p class="hint" style="margin-bottom:14px">Pick your name and this address is linked to you. You only do this once.</p>' +
             '<div class="focusbar" style="margin:0">' + unlinked.map(function(m){
-              var h = memberHue(m);
               return '<button class="focuschip" type="button" data-claim="' + esc(m.id) + '">' +
-                '<span class="focuschip__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
+                '<span class="focuschip__pic" ' + hueStyle(m) + ">" +
                   (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
                 esc(m.name) + "</button>";
             }).join("") +
@@ -2979,6 +3185,23 @@ function renderMe(){
               ((mem.hue || hueFor(mem.id)) === h) + '" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')" ' +
               'title="' + esc(HUE_NAMES[h]) + '"><span></span>' + esc(HUE_NAMES[h]) + "</button>";
           }).join("") +
+          /* the presets are the quick answer; this opens the whole spectrum */
+          '<button class="huechip huechip--custom" type="button" id="meHueCustom" aria-pressed="' +
+            isHex(mem.hue) + '" style="--c:' + (isHex(mem.hue) ? esc(mem.hue) : "var(--sunk)") + '">' +
+            "<span></span>" + (isHex(mem.hue) ? esc(mem.hue.toUpperCase()) : "Custom\u2026") + "</button>" +
+        "</div>" +
+        '<div class="huecustom" id="meHuePanel" hidden>' +
+          '<input type="color" id="meHueWheel" value="' + esc(isHex(mem.hue) ? mem.hue : hexOfHue(memberHue(mem))) + '" aria-label="Pick a colour">' +
+          '<div class="huecustom__side">' +
+            '<label class="huecustom__lab" for="meHueHex">Hex</label>' +
+            '<input class="input mono" type="text" id="meHueHex" maxlength="7" spellcheck="false" ' +
+              'value="' + esc(isHex(mem.hue) ? mem.hue.toUpperCase() : hexOfHue(memberHue(mem)).toUpperCase()) + '">' +
+            '<span class="huecustom__prev" id="meHuePrev">Aa</span>' +
+          "</div>" +
+          '<div class="huecustom__acts">' +
+            '<button class="btn btn--sm btn--zest" type="button" id="meHueApply">Use this colour</button>' +
+            '<button class="btn btn--sm btn--ghost" type="button" id="meHueCancel">Cancel</button>' +
+          "</div>" +
         "</div>" +
         '<div style="margin-top:12px"><span class="hint" id="meHueNote"></span></div>'
       : '<p class="empty" style="margin:6px 0">Once the organiser adds you to the members list you can pick a colour here.</p>') +
@@ -3221,6 +3444,9 @@ function recEditor(r){
       '<div class="field"><label>Pages</label><input class="input" type="number" min="1" max="20000" value="' + esc(r.pages || "") + '" data-rfield="pages" data-rid="' + esc(r.id) + '"></div>' +
       '<div class="field"><label>Reading level</label>' + dualRangeHTML("rc:" + r.id, r.ageMin, r.ageMax) + "</div>" +
       '<div class="field"><label>Recommended by</label><input class="input" type="text" value="' + esc(r.by || "") + '" data-rfield="by" data-rid="' + esc(r.id) + '" maxlength="60"></div>' +
+      '<div class="field"><label>Readers&rsquo; rating <span style="text-transform:none;letter-spacing:0">(out of 5)</span></label>' +
+        '<input class="input" type="number" min="0" max="5" step="0.01" value="' + esc(r.rating || "") + '" data-rfield="rating" data-rid="' + esc(r.id) + '"></div>' +
+      '<div class="field"><label>Rating source</label><input class="input" type="text" value="' + esc(r.ratingSource || "") + '" data-rfield="ratingSource" data-rid="' + esc(r.id) + '" maxlength="40" placeholder="Goodreads"></div>' +
     "</div>" +
     '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
       '<input class="input" type="text" value="' + esc((r.genres || []).join(", ")) + '" data-rfield="genres" data-rid="' + esc(r.id) + '" maxlength="300"></div>' +
@@ -3294,8 +3520,9 @@ function paneRecs(){
 
   out += '<hr class="divider"><p class="eyebrow">Live on the site</p><h3 style="font-size:22px;margin:8px 0 18px">' +
     ok.length + " recommendation" + (ok.length === 1 ? "" : "s") + "</h3>";
+  /* alphabetical — this list only gets longer, and scanning it is the whole job */
   out += ok.length
-    ? ok.map(function(r){
+    ? ok.slice().sort(function(a, b){ return String(a.title).localeCompare(String(b.title)); }).map(function(r){
         return '<div class="adminrow"><div class="adminrow__head"><strong>' + esc(r.title) + "</strong>" +
           '<span class="lanerow__meta">' + esc(r.author) + " · " + esc(r.pages || "?") + " pp" + (r.by ? " · rec. " + esc(r.by) : "") + "</span>" +
           '<button class="btn btn--sm btn--ghost" type="button" data-reject="' + esc(r.id) + '" style="margin-left:auto">Unpublish</button></div>' +
@@ -3305,7 +3532,7 @@ function paneRecs(){
 
   if(rej.length){
     out += '<hr class="divider"><p class="eyebrow">Rejected / unpublished</p><div style="margin-top:12px">' +
-      rej.map(function(r){
+      rej.slice().sort(function(a, b){ return String(a.title).localeCompare(String(b.title)); }).map(function(r){
         return '<div class="adminrow"><div class="adminrow__head"><strong>' + esc(r.title) + "</strong>" +
           '<span class="pill pill--done">Hidden</span>' +
           '<span style="margin-left:auto;display:flex;gap:8px">' +
@@ -3651,20 +3878,25 @@ document.addEventListener("click", async function(e){
     say("Linked — welcome back, " + (myName() || "") + ".", "ok");
     return;
   }
-  if((el = t.closest("[data-myhue]"))){
-    var hue = el.getAttribute("data-myhue");
-    var hres = await callEndpoint("profile-set", { token: sessionToken(), hue: hue });
-    if(!hres.ok){
-      var note = $("meHueNote");
-      if(note) note.textContent = hres.error === "busy, try again"
-        ? "Someone else was saving — try again in a moment." : "Couldn't change that.";
+  if(t.closest("#meHueCustom")){
+    var panel = $("meHuePanel");
+    if(panel){ panel.hidden = !panel.hidden; if(!panel.hidden) syncHuePreview(); }
+    return;
+  }
+  if(t.closest("#meHueCancel")){ if($("meHuePanel")) $("meHuePanel").hidden = true; return; }
+  if(t.closest("#meHueApply")){
+    var want = String($("meHueHex").value || "").trim();
+    if(want && want[0] !== "#") want = "#" + want;
+    if(!isHex(want)){
+      var hn0 = $("meHueNote");
+      if(hn0) hn0.textContent = "That isn't a colour — it needs six digits, like #34C94D.";
       return;
     }
-    var mm3 = myMember();
-    if(mm3) mm3.hue = hue;
-    me.hue = hue;
-    renderMe(); renderAll();
-    say("Badge colour updated.", "ok");
+    await saveMyHue(want.toLowerCase());
+    return;
+  }
+  if((el = t.closest("[data-myhue]"))){
+    await saveMyHue(el.getAttribute("data-myhue"));
     return;
   }
 
@@ -3753,11 +3985,26 @@ document.addEventListener("click", async function(e){
   }
 
   /* endorsing or turning down a recommendation */
+  if((el = t.closest("[data-takeback]"))){
+    var ur = recById(el.getAttribute("data-takeback")); if(!ur) return;
+    var un = myName();
+    if(!un){ say("Sign in to take a vote back.", "bad"); return; }
+    if(await clearVote(ur, un)){
+      say("Taken back.", "ok");
+      openBookDetail(ur, "rec");
+      renderRecs();
+    }
+    return;
+  }
   if((el = t.closest("[data-endorse]")) || (el = t.closest("[data-dislike]"))){
     var down = el.hasAttribute("data-dislike");
     var er = recById(el.getAttribute(down ? "data-dislike" : "data-endorse")); if(!er) return;
-    var nameEl = $("endorseName"), nm0 = nameEl ? nameEl.value.trim() : "";
+    /* signed in, we know who they are — no need to make them type it */
+    var nameEl = $("endorseName"), nm0 = myName() || (nameEl ? nameEl.value.trim() : "");
     if(!nm0){ if(nameEl) nameEl.focus(); say("Put your name in first.", "bad"); return; }
+    /* changing your mind is a re-vote, which castVote already moves across —
+       but it refuses a repeat of the same side, so clear that first */
+    if(myName() && myVote(er) === (down ? "down" : "up")) return;
     if(await castVote(er, down, nm0)) openBookDetail(er, "rec");
     return;
   }
@@ -3830,7 +4077,13 @@ document.addEventListener("click", async function(e){
   }
 
   if((el = t.closest("[data-focus]"))){
-    focusId = el.getAttribute("data-focus") || null;
+    var fid = el.getAttribute("data-focus");
+    focusAuto = false; focusTouched = true;
+    if(!fid) focusIds = [];
+    else{
+      var at = focusIds.indexOf(fid);
+      if(at === -1) focusIds.push(fid); else focusIds.splice(at, 1);
+    }
     renderFocus(); renderTree(); renderTimeline();
     return;
   }
@@ -3911,6 +4164,8 @@ document.addEventListener("click", async function(e){
     rs.ageMin = rAge.lo; rs.ageMax = rAge.hi; rs.level = levelText(rs);
     var rrv = rget("reviews");
     if(rrv) rs.reviews = parseReviewLines(rrv.value);
+    var rrt = rget("rating"); if(rrt) rs.rating = clampRating(rrt.value);
+    var rrs = rget("ratingSource"); if(rrs) rs.ratingSource = rrs.value.trim().slice(0, 40);
     if(!rs.title) rs.title = "Untitled";
     if(await save("Saving…")){ renderAll(); renderAdmin(); }
     return;
@@ -4203,7 +4458,8 @@ function acceptSubmission(item, opts){
          Recommendations tab; anything else waits there */
       status: opts.approve ? "approved" : "pending", at: String(item.at || "").slice(0, 10),
       cover: safeUrl(p.cover), blurb: String(p.blurb || ""), summarySource: String(p.summarySource || "own"),
-      shortlist: false, reviews: [], endorsements: [], dislikes: []
+      shortlist: false, reviews: [], endorsements: [], dislikes: [],
+      rating: clampRating(p.rating), ratingSource: String(p.ratingSource || "").slice(0, 40)
     }));
   }else if(item.kind === "join"){
     var nm = String(p.name || "").trim();
@@ -4329,6 +4585,47 @@ function renderAC(){
   menu.hidden = false;
   $("sTitle").setAttribute("aria-expanded", "true");
 }
+/* Every distinct author the search turned up for this title, so a book with
+   several editions, a translator, or a same-titled namesake doesn't quietly
+   pick the wrong one. Each row links out to a Google search for the pair, so
+   you can check before committing. */
+var authorHits = [];
+function authorCandidates(hits, title){
+  var seen = {}, outList = [];
+  hits.forEach(function(h){
+    if(!h.author) return;
+    /* Google Books joins co-authors with ", " — that whole string is one credit */
+    var key = h.author.toLowerCase();
+    if(seen[key]) { seen[key].count++; return; }
+    seen[key] = { name: h.author, count: 1, title: h.title, year: h.year || "", near: titleCloseness(title, h.title) };
+    outList.push(seen[key]);
+  });
+  /* closest title first, then the one that came up most often */
+  outList.sort(function(a, b){ return (a.near - b.near) || (b.count - a.count); });
+  return outList.slice(0, 6);
+}
+function googlePair(title, author){
+  return "https://www.google.com/search?q=" + encodeURIComponent('"' + title + '" "' + author + '"');
+}
+function renderAuthorPick(){
+  var host = $("sAuthorPick");
+  if(!host) return;
+  if(authorHits.length < 1){ host.hidden = true; host.innerHTML = ""; return; }
+  var title = $("sTitle").value.trim(), chosen = $("sAuthor").value.trim().toLowerCase();
+  host.hidden = false;
+  host.innerHTML = '<span class="authpick__lab">' +
+      (authorHits.length > 1 ? "Which author? Pick one and the rest fills in" : "Found this author") + "</span>" +
+    authorHits.map(function(a, i){
+      return '<span class="authrow">' +
+        '<button class="authrow__pick" type="button" data-authpick="' + i + '" aria-pressed="' +
+          (a.name.toLowerCase() === chosen) + '">' + esc(a.name) +
+          "<small>" + esc(a.title) + (a.year ? " \u00b7 " + esc(a.year) : "") + "</small></button>" +
+        '<a class="authrow__web" href="' + esc(googlePair(title || a.title, a.name)) + '" target="_blank" ' +
+          'rel="noopener noreferrer" title="Google &ldquo;' + esc(title || a.title) + '&rdquo; &ldquo;' + esc(a.name) + '&rdquo;" ' +
+          'aria-label="Search the web for ' + esc(a.name) + '">&#127760;</a>' +
+      "</span>";
+    }).join("");
+}
 async function chooseACHit(i){
   var h = acHits[i]; if(!h) return;
   closeAC();
@@ -4347,9 +4644,16 @@ async function chooseACHit(i){
     if(!sugCover && extras.cover) sugCover = extras.cover;
   }
   $("sGenres").value = normaliseGenres(genres).join(", ");
+  if(h.rating > 0){
+    $("sRating").value = h.rating;
+    if(!$("sRatingBy").value) $("sRatingBy").value = "Google Books";
+  }
   sugAI = "";
   setSugMode(sugMode === "own" ? "own" : "fetched");
   renderSugCover();
+  /* the picked title's other authors stay on offer, in case this was the wrong one */
+  authorHits = authorCandidates(acHits, h.title);
+  renderAuthorPick();
   /* these fields were filled in code, which fires no input event */
   syncSearchLinks();
 }
@@ -4443,11 +4747,24 @@ async function askAIForDetails(){
   var hits = await searchBooks([title, author].filter(Boolean).join(" "));
   hits.forEach(function(h){ h.near = titleCloseness(title, h.title); });
   hits.sort(function(a, b){ return a.near - b.near; });
+  /* offer every author the search found, rather than silently taking the first */
+  authorHits = authorCandidates(hits, title);
+  if(author){
+    /* they've already named someone: prefer that person's edition */
+    var wanted = author.toLowerCase();
+    var theirs = hits.filter(function(h){ return String(h.author || "").toLowerCase().indexOf(wanted) !== -1; });
+    if(theirs.length) hits = theirs.concat(hits.filter(function(h){ return theirs.indexOf(h) === -1; }));
+  }
   var best = hits[0] || null;
 
   var genres = [];
   if(best){
     if(best.author && !author){ $("sAuthor").value = best.author; author = best.author; filled.push("author"); }
+    if(best.rating > 0 && !$("sRating").value){
+      $("sRating").value = best.rating;
+      if(!$("sRatingBy").value) $("sRatingBy").value = "Google Books";
+      filled.push("readers' rating");
+    }
     if(best.pages && !$("sPages").value){ $("sPages").value = best.pages; filled.push("page count"); }
     genres = genres.concat(best.genres || []);
     if(best.blurb){ sugFetched = best.blurb; }
@@ -4508,6 +4825,7 @@ async function askAIForDetails(){
   }
 
   syncSearchLinks();
+  renderAuthorPick();
   var uniq = filled.filter(function(f, i){ return filled.indexOf(f) === i; });
   out.innerHTML = '<p class="hint" style="margin-top:10px">' +
     (uniq.length ? "Filled in the " + uniq.join(", ") + ". " : "Nothing new to fill in. ") +
@@ -4538,6 +4856,21 @@ document.addEventListener("click", async function(e){
   if(sm){ setSugMode(sm.getAttribute("data-summode")); return; }
   if(e.target.closest && e.target.closest("#sLookup")){ await runLookup(); return; }
   if(e.target.closest && e.target.closest("#sAskAI")){ await askAIForDetails(); return; }
+  var ap = e.target.closest && e.target.closest("[data-authpick]");
+  if(ap){
+    var who = authorHits[Number(ap.getAttribute("data-authpick"))];
+    if(who){
+      $("sAuthor").value = who.name;
+      renderAuthorPick();
+      syncSearchLinks();
+      /* refill against this author, so the page count and genres are theirs —
+         clearing first, or the "only if empty" guards keep the old values */
+      ["sPages", "sGenres", "sRating"].forEach(function(id){ $(id).value = ""; });
+      $("sRatingBy").value = "";
+      await askAIForDetails();
+    }
+    return;
+  }
   var uh = e.target.closest && e.target.closest("[data-usehit]");
   if(uh){
     var pick = lookupHits[Number(uh.getAttribute("data-usehit"))];
@@ -4569,7 +4902,8 @@ $("suggestForm").addEventListener("submit", async function(e){
     var res = await submitPublic("suggest", {
       title: title, author: author, pages: Number(el.pages.value) || null,
       ageMin: age.lo, ageMax: age.hi, level: levelText({ ageMin: age.lo, ageMax: age.hi }),
-      genres: genres, blurb: blurb, summarySource: sugMode, cover: sugCover, by: by
+      genres: genres, blurb: blurb, summarySource: sugMode, cover: sugCover, by: by,
+      rating: clampRating(el.rating.value), ratingSource: el.ratingSource.value.trim().slice(0, 40)
     });
     if(!res.ok){ note.textContent = submitFailMsg(res); return; }
     note.textContent = "Sent. The organiser will take a look.";
@@ -4585,6 +4919,9 @@ $("suggestForm").addEventListener("submit", async function(e){
     "**Pages:** " + (el.pages.value.trim() || "not given"),
     "**Reading level:** " + levelText({ ageMin: age.lo, ageMax: age.hi }),
     "**Genres:** " + (genres.join(", ") || "not given"),
+    "**Readers' rating:** " + (el.rating.value.trim()
+      ? el.rating.value.trim() + " / 5" + (el.ratingSource.value.trim() ? " (" + el.ratingSource.value.trim() + ")" : "")
+      : "not given"),
     "**Cover:** " + (sugCover || "not given"),
     "", "**What it\u2019s about**", blurb || "(not given)",
     "", "\u2014 suggested by " + by
@@ -4612,10 +4949,10 @@ function renderWhoami(){
   if(join) join.hidden = !!me;
   if(me){
     /* signed in: the two buttons give way to the member's own badge */
-    var mem = myMember(), h = mem ? memberHue(mem) : "sky";
+    var mem = myMember();
     btn.className = "btn btn--sm whoami" + (mem ? "" : " whoami--new");
     btn.innerHTML =
-      '<span class="whoami__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
+      '<span class="whoami__pic" ' + hueStyle(mem) + ">" +
         (mem && mem.avatar ? '<img src="' + esc(mem.avatar) + '" alt="">' : esc(initials(myName() || "?"))) + "</span>" +
       '<span class="whoami__n">' + esc((myName() || "Account").split(" ")[0]) + "</span>" +
       (mem ? "" : '<span class="whoami__dot" title="Link your name" aria-hidden="true"></span>');
@@ -4630,7 +4967,11 @@ function renderWhoami(){
   if(by && me && myName() && !by.value) by.value = myName();
 }
 function renderAll(){
-  if(focusId && !memberById(focusId)) focusId = null;
+  focusIds = focusIds.filter(function(id){ return !!memberById(id); });
+  /* signed in and haven't touched the focus bar: start on your own badges */
+  if(!focusIds.length && !focusTouched && me && me.memberId && memberById(me.memberId)){
+    focusIds = [me.memberId]; focusAuto = true;
+  }
   renderWhoami();
   renderHero(); renderShelf(); renderRecs(); renderFocus(); renderTree(); renderTimeline();
 }
