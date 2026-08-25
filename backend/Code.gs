@@ -101,7 +101,9 @@ function doPost(e) {
     return json({ ok: false, error: String(err) });
   }
 
-  notifyOrganiser(item);
+  /* No email per submission — the site's inbox already updates the moment this
+     file lands, and one message per endorsement is more than anyone wants.
+     weeklyDigest() sends the round-up instead. */
   return json({ ok: true, id: item.id });
 }
 
@@ -582,22 +584,131 @@ function appendToInbox(item) {
   }
 }
 
-function notifyOrganiser(item) {
+/* --------------------------------------------------------- weekly round-up
+   Submissions reach the site's inbox the moment they land, so nothing here is
+   urgent. One email a week, on Sunday evening, covering what arrived and what
+   is still waiting — and nothing at all in a quiet week. */
+
+var DIGEST_HOUR = 18;   /* 6pm, in the script's own timezone */
+
+function inboxItems() {
+  try {
+    var file = ghGetFile(INBOX_PATH);
+    var data = JSON.parse(file.content || '{"items":[]}');
+    return Array.isArray(data.items) ? data.items : [];
+  } catch (err) {
+    return [];
+  }
+}
+
+/* The organiser marks things done on the site, which records the ids in
+   state.json. Reading them back keeps "still waiting" honest. */
+function handledIds() {
+  try {
+    var state = JSON.parse(ghGetFile(STATE_PATH).content || '{}');
+    return Array.isArray(state.inbox) ? state.inbox : [];
+  } catch (err) {
+    return [];
+  }
+}
+
+function digestLine(item) {
+  var p = item.payload || {};
+  var day = String(item.at || '').slice(0, 10);
+  if (item.kind === 'suggest') {
+    return day + '  \u201c' + (p.title || 'Untitled') + '\u201d by ' + (p.author || 'unknown') +
+      (p.by ? ' \u2014 put forward by ' + p.by : '');
+  }
+  if (item.kind === 'join') {
+    /* This goes to your own inbox, not the repo, so it can carry the real
+       address — it's the one place you can see it without opening the script. */
+    var address = lookupEmail(p.emailRef);
+    return day + '  ' + (p.name || 'Someone') + ' asked to join' +
+      (address ? '  <' + address + '>' : '') + (p.note ? '\n        ' + p.note : '');
+  }
+  if (item.kind === 'endorse') {
+    return day + '  ' + (p.name || 'Someone') + ' ' +
+      (p.vote === 'down' ? 'passed on' : p.vote === 'none' ? 'took back their vote on' : 'endorsed') +
+      ' \u201c' + (p.title || 'a book') + '\u201d';
+  }
+  if (item.kind === 'profile') {
+    return day + '  ' + (p.member || p.name || 'Someone') + ' asked for a profile change' +
+      (p.note ? '\n        ' + p.note : '');
+  }
+  if (item.kind === 'notify') {
+    return day + '  ' + (p.name || 'Someone') + ' signed up for meeting emails';
+  }
+  return day + '  ' + item.kind;
+}
+
+var DIGEST_HEADINGS = {
+  suggest: 'Books put forward',
+  join: 'Asked to join',
+  endorse: 'Endorsements',
+  profile: 'Profile changes',
+  notify: 'Reminder sign-ups'
+};
+
+function weeklyDigest() {
   var to = propEmail('ORGANISER_EMAIL');
   if (!to) return;
-  var lines = Object.keys(item.payload).map(function (k) {
-    var v = item.payload[k];
-    return k + ': ' + (Array.isArray(v) ? v.join(', ') : v);
+
+  var store = PropertiesService.getScriptProperties();
+  var last = store.getProperty('digest:last');
+  var since = last ? new Date(last) : new Date(Date.now() - 7 * 86400000);
+  var now = new Date();
+
+  var items = inboxItems();
+  var handled = handledIds();
+  var fresh = items.filter(function (it) {
+    var t = new Date(it.at || 0);
+    return t > since && t <= now;
   });
-  /* This email goes to your own inbox, not the repo, so it can carry the real
-     address — it's the one place you can see it without opening the script. */
-  var address = lookupEmail(item.payload.emailRef);
-  if (address) lines.push('address: ' + address + '  (kept private, not in the repo)');
+  var waiting = items.filter(function (it) {
+    return !it.handled && handled.indexOf(it.id) === -1;
+  });
+
+  /* a quiet week gets no email at all */
+  if (!fresh.length && !waiting.length) {
+    store.setProperty('digest:last', now.toISOString());
+    return;
+  }
+
+  var body = [];
+  if (fresh.length) {
+    body.push(fresh.length + ' thing' + (fresh.length === 1 ? '' : 's') + ' arrived this week.');
+    KINDS.forEach(function (kind) {
+      var of = fresh.filter(function (it) { return it.kind === kind; });
+      if (!of.length) return;
+      body.push('', (DIGEST_HEADINGS[kind] || kind) + ' (' + of.length + ')');
+      of.forEach(function (it) { body.push('  ' + digestLine(it)); });
+    });
+  } else {
+    body.push('Nothing new arrived this week.');
+  }
+
+  body.push('');
+  body.push(waiting.length
+    ? waiting.length + ' still waiting for you in the inbox.'
+    : 'Nothing is waiting — the inbox is clear.');
+  body.push('', 'https://' + REPO_OWNER + '.github.io/' + REPO_NAME + '/  \u2014 Admin \u2192 Inbox');
+
   MailApp.sendEmail({
     to: to,
-    subject: 'Book club — new ' + item.kind,
-    body: lines.join('\n') + '\n\nOpen the site and go to Admin → Inbox to accept or dismiss it.'
+    subject: 'Book club \u2014 ' + (fresh.length ? fresh.length + ' new this week' : 'weekly round-up'),
+    body: body.join('\n')
   });
+  store.setProperty('digest:last', now.toISOString());
+}
+
+/** Run from the editor to see this week's round-up without waiting for Sunday. */
+function previewDigest() {
+  var to = propEmail('ORGANISER_EMAIL');
+  Logger.log(to ? 'Would send to ' + to : 'ORGANISER_EMAIL is not set to a real address.');
+  var items = inboxItems(), handled = handledIds();
+  Logger.log(items.length + ' items in the inbox, ' +
+    items.filter(function (it) { return !it.handled && handled.indexOf(it.id) === -1; }).length + ' still waiting.');
+  items.slice(-10).forEach(function (it) { Logger.log(digestLine(it)); });
 }
 
 /* ------------------------------------------------------------ GitHub calls */
@@ -941,9 +1052,13 @@ function send(to, subject, body) {
 /** Run once from the editor to start the reminder timer. */
 function setUpTrigger() {
   ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (t.getHandlerFunction() === 'sendMeetingEmails') ScriptApp.deleteTrigger(t);
+    var fn = t.getHandlerFunction();
+    if (fn === 'sendMeetingEmails' || fn === 'weeklyDigest') ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('sendMeetingEmails').timeBased().everyMinutes(5).create();
+  /* the round-up, Sunday evening */
+  ScriptApp.newTrigger('weeklyDigest').timeBased()
+    .onWeekDay(ScriptApp.WeekDay.SUNDAY).atHour(DIGEST_HOUR).create();
 }
 
 /** Run once from the editor to check the GitHub token works. */

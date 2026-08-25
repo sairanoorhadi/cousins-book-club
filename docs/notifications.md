@@ -111,6 +111,8 @@ Signing in was added after the first version. To switch it on:
 1. Open your script at <https://script.google.com>.
 2. Replace all of `Code.gs` with the current version from this repo.
 3. **Deploy → Manage deployments → edit (pencil) → Version: New version → Deploy.**
+4. Run `setUpTrigger` once from the editor, so the weekly round-up gets its
+   Sunday trigger alongside the meeting one.
 
 The URL stays the same, so nothing changes on the site. No new keys are needed
 — sign-in codes go out through the same mail permission the reminders already
@@ -228,6 +230,22 @@ accident.
 Each meeting gets at most three emails. What's already gone out is remembered
 in the script's own properties, so re-saving the site never re-sends anything.
 
+## What the organiser gets emailed
+
+**One email a week, on Sunday evening.** Submissions land in the site's inbox
+the instant they arrive — that file is written before the endpoint answers — so
+nothing here is urgent enough to interrupt you. The round-up covers what came in
+that week, grouped by kind, plus a count of what's still waiting. A week with
+nothing new *and* an empty inbox sends no email at all.
+
+Join requests carry the real address in this email. That's the one place it
+appears in readable form — it never goes into the repo.
+
+To see the round-up without waiting for Sunday, run `previewDigest` from the
+script editor; it logs what would be sent and mails nothing. If you'd rather it
+came on a different day or hour, change `DIGEST_HOUR` and the `onWeekDay(...)`
+line in `setUpTrigger`, then run `setUpTrigger` again.
+
 ## Costs and limits
 
 - Apps Script: free. A consumer Google account can send 100 emails a day, which
@@ -264,6 +282,8 @@ in the script's own properties, so re-saving the site never re-sends anything.
   fails. Make a new token (step 1) and update `GITHUB_TOKEN` under
   **Project Settings → Script properties**. No redeploy needed for a property
   change.
+- **No weekly round-up** — the Sunday trigger is missing. Run `setUpTrigger`
+  from the editor; it installs both that and the meeting one.
 - **No meeting emails** — check the trigger still exists under the clock icon in
   the script editor, and that members have both an email address and a ticked
   box under Admin → Members.
