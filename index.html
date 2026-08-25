@@ -486,8 +486,13 @@ img{max-width:100%;display:block}
 .huechip span{width:22px;height:22px;border-radius:50%;border:2px solid var(--edge);background:var(--c);flex:none}
 .huechip:hover{color:var(--ink);border-color:var(--edge)}
 .huechip[aria-pressed="true"]{border-color:var(--edge);color:var(--ink);background:var(--sunk);box-shadow:2px 2px 0 var(--stamp)}
-.whoami{display:inline-flex;align-items:center;gap:8px}
-.whoami__pic{width:22px;height:22px;border-radius:50%;border:2px solid var(--edge);background:var(--c,var(--sky));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:10px;flex:none}
+/* the signed-in member's badge, in place of the sign in / sign up pair */
+.whoami{display:inline-flex;align-items:center;gap:8px;padding:4px 14px 4px 4px;background:var(--surface)}
+.whoami__pic{width:26px;height:26px;border-radius:50%;border:2px solid var(--edge);background:var(--c,var(--sky));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:11px;flex:none;overflow:hidden}
+.whoami__pic img{width:100%;height:100%;object-fit:cover}
+.whoami__n{font-family:var(--f-display);font-weight:700;font-size:13.5px}
+/* a quiet nudge while they still haven't said which member they are */
+.whoami__dot{width:8px;height:8px;border-radius:50%;background:var(--flare);border:1.5px solid var(--edge);flex:none}
 
 /* ============ inbox ============ */
 .inboxrow{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:16px 18px;box-shadow:var(--shadow-sm)}
@@ -1959,10 +1964,14 @@ function coverHTML(b, cls){
       '<span class="cover__a">' + esc(b.author || "") + "</span>" +
     "</span></span>";
 }
+/* A book's badge art: the uploaded badge if there is one, otherwise its cover,
+   otherwise its initials. Most books have a cover long before anyone gets
+   round to drawing a badge. */
+function badgeArt(b){ return (b && (b.badge || b.cover)) || ""; }
 function discHTML(b, extra){
   var hue = hueFor(b.id || b.title);
   return '<span class="tree__disc ' + (extra||"") + '" style="--c:var(--' + hue + ');--cf:var(--on-' + hue + ')">' +
-    (b.badge ? '<img src="' + esc(b.badge) + '" alt="">' : "<span>" + esc(initials(b.title)) + "</span>") + "</span>";
+    (badgeArt(b) ? '<img src="' + esc(badgeArt(b)) + '" alt="">' : "<span>" + esc(initials(b.title)) + "</span>") + "</span>";
 }
 
 /* ---------- render: hero ---------- */
@@ -2162,7 +2171,8 @@ function recMatches(r){
   if(recFilter.genres.length){
     /* compare on the merged names, so picking "Humour" also finds "comedy" */
     var have = normaliseGenres(r.genres).map(function(g){ return g.toLowerCase(); });
-    var hit = recFilter.genres.some(function(g){ return have.indexOf(canonGenre(g).toLowerCase()) !== -1; });
+    /* every one, not any one — two genres means books that are both */
+    var hit = recFilter.genres.every(function(g){ return have.indexOf(canonGenre(g).toLowerCase()) !== -1; });
     if(!hit) return false;
   }
   /* keep anything whose age band overlaps the band being asked for */
@@ -2215,7 +2225,7 @@ function renderRecFilters(){
       }) + "</div>" +
     "</div>" +
     (genres.length
-      ? '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(pick any number)</span></label>' +
+      ? '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(pick several to narrow &mdash; books must have all of them)</span></label>' +
         '<div class="genrepick">' + genres.map(function(g){
           return '<button class="genrechip" type="button" data-fgenre="' + esc(g) + '" aria-pressed="' +
             (recFilter.genres.indexOf(g) !== -1) + '">' + esc(g) + "</button>";
@@ -2398,7 +2408,7 @@ function renderTimeline(){
         /* the initials need their own element, or the diamond's counter-rotation
            misses them and they sit at 45° */
         '<span class="tlrow__dot" style="--c:var(--' + hue + ');--cf:var(--on-' + hue + ')">' +
-          (b.badge ? '<img src="' + esc(b.badge) + '" alt="">' : "<span>" + esc(initials(b.title)) + "</span>") + "</span>" +
+          (badgeArt(b) ? '<img src="' + esc(badgeArt(b)) + '" alt="">' : "<span>" + esc(initials(b.title)) + "</span>") + "</span>" +
         '<button class="tlcard" type="button" data-badge="' + esc(b.id) + '" data-tip="' + esc(tipDates(b)) + '">' +
           '<span class="tlcard__when">' + (b.status === "current" ? "Reading now" : (e.when ? "Finished " + esc(shortDate(e.when)) : "Finished — date not set")) + "</span>" +
           '<span class="tlcard__what">' + esc(b.title) + "</span>" +
@@ -2721,7 +2731,7 @@ function openBadge(bookId){
   $("badgeModalBody").innerHTML =
     '<div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">' +
       '<span class="badgeart" style="--c:var(--' + hue + ');--cf:var(--on-' + hue + ')">' +
-        (b.badge ? '<img src="' + esc(b.badge) + '" alt="Badge for ' + esc(b.title) + '">' : "<span>" + esc(initials(b.title)) + "</span>") +
+        (badgeArt(b) ? '<img src="' + esc(badgeArt(b)) + '" alt="Badge for ' + esc(b.title) + '">' : "<span>" + esc(initials(b.title)) + "</span>") +
       "</span>" +
       '<div style="flex:1 1 260px;min-width:0">' +
         '<p class="eyebrow">' + (b.status === "current" ? "Reading now" : "Badge earned") + "</p>" +
@@ -2819,11 +2829,31 @@ function renderMe(){
   var books = currentBooks().concat(nextBooks());
   var all = myNotify.indexOf("*") !== -1;
 
+  /* Members who were on the list before sign-in existed and haven't linked an
+     address yet. A new signer-in picks themselves from here once. */
+  var unlinked = state.members.filter(function(m){ return !m.notifyRef; });
+
   $("meModalTitle").textContent = myName() || "Your account";
   $("meModalBody").innerHTML =
     '<p class="eyebrow">Signed in as</p>' +
     '<h3 style="font-size:24px;margin:8px 0 4px">' + esc(myName() || me.emailHint) + "</h3>" +
     '<p class="hint">' + esc(me.emailHint) + "</p>" +
+
+    (!mem
+      ? '<hr class="divider"><p class="eyebrow">One thing first</p>' +
+        '<h3 style="font-size:20px;margin:8px 0 6px">Which one are you?</h3>' +
+        (unlinked.length
+          ? '<p class="hint" style="margin-bottom:14px">Pick your name and this address is linked to you. You only do this once.</p>' +
+            '<div class="focusbar" style="margin:0">' + unlinked.map(function(m){
+              var h = memberHue(m);
+              return '<button class="focuschip" type="button" data-claim="' + esc(m.id) + '">' +
+                '<span class="focuschip__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
+                  (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
+                esc(m.name) + "</button>";
+            }).join("") + "</div>" +
+            '<p class="hint" style="margin-top:10px" id="meClaimNote">Not on the list? Use <strong>Sign up</strong> and the organiser will add you.</p>'
+          : '<p class="empty">Everyone on the list is already linked. Use <strong>Sign up</strong> and the organiser will add you.</p>')
+      : "") +
 
     '<hr class="divider"><p class="eyebrow">Meeting emails</p>' +
     '<p class="hint" style="margin:6px 0 14px">One when a meeting is scheduled, one five days before, one thirty minutes before.</p>' +
@@ -3493,6 +3523,25 @@ document.addEventListener("click", async function(e){
     myNotify = nres.books || want;
     renderMe();
     say(myNotify.length ? "Reminders updated." : "Reminders switched off.", "ok");
+    return;
+  }
+  if((el = t.closest("[data-claim]"))){
+    var cnote = $("meClaimNote");
+    if(cnote) cnote.textContent = "Linking…";
+    var cres = await callEndpoint("claim", { token: sessionToken(), memberId: el.getAttribute("data-claim") });
+    if(!cres.ok){
+      if(cnote) cnote.textContent = cres.error === "already claimed"
+        ? "Someone else has already linked that name."
+        : cres.error === "busy, try again" ? "Someone was saving just then — try again."
+        : "Couldn't link that just now.";
+      return;
+    }
+    me = cres.profile;
+    /* the endpoint wrote it to state.json; mirror it here so the page agrees */
+    var claimed = memberById(me.memberId);
+    if(claimed){ claimed.notifyRef = me.ref; claimed.emailHint = me.emailHint; }
+    renderMe(); renderAll();
+    say("Linked — welcome back, " + (myName() || "") + ".", "ok");
     return;
   }
   if((el = t.closest("[data-myhue]"))){
@@ -4461,11 +4510,15 @@ function renderWhoami(){
   /* once you're in, there's nothing to sign up for */
   if(join) join.hidden = !!me;
   if(me){
+    /* signed in: the two buttons give way to the member's own badge */
     var mem = myMember(), h = mem ? memberHue(mem) : "sky";
-    btn.className = "btn btn--sm btn--ghost";
-    btn.innerHTML = '<span class="whoami"><span class="whoami__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
-      esc(initials(myName() || "?")) + "</span>" + esc((myName() || "Account").split(" ")[0]) + "</span>";
-    btn.title = "Your account";
+    btn.className = "btn btn--sm whoami" + (mem ? "" : " whoami--new");
+    btn.innerHTML =
+      '<span class="whoami__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
+        (mem && mem.avatar ? '<img src="' + esc(mem.avatar) + '" alt="">' : esc(initials(myName() || "?"))) + "</span>" +
+      '<span class="whoami__n">' + esc((myName() || "Account").split(" ")[0]) + "</span>" +
+      (mem ? "" : '<span class="whoami__dot" title="Link your name" aria-hidden="true"></span>');
+    btn.title = mem ? "Your account" : "Pick which member you are";
   }else{
     btn.className = "btn btn--sm btn--ghost";
     btn.textContent = "Sign in";
