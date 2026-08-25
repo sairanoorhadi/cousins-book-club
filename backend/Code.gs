@@ -56,6 +56,7 @@ function doPost(e) {
   if (kind === 'notify-get') return json(notifyGet(payload));
   if (kind === 'notify-set') return json(notifySet(payload));
   if (kind === 'profile-set') return json(profileSet(payload));
+  if (kind === 'claim') return json(claimMember(payload));
   if (kind === 'photo-add') return json(photoAdd(payload));
   if (kind === 'photo-list') return json(photoList(payload));
   if (kind === 'photo-delete') return json(photoDelete(payload));
@@ -317,6 +318,56 @@ function notifySet(payload) {
     lock.releaseLock();
   }
   return { ok: true, books: books };
+}
+
+/**
+ * Someone who was already on the members list, signing in for the first time.
+ *
+ * The club existed before sign-in did, so those rows have no address attached.
+ * Rather than the organiser typing addresses in by hand, a member signs in and
+ * says which row is theirs; that links the two. Rows already linked to someone
+ * else can't be taken.
+ */
+function claimMember(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+
+  var wantId = String(payload.memberId || '');
+  var dir = directory();
+  var entry = dir[email];
+  if (!entry) return { ok: false, error: 'no profile' };
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      var file = ghGetFile(STATE_PATH);
+      var state;
+      try { state = JSON.parse(file.content || '{}'); } catch (err) { return { ok: false, error: 'unreadable state' }; }
+
+      var member = (state.members || []).filter(function (m) { return m.id === wantId; })[0];
+      if (!member) return { ok: false, error: 'no such member' };
+      if (member.notifyRef && member.notifyRef !== entry.ref) return { ok: false, error: 'already claimed' };
+
+      member.notifyRef = entry.ref;
+      member.emailHint = maskEmail(email);
+      state.rev = Number(state.rev || 0) + 1;
+
+      try {
+        ghPutFile(STATE_PATH, JSON.stringify(state, null, 2), file.sha, 'Member linked their sign-in');
+        entry.memberId = member.id;
+        if (!entry.name) entry.name = member.name;
+        dir[email] = entry;
+        saveDirectory(dir);
+        return { ok: true, profile: profileFor(email) };
+      } catch (err) {
+        if (attempt === 1) return { ok: false, error: 'busy, try again' };
+      }
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  return { ok: false, error: 'busy' };
 }
 
 /* A member editing their own row in state.json — their display name and the
