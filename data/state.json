@@ -1,5 +1,5 @@
 {
-  "rev": 1096,
+  "rev": 1097,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -16,8 +16,8 @@
       "fable": "",
       "goodreads": "",
       "email": "",
-      "notifyRef": "",
-      "emailHint": "",
+      "notifyRef": "sub-84e7607a-09e",
+      "emailHint": "s••••@gmail.com",
       "notify": [],
       "hue": ""
     },
