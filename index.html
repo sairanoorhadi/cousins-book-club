@@ -848,6 +848,7 @@ img{max-width:100%;display:block}
       <a href="#recs">Recommendations</a>
       <a href="#badges">Badges</a>
       <button class="btn btn--sm btn--ghost" id="loginOpen" type="button">Sign in</button>
+      <button class="btn btn--sm btn--surf" id="signupOpen" type="button" data-memform="join">Sign up</button>
       <button class="btn btn--sm btn--grape" id="adminOpen" type="button">Admin</button>
     </nav>
   </div>
@@ -2923,8 +2924,9 @@ function openMemberForm(kind, bookId){
 var adminTab = "shelf", openEditors = {};
 function openAdmin(){ renderAdmin(); openScrim("adminScrim"); }
 function renderAdmin(){
-  var pend = pendingRecs().length;
-  var waiting = inbox.filter(function(i){ return i && !i.handled; }).length;
+  var pend = pendingRecs().length + inboxSuggestions().length;
+  /* book suggestions are counted on the Recommendations tab, not here */
+  var waiting = inbox.filter(function(i){ return i && !i.handled && i.kind !== "suggest"; }).length;
   var tabs = [["shelf","Reading list"],["recs","Recommendations" + (pend ? " (" + pend + ")" : "")],
               ["meetings","Meetings"],["members","Members"],
               ["inbox","Inbox" + (waiting ? " (" + waiting + ")" : "")],["settings","Settings"]];
@@ -3123,22 +3125,43 @@ function recEditor(r){
       '<button class="btn btn--sm btn--ghost" type="button" data-rdel="' + esc(r.id) + '" style="margin-left:auto">Delete permanently</button>' +
     "</div></div></details>";
 }
+/* A book someone sent from the site, still sitting in the inbox. It's shown
+   here rather than on the Inbox tab so a suggestion is approved in one place
+   instead of being accepted there and then approved again here. */
+function inboxSuggestions(){
+  return inbox.filter(function(it){
+    return it && it.kind === "suggest" && !it.handled && !recById(it.id);
+  });
+}
+function pendingCard(r, approveAttr, rejectAttr){
+  return '<div class="pending"><div><h4>' + esc(r.title) + "</h4>" +
+    '<p style="color:var(--muted);font-style:italic;margin-top:4px">by ' + esc(r.author || "unknown") + " · " + esc(r.pages || "?") + " pages</p>" +
+    '<div class="tagbank" style="margin-top:10px"><span class="tag mono">' + esc(levelText(r)) + "</span>" +
+      normaliseGenres(r.genres).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") + "</div>" +
+    '<p style="margin-top:12px;font-size:15.5px">' + esc(r.blurb || "No summary given.") + "</p>" +
+    '<p class="review__by">Submitted by ' + esc(r.by || "anonymous") + (r.at ? " · " + esc(shortDate(String(r.at).slice(0, 10))) : "") + "</p></div>" +
+    '<div class="pending__acts"><button class="btn btn--sm btn--surf" type="button" ' + approveAttr + '>Approve</button>' +
+    '<button class="btn btn--sm btn--ghost" type="button" ' + rejectAttr + '>Reject</button></div></div>';
+}
 function paneRecs(){
-  var pend = pendingRecs(), ok = approvedRecs(), rej = state.recs.filter(function(r){ return r.status === "rejected"; });
+  var pend = pendingRecs(), fresh = inboxSuggestions();
+  var ok = approvedRecs(), rej = state.recs.filter(function(r){ return r.status === "rejected"; });
+  var waiting = pend.length + fresh.length;
   var out = '<p class="eyebrow">Waiting for approval</p><h3 style="font-size:22px;margin:8px 0 18px">' +
-    (pend.length ? pend.length + " submission" + (pend.length > 1 ? "s" : "") + " to review" : "Nothing waiting") + "</h3>";
-  out += pend.length
-    ? pend.map(function(r){
-        return '<div class="pending"><div><h4>' + esc(r.title) + "</h4>" +
-          '<p style="color:var(--muted);font-style:italic;margin-top:4px">by ' + esc(r.author) + " · " + esc(r.pages || "?") + " pages</p>" +
-          '<div class="tagbank" style="margin-top:10px"><span class="tag mono">' + esc(levelText(r)) + "</span>" +
-            (r.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") + "</div>" +
-          '<p style="margin-top:12px;font-size:15.5px">' + esc(r.blurb || "No summary given.") + "</p>" +
-          '<p class="review__by">Submitted by ' + esc(r.by || "anonymous") + (r.at ? " · " + esc(shortDate(r.at)) : "") + "</p></div>" +
-          '<div class="pending__acts"><button class="btn btn--sm btn--surf" type="button" data-approve="' + esc(r.id) + '">Approve</button>' +
-          '<button class="btn btn--sm btn--ghost" type="button" data-reject="' + esc(r.id) + '">Reject</button></div></div>';
+    (waiting ? waiting + " submission" + (waiting > 1 ? "s" : "") + " to review" : "Nothing waiting") + "</h3>";
+  out += waiting
+    ? fresh.map(function(it){
+        var p = it.payload || {};
+        return pendingCard(withAges({
+          title: p.title || "Untitled", author: p.author, pages: p.pages,
+          ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
+          genres: p.genres, blurb: p.blurb, by: p.by, at: it.at
+        }), 'data-inapprove="' + esc(it.id) + '"', 'data-inreject="' + esc(it.id) + '"');
+      }).join("") +
+      pend.map(function(r){
+        return pendingCard(r, 'data-approve="' + esc(r.id) + '"', 'data-reject="' + esc(r.id) + '"');
       }).join("")
-    : '<p class="empty">When someone submits a book it lands here first. Nothing reaches the public list until you approve it.</p>';
+    : '<p class="empty">When someone submits a book it lands here. Nothing reaches the public list until you approve it.</p>';
 
   out += '<hr class="divider"><p class="eyebrow">Live on the site</p><h3 style="font-size:22px;margin:8px 0 18px">' +
     ok.length + " recommendation" + (ok.length === 1 ? "" : "s") + "</h3>";
@@ -3316,11 +3339,13 @@ function paneSettings(){
 }
 
 function paneInbox(){
-  var waiting = inbox.filter(function(i){ return i && !i.handled; });
-  var labels = { suggest:"Book suggestion", join:"Join request", profile:"Profile change", endorse:"Second", notify:"Meeting emails" };
+  /* book suggestions live on the Recommendations tab so a submission is only
+     ever approved in one place */
+  var waiting = inbox.filter(function(i){ return i && !i.handled && i.kind !== "suggest"; });
+  var labels = { join:"Join request", profile:"Profile change", endorse:"Endorsement", notify:"Meeting emails" };
   var out = '<p class="eyebrow">From the site</p><h3 style="font-size:22px;margin:8px 0 6px">' +
     (waiting.length ? waiting.length + " waiting" : "Nothing waiting") + "</h3>" +
-    '<p class="hint" style="margin-bottom:18px">Everything people sent without a GitHub account. Accepting a suggestion drops it into Recommendations as a pending submission; accepting a join request adds the member.</p>';
+    '<p class="hint" style="margin-bottom:18px">Join requests, profile changes and reminder signups. Accepting a join request adds the member. Books people put forward are reviewed on the Recommendations tab.</p>';
   if(!endpoint()){
     return out + '<p class="empty">No submissions endpoint set yet — add one under Settings and the inbox starts filling up.</p>';
   }
@@ -3336,7 +3361,7 @@ function paneInbox(){
       '<span class="kind">' + esc(labels[it.kind] || it.kind) + "</span>" +
       '<span class="lanerow__meta">' + esc(it.at ? shortDate(String(it.at).slice(0, 10)) : "") + "</span>" +
       '<span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">' +
-        (it.kind === "suggest" || it.kind === "join" || it.kind === "notify"
+        (it.kind === "join" || it.kind === "notify"
           ? '<button class="btn btn--sm btn--surf" type="button" data-inaccept="' + esc(it.id) + '">Accept</button>' : "") +
         '<button class="btn btn--sm btn--ghost" type="button" data-indismiss="' + esc(it.id) + '">Dismiss</button>' +
       "</span></div>" +
@@ -3615,6 +3640,20 @@ document.addEventListener("click", async function(e){
   }
 
   /* inbox */
+  /* a suggestion approved straight from the Recommendations tab */
+  if((el = t.closest("[data-inapprove]")) || (el = t.closest("[data-inreject]"))){
+    var rejecting = el.hasAttribute("data-inreject");
+    var sid = el.getAttribute(rejecting ? "data-inreject" : "data-inapprove");
+    var sit = inbox.filter(function(x){ return x && x.id === sid; })[0];
+    if(!sit) return;
+    if(!rejecting) acceptSubmission(sit, { approve: true });
+    state.inbox.push(sid);
+    if(await save(rejecting ? "Rejecting…" : "Approving…")){
+      sit.handled = true;
+      renderAll(); renderAdmin();
+    }
+    return;
+  }
   if((el = t.closest("[data-inaccept]"))){
     var iid0 = el.getAttribute("data-inaccept");
     var item = inbox.filter(function(x){ return x && x.id === iid0; })[0];
@@ -4000,15 +4039,19 @@ document.addEventListener("click", async function(e){
 });
 
 /* fold an inbox item into the club's own data */
-function acceptSubmission(item){
+function acceptSubmission(item, opts){
   var p = item.payload || {};
+  opts = opts || {};
   if(item.kind === "suggest"){
     if(recById(item.id)) return;
     state.recs.push(withAges({
       id: item.id, title: String(p.title || "Untitled").slice(0, 140), author: String(p.author || "").slice(0, 140),
       pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
       genres: normaliseGenres(p.genres),
-      by: String(p.by || "").slice(0, 60), status: "pending", at: String(item.at || "").slice(0, 10),
+      by: String(p.by || "").slice(0, 60),
+      /* approved on the spot when the organiser pressed Approve on the
+         Recommendations tab; anything else waits there */
+      status: opts.approve ? "approved" : "pending", at: String(item.at || "").slice(0, 10),
       cover: safeUrl(p.cover), blurb: String(p.blurb || ""), summarySource: String(p.summarySource || "own"),
       shortlist: false, reviews: [], endorsements: [], dislikes: []
     }));
@@ -4213,57 +4256,114 @@ var lookupHits = [];
    Google's AI Overview has no API and can't be read from a page, so this asks
    Claude the same question through the club's endpoint and fills in the answer.
    Everything it returns stays editable. */
+/* Guess an age band from how the book is shelved. Not exact, but it beats
+   leaving the slider where it was, and it's one drag to correct. */
+function ageFromShelving(genres, mature){
+  var all = (genres || []).join(" ").toLowerCase();
+  if(mature || /\berotic|explicit\b/.test(all)) return { lo: 18, hi: AGE_TOP };
+  if(/picture book|board book|toddler|preschool/.test(all)) return { lo: 3, hi: 6 };
+  if(/early reader|beginning reader|chapter book/.test(all)) return { lo: 6, hi: 9 };
+  if(/juvenile|middle grade|children/.test(all)) return { lo: 8, hi: 12 };
+  if(/young adult|\bya\b|teen/.test(all)) return { lo: 13, hi: AGE_TOP };
+  if(/adult fiction|literary fiction/.test(all)) return { lo: 16, hi: AGE_TOP };
+  return null;
+}
+function setAgeSlider(lo, hi){
+  dualState.sAge = { lo: clampAge(lo, 0), hi: clampAge(hi, AGE_TOP) };
+  var loEl = document.querySelector('#sAgeSlider input[data-end="lo"]');
+  var hiEl = document.querySelector('#sAgeSlider input[data-end="hi"]');
+  if(loEl) loEl.value = dualState.sAge.lo;
+  if(hiEl) hiEl.value = dualState.sAge.hi;
+  syncDual("sAge");
+}
+
+/* "Fill in the details for me".
+   The book databases do the work — they need no key and answer for anyone. The
+   AI is only asked to refine afterwards, and only when the organiser has set a
+   key up; without one this still fills everything in. */
 async function askAIForDetails(){
   var title = $("sTitle").value.trim(), author = $("sAuthor").value.trim();
   var out = $("sLookupOut");
   if(!title){ $("sTitle").focus(); return; }
-  if(!endpoint()){
-    out.innerHTML = '<p class="hint" style="margin-top:10px">This needs the club&rsquo;s endpoint set up — ask the organiser. The web search above works without it.</p>';
+
+  out.innerHTML = '<p class="hint" style="margin-top:10px">Looking it up&hellip;</p>';
+  var filled = [], notes = [];
+
+  /* 1. the closest match on Google Books */
+  var hits = await searchBooks([title, author].filter(Boolean).join(" "));
+  hits.forEach(function(h){ h.near = titleCloseness(title, h.title); });
+  hits.sort(function(a, b){ return a.near - b.near; });
+  var best = hits[0] || null;
+
+  var genres = [];
+  if(best){
+    if(best.author && !author){ $("sAuthor").value = best.author; author = best.author; filled.push("author"); }
+    if(best.pages && !$("sPages").value){ $("sPages").value = best.pages; filled.push("page count"); }
+    genres = genres.concat(best.genres || []);
+    if(best.blurb){ sugFetched = best.blurb; }
+    if(best.cover && !sugCover){ sugCover = best.cover; renderSugCover(); }
+  }
+
+  /* 2. Open Library for the richer subject list and a second page count */
+  var extras = await openLibraryExtras(title, author);
+  if(extras){
+    if(extras.pages && !$("sPages").value){ $("sPages").value = extras.pages; filled.push("page count"); }
+    genres = genres.concat(extras.genres || []);
+    if(extras.cover && !sugCover){ sugCover = extras.cover; renderSugCover(); }
+  }
+
+  if(genres.length){
+    $("sGenres").value = normaliseGenres(genres).join(", ");
+    filled.push("genres");
+  }
+  var band = ageFromShelving(genres, best && best.mature);
+  if(band){ setAgeSlider(band.lo, band.hi); filled.push("age rating"); }
+  if(sugFetched && sugMode !== "own") setSugMode("fetched");
+
+  if(!best && !extras){
+    out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t find that one. Check the spelling, or fill it in yourself &mdash; the Goodreads and Google links are right there.</p>';
     return;
   }
-  out.innerHTML = '<p class="hint" style="margin-top:10px">Looking it up&hellip;</p>';
-  try{
-    var res = await fetch(endpoint(), {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ kind: "details", payload: { title: title, author: author }, at: new Date().toISOString() })
-    });
-    var j = res.ok ? await res.json() : null;
-    if(!j || !j.ok){
-      out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t look that one up. Try the web search, or fill it in yourself.</p>';
-      return;
-    }
-    var d = j.details || {}, filled = [];
-    if(d.author && !author){ $("sAuthor").value = d.author; filled.push("author"); }
-    if(Number(d.pages) > 0){ $("sPages").value = Number(d.pages); filled.push("page count"); }
-    if(Array.isArray(d.genres) && d.genres.length){
-      $("sGenres").value = normaliseGenres(d.genres).join(", ");
-      filled.push("genres");
-    }
-    /* the backend asks for zeroes when it isn't sure, so an empty answer must
-       not wipe the slider down to 0-0 */
-    if(typeof d.ageMin === "number" && typeof d.ageMax === "number" &&
-       d.ageMax > 0 && d.ageMax >= d.ageMin){
-      dualState.sAge = { lo: clampAge(d.ageMin, 0), hi: clampAge(d.ageMax, AGE_TOP) };
-      var loEl = document.querySelector('#sAgeSlider input[data-end="lo"]');
-      var hiEl = document.querySelector('#sAgeSlider input[data-end="hi"]');
-      if(loEl) loEl.value = dualState.sAge.lo;
-      if(hiEl) hiEl.value = dualState.sAge.hi;
-      syncDual("sAge");
-      filled.push("age rating");
-    }
-    if(d.summary){
-      sugAI = String(d.summary).trim();
-      if(sugMode !== "own") setSugMode("ai");
-    }
-    syncSearchLinks();
-    out.innerHTML = '<p class="hint" style="margin-top:10px">' +
-      (filled.length ? "Filled in the " + filled.join(", ") + ". " : "") +
-      "Written by Claude from what it knows about the book, so give it a glance before you send it &mdash; everything here is editable." +
-      (d.confident === false ? " It wasn't sure about this one, so do check." : "") + "</p>";
-  }catch(e){
-    out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t reach the club&rsquo;s inbox. Try the web search instead.</p>';
+
+  /* 3. the AI pass, when there's a key behind the endpoint. It sharpens the age
+        rating and writes a cleaner summary; everything above already stands. */
+  var refined = false;
+  if(endpoint()){
+    try{
+      var j = await callEndpoint("details", { title: title, author: author });
+      if(j && j.ok && j.details){
+        var d = j.details;
+        if(d.author && !$("sAuthor").value){ $("sAuthor").value = d.author; filled.push("author"); }
+        if(Number(d.pages) > 0 && !$("sPages").value){ $("sPages").value = Number(d.pages); filled.push("page count"); }
+        if(Array.isArray(d.genres) && d.genres.length){
+          $("sGenres").value = normaliseGenres(genres.concat(d.genres)).join(", ");
+        }
+        /* the backend answers with zeroes when it isn't sure — never let that
+           wipe the slider to 0-0 */
+        if(typeof d.ageMin === "number" && typeof d.ageMax === "number" &&
+           d.ageMax > 0 && d.ageMax >= d.ageMin){
+          setAgeSlider(d.ageMin, d.ageMax);
+          if(filled.indexOf("age rating") === -1) filled.push("age rating");
+        }
+        if(d.summary){
+          sugAI = String(d.summary).trim();
+          if(sugMode !== "own") setSugMode("ai");
+        }
+        refined = true;
+        if(d.confident === false) notes.push("It wasn't certain about this one, so do check.");
+      }else if(j && j.error === "no api key"){
+        notes.push("Summaries by AI aren't switched on, so this came from the book listings.");
+      }
+    }catch(e){}
   }
+
+  syncSearchLinks();
+  var uniq = filled.filter(function(f, i){ return filled.indexOf(f) === i; });
+  out.innerHTML = '<p class="hint" style="margin-top:10px">' +
+    (uniq.length ? "Filled in the " + uniq.join(", ") + ". " : "Nothing new to fill in. ") +
+    (refined ? "Checked against Google Books, Open Library and Claude. " : "From Google Books and Open Library. ") +
+    "Everything here is editable &mdash; give it a glance before you send it." +
+    (notes.length ? " " + esc(notes.join(" ")) : "") + "</p>";
 }
 $("sTitle").addEventListener("input", function(){
   clearTimeout(acTimer);
@@ -4351,8 +4451,15 @@ $("suggestForm").addEventListener("submit", async function(e){
 function renderWhoami(){
   var btn = $("loginOpen");
   if(!btn) return;
-  if(!endpoint()){ btn.hidden = true; return; }
+  var join = $("signupOpen");
+  if(!endpoint()){
+    btn.hidden = true;
+    if(join) join.hidden = true;
+    return;
+  }
   btn.hidden = false;
+  /* once you're in, there's nothing to sign up for */
+  if(join) join.hidden = !!me;
   if(me){
     var mem = myMember(), h = mem ? memberHue(mem) : "sky";
     btn.className = "btn btn--sm btn--ghost";
