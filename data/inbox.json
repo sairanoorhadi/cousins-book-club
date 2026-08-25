@@ -175,6 +175,17 @@
         "name": "Saira",
         "vote": "none"
       }
+    },
+    {
+      "id": "endorse-c9b1042b-048",
+      "kind": "endorse",
+      "at": "2026-08-25T19:35:52.723Z",
+      "payload": {
+        "recId": "rc-grace",
+        "title": "Finding Grace",
+        "name": "Saira",
+        "vote": "up"
+      }
     }
   ]
 }
