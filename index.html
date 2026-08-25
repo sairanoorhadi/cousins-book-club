@@ -1539,18 +1539,37 @@ function sessionToken(){
 function setSessionToken(v){
   try{ if(v) localStorage.setItem(SESSION_KEY, v); else localStorage.removeItem(SESSION_KEY); }catch(e){}
 }
-async function callEndpoint(kind, payload){
-  var url = endpoint();
+async function callEndpoint(kind, payload, urlOverride){
+  var url = urlOverride || endpoint();
   if(!url) return { ok: false, error: "unconfigured" };
+  var res;
   try{
-    var res = await fetch(url, {
+    res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ kind: kind, payload: payload || {}, at: new Date().toISOString() })
     });
-    if(!res.ok) return { ok: false, error: "http " + res.status };
-    return await res.json();
-  }catch(e){ return { ok: false, error: "network" }; }
+  }catch(e){
+    /* the browser never got an answer: wrong address, the script isn't
+       deployed, or its access isn't "Anyone" (Google redirects those to a
+       sign-in page, which a page like this isn't allowed to read). */
+    return { ok: false, error: "unreachable" };
+  }
+  if(!res.ok) return { ok: false, error: "http " + res.status };
+  /* Apps Script hands back an HTML error page when the script itself throws —
+     usually because it was never authorised to send mail. */
+  var text = await res.text();
+  try{ return JSON.parse(text); }
+  catch(e2){ return { ok: false, error: "crashed" }; }
+}
+/* Plain English for the failures above, so nobody has to guess. */
+function endpointTrouble(err){
+  if(err === "unconfigured") return "No script address saved yet — add it under Admin → Settings.";
+  if(err === "unreachable") return "Couldn't reach the script. In Apps Script, check Deploy → Manage deployments → Edit, and set \u201cWho has access\u201d to \u201cAnyone\u201d.";
+  if(err === "unknown kind") return "The deployed script is an older copy. In Apps Script: Deploy → Manage deployments → Edit → Version: \u201cNew version\u201d → Deploy.";
+  if(err === "crashed") return "The script hit an error. Open it in Apps Script and run setUpTrigger once — it'll ask permission to send email, which sign-in codes need.";
+  if(String(err || "").indexOf("http ") === 0) return "The script answered with an error (" + err + "). Re-deploy it and try again.";
+  return "";
 }
 async function restoreSession(){
   var token = sessionToken();
@@ -3485,7 +3504,10 @@ document.addEventListener("click", async function(e){
     if(!lem || lem.indexOf("@") < 1){ $("loginEmail").focus(); say("That doesn't look like an email address.", "bad"); return; }
     $("loginNote").textContent = "Sending…";
     var lres = await callEndpoint("login-request", { email: lem });
-    if(!lres.ok){ $("loginNote").textContent = "Couldn't send a code just now."; return; }
+    if(!lres.ok){
+      $("loginNote").textContent = endpointTrouble(lres.error) || "Couldn't send a code just now.";
+      return;
+    }
     loginEmail = lem; loginStep = "code"; renderLogin();
     return;
   }
@@ -4052,11 +4074,14 @@ document.addEventListener("click", async function(e){
     var tv = safeUrl($("setEndpoint").value.trim() || state.club.formEndpoint);
     if(!tv){ say("Paste the endpoint address first.", "bad"); return; }
     say("Testing…", "busy", true);
-    try{
-      var tr = await fetch(tv, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" },
-        body: JSON.stringify({ kind:"ping", payload:{}, at:new Date().toISOString() }) });
-      say(tr.ok ? "The endpoint answered — submissions will reach you." : "The endpoint answered with an error (" + tr.status + ").", tr.ok ? "ok" : "bad");
-    }catch(e2){ say("Couldn’t reach that address. Check it’s deployed with access set to “Anyone”.", "bad"); }
+    /* "session" with a junk token is harmless — no email, nothing saved — but
+       only a script with the sign-in code in it recognises the word, so the
+       answer tells us whether the DEPLOYED copy is current. A plain ping
+       can't: every version has ever answered that. */
+    var probe = await callEndpoint("session", { token: "probe" }, tv);
+    var trouble = endpointTrouble(probe.error);
+    if(trouble) say(trouble, "bad");
+    else say("The endpoint answered and it's the current script — sign-in and submissions will work.", "ok");
     return;
   }
 

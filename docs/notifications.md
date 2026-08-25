@@ -231,6 +231,22 @@ in the script's own properties, so re-saving the site never re-sends anything.
 
 - **"Couldn't reach the club's inbox"** — the deployment's access is probably
   not set to *Anyone*. Redeploy and check step 4.
+- **Sign-in won't send a code** — the box under Admin → Settings has a **Test
+  it** button that says which of these it is. It does more than check the
+  address answers: it asks the script a question only the current version
+  understands, so it catches a deployment that's still running old code.
+  The three things it can report:
+  - *"The deployed script is an older copy"* — the code in the editor was
+    updated but never deployed. **Deploy → Manage deployments → edit (pencil)
+    → Version: New version → Deploy.** Saving in the editor is not enough; the
+    live URL keeps serving whichever version was last deployed.
+  - *"The script hit an error"* — it has never been given permission to send
+    email. Open the script, pick `setUpTrigger` from the function dropdown and
+    press **Run** once. Google will ask for permission; grant it. (You'll see a
+    "Google hasn't verified this app" warning — *Advanced* → *Go to … (unsafe)*.
+    It's your own script.)
+  - *"Couldn't reach the script"* — the address is wrong, or the deployment's
+    access isn't *Anyone*.
 - **Submissions stop arriving** — the GitHub token has expired. Make a new one
   and update `GITHUB_TOKEN`.
 - **No meeting emails** — check the trigger still exists under the clock icon in
