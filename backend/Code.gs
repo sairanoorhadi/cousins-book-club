@@ -15,9 +15,11 @@
 
 /* ------------------------------------------------------------------ config */
 
-/* Bump this whenever this file changes. The /exec URL serves whichever version
-   was last DEPLOYED, not what is in the editor, and the two drifting apart is
-   invisible from the outside — so the site asks for this and shows it. */
+/* Bumped whenever this file changes. The editor and the deployed web app can
+   run different code — saving updates the editor, only Deploy updates the web
+   app — and every confusing hour spent on this script has come from that gap.
+   Compare scriptVersion() in the editor against what the /exec URL reports in
+   a browser; if they differ, the deployment is stale. */
 var SCRIPT_VERSION = '2026-08-25b';
 
 var REPO_OWNER  = 'sairanoorhadi';
@@ -112,9 +114,12 @@ function doPost(e) {
   return json({ ok: true, id: item.id });
 }
 
-/* Apps Script needs a doGet for the deployment to be reachable at all. */
+/* Apps Script needs a doGet for the deployment to be reachable at all. It also
+   makes the deployed version readable from a browser: open the /exec URL and
+   the version below is the code the web app is actually running. */
 function doGet() {
-  return json({ ok: true, service: 'cousins-book-club inbox' });
+  return json({ ok: true, service: 'cousins-book-club inbox', version: SCRIPT_VERSION,
+                emailsPerSubmission: false });
 }
 
 function json(obj) {
@@ -1112,6 +1117,15 @@ function testGitHub() {
  * Logs every subscription from both places they can live, every meeting still
  * due to send, and what each has already sent. Sends nothing.
  */
+/** Run from the editor: the version of the code in the EDITOR. Compare it with
+ *  what the /exec URL shows in a browser, which is the DEPLOYED version. */
+function scriptVersion() {
+  Logger.log('Editor code: ' + SCRIPT_VERSION +
+    '\nNow open your /exec URL in a browser. If the "version" it shows is not ' +
+    SCRIPT_VERSION + ', the deployment is stale: Deploy \u2192 Manage deployments ' +
+    '\u2192 edit the deployment whose URL the site uses \u2192 Version: New version \u2192 Deploy.');
+}
+
 function whoGetsEmails() {
   var out = [];
   var store = PropertiesService.getScriptProperties();

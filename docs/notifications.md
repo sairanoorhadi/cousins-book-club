@@ -270,6 +270,27 @@ Settings**. If that isn't your timezone, change it there.
 - Anthropic API: only used when someone presses **Write one for me**. A blurb is
   a fraction of a cent.
 
+## Is the deployed script the one you think it is?
+
+**Saving the editor does not update the live URL.** The `/exec` address serves
+whichever version was last *deployed*; the editor is separate. Every confusing
+hour spent on this script has come from that gap, so it's now visible from both
+sides:
+
+1. Run **`scriptVersion`** in the editor — it logs the version the *editor* has.
+2. Open your `/exec` URL in a browser tab — the JSON it returns includes the
+   version the *deployment* is running.
+
+If those two differ, the deployment is stale. Fix it with **Deploy → Manage
+deployments →** the pencil on **the deployment whose URL the site uses** →
+Version: **New version** → Deploy.
+
+That last part matters: if you have more than one deployment, editing the wrong
+one changes nothing the site sees. Match the URL against the one in the site's
+Admin → Settings before you edit it. And use **Manage deployments**, not **New
+deployment** — the latter creates a fresh URL and leaves the old one serving the
+old code.
+
 ## Still getting email you didn't expect?
 
 Run **`whoGetsEmails`** from the script editor. It sends nothing, and logs the
