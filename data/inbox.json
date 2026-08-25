@@ -153,6 +153,17 @@
         "name": "Saira",
         "vote": "down"
       }
+    },
+    {
+      "id": "endorse-97bdb6cf-2be",
+      "kind": "endorse",
+      "at": "2026-08-25T16:36:03.035Z",
+      "payload": {
+        "recId": "rc-grace",
+        "title": "Finding Grace",
+        "name": "Saira",
+        "vote": "none"
+      }
     }
   ]
 }
