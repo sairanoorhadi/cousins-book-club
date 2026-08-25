@@ -95,6 +95,50 @@ press **Run**. That schedules `sendMeetingEmails` every five minutes.
 To check the GitHub side is wired up, run `testGitHub` and look at the log —
 it should report reading `state.json`.
 
+## Already set this up? Update the script
+
+Signing in was added after the first version. To switch it on:
+
+1. Open your script at <https://script.google.com>.
+2. Replace all of `Code.gs` with the current version from this repo.
+3. **Deploy → Manage deployments → edit (pencil) → Version: New version → Deploy.**
+
+The URL stays the same, so nothing changes on the site. No new keys are needed
+— sign-in codes go out through the same mail permission the reminders already
+use.
+
+## Signing in
+
+Members sign in with a **six-digit code emailed to them**. There are no
+passwords anywhere in this system: nothing to leak, nothing to reset, and no
+password database for a club that includes children.
+
+- A code lasts ten minutes and dies after five wrong guesses.
+- Codes are stored hashed, with a salt unique to your script.
+- A session lasts thirty days and lives in the script; the browser only holds
+  an opaque token.
+- Asking for a code always gives the same answer, so nobody can use the form to
+  work out who is a member.
+
+Being signed in only changes what the site *offers*. Every action that matters
+is checked again at the endpoint against the session, so an edited browser
+gets nothing.
+
+### What signing in gets a member
+
+- **Their own reminders**, changed whenever they like — a book at a time, or
+  every meeting including books the club hasn't started. This takes effect
+  straight away.
+- **Their name filled in** when they put a book forward.
+- **One-click endorsing**, without typing their name each time.
+- **A progress panel** for the books they've recommended.
+- **A badge colour** they pick themselves.
+
+Changing a badge colour is the one member action that writes to
+`data/state.json`. The script does it under a lock and retries once if the
+organiser happened to save at the same moment; if both land together, whoever
+was second is told to try again rather than overwriting.
+
 ## Where the addresses live
 
 **No email address is ever written into this repo.** The repo is public and

@@ -43,9 +43,19 @@ function doPost(e) {
   }
 
   var kind = String(body.kind || '');
+  var payload = body.payload || {};
 
   /* The site's "Test it" button. */
   if (kind === 'ping') return json({ ok: true, pong: true });
+
+  /* Signing in, and the things only a signed-in member can do. */
+  if (kind === 'login-request') return json(loginRequest(payload));
+  if (kind === 'login-verify') return json(loginVerify(payload));
+  if (kind === 'session') return json(sessionInfo(payload));
+  if (kind === 'logout') return json(logout(payload));
+  if (kind === 'notify-get') return json(notifyGet(payload));
+  if (kind === 'notify-set') return json(notifySet(payload));
+  if (kind === 'profile-set') return json(profileSet(payload));
 
   /* "Write one for me" on the suggestion form. */
   if (kind === 'summarise') return json(summarise(body.payload || {}));
@@ -127,6 +137,232 @@ function maskEmail(address) {
   var at = address.indexOf('@');
   if (at < 1) return '•••';
   return address[0] + '••••' + address.slice(at);
+}
+
+/* ------------------------------------------------------------- signing in
+   There are no passwords anywhere in this system. A member types their email,
+   gets a six-digit code, and types it back; that exchanges for a session token
+   the browser keeps. Nothing to leak, nothing to reset, and no password
+   database for a club that includes children.
+
+   Codes are stored hashed with a per-install salt, expire in ten minutes, and
+   are thrown away after five wrong guesses. Sessions last thirty days. */
+
+var CODE_MINUTES = 10;
+var CODE_TRIES = 5;
+var SESSION_DAYS = 30;
+
+function normEmail(s) {
+  return String(s || '').trim().toLowerCase();
+}
+
+function salt() {
+  var store = PropertiesService.getScriptProperties();
+  var s = store.getProperty('login_salt');
+  if (!s) { s = Utilities.getUuid(); store.setProperty('login_salt', s); }
+  return s;
+}
+
+function hashCode(code, email) {
+  var bytes = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256, salt() + '|' + normEmail(email) + '|' + String(code));
+  return bytes.map(function (b) { return ('0' + (b & 0xFF).toString(16)).slice(-2); }).join('');
+}
+
+/* The whole club's subscriptions in one record: who they are, what they want
+   emails about, which member they map to. Addresses live only here. */
+function directory() {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty('directory') || '{}'); }
+  catch (err) { return {}; }
+}
+function saveDirectory(dir) {
+  PropertiesService.getScriptProperties().setProperty('directory', JSON.stringify(dir));
+}
+
+function loginRequest(payload) {
+  var email = normEmail(payload.email);
+  if (!email || email.indexOf('@') < 1) return { ok: false, error: 'bad email' };
+
+  var code = String(Math.floor(100000 + Math.random() * 900000));
+  PropertiesService.getScriptProperties().setProperty('code:' + email, JSON.stringify({
+    hash: hashCode(code, email),
+    expires: Date.now() + CODE_MINUTES * 60000,
+    tries: 0
+  }));
+
+  MailApp.sendEmail({
+    to: email,
+    subject: 'Your book club sign-in code: ' + code,
+    body: 'Your code is ' + code + '\n\n' +
+          'It works for the next ' + CODE_MINUTES + ' minutes.\n\n' +
+          "If you didn't ask to sign in, you can ignore this — nobody can get in without the code."
+  });
+
+  /* Always the same answer, so nobody can use this to discover who's a member. */
+  return { ok: true };
+}
+
+function loginVerify(payload) {
+  var email = normEmail(payload.email);
+  var given = String(payload.code || '').trim();
+  var store = PropertiesService.getScriptProperties();
+  var key = 'code:' + email;
+
+  var rec;
+  try { rec = JSON.parse(store.getProperty(key) || 'null'); } catch (err) { rec = null; }
+  if (!rec) return { ok: false, error: 'no code' };
+  if (Date.now() > rec.expires) { store.deleteProperty(key); return { ok: false, error: 'expired' }; }
+
+  if (hashCode(given, email) !== rec.hash) {
+    rec.tries = (rec.tries || 0) + 1;
+    if (rec.tries >= CODE_TRIES) store.deleteProperty(key);
+    else store.setProperty(key, JSON.stringify(rec));
+    return { ok: false, error: 'wrong', left: Math.max(0, CODE_TRIES - rec.tries) };
+  }
+
+  store.deleteProperty(key);
+
+  var token = Utilities.getUuid() + Utilities.getUuid().slice(0, 8);
+  store.setProperty('sess:' + token, JSON.stringify({
+    email: email,
+    expires: Date.now() + SESSION_DAYS * 86400000
+  }));
+
+  /* first sign-in creates their directory entry */
+  var dir = directory();
+  if (!dir[email]) {
+    var ref = 'sub-' + Utilities.getUuid().slice(0, 12);
+    store.setProperty('email:' + ref, email);
+    dir[email] = { ref: ref, name: '', books: [], memberId: '' };
+    saveDirectory(dir);
+  }
+
+  return { ok: true, token: token, profile: profileFor(email) };
+}
+
+/* Every privileged call goes through here. Returns the email or ''. */
+function whoIs(token) {
+  if (!token) return '';
+  var store = PropertiesService.getScriptProperties();
+  var raw = store.getProperty('sess:' + String(token));
+  if (!raw) return '';
+  var rec;
+  try { rec = JSON.parse(raw); } catch (err) { return ''; }
+  if (!rec || Date.now() > rec.expires) { store.deleteProperty('sess:' + String(token)); return ''; }
+  return rec.email;
+}
+
+function profileFor(email) {
+  var entry = directory()[email] || { ref: '', name: '', books: [], memberId: '' };
+  var member = null;
+  try {
+    var state = JSON.parse(ghGetFile(STATE_PATH).content || '{}');
+    member = (state.members || []).filter(function (m) {
+      return (entry.memberId && m.id === entry.memberId) ||
+             (entry.ref && m.notifyRef === entry.ref);
+    })[0] || null;
+  } catch (err) {}
+  return {
+    email: email,
+    emailHint: maskEmail(email),
+    ref: entry.ref,
+    name: entry.name || (member ? member.name : ''),
+    books: entry.books || [],
+    memberId: member ? member.id : (entry.memberId || ''),
+    hue: member ? (member.hue || '') : '',
+    isMember: !!member
+  };
+}
+
+function sessionInfo(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  return { ok: true, profile: profileFor(email) };
+}
+
+function logout(payload) {
+  if (payload.token) PropertiesService.getScriptProperties().deleteProperty('sess:' + String(payload.token));
+  return { ok: true };
+}
+
+function notifyGet(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  return { ok: true, books: (directory()[email] || {}).books || [] };
+}
+
+function notifySet(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+
+  var books = (Array.isArray(payload.books) ? payload.books : [])
+    .map(function (b) { return String(b).slice(0, 60); }).slice(0, 60);
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    var dir = directory();
+    var entry = dir[email] || { ref: 'sub-' + Utilities.getUuid().slice(0, 12), name: '', books: [], memberId: '' };
+    if (!PropertiesService.getScriptProperties().getProperty('email:' + entry.ref)) {
+      PropertiesService.getScriptProperties().setProperty('email:' + entry.ref, email);
+    }
+    entry.books = books;
+    if (payload.name) entry.name = String(payload.name).slice(0, 60);
+    dir[email] = entry;
+    saveDirectory(dir);
+  } finally {
+    lock.releaseLock();
+  }
+  return { ok: true, books: books };
+}
+
+/* A member editing their own row in state.json — their display name and the
+   colour their badge uses. Read-modify-write under a lock, with one retry if
+   the organiser saved at the same moment. */
+function profileSet(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+
+  var entry = directory()[email];
+  if (!entry) return { ok: false, error: 'no profile' };
+
+  var wantName = payload.name ? String(payload.name).slice(0, 60) : '';
+  var wantHue = String(payload.hue || '').slice(0, 20);
+  var allowed = ['flare', 'zest', 'surf', 'sky', 'grape', ''];
+  if (allowed.indexOf(wantHue) === -1) return { ok: false, error: 'bad colour' };
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      var file = ghGetFile(STATE_PATH);
+      var state;
+      try { state = JSON.parse(file.content || '{}'); } catch (err) { return { ok: false, error: 'unreadable state' }; }
+
+      var member = (state.members || []).filter(function (m) {
+        return (entry.memberId && m.id === entry.memberId) || (entry.ref && m.notifyRef === entry.ref);
+      })[0];
+      if (!member) return { ok: false, error: 'not a member yet' };
+
+      if (wantName) member.name = wantName;
+      member.hue = wantHue;
+      state.rev = Number(state.rev || 0) + 1;
+
+      try {
+        ghPutFile(STATE_PATH, JSON.stringify(state, null, 2), file.sha, 'Member updated their profile');
+        if (wantName) {
+          var dir = directory();
+          if (dir[email]) { dir[email].name = wantName; dir[email].memberId = member.id; saveDirectory(dir); }
+        }
+        return { ok: true, name: member.name, hue: member.hue };
+      } catch (err) {
+        if (attempt === 1) return { ok: false, error: 'busy, try again' };
+      }
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  return { ok: false, error: 'busy' };
 }
 
 /* --------------------------------------------------------------- the inbox */
@@ -459,14 +695,25 @@ function meetingStart(m) {
  * sitting in a public repo, and the site flags it for removal.
  */
 function recipients(members, bookId) {
-  return members.filter(function (m) {
-    var want = m.notify || [];
-    return want.indexOf('*') !== -1 || want.indexOf(bookId) !== -1;
-  }).map(function (m) {
-    return lookupEmail(m.notifyRef) || m.email || '';
-  }).filter(function (address) {
-    return address && address.indexOf('@') !== -1;
+  var out = {};
+
+  /* Members manage their own subscriptions once they've signed in, and those
+     live here rather than in the public repo. */
+  var dir = directory();
+  Object.keys(dir).forEach(function (email) {
+    var want = (dir[email] || {}).books || [];
+    if (want.indexOf('*') !== -1 || want.indexOf(bookId) !== -1) out[email] = 1;
   });
+
+  /* Anyone the organiser ticked by hand on the Members tab, from before. */
+  members.forEach(function (m) {
+    var want = m.notify || [];
+    if (want.indexOf('*') === -1 && want.indexOf(bookId) === -1) return;
+    var address = lookupEmail(m.notifyRef) || m.email || '';
+    if (address && address.indexOf('@') !== -1) out[address.toLowerCase()] = 1;
+  });
+
+  return Object.keys(out);
 }
 
 function intro(m, book, start, clubName) {

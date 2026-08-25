@@ -276,7 +276,8 @@ img{max-width:100%;display:block}
 #badgeScrim,#prevScrim{z-index:110}
 #meetScrim{z-index:120}
 #bookScrim{z-index:130}
-#memberScrim{z-index:140}
+#memberScrim,#meScrim{z-index:140}
+#loginScrim{z-index:150}
 .modal{width:100%;max-width:820px;background:var(--paper);border:2px solid var(--edge);border-radius:12px;box-shadow:8px 8px 0 var(--stamp);overflow:hidden}
 .modal--wide{max-width:980px}
 .modal__bar{display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:2px solid var(--edge);background:var(--surface);position:sticky;top:0;z-index:2}
@@ -460,6 +461,15 @@ img{max-width:100%;display:block}
 .badgeart img{width:142%;height:142%;object-fit:cover}
 .badgeart span{font-family:var(--f-display);font-weight:800;font-size:38px}
 .meetbtns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+
+/* ============ account ============ */
+.huepick{display:flex;flex-wrap:wrap;gap:9px}
+.huechip{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--hairline);border-radius:999px;background:var(--surface);padding:5px 14px 5px 6px;cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--muted)}
+.huechip span{width:22px;height:22px;border-radius:50%;border:2px solid var(--edge);background:var(--c);flex:none}
+.huechip:hover{color:var(--ink);border-color:var(--edge)}
+.huechip[aria-pressed="true"]{border-color:var(--edge);color:var(--ink);background:var(--sunk);box-shadow:2px 2px 0 var(--stamp)}
+.whoami{display:inline-flex;align-items:center;gap:8px}
+.whoami__pic{width:22px;height:22px;border-radius:50%;border:2px solid var(--edge);background:var(--c,var(--sky));color:var(--cf,#fff);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:10px;flex:none}
 
 /* ============ inbox ============ */
 .inboxrow{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:16px 18px;box-shadow:var(--shadow-sm)}
@@ -819,6 +829,7 @@ img{max-width:100%;display:block}
       <a href="#shelf">Previous Books</a>
       <a href="#recs">Recommendations</a>
       <a href="#badges">Badges</a>
+      <button class="btn btn--sm btn--ghost" id="loginOpen" type="button">Sign in</button>
       <button class="btn btn--sm btn--grape" id="adminOpen" type="button">Admin</button>
     </nav>
   </div>
@@ -984,6 +995,20 @@ img{max-width:100%;display:block}
     <div class="modal__body" id="bookModalBody"></div>
   </div>
 </div>
+<div class="scrim" id="loginScrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" style="max-width:520px">
+    <div class="modal__bar"><h2 id="loginModalTitle">Members</h2>
+      <button class="xbtn" type="button" data-close="loginScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body" id="loginModalBody"></div>
+  </div>
+</div>
+<div class="scrim" id="meScrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="meModalTitle">
+    <div class="modal__bar"><h2 id="meModalTitle">Your account</h2>
+      <button class="xbtn" type="button" data-close="meScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body" id="meModalBody"></div>
+  </div>
+</div>
 <div class="scrim" id="prevScrim" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="prevModalTitle">
     <div class="modal__bar"><h2 id="prevModalTitle">Previous meetings</h2>
@@ -1036,6 +1061,11 @@ function hueFor(key){
 function initials(s){
   var w = String(s||"?").trim().split(/\s+/);
   return ((w[0]||"?")[0] + (w.length>1 ? w[w.length-1][0] : "")).toUpperCase();
+}
+/* a member's colour: whatever they picked, else one derived from their id */
+function memberHue(m){
+  if(!m) return "sky";
+  return HUES.indexOf(m.hue) !== -1 ? m.hue : hueFor(m.id);
 }
 function surname(name){
   var w = String(name || "").trim().split(/\s+/);
@@ -1263,6 +1293,7 @@ function migrate(s){
        Members tab flags it for removal. */
     if(typeof m.email !== "string") m.email = "";
     if(typeof m.notifyRef !== "string") m.notifyRef = "";
+    if(typeof m.hue !== "string") m.hue = "";
     if(typeof m.emailHint !== "string") m.emailHint = "";
     /* book ids this member wants meeting emails about; "*" means every meeting */
     if(!Array.isArray(m.notify)) m.notify = [];
@@ -1462,6 +1493,97 @@ function submitFailMsg(res){
   if(res.reason === "unconfigured") return "Submissions aren’t switched on yet — the organiser needs to add an endpoint under Settings.";
   if(res.reason === "network") return "Couldn’t reach the club’s inbox. Check your connection and try again.";
   return "The club’s inbox returned an error (" + (res.status || "?") + "). Try again in a moment.";
+}
+
+/* ---------- signing in ----------
+   No passwords: a member types their email, gets a six-digit code, and types it
+   back. The endpoint holds the session; the browser only keeps the token. Being
+   signed in changes what the page offers, never what it trusts — every
+   privileged action is checked again at the endpoint. */
+var SESSION_KEY = "marginNotes.session";
+var me = null;   /* the signed-in member's profile, or null */
+
+function sessionToken(){
+  try{ return localStorage.getItem(SESSION_KEY) || ""; }catch(e){ return ""; }
+}
+function setSessionToken(v){
+  try{ if(v) localStorage.setItem(SESSION_KEY, v); else localStorage.removeItem(SESSION_KEY); }catch(e){}
+}
+async function callEndpoint(kind, payload){
+  var url = endpoint();
+  if(!url) return { ok: false, error: "unconfigured" };
+  try{
+    var res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ kind: kind, payload: payload || {}, at: new Date().toISOString() })
+    });
+    if(!res.ok) return { ok: false, error: "http " + res.status };
+    return await res.json();
+  }catch(e){ return { ok: false, error: "network" }; }
+}
+async function restoreSession(){
+  var token = sessionToken();
+  if(!token || !endpoint()) return;
+  var res = await callEndpoint("session", { token: token });
+  if(res && res.ok) me = res.profile;
+  else setSessionToken("");
+}
+async function signOut(){
+  var token = sessionToken();
+  setSessionToken("");
+  me = null;
+  if(token) callEndpoint("logout", { token: token });
+  renderAll();
+  say("Signed out.", "ok");
+}
+/* the member's own record, when the organiser has added them to the club */
+function myMember(){ return me && me.memberId ? memberById(me.memberId) : null; }
+function myName(){ return (me && (me.name || "")) || ""; }
+
+var loginStep = "email", loginEmail = "";
+function openLogin(){
+  loginStep = "email";
+  renderLogin();
+  openScrim("loginScrim");
+}
+function renderLogin(){
+  var body = $("loginModalBody");
+  if(!endpoint()){
+    body.innerHTML = '<p class="empty">Signing in isn&rsquo;t switched on yet — the organiser needs to set the club&rsquo;s endpoint under Settings.</p>';
+    return;
+  }
+  if(me){
+    body.innerHTML =
+      '<p class="eyebrow">Signed in</p>' +
+      '<h3 style="font-size:24px;margin:8px 0 6px">' + esc(myName() || me.emailHint) + "</h3>" +
+      '<p class="hint">' + esc(me.emailHint) + (me.isMember ? "" : " &mdash; not on the members list yet, so the badge tree doesn't show you") + "</p>" +
+      '<div style="margin-top:20px"><button class="btn btn--ghost" type="button" id="loginOut">Sign out</button></div>';
+    return;
+  }
+  if(loginStep === "email"){
+    body.innerHTML =
+      '<p class="eyebrow">Members</p><h3 style="font-size:24px;margin:8px 0 6px">Sign in</h3>' +
+      '<p class="hint">Pop in your email and we&rsquo;ll send you a six-digit code. There&rsquo;s no password to remember or forget.</p>' +
+      '<div class="field" style="margin-top:18px"><label for="loginEmail">Email</label>' +
+        '<input class="input" id="loginEmail" type="email" autocomplete="email" maxlength="160" value="' + esc(loginEmail) + '"></div>' +
+      '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px">' +
+        '<button class="btn btn--surf" type="button" id="loginSend">Send me a code</button>' +
+        '<span class="hint" id="loginNote"></span></div>' +
+      '<p class="hint" style="margin-top:16px">Your address is kept privately by the organiser and never published on this site.</p>';
+  }else{
+    body.innerHTML =
+      '<p class="eyebrow">Check your email</p><h3 style="font-size:24px;margin:8px 0 6px">Enter your code</h3>' +
+      '<p class="hint">Sent to ' + esc(loginEmail) + ". It works for ten minutes.</p>" +
+      '<div class="field" style="margin-top:18px"><label for="loginCode">Six-digit code</label>' +
+        '<input class="input mono" id="loginCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" ' +
+        'style="font-size:26px;letter-spacing:.32em;text-align:center"></div>' +
+      '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px">' +
+        '<button class="btn btn--surf" type="button" id="loginCheck">Sign in</button>' +
+        '<button class="btn btn--ghost btn--sm" type="button" id="loginBack">Use a different email</button>' +
+        '<span class="hint" id="loginNote"></span></div>';
+    setTimeout(function(){ var c = $("loginCode"); if(c) c.focus(); }, 60);
+  }
 }
 
 /* ---------- image picker ---------- */
@@ -1909,7 +2031,9 @@ function renderHero(){
       '<div style="margin-top:18px;display:flex;gap:9px;flex-wrap:wrap">' +
         '<button class="btn btn--sky btn--sm" type="button" data-meet="' + esc(meet.id) + '">' +
           (isParty ? "Party notes" : "Predictions &amp; discussion points") + "</button>" +
-        '<button class="btn btn--ghost btn--sm" type="button" data-memform="notify" data-nbook="' + esc(meet.bookId) + '">Email me about this</button>' +
+        (me
+          ? '<button class="btn btn--ghost btn--sm" type="button" id="meetManageNotify">Manage my reminders</button>'
+          : '<button class="btn btn--ghost btn--sm" type="button" data-memform="notify" data-nbook="' + esc(meet.bookId) + '">Email me about this</button>') +
       "</div>";
   }
   renderUpNext();
@@ -2136,7 +2260,7 @@ function renderFocus(){
   bar.innerHTML = '<span class="focusbar__lab">Focus</span>' +
     '<button class="focuschip focuschip--all" type="button" data-focus="" aria-pressed="' + (!focusId) + '">Whole club</button>' +
     state.members.map(function(m){
-      var h = hueFor(m.id);
+      var h = memberHue(m);
       return '<button class="focuschip" type="button" data-focus="' + esc(m.id) + '" aria-pressed="' + (focusId === m.id) + '">' +
         '<span class="focuschip__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
           (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
@@ -2167,7 +2291,7 @@ function branches(){
 function hubHTML(){
   var fm = focusMember();
   if(fm){
-    var h = hueFor(fm.id);
+    var h = memberHue(fm);
     return '<span class="tree__disc tree__disc--hub" style="--c:var(--' + h + ');--cf:var(--on-' + h + ');background:var(--' + h + ')">' +
       (fm.avatar ? '<img src="' + esc(fm.avatar) + '" alt="">' : "<span>" + esc(fm.name) + "</span>") + "</span>";
   }
@@ -2256,7 +2380,7 @@ function renderTimeline(){
           '<span class="tlcard__sub">' + esc(b.author) + " · " + esc(tipDates(b)) + "</span>" +
         "</button></div>";
     }
-    var mm = e.member, mh = hueFor(mm.id);
+    var mm = e.member, mh = memberHue(mm);
     return '<div class="tlrow">' +
       '<span class="tlrow__dot tlrow__dot--member" style="--c:var(--' + mh + ');--cf:var(--on-' + mh + ')">' +
         (mm.avatar ? '<img src="' + esc(mm.avatar) + '" alt="">' : esc(initials(mm.name))) + "</span>" +
@@ -2304,7 +2428,7 @@ function openScrim(id){
   document.body.style.overflow = "hidden";
   var f = $(id).querySelector(".xbtn"); if(f) f.focus();
 }
-var SCRIMS = ["memberScrim","bookScrim","meetScrim","prevScrim","badgeScrim","adminScrim"];
+var SCRIMS = ["loginScrim","meScrim","memberScrim","bookScrim","meetScrim","prevScrim","badgeScrim","adminScrim"];
 function closeScrim(id){
   $(id).hidden = true;
   if(SCRIMS.every(function(s){ return $(s).hidden; })) document.body.style.overflow = "";
@@ -2495,7 +2619,7 @@ function openBadge(bookId){
         '<p class="review__by" style="margin-top:16px">Who read it</p>' +
         (crew.length
           ? '<div class="crew__list" style="margin-top:10px">' + crew.map(function(m){
-              var h = hueFor(m.id);
+              var h = memberHue(m);
               return '<span class="crewchip"><span class="crewchip__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
                 (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
                 '<span class="crewchip__n">' + esc(m.name) + "</span>" + memberLinks(m, "") + "</span>";
@@ -2519,6 +2643,122 @@ function openBadge(bookId){
         }).join("") + "</div>"
       : '<p class="empty" style="margin-top:10px">No meetings recorded for this book.</p>');
   openScrim("badgeScrim");
+}
+
+/* One vote each way per person. Changing your mind moves you across rather than
+   counting on both sides. Returns true when the vote landed. */
+async function castVote(rec, down, name){
+  var mine = down ? "dislikes" : "endorsements", other = down ? "endorsements" : "dislikes";
+  if(!Array.isArray(rec[mine])) rec[mine] = [];
+  if(!Array.isArray(rec[other])) rec[other] = [];
+  var has = function(list){
+    return rec[list].some(function(x){ return x.name.toLowerCase() === name.toLowerCase(); });
+  };
+  if(has(mine)){
+    say(down ? "You've already passed on this one." : "You've already endorsed this one.", "ok");
+    return false;
+  }
+  if(endpoint()){
+    say("Sending…", "busy", true);
+    var res = await submitPublic("endorse", { recId: rec.id, title: rec.title, name: name, vote: down ? "down" : "up" });
+    if(!res.ok){ say(submitFailMsg(res), "bad"); return false; }
+  }else if(readOnly){
+    say(submitFailMsg({ reason: "unconfigured" }), "bad");
+    return false;
+  }
+  rec[other] = rec[other].filter(function(x){ return x.name.toLowerCase() !== name.toLowerCase(); });
+  rec[mine].push({ name: name, at: new Date().toISOString() });
+  if(endpoint()) say(down ? "Noted — thanks, " + name + "." : "Endorsed. Thanks, " + name + "!", "ok");
+  else if(!await save(down ? "Saving…" : "Endorsing…")) return false;
+  renderRecs();
+  return true;
+}
+
+/* ---------- your account ---------- */
+var HUE_NAMES = { flare: "Pink", zest: "Amber", surf: "Teal", sky: "Blue", grape: "Purple" };
+var myNotify = [];
+
+function myRecs(){
+  var name = myName().toLowerCase();
+  if(!name) return [];
+  return state.recs.filter(function(r){ return String(r.by || "").toLowerCase() === name; });
+}
+async function openMe(){
+  if(!me){ openLogin(); return; }
+  var res = await callEndpoint("notify-get", { token: sessionToken() });
+  myNotify = (res && res.ok && res.books) || [];
+  renderMe();
+  openScrim("meScrim");
+}
+function renderMe(){
+  var mem = myMember();
+  var mine = myRecs();
+  var live = mine.filter(function(r){ return r.status === "approved"; });
+  var short = mine.filter(function(r){ return r.shortlist; });
+  /* recommendations of theirs the club went on to read */
+  var read = state.books.filter(function(b){
+    return mine.some(function(r){ return r.id === b.id; }) ||
+      (myName() && String(b.recBy || "").toLowerCase() === myName().toLowerCase());
+  });
+  var total = mine.length + read.length;
+  var pct = total ? Math.round((live.length + read.length) / total * 100) : 0;
+
+  /* everything the club could email about */
+  var books = currentBooks().concat(nextBooks());
+  var all = myNotify.indexOf("*") !== -1;
+
+  $("meModalTitle").textContent = myName() || "Your account";
+  $("meModalBody").innerHTML =
+    '<p class="eyebrow">Signed in as</p>' +
+    '<h3 style="font-size:24px;margin:8px 0 4px">' + esc(myName() || me.emailHint) + "</h3>" +
+    '<p class="hint">' + esc(me.emailHint) + "</p>" +
+
+    '<hr class="divider"><p class="eyebrow">Meeting emails</p>' +
+    '<p class="hint" style="margin:6px 0 14px">One when a meeting is scheduled, one five days before, one thirty minutes before.</p>' +
+    '<div class="checkgrid">' +
+      '<label><input type="checkbox" data-mynotify="*"' + (all ? " checked" : "") + ">Every meeting, including books we haven&rsquo;t started</label>" +
+      books.map(function(b){
+        return '<label><input type="checkbox" data-mynotify="' + esc(b.id) + '"' +
+          ((all || myNotify.indexOf(b.id) !== -1) ? " checked" : "") + (all ? " disabled" : "") + ">" + esc(b.title) + "</label>";
+      }).join("") +
+    "</div>" +
+    (books.length ? "" : '<p class="empty" style="margin-top:10px">No books on the go to subscribe to yet.</p>') +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px">' +
+      '<button class="btn btn--sm btn--zest" type="button" id="meNotifySave">Save my reminders</button>' +
+      '<button class="btn btn--sm btn--ghost" type="button" id="meNotifyNone">Turn them all off</button>' +
+      '<span class="hint" id="meNotifyNote"></span>' +
+    "</div>" +
+
+    '<hr class="divider"><p class="eyebrow">Your badge colour</p>' +
+    (mem
+      ? '<p class="hint" style="margin:6px 0 12px">This is the colour beside your name on the badge tree.</p>' +
+        '<div class="huepick">' +
+          Object.keys(HUE_NAMES).map(function(h){
+            return '<button class="huechip" type="button" data-myhue="' + h + '" aria-pressed="' +
+              ((mem.hue || hueFor(mem.id)) === h) + '" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')" ' +
+              'title="' + esc(HUE_NAMES[h]) + '"><span></span>' + esc(HUE_NAMES[h]) + "</button>";
+          }).join("") +
+        "</div>" +
+        '<div style="margin-top:12px"><span class="hint" id="meHueNote"></span></div>'
+      : '<p class="empty" style="margin:6px 0">Once the organiser adds you to the members list you can pick a colour here.</p>') +
+
+    '<hr class="divider"><p class="eyebrow">Your recommendations</p>' +
+    (total
+      ? '<div class="progress" style="margin-top:12px;max-width:none"><div class="progress__bar">' +
+          '<div class="progress__fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="progress__label"><span>' + live.length + " live · " + short.length + " shortlisted · " + read.length + " read by the club</span>" +
+        "<span>" + pct + "%</span></div></div>" +
+        '<div class="tagbank" style="margin-top:14px">' +
+          mine.slice(0, 12).map(function(r){
+            var n = recScore(r);
+            return '<span class="tag' + (r.shortlist ? " tag--flare" : r.status === "approved" ? " tag--surf" : "") + '">' +
+              esc(r.title) + (n ? " " + esc(scoreLabel(r)) : "") + "</span>";
+          }).join("") +
+        "</div>"
+      : '<p class="empty" style="margin-top:8px">Nothing put forward yet. The Suggest a Book tab is where to start &mdash; your name goes in automatically now.</p>') +
+
+    '<hr class="divider"><div style="display:flex;gap:10px;flex-wrap:wrap">' +
+      '<button class="btn btn--ghost" type="button" id="loginOut">Sign out</button></div>';
 }
 
 /* ---------- member requests ---------- */
@@ -3033,6 +3273,72 @@ document.addEventListener("click", async function(e){
   var t = e.target; if(!t || !t.closest) return;
   var el;
 
+  /* signing in */
+  if(t.closest("#loginOpen") || t.closest("#meetManageNotify")){ if(me) await openMe(); else openLogin(); return; }
+  if(t.closest("#loginOut")){ closeScrim($("meScrim").hidden ? "loginScrim" : "meScrim"); await signOut(); return; }
+  if(t.closest("#loginBack")){ loginStep = "email"; renderLogin(); return; }
+  if(t.closest("#loginSend")){
+    var lem = $("loginEmail").value.trim();
+    if(!lem || lem.indexOf("@") < 1){ $("loginEmail").focus(); say("That doesn't look like an email address.", "bad"); return; }
+    $("loginNote").textContent = "Sending…";
+    var lres = await callEndpoint("login-request", { email: lem });
+    if(!lres.ok){ $("loginNote").textContent = "Couldn't send a code just now."; return; }
+    loginEmail = lem; loginStep = "code"; renderLogin();
+    return;
+  }
+  if(t.closest("#loginCheck")){
+    var lcode = $("loginCode").value.trim();
+    if(lcode.length < 6){ $("loginCode").focus(); return; }
+    $("loginNote").textContent = "Checking…";
+    var vres = await callEndpoint("login-verify", { email: loginEmail, code: lcode });
+    if(!vres.ok){
+      $("loginNote").textContent = vres.error === "expired" ? "That code has expired — send a new one."
+        : vres.error === "wrong" ? "Not right. " + (vres.left ? vres.left + " tries left." : "Send a new code.")
+        : "Couldn't sign you in.";
+      return;
+    }
+    setSessionToken(vres.token);
+    me = vres.profile;
+    closeScrim("loginScrim");
+    renderAll();
+    say("Signed in as " + (myName() || me.emailHint) + ".", "ok");
+    return;
+  }
+  if(t.closest("#meNotifySave") || t.closest("#meNotifyNone")){
+    var none = !!t.closest("#meNotifyNone");
+    var want = [];
+    if(!none){
+      Array.prototype.forEach.call($("meModalBody").querySelectorAll("[data-mynotify]"), function(c){
+        if(c.checked) want.push(c.getAttribute("data-mynotify"));
+      });
+      /* "every meeting" already covers the rest */
+      if(want.indexOf("*") !== -1) want = ["*"];
+    }
+    $("meNotifyNote").textContent = "Saving…";
+    var nres = await callEndpoint("notify-set", { token: sessionToken(), books: want, name: myName() });
+    if(!nres.ok){ $("meNotifyNote").textContent = "Couldn't save that."; return; }
+    myNotify = nres.books || want;
+    renderMe();
+    say(myNotify.length ? "Reminders updated." : "Reminders switched off.", "ok");
+    return;
+  }
+  if((el = t.closest("[data-myhue]"))){
+    var hue = el.getAttribute("data-myhue");
+    var hres = await callEndpoint("profile-set", { token: sessionToken(), hue: hue });
+    if(!hres.ok){
+      var note = $("meHueNote");
+      if(note) note.textContent = hres.error === "busy, try again"
+        ? "Someone else was saving — try again in a moment." : "Couldn't change that.";
+      return;
+    }
+    var mm3 = myMember();
+    if(mm3) mm3.hue = hue;
+    me.hue = hue;
+    renderMe(); renderAll();
+    say("Badge colour updated.", "ok");
+    return;
+  }
+
   /* carousels */
   if((el = t.closest("[data-cyc]"))){
     var ck = el.getAttribute("data-cyc"), cd = Number(el.getAttribute("data-d")) || 1;
@@ -3105,10 +3411,15 @@ document.addEventListener("click", async function(e){
   /* a tab in the previous-meetings popup */
   if((el = t.closest("[data-prevmeet]"))){ openMeeting(el.getAttribute("data-prevmeet")); return; }
 
-  /* the +/− shortcut on a card: open the book with the right field waiting */
+  /* The +/− shortcut on a card. Signed in, that's the whole interaction — the
+     vote is cast under their own name. Otherwise it opens the book with the
+     right field waiting for a name. */
   if((el = t.closest("[data-vote]"))){
     var vr = recById(el.getAttribute("data-rid"));
-    if(vr) openBookDetail(vr, "rec", el.getAttribute("data-vote"));
+    if(!vr) return;
+    var dir = el.getAttribute("data-vote");
+    if(me && myName()){ await castVote(vr, dir === "down", myName()); return; }
+    openBookDetail(vr, "rec", dir);
     return;
   }
 
@@ -3118,34 +3429,7 @@ document.addEventListener("click", async function(e){
     var er = recById(el.getAttribute(down ? "data-dislike" : "data-endorse")); if(!er) return;
     var nameEl = $("endorseName"), nm0 = nameEl ? nameEl.value.trim() : "";
     if(!nm0){ if(nameEl) nameEl.focus(); say("Put your name in first.", "bad"); return; }
-
-    var mine = down ? "dislikes" : "endorsements", other = down ? "endorsements" : "dislikes";
-    /* older records predate dislikes entirely */
-    if(!Array.isArray(er[mine])) er[mine] = [];
-    if(!Array.isArray(er[other])) er[other] = [];
-    var already = function(list){
-      return (er[list] || []).some(function(x){ return x.name.toLowerCase() === nm0.toLowerCase(); });
-    };
-    if(already(mine)){
-      say(down ? "You've already passed on this one." : "You've already endorsed this one.", "ok");
-      return;
-    }
-    if(endpoint()){
-      say("Sending…", "busy", true);
-      var eres = await submitPublic("endorse", { recId: er.id, title: er.title, name: nm0, vote: down ? "down" : "up" });
-      if(!eres.ok){ say(submitFailMsg(eres), "bad"); return; }
-    }else if(readOnly){
-      say(submitFailMsg({ reason: "unconfigured" }), "bad");
-      return;
-    }
-    /* one vote each way — changing your mind moves you across */
-    er[other] = (er[other] || []).filter(function(x){ return x.name.toLowerCase() !== nm0.toLowerCase(); });
-    er[mine].push({ name: nm0, at: new Date().toISOString() });
-    if(endpoint()) say(down ? "Noted — thanks." : "Endorsed. Thanks!", "ok");
-    else if(!await save(down ? "Saving…" : "Endorsing…")) return;
-
-    openBookDetail(er, "rec");
-    renderRecs();
+    if(await castVote(er, down, nm0)) openBookDetail(er, "rec");
     return;
   }
 
@@ -3916,8 +4200,29 @@ $("suggestForm").addEventListener("submit", async function(e){
 });
 
 /* ---------- boot ---------- */
+function renderWhoami(){
+  var btn = $("loginOpen");
+  if(!btn) return;
+  if(!endpoint()){ btn.hidden = true; return; }
+  btn.hidden = false;
+  if(me){
+    var mem = myMember(), h = mem ? memberHue(mem) : "sky";
+    btn.className = "btn btn--sm btn--ghost";
+    btn.innerHTML = '<span class="whoami"><span class="whoami__pic" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')">' +
+      esc(initials(myName() || "?")) + "</span>" + esc((myName() || "Account").split(" ")[0]) + "</span>";
+    btn.title = "Your account";
+  }else{
+    btn.className = "btn btn--sm btn--ghost";
+    btn.textContent = "Sign in";
+    btn.title = "Sign in to manage your reminders";
+  }
+  /* a signed-in member's name goes straight into the suggestion form */
+  var by = $("sBy");
+  if(by && me && myName() && !by.value) by.value = myName();
+}
 function renderAll(){
   if(focusId && !memberById(focusId)) focusId = null;
+  renderWhoami();
   renderHero(); renderShelf(); renderRecs(); renderFocus(); renderTree(); renderTimeline();
 }
 
@@ -3928,6 +4233,7 @@ function renderAll(){
   (state.inbox || []).forEach(function(id){ handled[id] = 1; });
   inbox.forEach(function(it){ if(it && handled[it.id]) it.handled = true; });
   applyInbox();
+  await restoreSession();
   refreshWriteMode();
   initSuggestForm();
   renderAll();
