@@ -1,5 +1,5 @@
 {
-  "rev": 1101,
+  "rev": 1102,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -259,7 +259,7 @@
       "date": "2026-09-06",
       "time": "15:00",
       "place": "Ferdinand",
-      "chapters": "32-45 Section 6",
+      "chapters": "Section 6: 32-45",
       "pages": "",
       "done": false,
       "summary": "",
