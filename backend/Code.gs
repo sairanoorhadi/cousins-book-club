@@ -337,11 +337,18 @@ function claimMember(payload) {
   var entry = dir[email];
   if (!entry) return { ok: false, error: 'no profile' };
 
+  /* This one has to write to the repo, so a dead token stops it dead —
+     unlike signing in, which shrugs a failed read off. Say so plainly
+     rather than letting the whole call blow up into an error page. */
+  if (!prop('GITHUB_TOKEN')) return { ok: false, error: 'no github token' };
+
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
     for (var attempt = 0; attempt < 2; attempt++) {
-      var file = ghGetFile(STATE_PATH);
+      var file;
+      try { file = ghGetFile(STATE_PATH); }
+      catch (err) { return { ok: false, error: 'no github token', detail: String(err) }; }
       var state;
       try { state = JSON.parse(file.content || '{}'); } catch (err) { return { ok: false, error: 'unreadable state' }; }
 
@@ -385,11 +392,15 @@ function profileSet(payload) {
   var allowed = ['flare', 'zest', 'surf', 'sky', 'grape', ''];
   if (allowed.indexOf(wantHue) === -1) return { ok: false, error: 'bad colour' };
 
+  if (!prop('GITHUB_TOKEN')) return { ok: false, error: 'no github token' };
+
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
     for (var attempt = 0; attempt < 2; attempt++) {
-      var file = ghGetFile(STATE_PATH);
+      var file;
+      try { file = ghGetFile(STATE_PATH); }
+      catch (err) { return { ok: false, error: 'no github token', detail: String(err) }; }
       var state;
       try { state = JSON.parse(file.content || '{}'); } catch (err) { return { ok: false, error: 'unreadable state' }; }
 
