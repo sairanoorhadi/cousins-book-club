@@ -1,5 +1,5 @@
 {
-  "rev": 1100,
+  "rev": 1101,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -206,7 +206,7 @@
       "date": "2026-08-27",
       "time": "19:00",
       "place": "Online - Discord",
-      "chapters": "23-32 Section 5",
+      "chapters": "Section 5: 23-32",
       "pages": "100",
       "done": false,
       "summary": "",
@@ -604,7 +604,12 @@
       "endorsements": [],
       "ageMin": 12,
       "ageMax": 100,
-      "dislikes": [],
+      "dislikes": [
+        {
+          "name": "Saira",
+          "at": "2026-08-25T15:52:10.000Z"
+        }
+      ],
       "rating": 0,
       "ratingSource": ""
     }
