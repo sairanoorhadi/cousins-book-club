@@ -120,6 +120,17 @@
         "name": "Saira",
         "vote": "up"
       }
+    },
+    {
+      "id": "endorse-55d8dc8b-06a",
+      "kind": "endorse",
+      "at": "2026-08-25T16:34:28.279Z",
+      "payload": {
+        "recId": "rc-kite",
+        "title": "The Kite Runner",
+        "name": "Saira",
+        "vote": "none"
+      }
     }
   ]
 }
