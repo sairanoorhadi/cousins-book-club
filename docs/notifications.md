@@ -242,9 +242,25 @@ Join requests carry the real address in this email. That's the one place it
 appears in readable form — it never goes into the repo.
 
 To see the round-up without waiting for Sunday, run `previewDigest` from the
-script editor; it logs what would be sent and mails nothing. If you'd rather it
-came on a different day or hour, change `DIGEST_HOUR` and the `onWeekDay(...)`
-line in `setUpTrigger`, then run `setUpTrigger` again.
+script editor; it logs what would be sent, mails nothing, and tells you when the
+next one is due and whether the trigger is actually installed.
+
+### Changing the day or time
+
+Two optional Script Properties, so you never have to edit the code:
+
+| Property | Value | Default |
+| --- | --- | --- |
+| `DIGEST_DAY` | `MONDAY` … `SUNDAY` | `SUNDAY` |
+| `DIGEST_HOUR` | `0`–`23` | `18` (6pm) |
+
+Add or change them under **Project Settings → Script properties**, then **run
+`setUpTrigger` again** — the trigger holds its own copy of the schedule, so a
+property change alone doesn't move it. Anything unrecognised falls back to the
+default rather than failing, so a typo can't leave you with no round-up at all.
+
+Both are read in the script's own timezone, shown at the top of **Project
+Settings**. If that isn't your timezone, change it there.
 
 ## Costs and limits
 
