@@ -56,6 +56,9 @@ function doPost(e) {
   if (kind === 'notify-get') return json(notifyGet(payload));
   if (kind === 'notify-set') return json(notifySet(payload));
   if (kind === 'profile-set') return json(profileSet(payload));
+  if (kind === 'photo-add') return json(photoAdd(payload));
+  if (kind === 'photo-list') return json(photoList(payload));
+  if (kind === 'photo-delete') return json(photoDelete(payload));
 
   /* "Write one for me" on the suggestion form. */
   if (kind === 'summarise') return json(summarise(body.payload || {}));
@@ -363,6 +366,116 @@ function profileSet(payload) {
     lock.releaseLock();
   }
   return { ok: false, error: 'busy' };
+}
+
+/* ------------------------------------------------------------ party photos
+   Photos live in a folder in the organiser's Drive, shared so anyone with the
+   link can view — the club decided they should be visible to everyone.
+
+   They are deliberately NOT committed to the repo. Base64 images would bloat
+   state.json and slow every save, and git would keep them forever even after
+   they were deleted. On Drive, deleting one actually deletes it.
+
+   Only a signed-in member can add or remove; anyone can look. */
+
+var PHOTO_FOLDER = 'Cousins Book Club photos';
+var PHOTOS_PER_MEETING = 40;
+
+function photoFolder() {
+  var store = PropertiesService.getScriptProperties();
+  var id = store.getProperty('photo_folder_id');
+  if (id) {
+    try { return DriveApp.getFolderById(id); } catch (err) {}
+  }
+  var folder = DriveApp.createFolder(PHOTO_FOLDER);
+  folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  store.setProperty('photo_folder_id', folder.getId());
+  return folder;
+}
+
+function photoKey(meetingId) { return 'photos:' + String(meetingId).slice(0, 60); }
+
+function readPhotos(meetingId) {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty(photoKey(meetingId)) || '[]'); }
+  catch (err) { return []; }
+}
+
+function photoAdd(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+
+  var meetingId = String(payload.meetingId || '');
+  if (!meetingId) return { ok: false, error: 'no meeting' };
+
+  var dataUrl = String(payload.dataUrl || '');
+  var match = dataUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);
+  if (!match) return { ok: false, error: 'not an image' };
+
+  var bytes = Utilities.base64Decode(match[2]);
+  if (bytes.length > 6 * 1024 * 1024) return { ok: false, error: 'too big' };
+
+  var blob = Utilities.newBlob(bytes, match[1], meetingId + '-' + Utilities.getUuid().slice(0, 8) + '.jpg');
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var list = readPhotos(meetingId);
+    if (list.length >= PHOTOS_PER_MEETING) return { ok: false, error: 'that party is full' };
+
+    var file = photoFolder().createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    var entry = {
+      id: file.getId(),
+      by: (directory()[email] || {}).name || email.split('@')[0],
+      at: new Date().toISOString(),
+      email: email          /* so the uploader can delete their own */
+    };
+    list.push(entry);
+    PropertiesService.getScriptProperties().setProperty(photoKey(meetingId), JSON.stringify(list));
+    return { ok: true, photo: publicPhoto(entry) };
+  } catch (err) {
+    return { ok: false, error: String(err).slice(0, 120) };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* the uploader's address is not part of what anyone else gets to see */
+function publicPhoto(entry) {
+  return { id: entry.id, by: entry.by, at: entry.at };
+}
+
+function photoList(payload) {
+  var meetingId = String(payload.meetingId || '');
+  if (!meetingId) return { ok: false, error: 'no meeting' };
+  return { ok: true, photos: readPhotos(meetingId).map(publicPhoto) };
+}
+
+function photoDelete(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+
+  var meetingId = String(payload.meetingId || '');
+  var id = String(payload.id || '');
+  var organiser = normEmail(prop('ORGANISER_EMAIL'));
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var list = readPhotos(meetingId);
+    var entry = list.filter(function (p) { return p.id === id; })[0];
+    if (!entry) return { ok: false, error: 'not found' };
+    /* your own photos, or anything at all if you're the organiser */
+    if (entry.email !== email && email !== organiser) return { ok: false, error: 'not yours' };
+
+    try { DriveApp.getFileById(id).setTrashed(true); } catch (err) {}
+    list = list.filter(function (p) { return p.id !== id; });
+    PropertiesService.getScriptProperties().setProperty(photoKey(meetingId), JSON.stringify(list));
+    return { ok: true };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 /* --------------------------------------------------------------- the inbox */

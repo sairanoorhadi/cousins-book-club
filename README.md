@@ -82,6 +82,8 @@ Keep an eye on file size — if `data/state.json` grows past a few megabytes, sa
 
 This repo is public, which GitHub Pages requires on a free account. Everything in `data/state.json` and `data/inbox.json` — member names, photos, profile links, reviews — is readable by anyone. Not just anyone who finds the URL: GitHub publishes a firehose of every public push, and harvesting public repos is automated and routine. Assume it's read.
 
+**Party photos are visible to anyone**, by the club's own decision — the youngest member is 13 and these are the same pictures the parents already share. They live in the organiser's Drive rather than in this repo, so deleting one actually deletes it instead of leaving it in git history forever.
+
 **Email addresses are the exception, and are deliberately kept out.** Some of the club are children, so an address never reaches this repo: the submissions endpoint holds it privately inside the organiser's Google account, and the repo carries only an opaque reference and a masked hint (`s••••@gmail.com`). The admin panel has no field to type an address into, and meeting reminders go out bcc so no child sees another's. Reading them back, and deleting one on request, is covered in `docs/notifications.md`.
 
 The **Admin** button is visible to everyone and the panel opens for anyone who clicks it, but nothing can be saved without the GitHub token above. There is no password, because a password checked inside a public page is not a password — anyone can read it in the page source. The token is the real lock, and it never leaves the browser it was pasted into.

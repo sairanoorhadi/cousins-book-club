@@ -139,6 +139,32 @@ Changing a badge colour is the one member action that writes to
 organiser happened to save at the same moment; if both land together, whoever
 was second is told to try again rather than overwriting.
 
+## Party photos
+
+A meeting can be a **Party**, and a party can have photos.
+
+- **Anyone visiting the site can see them.** That's a deliberate choice by the
+  club, not an accident.
+- **Only a signed-in member can add one**, and only remove their own — you, as
+  organiser, can remove any.
+- They're stored in a Drive folder called *Cousins Book Club photos*, created
+  automatically the first time someone uploads, and shared as
+  "anyone with the link can view".
+
+They are **not** committed to this repo, for two practical reasons: images as
+base64 would bloat `data/state.json` and slow every save, and git would keep
+them forever even after they were deleted. On Drive, deleting one actually
+deletes it — from the site and from the folder.
+
+Photos are shrunk to 1400px wide in the browser before they're sent, up to ten
+at a time, forty per party.
+
+### Removing a photo for good
+
+Delete it from the party's notes on the site. That trashes the Drive file too.
+If you'd rather clear a whole party, open the Drive folder and delete the files
+there — the site drops anything it can't load.
+
 ## Where the addresses live
 
 **No email address is ever written into this repo.** The repo is public and

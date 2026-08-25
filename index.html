@@ -462,6 +462,19 @@ img{max-width:100%;display:block}
 .badgeart span{font-family:var(--f-display);font-weight:800;font-size:38px}
 .meetbtns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 
+/* ============ party photos ============ */
+.photogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.photo{margin:0;position:relative}
+.photo img{width:100%;aspect-ratio:4/3;object-fit:cover;border:2px solid var(--edge);border-radius:6px;box-shadow:2px 2px 0 var(--stamp);cursor:zoom-in;background:var(--sunk)}
+.photo img:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--stamp)}
+.photo figcaption{display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.photo__x{margin-left:auto;border:1.5px solid var(--hairline);border-radius:50%;width:19px;height:19px;line-height:1;padding:0;background:var(--surface);color:var(--muted);cursor:pointer}
+.photo__x:hover{background:var(--flare);color:var(--on-flare);border-color:var(--edge)}
+#lightbox{z-index:160;align-items:center;padding:24px}
+.lightbox__inner{position:relative;max-width:min(1100px,94vw)}
+.lightbox__inner img{max-width:100%;max-height:86vh;border:3px solid var(--edge);border-radius:8px;box-shadow:var(--shadow);background:var(--surface)}
+.lightbox__inner .xbtn{position:absolute;top:-14px;right:-14px;z-index:2}
+
 /* ============ account ============ */
 .huepick{display:flex;flex-wrap:wrap;gap:9px}
 .huechip{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--hairline);border-radius:999px;background:var(--surface);padding:5px 14px 5px 6px;cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--muted)}
@@ -993,6 +1006,12 @@ img{max-width:100%;display:block}
     <div class="modal__bar"><h2 id="bookModalTitle">Book</h2>
       <button class="xbtn" type="button" data-close="bookScrim" aria-label="Close">&times;</button></div>
     <div class="modal__body" id="bookModalBody"></div>
+  </div>
+</div>
+<div class="scrim" id="lightbox" hidden>
+  <div class="lightbox__inner">
+    <button class="xbtn" type="button" data-close="lightbox" aria-label="Close">&times;</button>
+    <img id="lightboxImg" alt="">
   </div>
 </div>
 <div class="scrim" id="loginScrim" hidden>
@@ -2399,6 +2418,17 @@ function memberLinks(m, style){
     (g ? '<a class="crewlink" href="' + esc(g) + '" target="_blank" rel="noopener noreferrer">Goodreads</a>' : "") +
     "</span>";
 }
+/* Drive serves images from more than one host and has changed which one works.
+   If the first form fails, quietly try the other before giving up. */
+document.addEventListener("error", function(e){
+  var n = e.target;
+  if(!n || n.tagName !== "IMG" || !n.getAttribute) return;
+  var alt = n.getAttribute("data-fallback");
+  if(!alt) return;
+  n.removeAttribute("data-fallback");
+  n.src = alt;
+}, true);
+
 /* ---------- tooltips ---------- */
 document.addEventListener("mouseover", function(e){
   var n = e.target.closest && e.target.closest("[data-tip]");
@@ -2428,7 +2458,7 @@ function openScrim(id){
   document.body.style.overflow = "hidden";
   var f = $(id).querySelector(".xbtn"); if(f) f.focus();
 }
-var SCRIMS = ["loginScrim","meScrim","memberScrim","bookScrim","meetScrim","prevScrim","badgeScrim","adminScrim"];
+var SCRIMS = ["lightbox","loginScrim","meScrim","memberScrim","bookScrim","meetScrim","prevScrim","badgeScrim","adminScrim"];
 function closeScrim(id){
   $(id).hidden = true;
   if(SCRIMS.every(function(s){ return $(s).hidden; })) document.body.style.overflow = "";
@@ -2451,6 +2481,7 @@ function openMeeting(id){
   $("meetModalTitle").textContent = (b ? b.title : "Meeting") + " — " + shortDate(m.date);
   $("meetModalBody").innerHTML = meetingHTML(m, b);
   openScrim("meetScrim");
+  if(m.kind === "party") loadPhotos(m.id);
 }
 function noteList(items, kind, mid){
   if(!items || !items.length) return '<p class="empty">' + (kind === "pred" ? "No predictions yet. Call it before you read it." : "No discussion points yet.") + "</p>";
@@ -2492,7 +2523,8 @@ function meetingHTML(m, b){
       "</div></section>") +
     (party
       ? '<section class="noteblock"><div class="noteblock__head" style="background:var(--grape);color:var(--on-grape)"><h3>Photos</h3></div>' +
-        '<div class="noteblock__body"><p class="empty">Photo uploads arrive with the member login — they&rsquo;ll be visible to signed-in members only.</p></div></section>'
+        '<div class="noteblock__body" id="partyPhotos" data-photomeet="' + esc(m.id) + '">' +
+        '<p class="hint">Loading&hellip;</p></div></section>'
       : "") +
     '<section class="noteblock noteblock--sum"><div class="noteblock__head"><h3>' +
       (party ? "How the party went" : "What happened at the meeting") + "</h3></div><div class=\"noteblock__body\">" +
@@ -2568,6 +2600,80 @@ function openBookDetail(o, kind, focus){
       if(keep) keep.setAttribute("data-lean", focus);
     }
   }
+}
+
+/* ---------- party photos ----------
+   Stored on the organiser's Drive, not in this repo: base64 images would bloat
+   state.json and git would keep them forever. Anyone can look; only a
+   signed-in member can add one or take their own down. */
+var photoCache = {};
+
+/* Drive has changed its direct-image URL more than once, so try the current
+   form and fall back to the older one if the browser can't load it. */
+function photoSrc(id){ return "https://drive.google.com/thumbnail?id=" + encodeURIComponent(id) + "&sz=w1400"; }
+function photoAlt(id){ return "https://lh3.googleusercontent.com/d/" + encodeURIComponent(id); }
+
+async function loadPhotos(meetingId){
+  var host = $("partyPhotos");
+  if(!host || host.getAttribute("data-photomeet") !== meetingId) return;
+  if(!endpoint()){
+    host.innerHTML = '<p class="empty">Photos need the club&rsquo;s endpoint set up.</p>';
+    return;
+  }
+  var res = await callEndpoint("photo-list", { meetingId: meetingId });
+  photoCache[meetingId] = (res && res.ok && res.photos) || [];
+  renderPhotos(meetingId);
+}
+function renderPhotos(meetingId){
+  var host = $("partyPhotos");
+  if(!host || host.getAttribute("data-photomeet") !== meetingId) return;
+  var list = photoCache[meetingId] || [];
+  host.innerHTML =
+    (list.length
+      ? '<div class="photogrid">' + list.map(function(p){
+          return '<figure class="photo">' +
+            '<img src="' + esc(photoSrc(p.id)) + '" alt="' + esc("Party photo from " + (p.by || "a member")) + '" ' +
+              'loading="lazy" data-fallback="' + esc(photoAlt(p.id)) + '" data-photoview="' + esc(p.id) + '">' +
+            '<figcaption>' + esc(p.by || "") +
+              (me ? ' <button type="button" class="photo__x" data-photodel="' + esc(p.id) + '" data-mid="' + esc(meetingId) + '" aria-label="Remove this photo">&times;</button>' : "") +
+            "</figcaption></figure>";
+        }).join("") + "</div>"
+      : '<p class="empty">No photos from this one yet.</p>') +
+    (me
+      ? '<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">' +
+          '<button class="btn btn--sm btn--grape" type="button" data-photoadd="' + esc(meetingId) + '">Add photos</button>' +
+          '<span class="hint" id="photoNote">Anyone visiting the site can see these.</span></div>'
+      : '<p class="hint" style="margin-top:12px">Sign in to add photos.</p>');
+}
+/* several at once, shrunk in the browser before they go anywhere */
+function pickPhotos(cb){
+  var inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "image/*"; inp.multiple = true;
+  inp.addEventListener("change", function(){
+    var files = Array.prototype.slice.call(inp.files || []);
+    if(!files.length) return;
+    var out = [], done = 0;
+    files.slice(0, 10).forEach(function(f, i){
+      var fr = new FileReader();
+      fr.onload = function(){
+        var img = new Image();
+        img.onload = function(){
+          var w = Math.min(1400, img.width), h = Math.max(1, Math.round(img.height * (w / img.width)));
+          var c = document.createElement("canvas"); c.width = w; c.height = h;
+          var g = c.getContext("2d");
+          g.fillStyle = "#fff"; g.fillRect(0, 0, w, h);
+          g.drawImage(img, 0, 0, w, h);
+          out[i] = c.toDataURL("image/jpeg", 0.82);
+          if(++done === Math.min(files.length, 10)) cb(out.filter(Boolean));
+        };
+        img.onerror = function(){ if(++done === Math.min(files.length, 10)) cb(out.filter(Boolean)); };
+        img.src = fr.result;
+      };
+      fr.onerror = function(){ if(++done === Math.min(files.length, 10)) cb(out.filter(Boolean)); };
+      fr.readAsDataURL(f);
+    });
+  });
+  inp.click();
 }
 
 /* ---------- previous meetings ----------
@@ -3272,6 +3378,43 @@ document.addEventListener("input", function(e){
 document.addEventListener("click", async function(e){
   var t = e.target; if(!t || !t.closest) return;
   var el;
+
+  /* party photos */
+  if((el = t.closest("[data-photoadd]"))){
+    var pmid = el.getAttribute("data-photoadd");
+    pickPhotos(async function(urls){
+      var note = $("photoNote");
+      for(var i = 0; i < urls.length; i++){
+        if(note) note.textContent = "Uploading " + (i + 1) + " of " + urls.length + "…";
+        var res = await callEndpoint("photo-add", { token: sessionToken(), meetingId: pmid, dataUrl: urls[i] });
+        if(!res.ok){
+          if(note) note.textContent = res.error === "signed out" ? "Your session ran out — sign in again." : "Couldn't add that one: " + res.error;
+          break;
+        }
+        (photoCache[pmid] = photoCache[pmid] || []).push(res.photo);
+      }
+      renderPhotos(pmid);
+      say("Photos added.", "ok");
+    });
+    return;
+  }
+  if((el = t.closest("[data-photodel]"))){
+    var dpid = el.getAttribute("data-photodel"), dmid = el.getAttribute("data-mid");
+    var dres = await callEndpoint("photo-delete", { token: sessionToken(), meetingId: dmid, id: dpid });
+    if(!dres.ok){
+      say(dres.error === "not yours" ? "That one isn't yours to remove." : "Couldn't remove that photo.", "bad");
+      return;
+    }
+    photoCache[dmid] = (photoCache[dmid] || []).filter(function(p){ return p.id !== dpid; });
+    renderPhotos(dmid);
+    return;
+  }
+  if((el = t.closest("[data-photoview]"))){
+    $("lightboxImg").src = el.getAttribute("src");
+    $("lightboxImg").alt = el.getAttribute("alt") || "";
+    openScrim("lightbox");
+    return;
+  }
 
   /* signing in */
   if(t.closest("#loginOpen") || t.closest("#meetManageNotify")){ if(me) await openMe(); else openLogin(); return; }
