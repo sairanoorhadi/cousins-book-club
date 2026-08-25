@@ -3260,7 +3260,7 @@ function paneMeetings(){
         (party ? '<p class="hint" style="margin-top:12px">Photo uploads for parties are coming with the member login.</p>' : "") +
         '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
           '<button class="btn btn--sm btn--zest" type="button" data-msave="' + esc(m.id) + '">Save changes</button>' +
-          '<button class="btn btn--sm btn--ghost" type="button" data-mdone="' + esc(m.id) + '">' + (m.done ? "Reopen" : "Mark finished") + "</button>" +
+          '<button class="btn btn--sm btn--ghost" type="button" data-mdone="' + esc(m.id) + '">' + (m.done ? "Reopen meeting" : "Mark meeting done") + "</button>" +
           '<button class="btn btn--sm btn--ghost" type="button" data-meet="' + esc(m.id) + '">Open notes</button>' +
           '<button class="btn btn--sm btn--ghost" type="button" data-mdel="' + esc(m.id) + '" style="margin-left:auto">Delete</button>' +
         "</div></div>";
@@ -3931,18 +3931,9 @@ document.addEventListener("click", async function(e){
   }
   if((el = t.closest("[data-mdone]"))){
     var dm2 = meetingById(el.getAttribute("data-mdone")); if(!dm2) return;
+    /* this finishes the meeting only — the book keeps reading.
+       Finishing the book itself is the Reading list's job. */
     dm2.done = !dm2.done;
-    if(dm2.done){
-      var moved = bookById(dm2.bookId);
-      if(moved){
-        moved.status = "past";
-        if(!moved.finished) moved.finished = dm2.date || todayISO();
-        var q4 = nextBooks();
-        if(q4.length){ q4[0].status = "current"; if(!q4[0].started) q4[0].started = todayISO(); }
-      }else{
-        var fr = recById(dm2.bookId); if(fr) adoptRec(fr, "past");
-      }
-    }
     if(await save("Updating…")){ renderAll(); renderAdmin(); }
     return;
   }
