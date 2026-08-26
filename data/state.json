@@ -1,5 +1,5 @@
 {
-  "rev": 1157,
+  "rev": 1158,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -588,6 +588,11 @@
         {
           "id": "disc-mt9eua0ze0s73",
           "text": "Why did they hide that Zoya was one of their refugees",
+          "by": ""
+        },
+        {
+          "id": "disc-mt9euvkl3lhph",
+          "text": "Jesper's not sick from not using Grisha powers but it manifests as his gambling addiction",
           "by": ""
         }
       ]
