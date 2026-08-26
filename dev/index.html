@@ -1977,6 +1977,29 @@ function titleCloseness(query, title){
   return editDistance(q, t.slice(0, q.length + 6)) / Math.max(9, q.length) * 6;
 }
 
+/* The one list of corrections, used by the form and by the test suite alike,
+   so what the suite measures is literally what the box would show.
+
+   Three questions in order: is it already exactly right, is it the same words
+   in a scruffier form, or is it a near miss? The middle one is what the
+   "the  hunger  games" case needed — the words were right, so nothing looked
+   wrong to the closeness test, but the stray spaces would have been submitted
+   and stored as the book's title. */
+function titleFixesFor(typed, hits){
+  var flat = String(typed || "").trim().replace(/\s+/g, " ");
+  if(!flat) return [];
+  var named = (hits || []).filter(function(h){ return h && h.title; });
+  /* typed exactly as the shelf has it: leave them alone */
+  if(named.some(function(h){ return h.title === flat; })) return [];
+  var tidier = named.filter(function(h){ return sameTitle(flat, h.title); });
+  var near = tidier.length ? tidier : named.filter(function(h){
+    return !titleHasQuery(flat, h.title) && titleCloseness(flat, h.title) < 1.5;
+  });
+  return near.filter(function(h, i, all){        /* one row per title */
+    return all.map(function(x){ return x.title.toLowerCase(); }).indexOf(h.title.toLowerCase()) === i;
+  }).slice(0, 3);
+}
+
 /* Add ?debug=lookup to the address to watch a title search decide. Off
    otherwise, so the console stays usable — but there when the next "it just
    does nothing" needs answering without a rebuild. */
@@ -2139,6 +2162,7 @@ var QUERY_FORMS = {
 
 window.QUERY_FORMS = QUERY_FORMS;
 window.wildcardQuery = wildcardQuery;
+window.titleFixesFor = titleFixesFor;
 
 async function rawSearch(q){
   try{
@@ -2193,10 +2217,8 @@ window.typoSuite = async function(cases){
     var c = cases[i];
     var found = await lookupBook(c.typed);
     var hits = found.hits;
-    /* exactly what offerTitleFixes would put on screen */
-    var offered = hits.filter(function(h){
-      return h.title && !titleHasQuery(c.typed, h.title) && titleCloseness(c.typed, h.title) < 1.5;
-    }).slice(0, 3).map(function(h){ return h.title; });
+    /* the same function the form calls, not a second copy of the rule */
+    var offered = titleFixesFor(c.typed, hits).map(function(h){ return h.title; });
 
     var wantSilence = !c.expect;
     var got = offered[0] || "";
@@ -5106,14 +5128,14 @@ function fixBand(host, label, options, attr){
 
 var titleFixes = [];
 function offerTitleFixes(typed, hits){
-  /* only when the closest match doesn't contain what was typed but is near it:
-     a slip or two, not a different book */
-  titleFixes = hits.filter(function(h){
-    return h.title && !titleHasQuery(typed, h.title) && titleCloseness(typed, h.title) < 1.5;
-  }).filter(function(h, i, all){
-    return all.map(function(x){ return x.title.toLowerCase(); }).indexOf(h.title.toLowerCase()) === i;
-  }).slice(0, 3);
-  fixBand($("sTitleFix"), titleFixes.length > 1 ? "Did you mean one of these?" : "Did you mean\u2026",
+  titleFixes = titleFixesFor(typed, hits);
+  /* "Did you mean" is the wrong thing to say when the words are already right
+     and only the capitals or the spacing are off — nobody spelt anything
+     wrong there. */
+  var tidyOnly = titleFixes.length === 1 && sameTitle(typed, titleFixes[0].title);
+  fixBand($("sTitleFix"),
+    tidyOnly ? "Written like this on the shelf:"
+      : titleFixes.length > 1 ? "Did you mean one of these?" : "Did you mean\u2026",
     titleFixes.map(function(h){
       return { text: h.title, sub: (h.author || "") + (h.year ? " \u00b7 " + h.year : "") };
     }), "data-titlefix");
