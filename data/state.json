@@ -1,5 +1,5 @@
 {
-  "rev": 1161,
+  "rev": 1162,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -517,7 +517,7 @@
       "place": "Condo",
       "chapters": "Section 6: Chapters 39-46 (Final Section)",
       "pages": "55",
-      "done": false,
+      "done": true,
       "summary": "",
       "photos": [],
       "predictions": [],
