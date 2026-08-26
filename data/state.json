@@ -1,5 +1,5 @@
 {
-  "rev": 1113,
+  "rev": 1114,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -386,6 +386,11 @@
         {
           "id": "pred-mt9dqdnq5t4h2",
           "text": "Nina slows down Bo Yul-Bayars heartbeat so that everyone thinks he is dead at the ice court",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9ds63j5ft3l",
+          "text": "Pekka Rollins is gonna be at the Ice Court",
           "by": ""
         }
       ],
