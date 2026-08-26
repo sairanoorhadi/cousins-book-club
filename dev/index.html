@@ -1981,12 +1981,31 @@ window.selfTest = async function(title, author){
   var covers = await searchCovers(title, author);
   note("5. cover search", covers.length > 0, covers.length + " cover(s)");
 
-  var mis = await searchBooks(typo);
-  var near = mis.length ? Math.round(titleCloseness(typo, mis[0].title) * 100) / 100 : null;
-  var offers = mis.length && !titleHasQuery(typo, mis[0].title) && near < 1.5;
-  note("6. typo \u201c" + typo + "\u201d finds the book", mis.length > 0,
-    mis.length ? mis[0].title + " (closeness " + near + ")" : "NOTHING RETURNED");
-  note("6. \u2026and would be offered as a correction", !!offers, offers ? "yes" : "no \u2014 see closeness above");
+  /* Go through the page's own path, not a re-implementation of it. Open
+     Library is user-contributed and carries typo records — a work literally
+     titled "percy jackson and the lightning theif" — so the RAW first result
+     for a misspelling is often the misspelling itself. lookupBook sorts by
+     closeness and offerTitleFixes weighs every hit, which is what puts the
+     properly spelled book first; checking only the raw first result tests a
+     rule the page does not use. */
+  var found = await lookupBook(typo);
+  var mis = found.hits;
+  note("6. typo \u201c" + typo + "\u201d finds something", mis.length > 0,
+    mis.length ? mis.length + " hit(s)" : "NOTHING RETURNED");
+  note("6. closest after sorting", mis.length > 0,
+    mis.length ? mis[0].title + " (closeness " + (Math.round(mis[0].near * 100) / 100) + ")" : "-");
+
+  var qualify = mis.filter(function(h){
+    return h.title && !titleHasQuery(typo, h.title) && titleCloseness(typo, h.title) < 1.5;
+  });
+  note("6. would be offered as a correction", qualify.length > 0,
+    qualify.length ? qualify.slice(0, 3).map(function(h){ return h.title; }).join(" | ")
+      : "none qualified \u2014 hits were: " + mis.slice(0, 3).map(function(h){
+          return h.title + " (" + (Math.round(h.near * 100) / 100) + (titleHasQuery(typo, h.title) ? ", contains what you typed" : "") + ")";
+        }).join(" | "));
+  var typoRecords = mis.filter(function(h){ return titleHasQuery(typo, h.title); }).length;
+  note("6. typo records in the catalogue", true,
+    typoRecords ? typoRecords + " hit(s) literally contain the misspelling \u2014 excluded, as intended" : "none");
 
   console.log("%cselfTest \u2014 " + title, "font-weight:bold");
   try{ console.table(rows); }catch(e){ rows.forEach(function(r){ console.log(r.result, r.check, r.detail); }); }
