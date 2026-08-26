@@ -1,5 +1,5 @@
 {
-  "rev": 1194,
+  "rev": 1195,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -94,7 +94,10 @@
       "email": "",
       "notifyRef": "sub-f9a6f748-bc4",
       "emailHint": "e••••@gmail.com",
-      "notify": [],
+      "notify": [
+        "bk-ck",
+        "bk-mt7pvx697h34g"
+      ],
       "fable": "https://fable.co/fabler/eliza-hadi-487093293960?referralID=2v71c1ojRf",
       "goodreads": "",
       "hue": ""
