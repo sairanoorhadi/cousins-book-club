@@ -1,5 +1,5 @@
 {
-  "rev": 1111,
+  "rev": 1112,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -376,6 +376,11 @@
         {
           "id": "pred-mt9doy1imupzk",
           "text": "Inej might betray. There is something off with her",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9dpcksxx4nt",
+          "text": "Fjerdns maybe like Grisha",
           "by": ""
         }
       ],
