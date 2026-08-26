@@ -1,5 +1,5 @@
 {
-  "rev": 1180,
+  "rev": 1181,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -734,7 +734,7 @@
       "by": "Pareesa",
       "status": "approved",
       "at": "",
-      "cover": "",
+      "cover": "https://m.media-amazon.com/images/I/91cpWFgBVML._AC_UF1000,1000_QL80_.jpg",
       "blurb": "Kenny Sakamoto worships his older brother Mickey and the Vancouver Asahi baseball team, and wants nothing more than a place on the field. Then Pearl Harbor is bombed and his Japanese-Canadian community is uprooted to the interior. A coming-of-age story about a boy holding on to the one thing that still makes sense.",
       "shortlist": false,
       "summarySource": "own",
