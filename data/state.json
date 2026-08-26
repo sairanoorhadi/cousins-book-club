@@ -1,5 +1,5 @@
 {
-  "rev": 1179,
+  "rev": 1180,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -18,19 +18,6 @@
       "email": "",
       "notifyRef": "sub-84e7607a-09e",
       "emailHint": "s••••@gmail.com",
-      "notify": [],
-      "hue": ""
-    },
-    {
-      "id": "mb-pareesa",
-      "name": "Eliza",
-      "joined": "2026-04-17",
-      "avatar": "",
-      "fable": "",
-      "goodreads": "",
-      "email": "",
-      "notifyRef": "",
-      "emailHint": "",
       "notify": [],
       "hue": ""
     },
@@ -124,7 +111,6 @@
       "progressPage": 334,
       "members": [
         "mb-saira",
-        "mb-pareesa",
         "mb-mt3zx2lgcj3x8",
         "mb-mt3zy8m6cxe9o"
       ],
@@ -155,7 +141,6 @@
       "progressPage": 0,
       "members": [
         "mb-saira",
-        "mb-pareesa",
         "mb-mt3zx2lgcj3x8"
       ],
       "review": {
@@ -191,7 +176,6 @@
       "progressPage": 40,
       "members": [
         "mb-saira",
-        "mb-pareesa",
         "mb-mt3zy8m6cxe9o",
         "mb-mt40250262772"
       ],
@@ -629,8 +613,7 @@
       "ageMin": 13,
       "ageMax": 100,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-1984",
@@ -655,8 +638,7 @@
       "ageMin": 15,
       "ageMax": 100,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-kite",
@@ -681,8 +663,7 @@
       "ageMin": 16,
       "ageMax": 100,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-mockingbird",
@@ -707,8 +688,7 @@
       "ageMin": 13,
       "ageMax": 100,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-elevator",
@@ -738,8 +718,7 @@
       "ageMin": 8,
       "ageMax": 11,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-champion",
@@ -764,8 +743,7 @@
       "ageMin": 9,
       "ageMax": 12,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-grace",
@@ -790,8 +768,7 @@
       "ageMin": 10,
       "ageMax": 13,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-trouts",
@@ -816,8 +793,7 @@
       "ageMin": 8,
       "ageMax": 12,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-pandas",
@@ -842,8 +818,7 @@
       "ageMin": 9,
       "ageMax": 12,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-heartless",
@@ -874,8 +849,7 @@
           "at": "2026-08-25T15:52:10.000Z"
         }
       ],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     }
   ],
   "inbox": [
