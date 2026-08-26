@@ -1,5 +1,5 @@
 {
-  "rev": 1112,
+  "rev": 1113,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -381,6 +381,11 @@
         {
           "id": "pred-mt9dpcksxx4nt",
           "text": "Fjerdns maybe like Grisha",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9dqdnq5t4h2",
+          "text": "Nina slows down Bo Yul-Bayars heartbeat so that everyone thinks he is dead at the ice court",
           "by": ""
         }
       ],
