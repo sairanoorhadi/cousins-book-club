@@ -1,5 +1,5 @@
 {
-  "rev": 1120,
+  "rev": 1121,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -417,6 +417,11 @@
         {
           "id": "pred-mt9dyhe7wipth",
           "text": "Inej is going to \"Kill\" Kaz. Intense moment and reveal something about past or reveal that they like each other",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9dzkb436z31",
+          "text": "Bo Yul-Bayer does not exist or they just do not find him",
           "by": ""
         }
       ],
