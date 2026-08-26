@@ -1,5 +1,5 @@
 {
-  "rev": 1140,
+  "rev": 1141,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -494,6 +494,11 @@
         {
           "id": "pred-mt9ec8o6d4toh",
           "text": "We get a reveal about what Kaz did to Pekka in the Ice Court",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9eddyf7ugw7",
+          "text": "Kaz, Mattias, Jesper, Nina + Kuwei are going to use the slow down heart method Nina used when she was capsized with Mattis to stay alive in the river",
           "by": ""
         }
       ],
