@@ -1,5 +1,5 @@
 {
-  "rev": 1126,
+  "rev": 1127,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -442,6 +442,11 @@
         {
           "id": "pred-mt9e1r3iylts7",
           "text": "Inej turns into a Grish",
+          "by": "Summar"
+        },
+        {
+          "id": "pred-mt9e22j67vnbm",
+          "text": "Pekka Rollins is a Grisha",
           "by": "Summar"
         }
       ],
