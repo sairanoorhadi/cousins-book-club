@@ -1,5 +1,5 @@
 {
-  "rev": 1146,
+  "rev": 1147,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -531,7 +531,13 @@
       "done": true,
       "summary": "",
       "photos": [],
-      "predictions": [],
+      "predictions": [
+        {
+          "id": "pred-mt9emk883xe8m",
+          "text": "Bijaan get caught in the cross fire",
+          "by": ""
+        }
+      ],
       "points": []
     }
   ],
