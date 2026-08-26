@@ -1,5 +1,5 @@
 {
-  "rev": 1148,
+  "rev": 1149,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -540,6 +540,11 @@
         {
           "id": "pred-mt9emzm80rzou",
           "text": "Jesper's dad gets used",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9eni7omi848",
+          "text": "The Shu are catching Grisha for experimentation purposed",
           "by": ""
         }
       ],
