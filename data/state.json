@@ -1,5 +1,5 @@
 {
-  "rev": 1104,
+  "rev": 1105,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -240,11 +240,11 @@
     {
       "id": "mt-soc",
       "bookId": "bk-soc",
-      "date": "2026-07-02",
-      "time": "19:00",
-      "place": "",
-      "chapters": "Section 6",
-      "pages": "",
+      "date": "2026-05-09",
+      "time": "15:00",
+      "place": "Ferdinand",
+      "chapters": "Section 1 Chapter 1-6",
+      "pages": "99",
       "done": true,
       "summary": "",
       "predictions": [],
