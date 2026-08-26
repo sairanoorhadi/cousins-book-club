@@ -1,5 +1,5 @@
 {
-  "rev": 1115,
+  "rev": 1116,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -345,7 +345,7 @@
       "bookId": "bk-soc",
       "kind": "meeting",
       "date": "2026-05-18",
-      "time": "19:00",
+      "time": "13:00",
       "place": "Ferdinand",
       "chapters": "Section 2 Chapters 7-15",
       "pages": "77",
