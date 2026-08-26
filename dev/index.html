@@ -2061,6 +2061,99 @@ var TYPO_CASES = [
    typoSuite(TYPO_CASES.concat([{typed:"...", expect:"...", kind:"mine"}])) */
 window.TYPO_CASES = TYPO_CASES;
 
+/* ---- fuzzy probe ----
+   The 22-case run showed the correction is limited by Open Library's search,
+   not by our filter: nine typos returned nothing at all, and the ones that
+   worked all had a distinctive word spelled correctly. Open Library runs Solr,
+   which may accept fuzzy and wildcard operators. This asks whether any query
+   form finds the right book where the plain one failed — the answer decides
+   whether this is fixable or a ceiling to live with. Measuring, not guessing.
+
+   Run fuzzyProbe() in the console on a ?debug=lookup page. */
+var FUZZY_CASES = [
+  { typed: "lighning thief",       expect: "The Lightning Thief" },
+  { typed: "wrinkle in tim",       expect: "A Wrinkle in Time" },
+  { typed: "the hobbti",           expect: "The Hobbit" },
+  { typed: "six of crwos",         expect: "Six of Crows" },
+  { typed: "crooked kingdomm",     expect: "Crooked Kingdom" },
+  { typed: "the giverr",           expect: "The Giver" },
+  { typed: "matildaa",             expect: "Matilda" },
+  { typed: "crooked kigen",        expect: "Crooked Kingdom" },
+  { typed: "percy jackson and the titans course", expect: "The Titan's Curse" },
+  { typed: "sixofcrows",           expect: "Six of Crows" },
+  { typed: "bridgeto terabithia",  expect: "Bridge to Terabithia" },
+  { typed: "to kill a mockingbrd", expect: "To Kill a Mockingbird" },
+  { typed: "the kite runer",       expect: "The Kite Runner" },
+  { typed: "anne of green gabels", expect: "Anne of Green Gables" }
+];
+window.FUZZY_CASES = FUZZY_CASES;
+
+/* the query forms worth trying, each a plain function of what was typed */
+var QUERY_FORMS = {
+  plain: function(t){ return t; },
+  /* Solr fuzzy: within one or two edits of each real word */
+  fuzzy: function(t){
+    return t.split(/\s+/).map(function(w){ return w.length >= 4 ? w + "~" : w; }).join(" ");
+  },
+  fuzzy1: function(t){
+    return t.split(/\s+/).map(function(w){ return w.length >= 4 ? w + "~1" : w; }).join(" ");
+  },
+  /* scoped to the title field, so author names cannot drag it off course */
+  titleFuzzy: function(t){
+    return "title:(" + t.split(/\s+/).map(function(w){ return w.length >= 4 ? w + "~" : w; }).join(" ") + ")";
+  },
+  /* a trailing wildcard rescues an extra letter but not a wrong one */
+  prefix: function(t){
+    return t.split(/\s+/).map(function(w){ return w.length >= 5 ? w.slice(0, w.length - 2) + "*" : w; }).join(" ");
+  }
+};
+
+window.QUERY_FORMS = QUERY_FORMS;
+
+async function rawSearch(q){
+  try{
+    var url = "https://openlibrary.org/search.json?limit=8&fields=" + OL_FIELDS + "&q=" + encodeURIComponent(q);
+    var res = await fetch(url, { cache: "no-store" });
+    if(!res.ok) return { error: "HTTP " + res.status, docs: [] };
+    return { docs: ((await res.json()).docs || []).map(olHit) };
+  }catch(e){ return { error: String(e), docs: [] }; }
+}
+
+window.fuzzyProbe = async function(cases){
+  cases = cases || FUZZY_CASES;
+  var forms = Object.keys(QUERY_FORMS);
+  var rows = [], wins = {}, i, f;
+  forms.forEach(function(n){ wins[n] = 0; });
+
+  for(i = 0; i < cases.length; i++){
+    var c = cases[i];
+    var row = { typed: c.typed, expected: c.expect };
+    for(f = 0; f < forms.length; f++){
+      var name = forms[f];
+      var q = QUERY_FORMS[name](c.typed);
+      var got = await rawSearch(q);
+      var hit = got.docs.filter(function(h){ return sameTitle(h.title, c.expect); })[0];
+      /* does it also survive our own filter, or only appear in the results? */
+      var offerable = hit && !titleHasQuery(c.typed, hit.title) && titleCloseness(c.typed, hit.title) < 1.5;
+      row[name] = got.error ? "ERR " + got.error
+        : !got.docs.length ? "-"
+        : hit ? (offerable ? "FOUND+OFFERABLE" : "found, not offerable")
+        : "wrong book";
+      if(offerable) wins[name]++;
+      await new Promise(function(r){ setTimeout(r, 200); });
+    }
+    rows.push(row);
+  }
+
+  console.log("%cfuzzyProbe \u2014 " + cases.length + " cases the plain query could not solve", "font-weight:bold");
+  try{ console.table(rows); }catch(e){ console.log(rows); }
+  console.log("cases rescued, by query form:");
+  console.table(forms.map(function(n){
+    return { form: n, example: QUERY_FORMS[n]("six of crwos"), rescued: wins[n] + " / " + cases.length };
+  }));
+  return { rows: rows, wins: wins };
+};
+
 function sameTitle(a, b){ return normTitle(a) === normTitle(b); }
 
 window.typoSuite = async function(cases){
