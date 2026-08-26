@@ -1,5 +1,5 @@
 {
-  "rev": 1123,
+  "rev": 1124,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -435,7 +435,13 @@
           "by": ""
         }
       ],
-      "points": []
+      "points": [
+        {
+          "id": "disc-mt9e12ncq5koz",
+          "text": "Why don't Grisha fight?",
+          "by": ""
+        }
+      ]
     }
   ],
   "recs": [
