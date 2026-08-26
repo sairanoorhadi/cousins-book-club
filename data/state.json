@@ -1,5 +1,5 @@
 {
-  "rev": 1149,
+  "rev": 1150,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -545,6 +545,11 @@
         {
           "id": "pred-mt9eni7omi848",
           "text": "The Shu are catching Grisha for experimentation purposed",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9eoh1b4vl4y",
+          "text": "Boat guy for Kaz's crew is an inside man for Van Eck",
           "by": ""
         }
       ],
