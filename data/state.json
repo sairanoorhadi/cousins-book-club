@@ -1,5 +1,5 @@
 {
-  "rev": 1121,
+  "rev": 1122,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -422,6 +422,11 @@
         {
           "id": "pred-mt9dzkb436z31",
           "text": "Bo Yul-Bayer does not exist or they just do not find him",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9e029ib1tpp",
+          "text": "Wylan is not a traitor",
           "by": ""
         }
       ],
