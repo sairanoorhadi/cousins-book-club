@@ -1,5 +1,5 @@
 {
-  "rev": 1119,
+  "rev": 1120,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -412,6 +412,11 @@
         {
           "id": "pred-mt9dxj2j4ujil",
           "text": "Kaz is going to destroy Pekka (Embaress)",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9dyhe7wipth",
+          "text": "Inej is going to \"Kill\" Kaz. Intense moment and reveal something about past or reveal that they like each other",
           "by": ""
         }
       ],
