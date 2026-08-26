@@ -4849,6 +4849,8 @@ async function chooseACHit(i){
   var h = acHits[i]; if(!h) return;
   closeAC();
   $("sTitle").value = h.title;
+  lastTitleChecked = h.title.trim();   /* chosen, so not a typo */
+  hideTitleFix();
   $("sAuthor").value = h.author;
   if(h.pages) $("sPages").value = h.pages;
   sugCover = h.cover || "";
@@ -4956,7 +4958,8 @@ function initSuggestForm(){
   setSugMode("own");
   $("sLookupOut").innerHTML = "";
   if($("sAgeNote")) $("sAgeNote").hidden = true;
-  if($("sTitleFix")){ $("sTitleFix").hidden = true; $("sTitleFix").innerHTML = ""; }
+  hideTitleFix();
+  lastTitleChecked = "";
   sugRatings = [{ score: "", source: "" }];
   sugIsbn = "";
   renderRatingRows();
@@ -5178,8 +5181,36 @@ async function askAIForDetails(){
     " A summary isn&rsquo;t fetched unless you ask &mdash; the buttons under the summary box do that." +
     (notes.length ? " " + esc(notes.join(" ")) : "") + "</p>";
 }
+/* The correction check used to live inside the dropdown's debounce, which
+   made it a casualty of closing the dropdown: blur fires, closeAC clears the
+   pending timer, and the check that had not run yet never does. Anyone who
+   typed and tabbed straight away — which is most people — got nothing.
+   It is its own thing now, and blur runs it directly. */
+var lastTitleChecked = "";
+function hideTitleFix(){
+  var h = $("sTitleFix");
+  if(h){ h.hidden = true; h.innerHTML = ""; }
+  titleFixes = [];
+}
+async function checkTitleSpelling(why){
+  var q = $("sTitle").value.trim();
+  if(LOOKUP_DEBUG) console.log("checkTitleSpelling(" + why + ") reading: " + JSON.stringify(q));
+  if(q.length < 3){ hideTitleFix(); return; }
+  if(q === lastTitleChecked) return;        /* already decided about this text */
+  lastTitleChecked = q;
+  var found = await lookupBook(q);
+  /* they may have typed on, or picked something, while we were asking */
+  if($("sTitle").value.trim() !== q){
+    if(LOOKUP_DEBUG) console.log("checkTitleSpelling: box moved on, dropping this answer");
+    return;
+  }
+  offerTitleFixes(q, found.hits);
+}
+
 $("sTitle").addEventListener("input", function(){
   clearTimeout(acTimer);
+  hideTitleFix();
+  lastTitleChecked = "";
   var q = $("sTitle").value.trim();
   if(q.length < 3){ acHits = []; closeAC(); return; }
   acTimer = setTimeout(async function(){
@@ -5187,10 +5218,18 @@ $("sTitle").addEventListener("input", function(){
     acHits = found.hits.slice(0, 6);
     renderAC();
     /* and say so if what they typed doesn't look like any of them */
-    offerTitleFixes(q, found.hits);
+    if($("sTitle").value.trim() === q){
+      lastTitleChecked = q;
+      offerTitleFixes(q, found.hits);
+    }
   }, 320);
 });
-$("sTitle").addEventListener("blur", function(){ setTimeout(closeAC, 180); });
+$("sTitle").addEventListener("blur", function(){
+  setTimeout(closeAC, 180);
+  /* after closeAC, and after any click on a suggestion has been handled, so
+     this reads the box as it finally stands rather than as it was */
+  setTimeout(function(){ checkTitleSpelling("blur"); }, 230);
+});
 $("sBlurb").addEventListener("input", function(){
   var v = $("sBlurb").value;
   if(sugMode === "fetched") sugFetched = v;
@@ -5222,7 +5261,8 @@ document.addEventListener("click", async function(e){
     var pickT = titleFixes[Number(tf.getAttribute("data-titlefix"))];
     if(pickT){
       $("sTitle").value = pickT.title;
-      $("sTitleFix").hidden = true; $("sTitleFix").innerHTML = "";
+      lastTitleChecked = pickT.title.trim();
+      hideTitleFix();
       closeAC();
       syncSearchLinks();
     }
