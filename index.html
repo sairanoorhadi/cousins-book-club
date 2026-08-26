@@ -75,6 +75,8 @@ img{max-width:100%;display:block}
 
 /* ============ chrome ============ */
 .topbar{position:sticky;top:0;z-index:60;background:var(--paper);border-bottom:2px solid var(--edge)}
+/* the header stays on screen, so anything else that sticks has to clear it */
+:root{--topbar-h:66px}
 .topbar__in{display:flex;align-items:center;gap:20px;min-height:64px}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
 .brand__mark{width:32px;height:32px;flex:none;border:2px solid var(--edge);border-radius:5px;background:var(--flare);position:relative;box-shadow:2px 2px 0 var(--stamp);overflow:hidden}
@@ -268,7 +270,41 @@ img{max-width:100%;display:block}
 .select{font-family:var(--f-display);font-weight:500;font-size:15px}
 .input::placeholder,.textarea::placeholder{color:var(--muted);opacity:.75}
 .formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+.formgrid--rest{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+/* The lookup button stands in a field slot with nothing to label. An empty cap
+   the same size as a real label keeps it in line with the inputs beside it
+   rather than riding up level with their labels. */
+.field--action .lookupgo{width:100%}
+.field__cap{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:transparent}
+.field__cap::before{content:"\00a0"}
+/* the form is a flex stack with a gap, so an empty answer box would still
+   push the next field down */
+#sLookupOut:empty{display:none}
+
 .formcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:26px;max-width:760px}
+/* ============ the suggestion form and its sticky sidebar ============
+   Two separate boxes that have to agree about where the form's rows are: the
+   sidebar starts level with the top of the form card and travels no lower
+   than Summary. So the form element itself is the grid — an invisible frame
+   holding a column of fields and a column for the sidebar — and the card look
+   is painted by a layer placed over the field column alone, spread past it by
+   the padding. That leaves the two boxes genuinely separate while the grid's
+   own rows go on doing the measuring, with nothing in pixels to keep in
+   step. */
+.suggestform{--aside-col:208px;--aside-gap:46px;--pad:26px;position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) var(--aside-col);column-gap:var(--aside-gap);row-gap:18px;align-items:start;padding:var(--pad);max-width:1010px}
+/* the card is painted, not laid out: a grid item here would take the cells the
+   fields are meant to auto-place into and push the whole form down a column */
+.suggestform::before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:0;right:calc(var(--aside-col) + var(--aside-gap));border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
+.suggestform > *{grid-column:1;min-width:0}
+/* The track is the sidebar's whole travel: the card's top edge down to its
+   bottom. Taken out of the flow rather than placed on rows, so it spans the
+   form exactly — and there is no row number here to fall out of step when a
+   field is added. The column it sits over is still reserved by the grid. */
+.suggestform > .lookaside__track{position:absolute;top:0;bottom:0;right:var(--pad);width:var(--aside-col)}
+.formgrid--rest #sLookupOut{grid-column:1/-1}
+.lookaside{position:sticky;top:calc(var(--topbar-h) + 18px);display:flex;flex-direction:column;gap:8px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:16px}
+.lookaside__cap{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.lookaside .btn{width:100%}
 
 .picker{display:flex;gap:14px;align-items:flex-start}
 .picker__prev{width:64px;flex:none}
@@ -397,6 +433,21 @@ img{max-width:100%;display:block}
 .authrow__pick[aria-pressed="true"] small{color:var(--on-surf);opacity:.85}
 .authrow__web{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--muted);text-decoration:none}
 .authrow__web:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
+/* Only on the card that has been picked, and standing outside the card
+   entirely: Confirm sits in the Look up book column, under that button, level
+   with the top of its own row. The row is the anchor, so it always names the
+   right author; the column is a step to the right, which is the width of the
+   author cell plus the grid's gap. Nothing about the cards themselves changes
+   when one is picked — they are the size and shape they always were. */
+.authrow{position:relative}
+.authrow__ok{position:absolute;left:calc(100% + 16px);top:0;width:max-content}
+/* Measured, not guessed: below 766px the field row drops from three columns to
+   two, so there is no Look up book column beside the author to sit under. The
+   button rejoins the row on a line of its own rather than squeezing the name. */
+@media (max-width:765px){
+  .authrow{flex-wrap:wrap}
+  .authrow__ok{position:static;width:auto;margin-left:auto}
+}
 
 .lookupfix{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;border:2px dashed var(--edge);border-radius:var(--r);background:var(--sunk);padding:10px 14px;font-size:15px}
 
@@ -460,7 +511,6 @@ img{max-width:100%;display:block}
 /* the house pink only reaches 4.3:1 against white, so this chip gets a
    deeper red of its own — the name has to be readable at 11.5px */
 .secondchip--down{background:#C81748;color:#FFFFFF;border-color:#C81748;font-weight:700}
-:root:not([data-theme="light"]) .secondchip--down{background:#FF8FA3;color:#2A0710;border-color:#FF8FA3}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .secondchip--down{background:#FF8FA3;color:#2A0710;border-color:#FF8FA3}}
 :root[data-theme="dark"] .secondchip--down{background:#FF8FA3;color:#2A0710;border-color:#FF8FA3}
 .endorse{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;border:2px dashed var(--edge);border-radius:var(--r);padding:12px 14px;background:var(--sunk)}
@@ -505,6 +555,12 @@ img{max-width:100%;display:block}
 .ratingrow__del{flex:none;border:2px solid var(--edge);border-radius:50%;width:30px;height:30px;background:var(--surface);cursor:pointer;font-family:var(--f-display);font-weight:700;line-height:1;color:var(--muted)}
 .ratingrow__del:hover{background:var(--flare);color:var(--on-flare);border-color:var(--flare)}
 .agecheck{margin-left:10px;text-transform:none;letter-spacing:0;vertical-align:middle;padding:4px 11px;font-size:12px;box-shadow:1px 1px 0 var(--stamp)}
+/* said in the space beside those buttons when a lookup came back with no age
+   at all. The house pink is only 4.3:1 on white, so this takes the deeper red
+   the "Not for me" chip uses, with the light tone for dark mode. */
+.agemiss{margin-left:14px;vertical-align:middle;text-transform:none;letter-spacing:0;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:#C81748}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .agemiss{color:#FF8FA3}}
+:root[data-theme="dark"] .agemiss{color:#FF8FA3}
 .huepick{display:flex;flex-wrap:wrap;gap:9px}
 .huechip{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--hairline);border-radius:999px;background:var(--surface);padding:5px 14px 5px 6px;cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--muted)}
 .huechip span{width:22px;height:22px;border-radius:50%;border:2px solid var(--edge);background:var(--c);flex:none}
@@ -554,6 +610,18 @@ img{max-width:100%;display:block}
 
 @media (max-width:960px){
   .hero__grid{grid-template-columns:1fr;gap:28px}
+}
+/* Below this the two boxes stop fitting side by side: the fields would be
+   squeezed until the title row broke onto two lines. The form goes back to
+   being one plain card and the sidebar drops into the flow under the name
+   row, still its own box, with its buttons laid across. */
+@media (max-width:1024px){
+  .suggestform{display:flex;flex-direction:column;align-items:stretch;gap:18px;max-width:760px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
+  .suggestform::before{display:none}
+  .suggestform > .lookaside__track{position:static;width:auto}
+  .lookaside{position:static;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px}
+  .lookaside .btn{width:auto}
+  .lookaside__cap{width:100%;margin-bottom:0}
 }
 @media (max-width:700px){
   .hero__main{grid-template-columns:118px minmax(0,1fr);gap:20px}
@@ -970,10 +1038,10 @@ img{max-width:100%;display:block}
         <div class="recgrid" id="shortGrid"></div>
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-suggest" aria-labelledby="tab-suggest" hidden>
-        <form class="formcard stack" id="suggestForm" style="gap:18px">
+        <form class="suggestform" id="suggestForm">
           <div>
             <h3 style="font-size:22px">Put a book forward</h3>
-            <p class="hint" style="margin-top:8px">Type the title, then press <strong>Fill in the details for me</strong> &mdash; the author, page count, genres and rating fill themselves in. Everything stays editable. The organiser reads submissions and publishes the ones the club wants.</p>
+            <p class="hint" style="margin-top:8px">Type the title, then press <strong>Look up book</strong> &mdash; the author, page count, genres and rating fill themselves in. Everything stays editable. The organiser reads submissions and publishes the ones the club wants.</p>
           </div>
           <div class="formgrid">
             <div class="field"><label for="sTitle">Book title</label>
@@ -981,12 +1049,27 @@ img{max-width:100%;display:block}
               <div class="authpick" id="sTitleFix" hidden></div></div>
             <div class="field"><label for="sAuthor">Author</label><input class="input" id="sAuthor" name="author" required maxlength="140">
               <div class="authpick" id="sAuthorPick" hidden></div></div>
+            <div class="field field--action"><span class="field__cap" aria-hidden="true"></span>
+              <button class="btn btn--grape lookupgo" type="button" id="sAskAI">Look up book</button>
+              <p class="hint">A title on its own is enough &mdash; no author needed.</p></div>
+          </div>
+          <div class="formgrid formgrid--rest">
             <div class="field"><label for="sPages">Page count</label><input class="input" id="sPages" name="pages" type="number" min="1" max="20000" inputmode="numeric"></div>
             <div class="field"><label for="sBy">Your name</label><input class="input" id="sBy" name="by" required maxlength="60"></div>
+            <div id="sLookupOut"></div>
+          </div>
+          <div class="lookaside__track">
+            <aside class="lookaside" id="sLookAside">
+              <p class="lookaside__cap">Look it up</p>
+              <a class="btn btn--sm btn--ghost" id="sGoodreads" href="https://www.goodreads.com" target="_blank" rel="noopener noreferrer">Open on Goodreads</a>
+              <a class="btn btn--sm btn--ghost" id="sGoogle" href="https://www.google.com" target="_blank" rel="noopener noreferrer">Google it</a>
+              <a class="btn btn--sm btn--ghost" id="sFable" href="https://fable.co" target="_blank" rel="noopener noreferrer">Check on Fable</a>
+            </aside>
           </div>
           <div class="field"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span>
               <button class="btn btn--sm btn--sky agecheck" type="button" id="sAgeCheck">Check online</button>
-              <button class="btn btn--sm btn--grape agecheck" type="button" id="sAgeAI">Ask AI</button></label>
+              <button class="btn btn--sm btn--grape agecheck" type="button" id="sAgeAI">Ask AI</button>
+              <strong class="agemiss" id="sAgeMiss" hidden>Reading level not available.</strong></label>
             <div id="sAgeSlider"></div>
             <p class="hint" id="sAgeNote" hidden></p></div>
           <div class="field"><label for="sGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label><input class="input" id="sGenres" name="genres" placeholder="Young Adult, Fantasy" maxlength="300"></div>
@@ -994,16 +1077,8 @@ img{max-width:100%;display:block}
             <div id="sRatings"></div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">
               <button class="btn btn--sm btn--ghost" type="button" id="sRatingAdd">+ Add rating</button>
-              <span class="hint" id="sRatingNote">Read them off Goodreads or Fable and type them in &mdash; the links above open both.</span>
+              <span class="hint" id="sRatingNote">Read them off Goodreads or Fable and type them in &mdash; the Look it up links open both.</span>
             </div></div>
-          <div class="field"><label>Look it up</label>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-              <button class="btn btn--sm btn--grape" type="button" id="sAskAI">Fill in the details for me</button>
-              <a class="btn btn--sm btn--ghost" id="sGoodreads" href="https://www.goodreads.com" target="_blank" rel="noopener noreferrer">Open on Goodreads</a>
-              <a class="btn btn--sm btn--ghost" id="sGoogle" href="https://www.google.com" target="_blank" rel="noopener noreferrer">Google it</a>
-              <a class="btn btn--sm btn--ghost" id="sFable" href="https://fable.co" target="_blank" rel="noopener noreferrer">Check on Fable</a>
-            </div>
-            <div id="sLookupOut"></div></div>
           <div class="field"><label>Cover</label><div id="sCoverPick"></div></div>
           <div class="field"><label>Summary</label>
             <div class="seg" id="sSumMode" style="margin-bottom:10px">
@@ -4987,6 +5062,17 @@ tabGroup(["tree","time"], "tab-");
 /* ---------- the Suggest a Book form ---------- */
 var sugMode = "own", sugCover = "", sugFetched = "", sugAI = "", sugOwn = "";
 
+/* ---- who last wrote each field ----
+   The lookup may overwrite what it wrote itself, and may never overwrite what
+   the reader typed. Emptiness is the wrong test for that: an author filled in
+   from a misspelt title is a field that is full and still ours to replace,
+   which is exactly the case that used to need clearing by hand. Anything not
+   in here has never been written, so it is ours. */
+var sugAuto = {};
+function fillMine(key){ sugAuto[key] = true; }
+function fillTheirs(key){ sugAuto[key] = false; }
+function canFill(key){ return sugAuto[key] !== false; }
+
 function setSugMode(mode){
   sugMode = mode;
   Array.prototype.forEach.call($("sSumMode").querySelectorAll("[data-summode]"), function(b){
@@ -5065,6 +5151,12 @@ async function requestAISummary(){
    pick the wrong one. Each row links out to a Google search for the pair, so
    you can check before committing. */
 var authorHits = [];
+/* which card has been clicked, and whether Confirm has been pressed. Both are
+   about what the reader has DONE, not about what the author box happens to
+   say — a name the lookup filled in is not a choice they made, and Confirm
+   must not appear against a card nobody has picked. */
+var authorPicked = -1;
+var authorSettled = false;
 function authorCandidates(hits, title){
   var seen = {}, outList = [];
   hits.forEach(function(h){
@@ -5082,27 +5174,35 @@ function authorCandidates(hits, title){
 function googlePair(title, author){
   return "https://www.google.com/search?q=" + encodeURIComponent('"' + title + '" "' + author + '"');
 }
+/* One name that is already in the box is not a choice — showing it as one was
+   the whole feature for most books, since a novel usually does have exactly
+   one author. Speak up only when there is something to decide. The lookup asks
+   this too, to know whether there is a list worth waiting on. */
+function authorPickWorth(){
+  var chosen = $("sAuthor").value.trim().toLowerCase();
+  return authorHits.length > 1 ||
+    (authorHits.length === 1 && authorHits[0].name.toLowerCase() !== chosen);
+}
 function renderAuthorPick(){
   var host = $("sAuthorPick");
   if(!host) return;
-  var title = $("sTitle").value.trim(), chosen = $("sAuthor").value.trim().toLowerCase();
-  /* One name that is already in the box is not a choice — showing it as one
-     was the whole feature for most books, since a novel usually does have
-     exactly one author. Speak up only when there is something to decide. */
-  var worthIt = authorHits.length > 1 ||
-    (authorHits.length === 1 && authorHits[0].name.toLowerCase() !== chosen);
-  if(!worthIt){ host.hidden = true; host.innerHTML = ""; return; }
+  var title = $("sTitle").value.trim();
+  /* settled by Confirm: the question is answered, so stop asking it */
+  if(!authorPickWorth() || authorSettled){ host.hidden = true; host.innerHTML = ""; return; }
   host.hidden = false;
   host.innerHTML = '<span class="authpick__lab">' +
-      (authorHits.length > 1 ? "Which author? Pick one and the rest fills in" : "Found this author") + "</span>" +
+      (authorHits.length > 1 ? "Which author? Pick one, then confirm to fill the rest in" : "Found this author") + "</span>" +
     authorHits.map(function(a, i){
+      var on = i === authorPicked;
       return '<span class="authrow">' +
-        '<button class="authrow__pick" type="button" data-authpick="' + i + '" aria-pressed="' +
-          (a.name.toLowerCase() === chosen) + '">' + esc(a.name) +
+        '<button class="authrow__pick" type="button" data-authpick="' + i + '" aria-pressed="' + on + '">' +
+          esc(a.name) +
           "<small>" + esc(a.title) + (a.year ? " \u00b7 " + esc(a.year) : "") + "</small></button>" +
         '<a class="authrow__web" href="' + esc(googlePair(title || a.title, a.name)) + '" target="_blank" ' +
           'rel="noopener noreferrer" title="Google &ldquo;' + esc(title || a.title) + '&rdquo; &ldquo;' + esc(a.name) + '&rdquo;" ' +
           'aria-label="Search the web for ' + esc(a.name) + '">&#127760;</a>' +
+        '<button class="btn btn--sm btn--surf authrow__ok" type="button" data-authok="' + i + '"' + (on ? "" : " hidden") +
+          ' aria-label="Confirm ' + esc(a.name) + ' and fill in the rest">Confirm</button>' +
       "</span>";
     }).join("");
 }
@@ -5180,26 +5280,29 @@ async function applyBookHit(h, siblings){
   $("sTitle").value = h.title;
   lastTitleChecked = h.title.trim();   /* chosen, so not a typo */
   hideTitleFix();
-  $("sAuthor").value = h.author;
-  if(h.pages) $("sPages").value = h.pages;
-  sugCover = h.cover || "";
+  /* a different book, so everything the lookup filled is refilled — and
+     everything the reader typed still stands */
+  if(canFill("author")){ $("sAuthor").value = h.author; fillMine("author"); }
+  if(h.pages && canFill("pages")){ $("sPages").value = h.pages; fillMine("pages"); }
+  if(canFill("cover")){ sugCover = h.cover || ""; fillMine("cover"); }
   var genres = (h.genres || []).slice();
   /* the subject list is what the reading level is inferred from */
-  if(h.mature){ dualState.sAge = { lo: 18, hi: AGE_TOP }; syncDual("sAge"); }
+  if(h.mature && canFill("age")){ dualState.sAge = { lo: 18, hi: AGE_TOP }; syncDual("sAge"); fillMine("age"); }
   var extras = await openLibraryExtras(h.title, h.author);
   if(extras){
-    if(!h.pages && extras.pages) $("sPages").value = extras.pages;
+    if(!h.pages && extras.pages && canFill("pages")){ $("sPages").value = extras.pages; fillMine("pages"); }
     genres = genres.concat(extras.genres);
-    if(!sugCover && extras.cover) sugCover = extras.cover;
+    if(!sugCover && extras.cover && canFill("cover")){ sugCover = extras.cover; fillMine("cover"); }
   }
-  $("sGenres").value = normaliseGenres(genres).join(", ");
-  if(h.rating > 0) offerRating(h.rating, "Open Library");
+  if(canFill("genres")){ $("sGenres").value = normaliseGenres(genres).join(", "); fillMine("genres"); }
+  if(h.rating > 0 && canFill("rating") && offerRating(h.rating, "Open Library")) fillMine("rating");
   if(h.isbn13){ sugIsbn = h.isbn13; }
   sugAI = "";
   setSugMode(sugMode);
   renderSugCover();
   /* the picked title's other authors stay on offer, in case this was the wrong one */
   authorHits = authorCandidates(siblings || [h], h.title);
+  authorPicked = -1; authorSettled = false;   /* a different book, a new question */
   renderAuthorPick();
   /* these fields were filled in code, which fires no input event */
   syncSearchLinks();
@@ -5208,7 +5311,7 @@ function renderSugCover(){
   $("sCoverPick").innerHTML =
     (sugCover ? '<span class="cover-wrap" style="width:70px;display:inline-block;margin-bottom:10px"><span class="cover"><img src="' + esc(sugCover) + '" alt=""></span></span>' : "") +
     coverSearchHTML("suggest", function(){ return { title: $("sTitle").value, author: $("sAuthor").value }; },
-      function(url){ sugCover = url; renderSugCover(); });
+      function(url){ fillTheirs("cover"); sugCover = url; renderSugCover(); });
 }
 /* ---- ratings: as many as the book has ----
    A book has a Goodreads score and a Fable score and they disagree. Making
@@ -5282,15 +5385,18 @@ function fableUrl(title, author, isbn){
 }
 
 function initSuggestForm(){
-  $("sAgeSlider").innerHTML = dualRangeHTML("sAge", 12, AGE_TOP);
+  $("sAgeSlider").innerHTML = dualRangeHTML("sAge", 12, AGE_TOP, function(){ fillTheirs("age"); ageMiss(false); });
   renderSugCover();
   setSugMode("own");
   $("sLookupOut").innerHTML = "";
   if($("sAgeNote")) $("sAgeNote").hidden = true;
+  ageMiss(false);
   hideTitleFix();
   lastTitleChecked = "";
   sugRatings = [{ score: "", source: "" }];
   sugIsbn = "";
+  authorHits = []; authorPicked = -1; authorSettled = false;
+  sugAuto = {};
   renderRatingRows();
   syncSearchLinks();
 }
@@ -5304,6 +5410,12 @@ function syncSearchLinks(){
 /* the explicit "search the web" pass: correct the title, offer the authors it
    found, and fill in everything it can */
 var lookupHits = [];
+function correctionBand(correction){
+  return correction
+    ? '<div class="lookupfix"><span>Did you mean <strong>' + esc(correction) + "</strong>?</span>" +
+      '<button class="btn btn--sm btn--zest" type="button" data-usehit="0">Use it</button></div>'
+    : "";
+}
 
 /* The details pass: page count, age rating, genres and a summary in one go.
    Google's AI Overview has no API and can't be read from a page, so this asks
@@ -5348,7 +5460,19 @@ function ageStart(){
 }
 function ageApply(lo, hi, said){
   setAgeSlider(lo, hi);
+  fillTheirs("age");   /* they pressed the button, so the lookup leaves it be */
+  ageMiss(false);
   $("sAgeNote").textContent = "Set to " + levelText({ ageMin: lo, ageMax: hi }) + ". " + said;
+}
+/* Shown only when a lookup has been run and came back with no age at all —
+   never before anyone has asked, and gone the moment a level arrives, from a
+   source or from the reader's own hand. The slider goes back to its full
+   range with it, so what is on screen is "we do not know" rather than a
+   leftover from the last book. */
+function ageMiss(missing){
+  var el = $("sAgeMiss");
+  if(el) el.hidden = !missing;
+  if(missing) setAgeSlider(0, AGE_TOP);
 }
 
 /* What the book databases shelve it under. */
@@ -5415,7 +5539,12 @@ async function askAIForDetails(){
   /* 1. the closest match on Open Library. lookupBook rather than searchBooks,
         because the typo correction used to live on the search button and that
         button has gone — this is the only lookup now, so it carries it. */
-  var found = await lookupBook([title, author].filter(Boolean).join(" "));
+  /* Only an author the reader typed steers the search. One we filled in
+     ourselves is a guess, and after a title is corrected it is usually a guess
+     about the wrong book — searching with it would hold the wrong answer in
+     place, which is the bug this fixes. */
+  var theirAuthor = canFill("author") ? "" : author;
+  var found = await lookupBook([title, theirAuthor].filter(Boolean).join(" "));
   var hits = found.hits;
   lookupHits = hits;
   var correction = found.correction;
@@ -5423,41 +5552,56 @@ async function askAIForDetails(){
      author in the query returns only that author's editions, which is exactly
      the alternatives the list exists to offer — so it went quiet as soon as
      the author box had anything in it, which is after the first press. */
-  authorHits = authorCandidates(author ? (await lookupBook(title)).hits : hits, title);
-  if(author){
-    /* they've already named someone: prefer that person's edition */
-    var wanted = author.toLowerCase();
+  authorHits = authorCandidates(theirAuthor ? (await lookupBook(title)).hits : hits, title);
+  if(theirAuthor){
+    /* they've named someone themselves: prefer that person's edition */
+    var wanted = theirAuthor.toLowerCase();
     var theirs = hits.filter(function(h){ return String(h.author || "").toLowerCase().indexOf(wanted) !== -1; });
     if(theirs.length) hits = theirs.concat(hits.filter(function(h){ return theirs.indexOf(h) === -1; }));
   }
   var best = hits[0] || null;
 
+  /* A name they typed is not a name they have settled on. Put the candidates
+     that name turns up on screen and touch nothing else until Confirm says so
+     — the same step the first lookup asks for. Confirm sets authorSettled, so
+     this only holds back the press that follows the typing. */
+  if(theirAuthor && !authorSettled && authorPickWorth()){
+    renderAuthorPick();
+    syncSearchLinks();
+    out.innerHTML = correctionBand(correction) +
+      '<p class="hint" style="margin-top:10px">Kept the author you typed. Pick one of the names below and press ' +
+      '<strong>Confirm</strong> to fill the rest in &mdash; nothing else has been touched.</p>';
+    return;
+  }
+
   var genres = [];
   if(best){
-    if(best.author && !author){ $("sAuthor").value = best.author; author = best.author; filled.push("author"); }
-    if(best.rating > 0 && offerRating(best.rating, "Open Library")) filled.push("a rating");
+    if(best.author && canFill("author")){ $("sAuthor").value = best.author; author = best.author; fillMine("author"); filled.push("author"); }
+    if(best.rating > 0 && canFill("rating") && offerRating(best.rating, "Open Library")){ fillMine("rating"); filled.push("a rating"); }
     if(best.isbn13){ sugIsbn = best.isbn13; }
-    if(best.pages && !$("sPages").value){ $("sPages").value = best.pages; filled.push("page count"); }
+    if(best.pages && canFill("pages")){ $("sPages").value = best.pages; fillMine("pages"); filled.push("page count"); }
     genres = genres.concat(best.genres || []);
-    if(best.cover && !sugCover){ sugCover = best.cover; renderSugCover(); }
+    if(best.cover && canFill("cover")){ sugCover = best.cover; fillMine("cover"); renderSugCover(); }
   }
 
   /* 2. Open Library for the richer subject list and a second page count */
   var extras = await openLibraryExtras(title, author);
   if(extras){
-    if(extras.pages && !$("sPages").value){ $("sPages").value = extras.pages; filled.push("page count"); }
+    if(extras.pages && canFill("pages")){ $("sPages").value = extras.pages; fillMine("pages"); filled.push("page count"); }
     genres = genres.concat(extras.genres || []);
-    if(extras.cover && !sugCover){ sugCover = extras.cover; renderSugCover(); }
+    if(extras.cover && canFill("cover")){ sugCover = extras.cover; fillMine("cover"); renderSugCover(); }
   }
 
-  if(genres.length){
+  if(genres.length && canFill("genres")){
     $("sGenres").value = normaliseGenres(genres).join(", ");
+    fillMine("genres");
     filled.push("genres");
   }
   var band = ageFromShelving(genres, best && best.mature);
-  if(band){ setAgeSlider(band.lo, band.hi); filled.push("age rating"); }
+  if(band && canFill("age")){ setAgeSlider(band.lo, band.hi); fillMine("age"); filled.push("age rating"); }
 
   if(!best && !extras){
+    ageMiss(canFill("age"));
     out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t find that one. Check the spelling, or fill it in yourself &mdash; the Goodreads, Google and Fable links are right there.</p>';
     return;
   }
@@ -5470,16 +5614,18 @@ async function askAIForDetails(){
       var j = await callEndpoint("details", { title: title, author: author });
       if(j && j.ok && j.details){
         var d = j.details;
-        if(d.author && !$("sAuthor").value){ $("sAuthor").value = d.author; filled.push("author"); }
-        if(Number(d.pages) > 0 && !$("sPages").value){ $("sPages").value = Number(d.pages); filled.push("page count"); }
-        if(Array.isArray(d.genres) && d.genres.length){
+        if(d.author && canFill("author") && !$("sAuthor").value){ $("sAuthor").value = d.author; fillMine("author"); filled.push("author"); }
+        if(Number(d.pages) > 0 && canFill("pages")){ $("sPages").value = Number(d.pages); fillMine("pages"); filled.push("page count"); }
+        if(Array.isArray(d.genres) && d.genres.length && canFill("genres")){
           $("sGenres").value = normaliseGenres(genres.concat(d.genres)).join(", ");
+          fillMine("genres");
         }
         /* the backend answers with zeroes when it isn't sure — never let that
            wipe the slider to 0-0 */
         if(typeof d.ageMin === "number" && typeof d.ageMax === "number" &&
-           d.ageMax > 0 && d.ageMax >= d.ageMin){
+           d.ageMax > 0 && d.ageMax >= d.ageMin && canFill("age")){
           setAgeSlider(d.ageMin, d.ageMax);
+          fillMine("age");
           if(filled.indexOf("age rating") === -1) filled.push("age rating");
         }
         /* deliberately not touching the summary — that only happens when
@@ -5492,14 +5638,15 @@ async function askAIForDetails(){
     }catch(e){}
   }
 
+  /* Neither the shelving nor the AI could put an age on it — but say so only
+     about a level that was ours to set. Resetting one they set by hand would
+     throw away the very thing the ledger is for. */
+  ageMiss(canFill("age") && filled.indexOf("age rating") === -1);
+
   syncSearchLinks();
   renderAuthorPick();
   var uniq = filled.filter(function(f, i){ return filled.indexOf(f) === i; });
-  out.innerHTML =
-    (correction
-      ? '<div class="lookupfix"><span>Did you mean <strong>' + esc(correction) + "</strong>?</span>" +
-        '<button class="btn btn--sm btn--zest" type="button" data-usehit="0">Use it</button></div>'
-      : "") +
+  out.innerHTML = correctionBand(correction) +
     '<p class="hint" style="margin-top:10px">' +
     (uniq.length ? "Filled in the " + uniq.join(", ") + ". " : "Nothing new to fill in. ") +
     (refined ? "Checked against Open Library and Claude. " : "From Open Library. ") +
@@ -5593,18 +5740,33 @@ document.addEventListener("click", async function(e){
   }
   if(e.target.closest && e.target.closest("#sAgeCheck")){ await ageFromWeb(); return; }
   if(e.target.closest && e.target.closest("#sAgeAI")){ await ageFromAI(); return; }
+  /* a name on its own: take the name, show Confirm, change nothing else.
+     The other names stay up, so a wrong pick costs one more click. */
   var ap = e.target.closest && e.target.closest("[data-authpick]");
   if(ap){
-    var who = authorHits[Number(ap.getAttribute("data-authpick"))];
+    var i = Number(ap.getAttribute("data-authpick"));
+    var who = authorHits[i];
     if(who){
+      authorPicked = i;
       $("sAuthor").value = who.name;
+      fillTheirs("author");
       renderAuthorPick();
       syncSearchLinks();
-      /* refill against this author, so the page count and genres are theirs —
-         clearing first, or the "only if empty" guards keep the old values */
-      ["sPages", "sGenres"].forEach(function(id){ $(id).value = ""; });
-      sugRatings = [{ score: "", source: "" }];
-      renderRatingRows();
+    }
+    return;
+  }
+  /* Confirm: settle on this author, put the other cards away and fill in */
+  var ok = e.target.closest && e.target.closest("[data-authok]");
+  if(ok){
+    var confirmed = authorHits[Number(ok.getAttribute("data-authok"))];
+    if(confirmed){
+      $("sAuthor").value = confirmed.name;
+      fillTheirs("author");        /* they chose it, so it is not ours to change */
+      authorSettled = true;
+      renderAuthorPick();
+      syncSearchLinks();
+      /* no clearing needed any more: every field the lookup filled is still
+         marked as ours and gets replaced, and every field they typed is not */
       await askAIForDetails();
     }
     return;
@@ -5623,13 +5785,22 @@ document.addEventListener("click", async function(e){
 });
 var authTimer = null;
 $("sAuthor").addEventListener("input", function(){
+  /* typing over it is a choice of its own, so the cards may speak again */
+  fillTheirs("author");
+  authorPicked = -1; authorSettled = false;
   syncSearchLinks();
   clearTimeout(authTimer);
   if($("sAuthorPick") && !authorHits.length){ $("sAuthorPick").hidden = true; }
   authTimer = setTimeout(checkAuthorSpelling, 500);
 });
 $("sAuthor").addEventListener("blur", function(){ clearTimeout(authTimer); setTimeout(checkAuthorSpelling, 120); });
-$("sTitle").addEventListener("input", syncSearchLinks);
+$("sTitle").addEventListener("input", function(){
+  authorPicked = -1; authorSettled = false;   /* another book, another question */
+  syncSearchLinks();
+});
+$("sPages").addEventListener("input", function(){ fillTheirs("pages"); });
+$("sGenres").addEventListener("input", function(){ fillTheirs("genres"); });
+$("sRatings").addEventListener("input", function(){ fillTheirs("rating"); });
 
 $("suggestForm").addEventListener("submit", async function(e){
   e.preventDefault();
