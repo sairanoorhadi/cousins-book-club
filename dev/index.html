@@ -385,9 +385,6 @@ img{max-width:100%;display:block}
 .coverpick__src{display:block;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px;text-align:center}
 
 /* ============ autocomplete ============ */
-.ac{position:relative}
-.ac__menu{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--surface);border:2px solid var(--edge);border-radius:6px;box-shadow:var(--shadow-sm);max-height:274px;overflow:auto}
-.ac__menu[hidden]{display:none}
 /* the candidate authors a lookup turned up, under the author box */
 .authpick{margin-top:9px;display:flex;flex-direction:column;gap:6px}
 .authpick[hidden]{display:none}
@@ -400,12 +397,6 @@ img{max-width:100%;display:block}
 .authrow__pick[aria-pressed="true"] small{color:var(--on-surf);opacity:.85}
 .authrow__web{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--muted);text-decoration:none}
 .authrow__web:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
-.ac__opt{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:9px 12px;background:none;border:0;border-bottom:1.5px solid var(--hairline);cursor:pointer}
-.ac__opt:last-child{border-bottom:0}
-.ac__opt:hover,.ac__opt[data-on="1"]{background:var(--sunk)}
-.ac__opt img{width:28px;height:42px;object-fit:cover;border:1.5px solid var(--edge);border-radius:3px;flex:none}
-.ac__t{font-family:var(--f-display);font-weight:700;font-size:14px;line-height:1.2}
-.ac__a{display:block;color:var(--muted);font-size:13px;font-style:italic}
 
 .lookupfix{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;border:2px dashed var(--edge);border-radius:var(--r);background:var(--sunk);padding:10px 14px;font-size:15px}
 
@@ -982,12 +973,11 @@ img{max-width:100%;display:block}
         <form class="formcard stack" id="suggestForm" style="gap:18px">
           <div>
             <h3 style="font-size:22px">Put a book forward</h3>
-            <p class="hint" style="margin-top:8px">Start typing a title and pick it from the list &mdash; the author, page count, genres and summary fill themselves in. Everything stays editable. The organiser reads submissions and publishes the ones the club wants.</p>
+            <p class="hint" style="margin-top:8px">Type the title, then press <strong>Fill in the details for me</strong> &mdash; the author, page count, genres and rating fill themselves in. Everything stays editable. The organiser reads submissions and publishes the ones the club wants.</p>
           </div>
           <div class="formgrid">
-            <div class="field ac"><label for="sTitle">Book title</label>
-              <input class="input" id="sTitle" name="title" required maxlength="140" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="sTitleMenu">
-              <div class="ac__menu" id="sTitleMenu" role="listbox" hidden></div>
+            <div class="field"><label for="sTitle">Book title</label>
+              <input class="input" id="sTitle" name="title" required maxlength="140" autocomplete="off">
               <div class="authpick" id="sTitleFix" hidden></div></div>
             <div class="field"><label for="sAuthor">Author</label><input class="input" id="sAuthor" name="author" required maxlength="140">
               <div class="authpick" id="sAuthorPick" hidden></div></div>
@@ -4652,7 +4642,6 @@ tabGroup(["tree","time"], "tab-");
 
 /* ---------- the Suggest a Book form ---------- */
 var sugMode = "own", sugCover = "", sugFetched = "", sugAI = "", sugOwn = "";
-var acHits = [], acTimer = null;
 
 function setSugMode(mode){
   sugMode = mode;
@@ -4724,25 +4713,6 @@ async function requestAISummary(){
   }catch(e){
     $("sSumHint").textContent = "Couldn\u2019t reach the club\u2019s inbox. Try the other options.";
   }
-}
-function closeAC(){
-  /* the search is debounced, so a timer set while they were still typing would
-     reopen the menu a moment after this — over whatever we just put on screen */
-  clearTimeout(acTimer);
-  $("sTitleMenu").hidden = true;
-  $("sTitle").setAttribute("aria-expanded", "false");
-}
-function renderAC(){
-  var menu = $("sTitleMenu");
-  if(!acHits.length){ closeAC(); return; }
-  menu.innerHTML = acHits.map(function(h, i){
-    return '<button class="ac__opt" type="button" role="option" data-achit="' + i + '">' +
-      (h.cover ? '<img src="' + esc(h.cover) + '" alt="" loading="lazy">' : "") +
-      '<span><span class="ac__t">' + esc(h.title) + "</span>" +
-      '<span class="ac__a">' + esc(h.author || "unknown author") + (h.year ? " \u00b7 " + esc(h.year) : "") + "</span></span></button>";
-  }).join("");
-  menu.hidden = false;
-  $("sTitle").setAttribute("aria-expanded", "true");
 }
 /* Every distinct author the search turned up for this title, so a book with
    several editions, a translator, or a same-titled namesake doesn't quietly
@@ -4845,9 +4815,12 @@ async function checkAuthorSpelling(){
   }), "data-authorfix");
 }
 
-async function chooseACHit(i){
-  var h = acHits[i]; if(!h) return;
-  closeAC();
+/* Fill the form in from one search result. This used to be "the thing the
+   dropdown does"; with the dropdown gone it is only reached from the "Use it"
+   button on a correction, so it takes the hit rather than an index into a
+   list that no longer exists. */
+async function applyBookHit(h, siblings){
+  if(!h) return;
   $("sTitle").value = h.title;
   lastTitleChecked = h.title.trim();   /* chosen, so not a typo */
   hideTitleFix();
@@ -4870,7 +4843,7 @@ async function chooseACHit(i){
   setSugMode(sugMode);
   renderSugCover();
   /* the picked title's other authors stay on offer, in case this was the wrong one */
-  authorHits = authorCandidates(acHits, h.title);
+  authorHits = authorCandidates(siblings || [h], h.title);
   renderAuthorPick();
   /* these fields were filled in code, which fires no input event */
   syncSearchLinks();
@@ -5086,7 +5059,6 @@ async function askAIForDetails(){
   /* 1. the closest match on Google Books. lookupBook rather than searchBooks,
         because the typo correction used to live on the search button and that
         button has gone — this is the only lookup now, so it carries it. */
-  closeAC();   /* the title dropdown would otherwise sit over the answer */
   var found = await lookupBook([title, author].filter(Boolean).join(" "));
   var hits = found.hits;
   lookupHits = hits;
@@ -5181,11 +5153,12 @@ async function askAIForDetails(){
     " A summary isn&rsquo;t fetched unless you ask &mdash; the buttons under the summary box do that." +
     (notes.length ? " " + esc(notes.join(" ")) : "") + "</p>";
 }
-/* The correction check used to live inside the dropdown's debounce, which
-   made it a casualty of closing the dropdown: blur fires, closeAC clears the
-   pending timer, and the check that had not run yet never does. Anyone who
-   typed and tabbed straight away — which is most people — got nothing.
-   It is its own thing now, and blur runs it directly. */
+/* The one lookup on this field. It used to live inside the autocomplete
+   dropdown's debounce, which made it a casualty of closing that dropdown —
+   blur closed the menu, the close cleared the shared timer, and the check
+   that had not run yet never did. The dropdown is gone now, so that whole
+   class of interference is gone with it: this is the only thing listening,
+   and it runs once, on blur. */
 var lastTitleChecked = "";
 function hideTitleFix(){
   var h = $("sTitleFix");
@@ -5207,28 +5180,15 @@ async function checkTitleSpelling(why){
   offerTitleFixes(q, found.hits);
 }
 
+/* Nothing happens while you type any more — no dropdown, and no search per
+   keystroke. The check runs once, when you leave the field. */
 $("sTitle").addEventListener("input", function(){
-  clearTimeout(acTimer);
   hideTitleFix();
   lastTitleChecked = "";
-  var q = $("sTitle").value.trim();
-  if(q.length < 3){ acHits = []; closeAC(); return; }
-  acTimer = setTimeout(async function(){
-    var found = await lookupBook(q);
-    acHits = found.hits.slice(0, 6);
-    renderAC();
-    /* and say so if what they typed doesn't look like any of them */
-    if($("sTitle").value.trim() === q){
-      lastTitleChecked = q;
-      offerTitleFixes(q, found.hits);
-    }
-  }, 320);
 });
 $("sTitle").addEventListener("blur", function(){
-  setTimeout(closeAC, 180);
-  /* after closeAC, and after any click on a suggestion has been handled, so
-     this reads the box as it finally stands rather than as it was */
-  setTimeout(function(){ checkTitleSpelling("blur"); }, 230);
+  /* a beat, so a click on the correction band itself lands first */
+  setTimeout(function(){ checkTitleSpelling("blur"); }, 120);
 });
 $("sBlurb").addEventListener("input", function(){
   var v = $("sBlurb").value;
@@ -5237,8 +5197,6 @@ $("sBlurb").addEventListener("input", function(){
   else sugOwn = v;
 });
 document.addEventListener("click", async function(e){
-  var el = e.target.closest && e.target.closest("[data-achit]");
-  if(el){ await chooseACHit(Number(el.getAttribute("data-achit"))); return; }
   var sm = e.target.closest && e.target.closest("[data-summode]");
   if(sm){ setSugMode(sm.getAttribute("data-summode")); return; }
   if(e.target.closest && e.target.closest("#sAskAI")){ await askAIForDetails(); return; }
@@ -5263,7 +5221,6 @@ document.addEventListener("click", async function(e){
       $("sTitle").value = pickT.title;
       lastTitleChecked = pickT.title.trim();
       hideTitleFix();
-      closeAC();
       syncSearchLinks();
     }
     return;
@@ -5300,8 +5257,7 @@ document.addEventListener("click", async function(e){
   if(uh){
     var pick = lookupHits[Number(uh.getAttribute("data-usehit"))];
     if(pick){
-      acHits = lookupHits;
-      await chooseACHit(Number(uh.getAttribute("data-usehit")));
+      await applyBookHit(pick, lookupHits);
       $("sLookupOut").innerHTML = '<p class="hint" style="margin-top:10px">Filled in from &ldquo;' +
         esc(pick.title) + '&rdquo;. Change anything that looks wrong.</p>';
       syncSearchLinks();
