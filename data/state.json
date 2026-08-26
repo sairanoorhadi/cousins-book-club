@@ -1,5 +1,5 @@
 {
-  "rev": 1109,
+  "rev": 1110,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -367,7 +367,13 @@
       "done": true,
       "summary": "",
       "photos": [],
-      "predictions": [],
+      "predictions": [
+        {
+          "id": "pred-mt9dofhjb5xh8",
+          "text": "Jesper was faking ADHD and betrays everyone",
+          "by": ""
+        }
+      ],
       "points": []
     }
   ],
