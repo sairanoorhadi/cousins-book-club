@@ -1,5 +1,5 @@
 {
-  "rev": 1143,
+  "rev": 1144,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -502,6 +502,21 @@
           "by": ""
         }
       ],
+      "points": []
+    },
+    {
+      "id": "mt-mt9ehc1m8ekko",
+      "bookId": "bk-soc",
+      "kind": "meeting",
+      "date": "2026-07-01",
+      "time": "19:00",
+      "place": "Condo",
+      "chapters": "Section 6: Chapters 39-46 (Final Section)",
+      "pages": "55",
+      "done": false,
+      "summary": "",
+      "photos": [],
+      "predictions": [],
       "points": []
     }
   ],
