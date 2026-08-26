@@ -19,18 +19,33 @@ all commits to `dev/data/state.json` and the real site never notices. When the
 test data gets too messy to be useful, say so and it gets reseeded from the
 real data.
 
+## What it can and can't reach
+
+The test site talks to the same Google Apps Script as the real one, but only
+for the calls that **read**:
+
+| Works on the test site | Blocked there |
+| --- | --- |
+| Fill in the details | Submitting a book |
+| Ask AI (reading level) | Asking to join / signing up |
+| Write one for me | Signing in |
+| Cover search | Linking your name to a member |
+| | Endorsing, disliking, subscribing |
+| | Party photos |
+
+The three lookups return data and write nothing; everything in the right-hand
+column either writes to the *real* repo or reaches *real* members. A blocked
+one says so rather than failing silently.
+
 ## The one thing it can't do
 
-**Submissions and sign-in are switched off there.** Both go through the Google
-Apps Script, and that script writes to the *real* repo and emails *real*
-members — a test "ask to join" would land in your real inbox and a test sign-in
-would write to the real members list. Rather than risk that, the test site
-refuses to reach the endpoint at all, so those buttons report themselves as not
-switched on.
+**Anything that writes to the real repo or reaches real members is blocked.**
+A test "ask to join" would land in your real inbox; a test sign-in would edit
+the real members list. Those buttons say so when pressed.
 
-So: everything in Organiser tools, the reading list, recommendations, filters,
-badges and meetings can be tested there. Signing in, submitting a book from the
-public form, and party photos have to be checked on the real site — or on a
+So: Organiser tools, the reading list, recommendations, filters, badges,
+meetings and every lookup can be tested there. Submitting from the public form,
+signing in, and party photos have to be checked on the real site — or on a
 second Apps Script deployment of their own, which can be set up if it turns out
 to be worth it.
 

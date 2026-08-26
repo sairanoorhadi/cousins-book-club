@@ -583,7 +583,7 @@ img{max-width:100%;display:block}
 <body>
   <div class="devbar" id="devBar" hidden>
     <strong>Test site</strong>
-    <span>Its own copy of the data &mdash; nothing here reaches the real one. Submissions and sign-in are switched off.</span>
+    <span>Its own copy of the data &mdash; nothing here reaches the real one. Lookups work; submissions and sign-in are switched off.</span>
     <a href="../">Go to the real site &rarr;</a>
   </div>
 
@@ -1474,10 +1474,6 @@ async function loadState(){
     if(res.ok) file = await res.json();
   }catch(e){}
   state = migrate((file && Number(file.rev || 0) >= Number(seed.rev || 0)) ? file : seed);
-  /* The endpoint writes to the live repo and mails real people, so the dev
-     copy is not allowed to reach it whatever its data file says. Submissions
-     and sign-in report themselves as switched off there. */
-  if(DEV) state.club.formEndpoint = "";
 }
 
 /* ---------- dev copy ----------
@@ -1582,6 +1578,8 @@ function downloadState(){
 var inbox = [];
 function endpoint(){ return safeUrl(state && state.club && state.club.formEndpoint); }
 async function submitPublic(kind, payload){
+  /* every one of these lands in the real inbox */
+  if(DEV) return { ok: false, reason: "dev-blocked" };
   var url = endpoint();
   if(!url) return { ok: false, reason: "unconfigured" };
   try{
@@ -1632,6 +1630,7 @@ function applyInbox(){
   });
 }
 function submitFailMsg(res){
+  if(res.reason === "dev-blocked") return "This is the test site, so nothing is actually sent. Submit on the real site.";
   if(res.reason === "unconfigured") return "Submissions aren’t switched on yet — the organiser needs to add an endpoint under Settings.";
   if(res.reason === "network") return "Couldn’t reach the club’s inbox. Check your connection and try again.";
   return "The club’s inbox returned an error (" + (res.status || "?") + "). Try again in a moment.";
@@ -1651,7 +1650,17 @@ function sessionToken(){
 function setSessionToken(v){
   try{ if(v) localStorage.setItem(SESSION_KEY, v); else localStorage.removeItem(SESSION_KEY); }catch(e){}
 }
+/* What the test site is allowed to ask the endpoint for.
+   Blanking the address there was too blunt: it also killed the lookups, so
+   "Ask AI", the AI half of "Fill in the details" and "Write one for me" could
+   not be tried at all — which is not what a test site is for. These three read
+   and return; they write nothing to the repo and email nobody. Everything else
+   — submissions, sign-in, claiming a name, photos, subscriptions — either
+   writes to the real repo or reaches real members, and stays blocked. */
+var DEV_SAFE = ["ping", "details", "summarise", "images"];
+
 async function callEndpoint(kind, payload, urlOverride){
+  if(DEV && DEV_SAFE.indexOf(kind) === -1) return { ok: false, error: "dev-blocked" };
   var url = urlOverride || endpoint();
   if(!url) return { ok: false, error: "unconfigured" };
   var res;
@@ -1676,6 +1685,7 @@ async function callEndpoint(kind, payload, urlOverride){
 }
 /* Plain English for the failures above, so nobody has to guess. */
 function endpointTrouble(err){
+  if(err === "dev-blocked") return "That's switched off on the test site — it would reach real members. Try it on the real site.";
   if(err === "unconfigured") return "No script address saved yet — add it under Admin → Settings.";
   if(err === "unreachable") return "Couldn't reach the script. In Apps Script, check Deploy → Manage deployments → Edit, and set \u201cWho has access\u201d to \u201cAnyone\u201d.";
   if(err === "unknown kind") return "The deployed script is an older copy. In Apps Script: Deploy → Manage deployments → Edit → Version: \u201cNew version\u201d → Deploy.";
@@ -5058,7 +5068,8 @@ function renderWhoami(){
   var btn = $("loginOpen");
   if(!btn) return;
   var join = $("signupOpen");
-  if(!endpoint()){
+  /* signing in writes to the real members list, so it stays off here */
+  if(!endpoint() || DEV){
     btn.hidden = true;
     if(join) join.hidden = true;
     return;
