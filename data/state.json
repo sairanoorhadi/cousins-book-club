@@ -1,5 +1,5 @@
 {
-  "rev": 1184,
+  "rev": 1185,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -784,7 +784,7 @@
       "by": "Pareesa",
       "status": "approved",
       "at": "",
-      "cover": "",
+      "cover": "https://covers.openlibrary.org/b/id/8402785-L.jpg",
       "blurb": "Four loosely related children live in a car on a tropical island. They bathe in the ocean, fish for dinner, pick fruit for breakfast, and drive themselves to school — all while hunting for a real home. Witty, warm, and quietly serious about what family means when the adults have opted out.",
       "shortlist": false,
       "summarySource": "own",
