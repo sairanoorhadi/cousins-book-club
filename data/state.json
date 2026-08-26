@@ -1,5 +1,5 @@
 {
-  "rev": 1154,
+  "rev": 1155,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -571,6 +571,11 @@
         {
           "id": "pred-mt9esjiwhfbfi",
           "text": "Bijaan gets caught in the cross fire",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9et0a6cpsbv",
+          "text": "Jesper's dad is going the get used",
           "by": ""
         }
       ],
