@@ -268,6 +268,7 @@ img{max-width:100%;display:block}
 .select{font-family:var(--f-display);font-weight:500;font-size:15px}
 .input::placeholder,.textarea::placeholder{color:var(--muted);opacity:.75}
 .formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+.formgrid--rest{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
 /* The lookup button stands in a field slot with nothing to label. An empty cap
    the same size as a real label keeps it in line with the inputs beside it
    rather than riding up level with their labels. */
@@ -277,7 +278,24 @@ img{max-width:100%;display:block}
 /* the form is a flex stack with a gap, so an empty answer box would still
    push the next field down */
 #sLookupOut:empty{display:none}
+
 .formcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:26px;max-width:760px}
+/* ============ the suggestion form and its sticky sidebar ============
+   The form is the track: one column of fields, and a second column the
+   sidebar sits in. Grid rows do the measuring, so the sidebar's bounds are
+   the fields themselves rather than pixel offsets — it starts at the page
+   count row and its area stops at the top of Summary, which is as far as it
+   can travel. The card is wider than a plain form card by exactly the
+   sidebar and its gap, so the fields keep the width they had. */
+.suggestform{display:grid;grid-template-columns:minmax(0,1fr) 176px;column-gap:20px;row-gap:18px;align-items:start;max-width:956px}
+.suggestform > *{grid-column:1;min-width:0}
+/* the track has to fill its rows — the form aligns everything else to the
+   top, and a track only as tall as the buttons gives sticky nowhere to go */
+.suggestform > .lookaside__track{grid-column:2;grid-row:3 / 8;align-self:stretch}
+.formgrid--rest #sLookupOut{grid-column:1/-1}
+.lookaside{position:sticky;top:18px;display:flex;flex-direction:column;gap:8px}
+.lookaside__cap{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.lookaside .btn{width:100%}
 
 .picker{display:flex;gap:14px;align-items:flex-start}
 .picker__prev{width:64px;flex:none}
@@ -563,6 +581,13 @@ img{max-width:100%;display:block}
 
 @media (max-width:960px){
   .hero__grid{grid-template-columns:1fr;gap:28px}
+  /* no room for a column beside the fields: the sidebar drops back into the
+     flow under the name row, laid out across as it used to be */
+  .suggestform{grid-template-columns:minmax(0,1fr)}
+  .suggestform > .lookaside__track{grid-column:1;grid-row:auto}
+  .lookaside{position:static;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px}
+  .lookaside .btn{width:auto}
+  .lookaside__cap{width:100%}
 }
 @media (max-width:700px){
   .hero__main{grid-template-columns:118px minmax(0,1fr);gap:20px}
@@ -979,7 +1004,7 @@ img{max-width:100%;display:block}
         <div class="recgrid" id="shortGrid"></div>
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-suggest" aria-labelledby="tab-suggest" hidden>
-        <form class="formcard stack" id="suggestForm" style="gap:18px">
+        <form class="formcard suggestform" id="suggestForm">
           <div>
             <h3 style="font-size:22px">Put a book forward</h3>
             <p class="hint" style="margin-top:8px">Type the title, then press <strong>Look up book</strong> &mdash; the author, page count, genres and rating fill themselves in. Everything stays editable. The organiser reads submissions and publishes the ones the club wants.</p>
@@ -993,10 +1018,20 @@ img{max-width:100%;display:block}
             <div class="field field--action"><span class="field__cap" aria-hidden="true"></span>
               <button class="btn btn--grape lookupgo" type="button" id="sAskAI">Look up book</button>
               <p class="hint">A title on its own is enough &mdash; no author needed.</p></div>
+          </div>
+          <div class="formgrid formgrid--rest">
             <div class="field"><label for="sPages">Page count</label><input class="input" id="sPages" name="pages" type="number" min="1" max="20000" inputmode="numeric"></div>
             <div class="field"><label for="sBy">Your name</label><input class="input" id="sBy" name="by" required maxlength="60"></div>
+            <div id="sLookupOut"></div>
           </div>
-          <div id="sLookupOut"></div>
+          <div class="lookaside__track">
+            <aside class="lookaside" id="sLookAside">
+              <p class="lookaside__cap">Look it up</p>
+              <a class="btn btn--sm btn--ghost" id="sGoodreads" href="https://www.goodreads.com" target="_blank" rel="noopener noreferrer">Open on Goodreads</a>
+              <a class="btn btn--sm btn--ghost" id="sGoogle" href="https://www.google.com" target="_blank" rel="noopener noreferrer">Google it</a>
+              <a class="btn btn--sm btn--ghost" id="sFable" href="https://fable.co" target="_blank" rel="noopener noreferrer">Check on Fable</a>
+            </aside>
+          </div>
           <div class="field"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span>
               <button class="btn btn--sm btn--sky agecheck" type="button" id="sAgeCheck">Check online</button>
               <button class="btn btn--sm btn--grape agecheck" type="button" id="sAgeAI">Ask AI</button></label>
@@ -1007,15 +1042,8 @@ img{max-width:100%;display:block}
             <div id="sRatings"></div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">
               <button class="btn btn--sm btn--ghost" type="button" id="sRatingAdd">+ Add rating</button>
-              <span class="hint" id="sRatingNote">Read them off Goodreads or Fable and type them in &mdash; the links above open both.</span>
+              <span class="hint" id="sRatingNote">Read them off Goodreads or Fable and type them in &mdash; the Look it up links open both.</span>
             </div></div>
-          <div class="field"><label>Look it up</label>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-              <a class="btn btn--sm btn--ghost" id="sGoodreads" href="https://www.goodreads.com" target="_blank" rel="noopener noreferrer">Open on Goodreads</a>
-              <a class="btn btn--sm btn--ghost" id="sGoogle" href="https://www.google.com" target="_blank" rel="noopener noreferrer">Google it</a>
-              <a class="btn btn--sm btn--ghost" id="sFable" href="https://fable.co" target="_blank" rel="noopener noreferrer">Check on Fable</a>
-            </div>
-            </div>
           <div class="field"><label>Cover</label><div id="sCoverPick"></div></div>
           <div class="field"><label>Summary</label>
             <div class="seg" id="sSumMode" style="margin-bottom:10px">
