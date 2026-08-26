@@ -1,5 +1,5 @@
 {
-  "rev": 1118,
+  "rev": 1119,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -408,7 +408,13 @@
       "done": true,
       "summary": "",
       "photos": [],
-      "predictions": [],
+      "predictions": [
+        {
+          "id": "pred-mt9dxj2j4ujil",
+          "text": "Kaz is going to destroy Pekka (Embaress)",
+          "by": ""
+        }
+      ],
       "points": []
     }
   ],
