@@ -1,5 +1,5 @@
 {
-  "rev": 1182,
+  "rev": 1183,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -759,7 +759,7 @@
       "by": "Pareesa",
       "status": "approved",
       "at": "",
-      "cover": "",
+      "cover": "https://covers.openlibrary.org/b/id/14717510-L.jpg",
       "blurb": "It's 1954, and eleven-year-old Hope has spent years writing letters to a sister she believes she invented. When she discovers Grace is real — a twin given up for adoption after contracting polio — Hope sets out to find her, and to reach the mother who has gone quiet in the next room.",
       "shortlist": false,
       "summarySource": "own",
