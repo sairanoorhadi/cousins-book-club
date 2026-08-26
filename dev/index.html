@@ -1852,20 +1852,45 @@ function olHit(d){
     mature: false
   };
 }
+/* A misspelt word matches no token, so the plain query finds nothing at all —
+   nine of fourteen typos came back empty. Truncating each longish word and
+   letting a wildcard finish it still matches the shelf: "kingdomm" -> "kingdo*"
+   finds Crooked Kingdom. Solr's fuzzy operators (~, ~1) were measured against
+   the same fourteen and rescued none, so this is the form that earns its
+   place. */
+function wildcardQuery(q){
+  return String(q || "").split(/\s+/).map(function(w){
+    return w.length >= 5 ? w.slice(0, w.length - 2) + "*" : w;
+  }).join(" ");
+}
+
+async function olSearch(q){
+  var url = "https://openlibrary.org/search.json?limit=8&fields=" + OL_FIELDS +
+    "&q=" + encodeURIComponent(q);
+  if(LOOKUP_DEBUG) console.log("Open Library \u2192", url);
+  var res = await fetch(url, { cache: "no-store" });
+  if(!res.ok){
+    if(LOOKUP_DEBUG) console.warn("Open Library answered " + res.status + " for " + url);
+    return [];
+  }
+  return ((await res.json()).docs || []).map(olHit).filter(function(x){ return x.title; });
+}
+
 async function searchBooks(q){
   q = String(q || "").trim();
   if(q.length < 3) return [];
   try{
-    var url = "https://openlibrary.org/search.json?limit=8&fields=" + OL_FIELDS +
-      "&q=" + encodeURIComponent(q);
-    if(LOOKUP_DEBUG) console.log("Open Library \u2192", url);
-    var res = await fetch(url, { cache: "no-store" });
-    if(!res.ok){
-      if(LOOKUP_DEBUG) console.warn("Open Library answered " + res.status + " for " + url);
-      return [];
+    var hits = await olSearch(q);
+    /* only when the plain question got no answer at all — a second request on
+       failure, never on success */
+    if(!hits.length){
+      var loose = wildcardQuery(q);
+      if(loose !== q){
+        if(LOOKUP_DEBUG) console.log("nothing found; trying the looser form");
+        hits = await olSearch(loose);
+      }
     }
-    var docs = (await res.json()).docs || [];
-    return docs.map(olHit).filter(function(x){ return x.title; });
+    return hits;
   }catch(e){
     if(LOOKUP_DEBUG) console.warn("Open Library call failed:", e);
     return [];
@@ -1942,8 +1967,14 @@ function titleCloseness(query, title){
   if(t === q) return 0;
   if(t.indexOf(q) === 0) return 0.5;
   if(t.indexOf(q) !== -1) return 1;
-  /* scale the distance by length, so a slip in a long title still counts as close */
-  return editDistance(q, t.slice(0, q.length + 6)) / Math.max(4, q.length) * 6;
+  /* Scale the distance by length, so a slip in a long title still counts as
+     close. The divisor's floor sets how many edits a SHORT title is allowed:
+     the threshold everywhere is 1.5, and score < 1.5 works out to
+     "edits < divisor / 4". A floor of 4 allowed one edit on a six-letter
+     title — and a transposition costs two, so "hobbti" could never be
+     corrected to "Hobbit", nor Matilda, Holes or Coraline. A floor of 9
+     allows a little over two, which covers a transposition at any length. */
+  return editDistance(q, t.slice(0, q.length + 6)) / Math.max(9, q.length) * 6;
 }
 
 /* Add ?debug=lookup to the address to watch a title search decide. Off
@@ -2103,12 +2134,11 @@ var QUERY_FORMS = {
     return "title:(" + t.split(/\s+/).map(function(w){ return w.length >= 4 ? w + "~" : w; }).join(" ") + ")";
   },
   /* a trailing wildcard rescues an extra letter but not a wrong one */
-  prefix: function(t){
-    return t.split(/\s+/).map(function(w){ return w.length >= 5 ? w.slice(0, w.length - 2) + "*" : w; }).join(" ");
-  }
+  prefix: function(t){ return wildcardQuery(t); }
 };
 
 window.QUERY_FORMS = QUERY_FORMS;
+window.wildcardQuery = wildcardQuery;
 
 async function rawSearch(q){
   try{
