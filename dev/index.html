@@ -511,7 +511,6 @@ img{max-width:100%;display:block}
 /* the house pink only reaches 4.3:1 against white, so this chip gets a
    deeper red of its own — the name has to be readable at 11.5px */
 .secondchip--down{background:#C81748;color:#FFFFFF;border-color:#C81748;font-weight:700}
-:root:not([data-theme="light"]) .secondchip--down{background:#FF8FA3;color:#2A0710;border-color:#FF8FA3}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .secondchip--down{background:#FF8FA3;color:#2A0710;border-color:#FF8FA3}}
 :root[data-theme="dark"] .secondchip--down{background:#FF8FA3;color:#2A0710;border-color:#FF8FA3}
 .endorse{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;border:2px dashed var(--edge);border-radius:var(--r);padding:12px 14px;background:var(--sunk)}
@@ -556,6 +555,12 @@ img{max-width:100%;display:block}
 .ratingrow__del{flex:none;border:2px solid var(--edge);border-radius:50%;width:30px;height:30px;background:var(--surface);cursor:pointer;font-family:var(--f-display);font-weight:700;line-height:1;color:var(--muted)}
 .ratingrow__del:hover{background:var(--flare);color:var(--on-flare);border-color:var(--flare)}
 .agecheck{margin-left:10px;text-transform:none;letter-spacing:0;vertical-align:middle;padding:4px 11px;font-size:12px;box-shadow:1px 1px 0 var(--stamp)}
+/* said in the space beside those buttons when a lookup came back with no age
+   at all. The house pink is only 4.3:1 on white, so this takes the deeper red
+   the "Not for me" chip uses, with the light tone for dark mode. */
+.agemiss{margin-left:14px;vertical-align:middle;text-transform:none;letter-spacing:0;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:#C81748}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .agemiss{color:#FF8FA3}}
+:root[data-theme="dark"] .agemiss{color:#FF8FA3}
 .huepick{display:flex;flex-wrap:wrap;gap:9px}
 .huechip{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--hairline);border-radius:999px;background:var(--surface);padding:5px 14px 5px 6px;cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--muted)}
 .huechip span{width:22px;height:22px;border-radius:50%;border:2px solid var(--edge);background:var(--c);flex:none}
@@ -1063,7 +1068,8 @@ img{max-width:100%;display:block}
           </div>
           <div class="field"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span>
               <button class="btn btn--sm btn--sky agecheck" type="button" id="sAgeCheck">Check online</button>
-              <button class="btn btn--sm btn--grape agecheck" type="button" id="sAgeAI">Ask AI</button></label>
+              <button class="btn btn--sm btn--grape agecheck" type="button" id="sAgeAI">Ask AI</button>
+              <strong class="agemiss" id="sAgeMiss" hidden>Reading level not available.</strong></label>
             <div id="sAgeSlider"></div>
             <p class="hint" id="sAgeNote" hidden></p></div>
           <div class="field"><label for="sGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label><input class="input" id="sGenres" name="genres" placeholder="Young Adult, Fantasy" maxlength="300"></div>
@@ -5363,11 +5369,12 @@ function fableUrl(title, author, isbn){
 }
 
 function initSuggestForm(){
-  $("sAgeSlider").innerHTML = dualRangeHTML("sAge", 12, AGE_TOP);
+  $("sAgeSlider").innerHTML = dualRangeHTML("sAge", 12, AGE_TOP, function(){ ageMiss(false); });
   renderSugCover();
   setSugMode("own");
   $("sLookupOut").innerHTML = "";
   if($("sAgeNote")) $("sAgeNote").hidden = true;
+  ageMiss(false);
   hideTitleFix();
   lastTitleChecked = "";
   sugRatings = [{ score: "", source: "" }];
@@ -5430,7 +5437,18 @@ function ageStart(){
 }
 function ageApply(lo, hi, said){
   setAgeSlider(lo, hi);
+  ageMiss(false);
   $("sAgeNote").textContent = "Set to " + levelText({ ageMin: lo, ageMax: hi }) + ". " + said;
+}
+/* Shown only when a lookup has been run and came back with no age at all —
+   never before anyone has asked, and gone the moment a level arrives, from a
+   source or from the reader's own hand. The slider goes back to its full
+   range with it, so what is on screen is "we do not know" rather than a
+   leftover from the last book. */
+function ageMiss(missing){
+  var el = $("sAgeMiss");
+  if(el) el.hidden = !missing;
+  if(missing) setAgeSlider(0, AGE_TOP);
 }
 
 /* What the book databases shelve it under. */
@@ -5540,6 +5558,7 @@ async function askAIForDetails(){
   if(band){ setAgeSlider(band.lo, band.hi); filled.push("age rating"); }
 
   if(!best && !extras){
+    ageMiss(true);
     out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t find that one. Check the spelling, or fill it in yourself &mdash; the Goodreads, Google and Fable links are right there.</p>';
     return;
   }
@@ -5573,6 +5592,9 @@ async function askAIForDetails(){
       }
     }catch(e){}
   }
+
+  /* neither the shelving nor the AI could put an age on it */
+  ageMiss(filled.indexOf("age rating") === -1);
 
   syncSearchLinks();
   renderAuthorPick();
