@@ -385,9 +385,6 @@ img{max-width:100%;display:block}
 .coverpick__src{display:block;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px;text-align:center}
 
 /* ============ autocomplete ============ */
-.ac{position:relative}
-.ac__menu{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--surface);border:2px solid var(--edge);border-radius:6px;box-shadow:var(--shadow-sm);max-height:274px;overflow:auto}
-.ac__menu[hidden]{display:none}
 /* the candidate authors a lookup turned up, under the author box */
 .authpick{margin-top:9px;display:flex;flex-direction:column;gap:6px}
 .authpick[hidden]{display:none}
@@ -400,12 +397,6 @@ img{max-width:100%;display:block}
 .authrow__pick[aria-pressed="true"] small{color:var(--on-surf);opacity:.85}
 .authrow__web{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--muted);text-decoration:none}
 .authrow__web:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
-.ac__opt{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:9px 12px;background:none;border:0;border-bottom:1.5px solid var(--hairline);cursor:pointer}
-.ac__opt:last-child{border-bottom:0}
-.ac__opt:hover,.ac__opt[data-on="1"]{background:var(--sunk)}
-.ac__opt img{width:28px;height:42px;object-fit:cover;border:1.5px solid var(--edge);border-radius:3px;flex:none}
-.ac__t{font-family:var(--f-display);font-weight:700;font-size:14px;line-height:1.2}
-.ac__a{display:block;color:var(--muted);font-size:13px;font-style:italic}
 
 .lookupfix{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;border:2px dashed var(--edge);border-radius:var(--r);background:var(--sunk);padding:10px 14px;font-size:15px}
 
@@ -505,6 +496,15 @@ img{max-width:100%;display:block}
 .lightbox__inner .xbtn{position:absolute;top:-14px;right:-14px;z-index:2}
 
 /* ============ account ============ */
+.sumbox{position:relative}
+.sumbox__go{position:absolute;right:10px;bottom:12px;box-shadow:1px 1px 0 var(--stamp)}
+.sumbox__go[hidden]{display:none !important}
+.ratingrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.ratingrow .input{flex:0 0 110px;width:110px}
+.ratingrow .input--src{flex:1 1 180px;width:auto}
+.ratingrow__del{flex:none;border:2px solid var(--edge);border-radius:50%;width:30px;height:30px;background:var(--surface);cursor:pointer;font-family:var(--f-display);font-weight:700;line-height:1;color:var(--muted)}
+.ratingrow__del:hover{background:var(--flare);color:var(--on-flare);border-color:var(--flare)}
+.agecheck{margin-left:10px;text-transform:none;letter-spacing:0;vertical-align:middle;padding:4px 11px;font-size:12px;box-shadow:1px 1px 0 var(--stamp)}
 .huepick{display:flex;flex-wrap:wrap;gap:9px}
 .huechip{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--hairline);border-radius:999px;background:var(--surface);padding:5px 14px 5px 6px;cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--muted)}
 .huechip span{width:22px;height:22px;border-radius:50%;border:2px solid var(--edge);background:var(--c);flex:none}
@@ -582,7 +582,7 @@ img{max-width:100%;display:block}
 <body>
   <div class="devbar" id="devBar" hidden>
     <strong>Test site</strong>
-    <span>Its own copy of the data &mdash; nothing here reaches the real one. Submissions and sign-in are switched off.</span>
+    <span>Its own copy of the data &mdash; nothing here reaches the real one. Lookups work; submissions and sign-in are switched off.</span>
     <a href="../">Go to the real site &rarr;</a>
   </div>
 
@@ -973,32 +973,35 @@ img{max-width:100%;display:block}
         <form class="formcard stack" id="suggestForm" style="gap:18px">
           <div>
             <h3 style="font-size:22px">Put a book forward</h3>
-            <p class="hint" style="margin-top:8px">Start typing a title and pick it from the list &mdash; the author, page count, genres and summary fill themselves in. Everything stays editable. The organiser reads submissions and publishes the ones the club wants.</p>
+            <p class="hint" style="margin-top:8px">Type the title, then press <strong>Fill in the details for me</strong> &mdash; the author, page count, genres and rating fill themselves in. Everything stays editable. The organiser reads submissions and publishes the ones the club wants.</p>
           </div>
           <div class="formgrid">
-            <div class="field ac"><label for="sTitle">Book title</label>
-              <input class="input" id="sTitle" name="title" required maxlength="140" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="sTitleMenu">
-              <div class="ac__menu" id="sTitleMenu" role="listbox" hidden></div></div>
+            <div class="field"><label for="sTitle">Book title</label>
+              <input class="input" id="sTitle" name="title" required maxlength="140" autocomplete="off">
+              <div class="authpick" id="sTitleFix" hidden></div></div>
             <div class="field"><label for="sAuthor">Author</label><input class="input" id="sAuthor" name="author" required maxlength="140">
               <div class="authpick" id="sAuthorPick" hidden></div></div>
             <div class="field"><label for="sPages">Page count</label><input class="input" id="sPages" name="pages" type="number" min="1" max="20000" inputmode="numeric"></div>
             <div class="field"><label for="sBy">Your name</label><input class="input" id="sBy" name="by" required maxlength="60"></div>
           </div>
-          <div class="field"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span></label>
-            <div id="sAgeSlider"></div></div>
+          <div class="field"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span>
+              <button class="btn btn--sm btn--sky agecheck" type="button" id="sAgeCheck">Check online</button>
+              <button class="btn btn--sm btn--grape agecheck" type="button" id="sAgeAI">Ask AI</button></label>
+            <div id="sAgeSlider"></div>
+            <p class="hint" id="sAgeNote" hidden></p></div>
           <div class="field"><label for="sGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label><input class="input" id="sGenres" name="genres" placeholder="Young Adult, Fantasy" maxlength="300"></div>
-          <div class="formgrid">
-            <div class="field"><label for="sRating">Readers&rsquo; rating <span style="text-transform:none;letter-spacing:0">(out of 5)</span></label>
-              <input class="input" id="sRating" name="rating" type="number" min="0" max="5" step="0.01" inputmode="decimal" placeholder="4.1">
-              <p class="hint" style="margin-top:6px" id="sRatingNote">Read it off the book&rsquo;s Goodreads page and type it in &mdash; or let &ldquo;Fill in the details&rdquo; try.</p></div>
-            <div class="field"><label for="sRatingBy">Where it came from</label>
-              <input class="input" id="sRatingBy" name="ratingSource" maxlength="40" placeholder="Goodreads"></div>
-          </div>
+          <div class="field"><label>Readers&rsquo; ratings <span style="text-transform:none;letter-spacing:0">(out of 5 &mdash; add as many as you like)</span></label>
+            <div id="sRatings"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">
+              <button class="btn btn--sm btn--ghost" type="button" id="sRatingAdd">+ Add rating</button>
+              <span class="hint" id="sRatingNote">Read them off Goodreads or Fable and type them in &mdash; the links above open both.</span>
+            </div></div>
           <div class="field"><label>Look it up</label>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
               <button class="btn btn--sm btn--grape" type="button" id="sAskAI">Fill in the details for me</button>
               <a class="btn btn--sm btn--ghost" id="sGoodreads" href="https://www.goodreads.com" target="_blank" rel="noopener noreferrer">Open on Goodreads</a>
               <a class="btn btn--sm btn--ghost" id="sGoogle" href="https://www.google.com" target="_blank" rel="noopener noreferrer">Google it</a>
+              <a class="btn btn--sm btn--ghost" id="sFable" href="https://fable.co" target="_blank" rel="noopener noreferrer">Check on Fable</a>
             </div>
             <div id="sLookupOut"></div></div>
           <div class="field"><label>Cover</label><div id="sCoverPick"></div></div>
@@ -1008,8 +1011,9 @@ img{max-width:100%;display:block}
               <button class="segbtn" type="button" data-summode="fetched" aria-pressed="false">From the book listing</button>
               <button class="segbtn" type="button" data-summode="ai" aria-pressed="false">Write one for me</button>
             </div>
-            <textarea class="textarea" id="sBlurb" name="blurb" placeholder="A few sentences — no spoilers." maxlength="2400"></textarea>
-            <p class="hint" id="sSumHint">Pulled from the book listing when you pick a title. Edit it however you like.</p>
+            <div class="sumbox"><textarea class="textarea" id="sBlurb" name="blurb" placeholder="A few sentences — no spoilers." maxlength="2400"></textarea>
+              <button class="btn btn--sm btn--sky sumbox__go" type="button" id="sSumSearch" hidden>Search the web</button></div>
+            <p class="hint" id="sSumHint">All yours. A few sentences, no spoilers.</p>
           </div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
             <button class="btn btn--surf" type="submit" id="suggestSubmit">Send it to the organiser</button>
@@ -1436,9 +1440,15 @@ function migrate(s){
     if(!Array.isArray(r.reviews)) r.reviews = [];
     if(!Array.isArray(r.endorsements)) r.endorsements = [];
     if(!Array.isArray(r.dislikes)) r.dislikes = [];
-    /* what readers elsewhere gave it, put in by whoever suggested the book */
-    r.rating = clampRating(r.rating);
-    if(typeof r.ratingSource !== "string") r.ratingSource = "";
+    /* What readers elsewhere gave it. Several, because a book has a Goodreads
+       score and a Fable score and they disagree — worth seeing both rather
+       than picking one. The old single pair folds in, so nothing already
+       saved is lost. */
+    r.ratings = cleanRatings(r.ratings);
+    if(!r.ratings.length && Number(r.rating) > 0){
+      r.ratings = [{ score: clampRating(r.rating), source: String(r.ratingSource || "").slice(0, 40) }];
+    }
+    delete r.rating; delete r.ratingSource;
     ["endorsements","dislikes"].forEach(function(k){
       r[k] = r[k].map(function(e){
         return typeof e === "string" ? { name: e, at: "" } : { name: String(e && e.name || "").trim(), at: String(e && e.at || "") };
@@ -1469,10 +1479,6 @@ async function loadState(){
     if(res.ok) file = await res.json();
   }catch(e){}
   state = migrate((file && Number(file.rev || 0) >= Number(seed.rev || 0)) ? file : seed);
-  /* The endpoint writes to the live repo and mails real people, so the dev
-     copy is not allowed to reach it whatever its data file says. Submissions
-     and sign-in report themselves as switched off there. */
-  if(DEV) state.club.formEndpoint = "";
 }
 
 /* ---------- dev copy ----------
@@ -1577,6 +1583,8 @@ function downloadState(){
 var inbox = [];
 function endpoint(){ return safeUrl(state && state.club && state.club.formEndpoint); }
 async function submitPublic(kind, payload){
+  /* every one of these lands in the real inbox */
+  if(DEV) return { ok: false, reason: "dev-blocked" };
   var url = endpoint();
   if(!url) return { ok: false, reason: "unconfigured" };
   try{
@@ -1627,6 +1635,7 @@ function applyInbox(){
   });
 }
 function submitFailMsg(res){
+  if(res.reason === "dev-blocked") return "This is the test site, so nothing is actually sent. Submit on the real site.";
   if(res.reason === "unconfigured") return "Submissions aren’t switched on yet — the organiser needs to add an endpoint under Settings.";
   if(res.reason === "network") return "Couldn’t reach the club’s inbox. Check your connection and try again.";
   return "The club’s inbox returned an error (" + (res.status || "?") + "). Try again in a moment.";
@@ -1646,7 +1655,17 @@ function sessionToken(){
 function setSessionToken(v){
   try{ if(v) localStorage.setItem(SESSION_KEY, v); else localStorage.removeItem(SESSION_KEY); }catch(e){}
 }
+/* What the test site is allowed to ask the endpoint for.
+   Blanking the address there was too blunt: it also killed the lookups, so
+   "Ask AI", the AI half of "Fill in the details" and "Write one for me" could
+   not be tried at all — which is not what a test site is for. These three read
+   and return; they write nothing to the repo and email nobody. Everything else
+   — submissions, sign-in, claiming a name, photos, subscriptions — either
+   writes to the real repo or reaches real members, and stays blocked. */
+var DEV_SAFE = ["ping", "details", "summarise", "images"];
+
 async function callEndpoint(kind, payload, urlOverride){
+  if(DEV && DEV_SAFE.indexOf(kind) === -1) return { ok: false, error: "dev-blocked" };
   var url = urlOverride || endpoint();
   if(!url) return { ok: false, error: "unconfigured" };
   var res;
@@ -1671,6 +1690,7 @@ async function callEndpoint(kind, payload, urlOverride){
 }
 /* Plain English for the failures above, so nobody has to guess. */
 function endpointTrouble(err){
+  if(err === "dev-blocked") return "That's switched off on the test site — it would reach real members. Try it on the real site.";
   if(err === "unconfigured") return "No script address saved yet — add it under Admin → Settings.";
   if(err === "unreachable") return "Couldn't reach the script. In Apps Script, check Deploy → Manage deployments → Edit, and set \u201cWho has access\u201d to \u201cAnyone\u201d.";
   if(err === "unknown kind") return "The deployed script is an older copy. In Apps Script: Deploy → Manage deployments → Edit → Version: \u201cNew version\u201d → Deploy.";
@@ -1784,40 +1804,113 @@ function pickImage(maxW, type, cb){
 
 /* ---------- looking books up on the open web ----------
    Goodreads retired its public API in 2020, so the metadata here comes from
-   Google Books (titles, page counts, descriptions) and Open Library (richer
-   subject lists and a second source of cover art). Both allow browser calls. */
+   Open Library alone: titles, authors, page counts, subjects, covers and
+   ratings. No key, no quota, and it answers browser calls directly. */
 function httpsify(u){ return String(u || "").replace(/^http:/i, "https:"); }
 function gbCover(u){ return httpsify(u).replace(/&edge=curl/g, "").replace(/zoom=\d/, "zoom=2"); }
 function stripTags(s){ return String(s || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim(); }
+
+/* ---- book lookups: Open Library ----
+   Google Books was dropped: its keyless daily quota is zero
+   ("quota_limit_value": "0" against a shared anonymous project), so every
+   call returned 429. What still worked on the form — pages, genres, cover,
+   reading level — was Open Library all along, through openLibraryExtras;
+   what never worked, the spell-checks and the old autocomplete, was
+   Google-Books-only. Open Library needs no key and has no such quota. */
+var OL_FIELDS = "key,title,author_name,first_publish_year,number_of_pages_median," +
+  "cover_i,subject,isbn,ratings_average,ratings_count,first_sentence";
+
+function olGenres(list){
+  return (list || []).filter(function(s){
+    return s && s.length < 28 && !/^(accessible|protected daisy|in library|overdrive|nyt|large type)/i.test(s);
+  }).slice(0, 10);
+}
+function olIsbn13(list){
+  return (list || []).filter(function(x){ return String(x).length === 13; })[0] || "";
+}
+function olSentence(v){
+  if(!v) return "";
+  if(typeof v === "string") return v;
+  if(v.value) return String(v.value);
+  if(Array.isArray(v) && v.length) return String(v[0]);
+  return "";
+}
+function olHit(d){
+  return {
+    key: d.key || "",
+    title: d.title || "",
+    author: (d.author_name || []).join(", "),
+    pages: Number(d.number_of_pages_median) || null,
+    genres: olGenres(d.subject),
+    blurb: olSentence(d.first_sentence),
+    cover: d.cover_i ? "https://covers.openlibrary.org/b/id/" + d.cover_i + "-L.jpg" : "",
+    year: d.first_publish_year ? String(d.first_publish_year) : "",
+    rating: Math.round((Number(d.ratings_average) || 0) * 100) / 100,
+    ratingsCount: Number(d.ratings_count) || 0,
+    isbn13: olIsbn13(d.isbn),
+    mature: false
+  };
+}
+/* A misspelt word matches no token, so the plain query finds nothing at all —
+   nine of fourteen typos came back empty. Truncating each longish word and
+   letting a wildcard finish it still matches the shelf: "kingdomm" -> "kingdo*"
+   finds Crooked Kingdom. Solr's fuzzy operators (~, ~1) were measured against
+   the same fourteen and rescued none, so this is the form that earns its
+   place. */
+function wildcardQuery(q){
+  return String(q || "").split(/\s+/).map(function(w){
+    return w.length >= 5 ? w.slice(0, w.length - 2) + "*" : w;
+  }).join(" ");
+}
+
+async function olSearch(q){
+  var url = "https://openlibrary.org/search.json?limit=8&fields=" + OL_FIELDS +
+    "&q=" + encodeURIComponent(q);
+  if(LOOKUP_DEBUG) console.log("Open Library \u2192", url);
+  var res = await fetch(url, { cache: "no-store" });
+  if(!res.ok){
+    if(LOOKUP_DEBUG) console.warn("Open Library answered " + res.status + " for " + url);
+    return [];
+  }
+  return ((await res.json()).docs || []).map(olHit).filter(function(x){ return x.title; });
+}
 
 async function searchBooks(q){
   q = String(q || "").trim();
   if(q.length < 3) return [];
   try{
-    var res = await fetch("https://www.googleapis.com/books/v1/volumes?maxResults=8&q=" + encodeURIComponent(q), { cache: "no-store" });
-    if(!res.ok) return [];
-    var j = await res.json();
-    return (j.items || []).map(function(it){
-      var v = it.volumeInfo || {}, img = v.imageLinks || {};
-      return {
-        title: v.title || "",
-        author: (v.authors || []).join(", "),
-        pages: Number(v.pageCount) || null,
-        genres: (v.categories || []).slice(),
-        blurb: stripTags(v.description),
-        cover: gbCover(img.thumbnail || img.smallThumbnail || ""),
-        year: String(v.publishedDate || "").slice(0, 4),
-        /* Goodreads retired its public API in 2020, so this is the nearest
-           honest stand-in — and the form labels it as such */
-        rating: Number(v.averageRating) || 0,
-        ratingsCount: Number(v.ratingsCount) || 0,
-        mature: v.maturityRating === "MATURE"
-      };
-    }).filter(function(x){ return x.title; });
-  }catch(e){ return []; }
+    var hits = await olSearch(q);
+    /* only when the plain question got no answer at all — a second request on
+       failure, never on success */
+    if(!hits.length){
+      var loose = wildcardQuery(q);
+      if(loose !== q){
+        if(LOOKUP_DEBUG) console.log("nothing found; trying the looser form");
+        hits = await olSearch(loose);
+      }
+    }
+    return hits;
+  }catch(e){
+    if(LOOKUP_DEBUG) console.warn("Open Library call failed:", e);
+    return [];
+  }
+}
+/* The search index carries no description, so a summary needs the work itself. */
+async function olDescription(key){
+  if(!key) return "";
+  try{
+    var res = await fetch("https://openlibrary.org" + key + ".json", { cache: "no-store" });
+    if(!res.ok) return "";
+    var d = await res.json();
+    var t = d.description;
+    if(t && typeof t === "object") t = t.value;
+    return stripTags(String(t || "")).split(/\n\s*-{3,}|\[source\]/i)[0].trim();
+  }catch(e){ return ""; }
 }
 
-/* Open Library's subject list is the closest free stand-in for Goodreads shelves */
+/* A tighter, field-scoped lookup than the general search: when the title and
+   author are typed correctly this finds the right edition where a loose query
+   might not. Same service, different question. */
 async function openLibraryExtras(title, author){
   try{
     var url = "https://openlibrary.org/search.json?limit=1&fields=subject,number_of_pages_median,cover_i,first_publish_year" +
@@ -1851,26 +1944,333 @@ function editDistance(a, b){
   return prev[b.length];
 }
 /* true when the title already contains what was typed — nothing to correct */
+/* Nobody types the leading article. "lightning theif" against "The Lightning
+   Thief" used to score 2.40 — over the ceiling — because the comparison ran
+   from the first character and those four unwritten letters cost more than the
+   typo did. Punctuation is dropped for the same reason: a missing colon or
+   apostrophe is not a different book. */
+function normTitle(s){
+  return String(s || "").toLowerCase()
+    .replace(/[\u2018\u2019']/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/^(the|a|an)\s+/, "");
+}
 function titleHasQuery(query, title){
-  query = String(query || "").toLowerCase().trim();
-  title = String(title || "").toLowerCase().trim();
-  return !!query && title.indexOf(query) !== -1;
+  var q = normTitle(query), t = normTitle(title);
+  return !!q && t.indexOf(q) !== -1;
 }
 function titleCloseness(query, title){
-  query = String(query || "").toLowerCase().trim();
-  title = String(title || "").toLowerCase().trim();
-  if(!query) return 99;
-  if(title === query) return 0;
-  if(title.indexOf(query) === 0) return 0.5;
-  if(title.indexOf(query) !== -1) return 1;
-  /* scale the distance by length, so a slip in a long title still counts as close */
-  return editDistance(query, title.slice(0, query.length + 6)) / Math.max(4, query.length) * 6;
+  var q = normTitle(query), t = normTitle(title);
+  if(!q) return 99;
+  if(t === q) return 0;
+  if(t.indexOf(q) === 0) return 0.5;
+  if(t.indexOf(q) !== -1) return 1;
+  /* Scale the distance by length, so a slip in a long title still counts as
+     close. The divisor's floor sets how many edits a SHORT title is allowed:
+     the threshold everywhere is 1.5, and score < 1.5 works out to
+     "edits < divisor / 4". A floor of 4 allowed one edit on a six-letter
+     title — and a transposition costs two, so "hobbti" could never be
+     corrected to "Hobbit", nor Matilda, Holes or Coraline. A floor of 9
+     allows a little over two, which covers a transposition at any length. */
+  return editDistance(q, t.slice(0, q.length + 6)) / Math.max(9, q.length) * 6;
+}
+
+/* The one list of corrections, used by the form and by the test suite alike,
+   so what the suite measures is literally what the box would show.
+
+   Three questions in order: is it already exactly right, is it the same words
+   in a scruffier form, or is it a near miss? The middle one is what the
+   "the  hunger  games" case needed — the words were right, so nothing looked
+   wrong to the closeness test, but the stray spaces would have been submitted
+   and stored as the book's title. */
+function titleFixesFor(typed, hits){
+  var flat = String(typed || "").trim().replace(/\s+/g, " ");
+  if(!flat) return [];
+  var named = (hits || []).filter(function(h){ return h && h.title; });
+  /* typed exactly as the shelf has it: leave them alone */
+  if(named.some(function(h){ return h.title === flat; })) return [];
+  var tidier = named.filter(function(h){ return sameTitle(flat, h.title); });
+  var near = tidier.length ? tidier : named.filter(function(h){
+    return !titleHasQuery(flat, h.title) && titleCloseness(flat, h.title) < 1.5;
+  });
+  return near.filter(function(h, i, all){        /* one row per title */
+    return all.map(function(x){ return x.title.toLowerCase(); }).indexOf(h.title.toLowerCase()) === i;
+  }).slice(0, 3);
+}
+
+/* Add ?debug=lookup to the address to watch a title search decide. Off
+   otherwise, so the console stays usable — but there when the next "it just
+   does nothing" needs answering without a rebuild. */
+var LOOKUP_DEBUG = /[?&]debug=lookup\b/.test(location.search);
+/* A real-call check of every lookup the form does, run from the browser that
+   will actually be running them. Added because the sandbox this was written in
+   cannot reach openlibrary.org, so the only honest verification is one that
+   runs where the code runs — mocks are what let the last two faults through.
+   Type selfTest() in the console on a ?debug=lookup page. */
+window.selfTest = async function(title, author){
+  title = title || "The Lightning Thief";
+  author = author || "Rick Riordan";
+  var typo = title.toLowerCase().replace(/ie/, "ei").replace(/^the /, "");
+  var rows = [];
+  var note = function(what, ok, detail){ rows.push({ check: what, result: ok ? "PASS" : "FAIL", detail: detail }); };
+
+  var hits = await searchBooks(title + " " + author);
+  note("1. search returns hits", hits.length > 0, hits.length + " hit(s); first: " + ((hits[0] || {}).title || "-"));
+  var b = hits[0] || {};
+  note("2. fill in details \u2014 author", !!b.author, b.author || "MISSING");
+  note("2. fill in details \u2014 pages", !!b.pages, String(b.pages || "MISSING"));
+  note("2. fill in details \u2014 genres", (b.genres || []).length > 0, (b.genres || []).slice(0, 4).join(", ") || "MISSING");
+  note("2. fill in details \u2014 cover", !!b.cover, b.cover || "MISSING");
+  note("2. fill in details \u2014 rating", b.rating > 0, b.rating ? b.rating + " / 5" : "none published");
+  note("2. fill in details \u2014 isbn13", !!b.isbn13, b.isbn13 || "MISSING");
+
+  var band = ageFromShelving(b.genres || [], false);
+  note("3. reading level from subjects", !!band, band ? "Ages " + band.lo + "-" + band.hi : "no age-bearing subject");
+
+  var desc = await olDescription(b.key);
+  note("4. summary from the work record", !!desc, desc ? desc.slice(0, 70) + "\u2026" : "MISSING");
+
+  var covers = await searchCovers(title, author);
+  note("5. cover search", covers.length > 0, covers.length + " cover(s)");
+
+  /* Go through the page's own path, not a re-implementation of it. Open
+     Library is user-contributed and carries typo records — a work literally
+     titled "percy jackson and the lightning theif" — so the RAW first result
+     for a misspelling is often the misspelling itself. lookupBook sorts by
+     closeness and offerTitleFixes weighs every hit, which is what puts the
+     properly spelled book first; checking only the raw first result tests a
+     rule the page does not use. */
+  var found = await lookupBook(typo);
+  var mis = found.hits;
+  note("6. typo \u201c" + typo + "\u201d finds something", mis.length > 0,
+    mis.length ? mis.length + " hit(s)" : "NOTHING RETURNED");
+  note("6. closest after sorting", mis.length > 0,
+    mis.length ? mis[0].title + " (closeness " + (Math.round(mis[0].near * 100) / 100) + ")" : "-");
+
+  var qualify = mis.filter(function(h){
+    return h.title && !titleHasQuery(typo, h.title) && titleCloseness(typo, h.title) < 1.5;
+  });
+  note("6. would be offered as a correction", qualify.length > 0,
+    qualify.length ? qualify.slice(0, 3).map(function(h){ return h.title; }).join(" | ")
+      : "none qualified \u2014 hits were: " + mis.slice(0, 3).map(function(h){
+          return h.title + " (" + (Math.round(h.near * 100) / 100) + (titleHasQuery(typo, h.title) ? ", contains what you typed" : "") + ")";
+        }).join(" | "));
+  var typoRecords = mis.filter(function(h){ return titleHasQuery(typo, h.title); }).length;
+  note("6. typo records in the catalogue", true,
+    typoRecords ? typoRecords + " hit(s) literally contain the misspelling \u2014 excluded, as intended" : "none");
+
+  console.log("%cselfTest \u2014 " + title, "font-weight:bold");
+  try{ console.table(rows); }catch(e){ rows.forEach(function(r){ console.log(r.result, r.check, r.detail); }); }
+  var failed = rows.filter(function(r){ return r.result === "FAIL"; }).length;
+  console.log(failed ? failed + " FAILED \u2014 copy the table above" : "all " + rows.length + " passed");
+  return rows;
+};
+
+/* ---- the typo suite ----
+   One case is not evidence that a correction rule holds. This runs a spread of
+   real misspellings against the real Open Library, through the page's own
+   lookup and filter, and separates the two ways a case can come out wrong:
+
+     CATALOGUE  the right book was never in the results, so no rule could have
+                offered it — a search or data problem, not ours
+     LOGIC      the right book WAS in the results and we still got it wrong —
+                ours
+
+   Run typoSuite() in the console on a ?debug=lookup page. */
+var TYPO_CASES = [
+  /* missing letter */
+  { typed: "lighning thief",                 expect: "The Lightning Thief",                    kind: "missing letter" },
+  { typed: "hary potter and the philosophers stone", expect: "Harry Potter and the Philosopher's Stone", kind: "missing letter" },
+  { typed: "wrinkle in tim",                 expect: "A Wrinkle in Time",                      kind: "missing letter" },
+  /* transposed */
+  { typed: "lightning theif",                expect: "The Lightning Thief",                    kind: "transposed" },
+  { typed: "the hobbti",                     expect: "The Hobbit",                             kind: "transposed" },
+  { typed: "six of crwos",                   expect: "Six of Crows",                           kind: "transposed" },
+  /* extra letter */
+  { typed: "crooked kingdomm",               expect: "Crooked Kingdom",                        kind: "extra letter" },
+  { typed: "the giverr",                     expect: "The Giver",                              kind: "extra letter" },
+  { typed: "matildaa",                       expect: "Matilda",                                kind: "extra letter" },
+  /* wrong word */
+  { typed: "crooked kigen",                  expect: "Crooked Kingdom",                        kind: "wrong word" },
+  { typed: "harry potter and the chamber of secrete", expect: "Harry Potter and the Chamber of Secrets", kind: "wrong word" },
+  { typed: "percy jackson and the titans course", expect: "The Titan's Curse",                  kind: "wrong word" },
+  /* spacing */
+  { typed: "sixofcrows",                     expect: "Six of Crows",                           kind: "spacing" },
+  { typed: "the  hunger  games",             expect: "The Hunger Games",                       kind: "spacing" },
+  { typed: "bridgeto terabithia",            expect: "Bridge to Terabithia",                   kind: "spacing" },
+  /* nothing to do with the club's usual shelf, to catch anything overfitted */
+  { typed: "the book theif",                 expect: "The Book Thief",                         kind: "outside the shelf" },
+  { typed: "to kill a mockingbrd",           expect: "To Kill a Mockingbird",                  kind: "outside the shelf" },
+  { typed: "the kite runer",                 expect: "The Kite Runner",                        kind: "outside the shelf" },
+  { typed: "anne of green gabels",           expect: "Anne of Green Gables",                   kind: "outside the shelf" },
+  /* correctly spelled: must stay silent */
+  { typed: "The Hunger Games",               expect: "",                                       kind: "already correct" },
+  { typed: "Six of Crows",                   expect: "",                                       kind: "already correct" },
+  { typed: "Harry Potter and the Goblet of Fire", expect: "",                                  kind: "already correct" }
+];
+
+/* on window so the list can be read, extended or replaced from the console:
+   typoSuite(TYPO_CASES.concat([{typed:"...", expect:"...", kind:"mine"}])) */
+window.TYPO_CASES = TYPO_CASES;
+
+/* ---- fuzzy probe ----
+   The 22-case run showed the correction is limited by Open Library's search,
+   not by our filter: nine typos returned nothing at all, and the ones that
+   worked all had a distinctive word spelled correctly. Open Library runs Solr,
+   which may accept fuzzy and wildcard operators. This asks whether any query
+   form finds the right book where the plain one failed — the answer decides
+   whether this is fixable or a ceiling to live with. Measuring, not guessing.
+
+   Run fuzzyProbe() in the console on a ?debug=lookup page. */
+var FUZZY_CASES = [
+  { typed: "lighning thief",       expect: "The Lightning Thief" },
+  { typed: "wrinkle in tim",       expect: "A Wrinkle in Time" },
+  { typed: "the hobbti",           expect: "The Hobbit" },
+  { typed: "six of crwos",         expect: "Six of Crows" },
+  { typed: "crooked kingdomm",     expect: "Crooked Kingdom" },
+  { typed: "the giverr",           expect: "The Giver" },
+  { typed: "matildaa",             expect: "Matilda" },
+  { typed: "crooked kigen",        expect: "Crooked Kingdom" },
+  { typed: "percy jackson and the titans course", expect: "The Titan's Curse" },
+  { typed: "sixofcrows",           expect: "Six of Crows" },
+  { typed: "bridgeto terabithia",  expect: "Bridge to Terabithia" },
+  { typed: "to kill a mockingbrd", expect: "To Kill a Mockingbird" },
+  { typed: "the kite runer",       expect: "The Kite Runner" },
+  { typed: "anne of green gabels", expect: "Anne of Green Gables" }
+];
+window.FUZZY_CASES = FUZZY_CASES;
+
+/* the query forms worth trying, each a plain function of what was typed */
+var QUERY_FORMS = {
+  plain: function(t){ return t; },
+  /* Solr fuzzy: within one or two edits of each real word */
+  fuzzy: function(t){
+    return t.split(/\s+/).map(function(w){ return w.length >= 4 ? w + "~" : w; }).join(" ");
+  },
+  fuzzy1: function(t){
+    return t.split(/\s+/).map(function(w){ return w.length >= 4 ? w + "~1" : w; }).join(" ");
+  },
+  /* scoped to the title field, so author names cannot drag it off course */
+  titleFuzzy: function(t){
+    return "title:(" + t.split(/\s+/).map(function(w){ return w.length >= 4 ? w + "~" : w; }).join(" ") + ")";
+  },
+  /* a trailing wildcard rescues an extra letter but not a wrong one */
+  prefix: function(t){ return wildcardQuery(t); }
+};
+
+window.QUERY_FORMS = QUERY_FORMS;
+window.wildcardQuery = wildcardQuery;
+window.titleFixesFor = titleFixesFor;
+
+async function rawSearch(q){
+  try{
+    var url = "https://openlibrary.org/search.json?limit=8&fields=" + OL_FIELDS + "&q=" + encodeURIComponent(q);
+    var res = await fetch(url, { cache: "no-store" });
+    if(!res.ok) return { error: "HTTP " + res.status, docs: [] };
+    return { docs: ((await res.json()).docs || []).map(olHit) };
+  }catch(e){ return { error: String(e), docs: [] }; }
+}
+
+window.fuzzyProbe = async function(cases){
+  cases = cases || FUZZY_CASES;
+  var forms = Object.keys(QUERY_FORMS);
+  var rows = [], wins = {}, i, f;
+  forms.forEach(function(n){ wins[n] = 0; });
+
+  for(i = 0; i < cases.length; i++){
+    var c = cases[i];
+    var row = { typed: c.typed, expected: c.expect };
+    for(f = 0; f < forms.length; f++){
+      var name = forms[f];
+      var q = QUERY_FORMS[name](c.typed);
+      var got = await rawSearch(q);
+      var hit = got.docs.filter(function(h){ return sameTitle(h.title, c.expect); })[0];
+      /* does it also survive our own filter, or only appear in the results? */
+      var offerable = hit && !titleHasQuery(c.typed, hit.title) && titleCloseness(c.typed, hit.title) < 1.5;
+      row[name] = got.error ? "ERR " + got.error
+        : !got.docs.length ? "-"
+        : hit ? (offerable ? "FOUND+OFFERABLE" : "found, not offerable")
+        : "wrong book";
+      if(offerable) wins[name]++;
+      await new Promise(function(r){ setTimeout(r, 200); });
+    }
+    rows.push(row);
+  }
+
+  console.log("%cfuzzyProbe \u2014 " + cases.length + " cases the plain query could not solve", "font-weight:bold");
+  try{ console.table(rows); }catch(e){ console.log(rows); }
+  console.log("cases rescued, by query form:");
+  console.table(forms.map(function(n){
+    return { form: n, example: QUERY_FORMS[n]("six of crwos"), rescued: wins[n] + " / " + cases.length };
+  }));
+  return { rows: rows, wins: wins };
+};
+
+function sameTitle(a, b){ return normTitle(a) === normTitle(b); }
+
+window.typoSuite = async function(cases){
+  cases = cases || TYPO_CASES;
+  var rows = [], i;
+  for(i = 0; i < cases.length; i++){
+    var c = cases[i];
+    var found = await lookupBook(c.typed);
+    var hits = found.hits;
+    /* the same function the form calls, not a second copy of the rule */
+    var offered = titleFixesFor(c.typed, hits).map(function(h){ return h.title; });
+
+    var wantSilence = !c.expect;
+    var got = offered[0] || "";
+    var right = wantSilence ? offered.length === 0 : (!!got && sameTitle(got, c.expect));
+
+    /* the right book was returned by the search, whether or not we offered it */
+    var expectPresent = !!c.expect && hits.some(function(h){ return sameTitle(h.title, c.expect); });
+    var verdict;
+    if(right) verdict = "OK";
+    else if(wantSilence) verdict = "LOGIC (false suggestion)";
+    else if(!hits.length) verdict = "CATALOGUE (no results)";
+    else if(!expectPresent) verdict = "CATALOGUE (right book not returned)";
+    else verdict = "LOGIC";
+
+    rows.push({
+      kind: c.kind,
+      typed: c.typed,
+      expected: c.expect || "(stay silent)",
+      openLibraryReturned: hits.slice(0, 3).map(function(h){
+        return h.title + " [" + (Math.round(h.near * 100) / 100) + (titleHasQuery(c.typed, h.title) ? ", contains typed" : "") + "]";
+      }).join("  ~  ") || "(nothing)",
+      offered: offered.join(" | ") || "(nothing)",
+      verdict: verdict
+    });
+    await new Promise(function(r){ setTimeout(r, 250); });   /* be kind to the API */
+  }
+
+  console.log("%ctypoSuite \u2014 " + rows.length + " cases against the real Open Library", "font-weight:bold");
+  try{ console.table(rows); }catch(e){ rows.forEach(function(r){ console.log(r.verdict, "|", r.typed, "->", r.offered); }); }
+  var tally = { OK: 0, LOGIC: 0, CATALOGUE: 0 };
+  rows.forEach(function(r){ tally[r.verdict.split(" ")[0]]++; });
+  console.log(tally.OK + " OK, " + tally.LOGIC + " logic bug(s), " + tally.CATALOGUE + " catalogue quirk(s)");
+  if(tally.LOGIC) console.log("LOGIC rows are ours to fix:", rows.filter(function(r){ return /^LOGIC/.test(r.verdict); }));
+  return rows;
+};
+
+function lookupLog(label, rows){
+  if(!LOOKUP_DEBUG) return;
+  try{ console.log("%c" + label, "font-weight:bold"); console.table(rows); }
+  catch(e){ console.log(label, rows); }
 }
 async function lookupBook(query){
   var hits = await searchBooks(query);
   hits.forEach(function(h){ h.near = titleCloseness(query, h.title); });
   hits.sort(function(a, b){ return a.near - b.near; });
   var best = hits[0] || null;
+  lookupLog('lookupBook("' + query + '") \u2014 typed as "' + normTitle(query) + '"',
+    hits.map(function(h){
+      return { title: h.title, normalised: normTitle(h.title), author: h.author,
+        closeness: Math.round(h.near * 100) / 100,
+        containsWhatYouTyped: titleHasQuery(query, h.title),
+        wouldOfferAsCorrection: !titleHasQuery(query, h.title) && h.near < 1.5 };
+    }));
   return {
     hits: hits.slice(0, 6),
     /* Offer a correction only when the best match doesn't contain what was
@@ -1902,13 +2302,13 @@ async function searchCovers(title, author){
     out.push({ url: url, src: src });
   }
   var q = [title, author].filter(Boolean).join(" ");
-  /* Two passes at Google Books: the plain phrase, then a field-qualified one.
+  /* Two passes at Open Library: the plain phrase, then a field-qualified one.
      The qualified query surfaces other editions — different jackets for the
      same book — which is usually what you actually want to choose between. */
   var queries = [q];
-  if(title) queries.push('intitle:"' + title + '"' + (author ? ' inauthor:"' + author + '"' : ""));
+  if(title) queries.push('title:"' + title + '"' + (author ? ' author:"' + author + '"' : ""));
   for(var i = 0; i < queries.length; i++){
-    (await searchBooks(queries[i])).forEach(function(b){ if(b.cover) add(b.cover, "Google Books"); });
+    (await searchBooks(queries[i])).forEach(function(b){ if(b.cover) add(b.cover, "Open Library"); });
     if(out.length >= 5) break;
   }
   try{
@@ -2068,6 +2468,19 @@ function allGenres(){
 function pendingRecs(){ return state.recs.filter(function(r){ return r.status === "pending"; }); }
 function recById(id){ return state.recs.filter(function(r){ return r.id === id; })[0] || null; }
 function memberById(id){ return state.members.filter(function(m){ return m.id === id; })[0] || null; }
+/* "4.35 Goodreads" per line — the number first, the rest is where it came from */
+function parseRatingLines(text){
+  return cleanRatings(String(text || "").split("\n").map(function(line){
+    var m = line.trim().match(/^([0-9]+(?:\.[0-9]+)?)\s*(?:\/\s*5)?\s*(.*)$/);
+    return m ? { score: m[1], source: m[2].trim() } : null;
+  }).filter(Boolean));
+}
+function cleanRatings(list){
+  if(!Array.isArray(list)) return [];
+  return list.map(function(r){
+    return { score: clampRating(r && r.score), source: String((r && r.source) || "").slice(0, 40) };
+  }).filter(function(r){ return r.score > 0; }).slice(0, 12);
+}
 /* two decimals, because that is how the rating sites quote them (4.35, not 4.4) */
 function clampRating(n){ n = Number(n); if(isNaN(n)) n = 0; return Math.max(0, Math.min(5, Math.round(n * 100) / 100)); }
 function stars(n, small){
@@ -2817,10 +3230,12 @@ function openBookDetail(o, kind, focus){
           (o.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
         "</div>" +
         (o.by ? '<p class="review__by" style="margin-top:14px">Recommended by ' + esc(o.by) + "</p>" : "") +
-        (Number(o.rating) > 0
-          ? '<div class="ratepair" style="margin-top:12px"><span class="ratebox">' +
-            '<span class="ratebox__k">' + esc(o.ratingSource || "Readers") + "</span>" +
-            '<span class="review__stars">' + stars(o.rating, true) + "</span></span></div>"
+        ((o.ratings || []).length
+          ? '<div class="ratepair" style="margin-top:12px">' +
+            o.ratings.map(function(rt){
+              return '<span class="ratebox"><span class="ratebox__k">' + esc(rt.source || "Readers") + "</span>" +
+                '<span class="review__stars">' + stars(rt.score, true) + "</span></span>";
+            }).join("") + "</div>"
           : "") +
         (ups.length
           ? '<p class="review__by" style="margin-top:10px">Endorsed by</p><div class="seconds">' +
@@ -3492,10 +3907,10 @@ function recEditor(r){
       '<div class="field"><label>Pages</label><input class="input" type="number" min="1" max="20000" value="' + esc(r.pages || "") + '" data-rfield="pages" data-rid="' + esc(r.id) + '"></div>' +
       '<div class="field"><label>Reading level</label>' + dualRangeHTML("rc:" + r.id, r.ageMin, r.ageMax) + "</div>" +
       '<div class="field"><label>Recommended by</label><input class="input" type="text" value="' + esc(r.by || "") + '" data-rfield="by" data-rid="' + esc(r.id) + '" maxlength="60"></div>' +
-      '<div class="field"><label>Readers&rsquo; rating <span style="text-transform:none;letter-spacing:0">(out of 5)</span></label>' +
-        '<input class="input" type="number" min="0" max="5" step="0.01" value="' + esc(r.rating || "") + '" data-rfield="rating" data-rid="' + esc(r.id) + '"></div>' +
-      '<div class="field"><label>Rating source</label><input class="input" type="text" value="' + esc(r.ratingSource || "") + '" data-rfield="ratingSource" data-rid="' + esc(r.id) + '" maxlength="40" placeholder="Goodreads"></div>' +
     "</div>" +
+    '<div class="field" style="margin-top:14px"><label>Readers&rsquo; ratings <span style="text-transform:none;letter-spacing:0">(one per line, as &ldquo;4.35 Goodreads&rdquo;)</span></label>' +
+      '<textarea class="textarea" data-rfield="ratings" data-rid="' + esc(r.id) + '" placeholder="4.35 Goodreads&#10;4.1 Fable" style="min-height:70px">' +
+      esc((r.ratings || []).map(function(rt){ return rt.score + (rt.source ? " " + rt.source : ""); }).join("\n")) + "</textarea></div>" +
     '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
       '<input class="input" type="text" value="' + esc((r.genres || []).join(", ")) + '" data-rfield="genres" data-rid="' + esc(r.id) + '" maxlength="300"></div>' +
     '<div class="field" style="margin-top:14px"><label>Summary</label>' +
@@ -4212,8 +4627,7 @@ document.addEventListener("click", async function(e){
     rs.ageMin = rAge.lo; rs.ageMax = rAge.hi; rs.level = levelText(rs);
     var rrv = rget("reviews");
     if(rrv) rs.reviews = parseReviewLines(rrv.value);
-    var rrt = rget("rating"); if(rrt) rs.rating = clampRating(rrt.value);
-    var rrs = rget("ratingSource"); if(rrs) rs.ratingSource = rrs.value.trim().slice(0, 40);
+    var rrt = rget("ratings"); if(rrt) rs.ratings = parseRatingLines(rrt.value);
     if(!rs.title) rs.title = "Untitled";
     if(await save("Saving…")){ renderAll(); renderAdmin(); }
     return;
@@ -4507,7 +4921,8 @@ function acceptSubmission(item, opts){
       status: opts.approve ? "approved" : "pending", at: String(item.at || "").slice(0, 10),
       cover: safeUrl(p.cover), blurb: String(p.blurb || ""), summarySource: String(p.summarySource || "own"),
       shortlist: false, reviews: [], endorsements: [], dislikes: [],
-      rating: clampRating(p.rating), ratingSource: String(p.ratingSource || "").slice(0, 40)
+      ratings: cleanRatings(p.ratings).length ? cleanRatings(p.ratings)
+        : (Number(p.rating) > 0 ? [{ score: clampRating(p.rating), source: String(p.ratingSource || "").slice(0, 40) }] : [])
     }));
   }else if(item.kind === "join"){
     var nm = String(p.name || "").trim();
@@ -4571,27 +4986,55 @@ tabGroup(["tree","time"], "tab-");
 
 /* ---------- the Suggest a Book form ---------- */
 var sugMode = "own", sugCover = "", sugFetched = "", sugAI = "", sugOwn = "";
-var acHits = [], acTimer = null;
 
 function setSugMode(mode){
   sugMode = mode;
   Array.prototype.forEach.call($("sSumMode").querySelectorAll("[data-summode]"), function(b){
     b.setAttribute("aria-pressed", String(b.getAttribute("data-summode") === mode));
   });
-  var box = $("sBlurb"), hint = $("sSumHint");
+  var box = $("sBlurb"), hint = $("sSumHint"), go = $("sSumSearch");
+  /* Picking a source no longer goes and gets one. Selecting a tab is how you
+     say what you want, not an instruction to spend a lookup or an API call —
+     the button is. */
   if(mode === "fetched"){
     box.value = sugFetched;
     hint.textContent = sugFetched
-      ? "Pulled from the book listing. Edit it however you like."
-      : "Nothing found for this one yet \u2014 press \u201cFill in the details for me\u201d first.";
+      ? "From the book listing. Edit it however you like."
+      : "Nothing fetched yet \u2014 press \u201cSearch the web\u201d.";
+    if(go){ go.hidden = false; go.textContent = "Search the web"; }
   }else if(mode === "ai"){
     box.value = sugAI;
-    hint.textContent = "Written fresh from the title and author. Edit it however you like.";
-    if(!sugAI) requestAISummary();
+    hint.textContent = sugAI
+      ? "Written from the title and author. Edit it however you like."
+      : "Nothing written yet \u2014 press \u201cWrite it\u201d.";
+    if(go){ go.hidden = false; go.textContent = "Write it"; }
   }else{
     box.value = sugOwn;
     hint.textContent = "All yours. A few sentences, no spoilers.";
+    if(go) go.hidden = true;
   }
+}
+/* the one button behind the summary box, doing whichever the chosen tab means */
+async function fetchSummary(){
+  var hint = $("sSumHint");
+  var title = $("sTitle").value.trim();
+  if(!title){ $("sTitle").focus(); return; }
+  if(sugMode === "ai"){ await requestAISummary(); return; }
+  hint.textContent = "Looking it up\u2026";
+  var hits = await searchBooks([title, $("sAuthor").value.trim()].filter(Boolean).join(" "));
+  hits.forEach(function(h){ h.near = titleCloseness(title, h.title); });
+  hits.sort(function(a, b){ return a.near - b.near; });
+  var best = hits[0];
+  /* the search index has no description, so ask the work record for one */
+  var text = best ? (await olDescription(best.key) || best.blurb) : "";
+  if(!text){
+    hint.textContent = "Unable to gather a summary for this one \u2014 write your own, or try \u201cWrite it\u201d.";
+    return;
+  }
+  sugFetched = text;
+  if(best.isbn13){ sugIsbn = best.isbn13; syncSearchLinks(); }
+  if(best.rating > 0) offerRating(best.rating, "Open Library");
+  setSugMode("fetched");
 }
 async function requestAISummary(){
   var title = $("sTitle").value.trim(), author = $("sAuthor").value.trim();
@@ -4617,22 +5060,6 @@ async function requestAISummary(){
     $("sSumHint").textContent = "Couldn\u2019t reach the club\u2019s inbox. Try the other options.";
   }
 }
-function closeAC(){
-  $("sTitleMenu").hidden = true;
-  $("sTitle").setAttribute("aria-expanded", "false");
-}
-function renderAC(){
-  var menu = $("sTitleMenu");
-  if(!acHits.length){ closeAC(); return; }
-  menu.innerHTML = acHits.map(function(h, i){
-    return '<button class="ac__opt" type="button" role="option" data-achit="' + i + '">' +
-      (h.cover ? '<img src="' + esc(h.cover) + '" alt="" loading="lazy">' : "") +
-      '<span><span class="ac__t">' + esc(h.title) + "</span>" +
-      '<span class="ac__a">' + esc(h.author || "unknown author") + (h.year ? " \u00b7 " + esc(h.year) : "") + "</span></span></button>";
-  }).join("");
-  menu.hidden = false;
-  $("sTitle").setAttribute("aria-expanded", "true");
-}
 /* Every distinct author the search turned up for this title, so a book with
    several editions, a translator, or a same-titled namesake doesn't quietly
    pick the wrong one. Each row links out to a Google search for the pair, so
@@ -4642,7 +5069,7 @@ function authorCandidates(hits, title){
   var seen = {}, outList = [];
   hits.forEach(function(h){
     if(!h.author) return;
-    /* Google Books joins co-authors with ", " — that whole string is one credit */
+    /* co-authors arrive joined with ", " — that whole string is one credit */
     var key = h.author.toLowerCase();
     if(seen[key]) { seen[key].count++; return; }
     seen[key] = { name: h.author, count: 1, title: h.title, year: h.year || "", near: titleCloseness(title, h.title) };
@@ -4658,8 +5085,13 @@ function googlePair(title, author){
 function renderAuthorPick(){
   var host = $("sAuthorPick");
   if(!host) return;
-  if(authorHits.length < 1){ host.hidden = true; host.innerHTML = ""; return; }
   var title = $("sTitle").value.trim(), chosen = $("sAuthor").value.trim().toLowerCase();
+  /* One name that is already in the box is not a choice — showing it as one
+     was the whole feature for most books, since a novel usually does have
+     exactly one author. Speak up only when there is something to decide. */
+  var worthIt = authorHits.length > 1 ||
+    (authorHits.length === 1 && authorHits[0].name.toLowerCase() !== chosen);
+  if(!worthIt){ host.hidden = true; host.innerHTML = ""; return; }
   host.hidden = false;
   host.innerHTML = '<span class="authpick__lab">' +
       (authorHits.length > 1 ? "Which author? Pick one and the rest fills in" : "Found this author") + "</span>" +
@@ -4674,16 +5106,85 @@ function renderAuthorPick(){
       "</span>";
     }).join("");
 }
-async function chooseACHit(i){
-  var h = acHits[i]; if(!h) return;
-  closeAC();
+/* ---- did you mean ----
+   Two of these, on the two fields where a slip is invisible until the lookup
+   returns the wrong book. Both offer at most three, and only when what was
+   typed isn't already right — a correction you didn't need is noise. */
+function fixBand(host, label, options, attr){
+  if(!host) return;
+  if(!options.length){ host.hidden = true; host.innerHTML = ""; return; }
+  host.hidden = false;
+  host.innerHTML = '<span class="authpick__lab">' + esc(label) + "</span>" +
+    options.map(function(o, i){
+      return '<span class="authrow">' +
+        '<button class="authrow__pick" type="button" ' + attr + '="' + i + '">' + esc(o.text) +
+          (o.sub ? "<small>" + esc(o.sub) + "</small>" : "") + "</button>" +
+        (o.href ? '<a class="authrow__web" href="' + esc(o.href) + '" target="_blank" rel="noopener noreferrer" ' +
+          'aria-label="Search the web for ' + esc(o.text) + '">&#127760;</a>' : "") +
+      "</span>";
+    }).join("");
+}
+
+var titleFixes = [];
+function offerTitleFixes(typed, hits){
+  titleFixes = titleFixesFor(typed, hits);
+  /* "Did you mean" is the wrong thing to say when the words are already right
+     and only the capitals or the spacing are off — nobody spelt anything
+     wrong there. */
+  var tidyOnly = titleFixes.length === 1 && sameTitle(typed, titleFixes[0].title);
+  fixBand($("sTitleFix"),
+    tidyOnly ? "Written like this on the shelf:"
+      : titleFixes.length > 1 ? "Did you mean one of these?" : "Did you mean\u2026",
+    titleFixes.map(function(h){
+      return { text: h.title, sub: (h.author || "") + (h.year ? " \u00b7 " + h.year : "") };
+    }), "data-titlefix");
+}
+
+var authorFixes = [];
+async function checkAuthorSpelling(){
+  var title = $("sTitle").value.trim(), typed = $("sAuthor").value.trim();
+  var host = $("sAuthorPick");
+  /* Defer only while the picker is actually on screen offering names — not
+     merely because a lookup once filled authorHits. Testing the array meant
+     one press of "Fill in the details" switched the spell-check off for the
+     rest of the session, including when the picker had decided it had
+     nothing worth showing. */
+  var showing = host && !host.hidden && host.querySelector("[data-authpick]");
+  if(!title || !typed || showing){ return; }
+  var hits = (await lookupBook(title)).hits;
+  var names = [];
+  hits.forEach(function(h){
+    if(h.author && names.indexOf(h.author) === -1) names.push(h.author);
+  });
+  if(!names.length) return;
+  var low = typed.toLowerCase();
+  /* Already right, or part-way through typing a name on record: say nothing.
+     Only that direction — a name containing what you have typed so far. The
+     reverse, what you typed containing a name, swallows every trailing-letter
+     slip: "leigh bardugoo" contains "leigh bardugo", so the commonest kind of
+     typo was being read as correct. */
+  if(names.some(function(n){ return n.toLowerCase().indexOf(low) !== -1; })) return;
+  authorFixes = names.filter(function(n){ return titleCloseness(typed, n) < 2; }).slice(0, 3);
+  if(!authorFixes.length) return;
+  fixBand(host, "Did you mean\u2026", authorFixes.map(function(n){
+    return { text: n, href: googlePair(title, n) };
+  }), "data-authorfix");
+}
+
+/* Fill the form in from one search result. This used to be "the thing the
+   dropdown does"; with the dropdown gone it is only reached from the "Use it"
+   button on a correction, so it takes the hit rather than an index into a
+   list that no longer exists. */
+async function applyBookHit(h, siblings){
+  if(!h) return;
   $("sTitle").value = h.title;
+  lastTitleChecked = h.title.trim();   /* chosen, so not a typo */
+  hideTitleFix();
   $("sAuthor").value = h.author;
   if(h.pages) $("sPages").value = h.pages;
-  sugFetched = h.blurb || "";
   sugCover = h.cover || "";
   var genres = (h.genres || []).slice();
-  /* Google Books hints at maturity; Open Library fills out the shelf-style genres */
+  /* the subject list is what the reading level is inferred from */
   if(h.mature){ dualState.sAge = { lo: 18, hi: AGE_TOP }; syncDual("sAge"); }
   var extras = await openLibraryExtras(h.title, h.author);
   if(extras){
@@ -4692,15 +5193,13 @@ async function chooseACHit(i){
     if(!sugCover && extras.cover) sugCover = extras.cover;
   }
   $("sGenres").value = normaliseGenres(genres).join(", ");
-  if(h.rating > 0){
-    $("sRating").value = h.rating;
-    if(!$("sRatingBy").value) $("sRatingBy").value = "Google Books";
-  }
+  if(h.rating > 0) offerRating(h.rating, "Open Library");
+  if(h.isbn13){ sugIsbn = h.isbn13; }
   sugAI = "";
   setSugMode(sugMode);
   renderSugCover();
   /* the picked title's other authors stay on offer, in case this was the wrong one */
-  authorHits = authorCandidates(acHits, h.title);
+  authorHits = authorCandidates(siblings || [h], h.title);
   renderAuthorPick();
   /* these fields were filled in code, which fires no input event */
   syncSearchLinks();
@@ -4711,11 +5210,88 @@ function renderSugCover(){
     coverSearchHTML("suggest", function(){ return { title: $("sTitle").value, author: $("sAuthor").value }; },
       function(url){ sugCover = url; renderSugCover(); });
 }
+/* ---- ratings: as many as the book has ----
+   A book has a Goodreads score and a Fable score and they disagree. Making
+   the form hold one meant choosing which to believe on the submitter's
+   behalf. */
+var sugRatings = [{ score: "", source: "" }];
+function renderRatingRows(){
+  var host = $("sRatings");
+  if(!host) return;
+  if(!sugRatings.length) sugRatings = [{ score: "", source: "" }];
+  host.innerHTML = sugRatings.map(function(r, i){
+    return '<div class="ratingrow">' +
+      '<input class="input mono" type="number" min="0" max="5" step="0.01" inputmode="decimal" ' +
+        'placeholder="4.1" value="' + esc(r.score) + '" data-rscore="' + i + '" aria-label="Rating out of 5">' +
+      '<input class="input input--src" type="text" maxlength="40" placeholder="Goodreads, Fable, StoryGraph\u2026" ' +
+        'value="' + esc(r.source) + '" data-rsrc="' + i + '" aria-label="Where the rating came from">' +
+      (sugRatings.length > 1
+        ? '<button class="ratingrow__del" type="button" data-rdrop="' + i + '" ' +
+          'aria-label="Remove this rating" title="Remove">&times;</button>'
+        : "") +
+    "</div>";
+  }).join("");
+}
+/* read the boxes back, because they are the truth once someone has typed */
+function readRatingRows(){
+  var host = $("sRatings");
+  if(!host) return;
+  sugRatings.forEach(function(r, i){
+    var sc = host.querySelector('[data-rscore="' + i + '"]');
+    var sr = host.querySelector('[data-rsrc="' + i + '"]');
+    if(sc) r.score = sc.value;
+    if(sr) r.source = sr.value;
+  });
+}
+function ratingsForSubmit(){
+  readRatingRows();
+  return cleanRatings(sugRatings.map(function(r){ return { score: r.score, source: r.source }; }));
+}
+/* fill the first empty row rather than adding another or overwriting one */
+function offerRating(score, source){
+  if(!(Number(score) > 0)) return false;
+  readRatingRows();
+  var same = sugRatings.some(function(r){
+    return String(r.source || "").toLowerCase() === String(source).toLowerCase();
+  });
+  if(same) return false;
+  var slot = sugRatings.filter(function(r){ return !String(r.score).trim(); })[0];
+  if(slot){ slot.score = score; slot.source = source; }
+  else sugRatings.push({ score: score, source: source });
+  renderRatingRows();
+  return true;
+}
+
+/* ---- Fable ----
+   Fable's pages can't be read from here: the browser blocks a cross-site read,
+   and fetching their HTML to pull numbers out of it is against the terms most
+   sites publish. So this is a link, and the rating rows above are where what
+   you find there goes. */
+function slugify(t){
+  return String(t || "").toLowerCase()
+    .replace(/[\u2018\u2019']/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+var sugIsbn = "";
+function fableUrl(title, author, isbn){
+  if(isbn && title){
+    return "https://fable.co/book/" + slugify(title) + "-by-" + slugify(author) + "-" + isbn;
+  }
+  return "https://fable.co/search?q=" + encodeURIComponent([title, author].filter(Boolean).join(" "));
+}
+
 function initSuggestForm(){
   $("sAgeSlider").innerHTML = dualRangeHTML("sAge", 12, AGE_TOP);
   renderSugCover();
   setSugMode("own");
   $("sLookupOut").innerHTML = "";
+  if($("sAgeNote")) $("sAgeNote").hidden = true;
+  hideTitleFix();
+  lastTitleChecked = "";
+  sugRatings = [{ score: "", source: "" }];
+  sugIsbn = "";
+  renderRatingRows();
   syncSearchLinks();
 }
 /* keep the two "go and look" links pointed at whatever's typed */
@@ -4723,6 +5299,7 @@ function syncSearchLinks(){
   var t = $("sTitle").value.trim(), a = $("sAuthor").value.trim();
   $("sGoodreads").href = goodreadsSearch(t, a);
   $("sGoogle").href = googleSearch(t, a);
+  if($("sFable")) $("sFable").href = fableUrl(t, a, sugIsbn);
 }
 /* the explicit "search the web" pass: correct the title, offer the authors it
    found, and fill in everything it can */
@@ -4753,6 +5330,76 @@ function setAgeSlider(lo, hi){
   syncDual("sAge");
 }
 
+/* The age rating on its own, on demand — two buttons, because they answer
+   different questions. "Check online" is what shops and libraries shelve it
+   under: free, no key, and the right answer when there is one. "Ask AI" is a
+   reading of the book itself, for the many listings that carry no shelving at
+   all — which is exactly when whoever is filling the form has nothing to go on
+   either. Keeping them apart means you choose which you are getting, and the
+   note always says which answered: "Ages 13+" from a publisher and from a
+   model are not the same claim. */
+function ageStart(){
+  var title = $("sTitle").value.trim();
+  var note = $("sAgeNote");
+  if(!title){ $("sTitle").focus(); return null; }
+  note.hidden = false;
+  note.textContent = "Checking\u2026";
+  return { title: title, author: $("sAuthor").value.trim(), note: note };
+}
+function ageApply(lo, hi, said){
+  setAgeSlider(lo, hi);
+  $("sAgeNote").textContent = "Set to " + levelText({ ageMin: lo, ageMax: hi }) + ". " + said;
+}
+
+/* What the book databases shelve it under. */
+async function ageFromWeb(){
+  var c = ageStart(); if(!c) return;
+
+  var genres = normaliseGenres($("sGenres").value);
+  var mature = false;
+  var hits = await searchBooks([c.title, c.author].filter(Boolean).join(" "));
+  if(hits.length){
+    hits.forEach(function(h){ h.near = titleCloseness(c.title, h.title); });
+    hits.sort(function(a, b){ return a.near - b.near; });
+    genres = genres.concat(hits[0].genres || []);
+    mature = !!hits[0].mature;
+  }
+  var extras = await openLibraryExtras(c.title, c.author);
+  if(extras) genres = genres.concat(extras.genres || []);
+
+  var band = ageFromShelving(genres, mature);
+  if(band){
+    ageApply(band.lo, band.hi, "That\u2019s how shops and libraries shelve it. Drag the handles if you disagree.");
+    return;
+  }
+  c.note.textContent = hits.length || extras
+    ? "Found the book, but nothing says what age it\u2019s for \u2014 try \u201cAsk AI\u201d, or set it yourself."
+    : "Couldn\u2019t find that one online \u2014 try \u201cAsk AI\u201d, or set it yourself.";
+}
+
+/* What Claude makes of the book, asked through the club's endpoint. */
+async function ageFromAI(){
+  var c = ageStart(); if(!c) return;
+
+  if(!endpoint()){
+    c.note.textContent = "Asking the AI isn\u2019t switched on \u2014 use \u201cCheck online\u201d, or set the level yourself.";
+    return;
+  }
+  var j = await callEndpoint("details", { title: c.title, author: c.author });
+  if(j && j.ok && j.details &&
+     typeof j.details.ageMin === "number" && typeof j.details.ageMax === "number" &&
+     j.details.ageMax > 0 && j.details.ageMax >= j.details.ageMin){
+    ageApply(j.details.ageMin, j.details.ageMax,
+      j.details.confident === false
+        ? "That\u2019s Claude\u2019s reading, and it wasn\u2019t certain \u2014 do check."
+        : "That\u2019s Claude\u2019s reading of it \u2014 worth a check.");
+    return;
+  }
+  c.note.textContent = j && j.error === "no api key"
+    ? "Asking the AI isn\u2019t switched on \u2014 use \u201cCheck online\u201d, or set the level yourself."
+    : "The AI couldn\u2019t put an age on this one \u2014 try \u201cCheck online\u201d, or set it yourself.";
+}
+
 /* "Fill in the details for me".
    The book databases do the work — they need no key and answer for anyone. The
    AI is only asked to refine afterwards, and only when the organiser has set a
@@ -4765,15 +5412,18 @@ async function askAIForDetails(){
   out.innerHTML = '<p class="hint" style="margin-top:10px">Looking it up&hellip;</p>';
   var filled = [], notes = [];
 
-  /* 1. the closest match on Google Books. lookupBook rather than searchBooks,
+  /* 1. the closest match on Open Library. lookupBook rather than searchBooks,
         because the typo correction used to live on the search button and that
         button has gone — this is the only lookup now, so it carries it. */
   var found = await lookupBook([title, author].filter(Boolean).join(" "));
   var hits = found.hits;
   lookupHits = hits;
   var correction = found.correction;
-  /* offer every author the search found, rather than silently taking the first */
-  authorHits = authorCandidates(hits, title);
+  /* The candidate list has to come from the TITLE alone. Searching with the
+     author in the query returns only that author's editions, which is exactly
+     the alternatives the list exists to offer — so it went quiet as soon as
+     the author box had anything in it, which is after the first press. */
+  authorHits = authorCandidates(author ? (await lookupBook(title)).hits : hits, title);
   if(author){
     /* they've already named someone: prefer that person's edition */
     var wanted = author.toLowerCase();
@@ -4785,14 +5435,10 @@ async function askAIForDetails(){
   var genres = [];
   if(best){
     if(best.author && !author){ $("sAuthor").value = best.author; author = best.author; filled.push("author"); }
-    if(best.rating > 0 && !$("sRating").value){
-      $("sRating").value = best.rating;
-      if(!$("sRatingBy").value) $("sRatingBy").value = "Google Books";
-      filled.push("readers' rating");
-    }
+    if(best.rating > 0 && offerRating(best.rating, "Open Library")) filled.push("a rating");
+    if(best.isbn13){ sugIsbn = best.isbn13; }
     if(best.pages && !$("sPages").value){ $("sPages").value = best.pages; filled.push("page count"); }
     genres = genres.concat(best.genres || []);
-    if(best.blurb){ sugFetched = best.blurb; }
     if(best.cover && !sugCover){ sugCover = best.cover; renderSugCover(); }
   }
 
@@ -4812,7 +5458,7 @@ async function askAIForDetails(){
   if(band){ setAgeSlider(band.lo, band.hi); filled.push("age rating"); }
 
   if(!best && !extras){
-    out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t find that one. Check the spelling, or fill it in yourself &mdash; the Goodreads and Google links are right there.</p>';
+    out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t find that one. Check the spelling, or fill it in yourself &mdash; the Goodreads, Google and Fable links are right there.</p>';
     return;
   }
 
@@ -4856,23 +5502,50 @@ async function askAIForDetails(){
       : "") +
     '<p class="hint" style="margin-top:10px">' +
     (uniq.length ? "Filled in the " + uniq.join(", ") + ". " : "Nothing new to fill in. ") +
-    (refined ? "Checked against Google Books, Open Library and Claude. " : "From Google Books and Open Library. ") +
+    (refined ? "Checked against Open Library and Claude. " : "From Open Library. ") +
     "Everything here is editable &mdash; give it a glance before you send it." +
     /* the summary is nobody's business but theirs, so say what's on offer
        rather than dropping it in */
-    (sugFetched ? " There&rsquo;s a published summary too &mdash; pick <strong>From the book listing</strong> below if you want it." : "") +
+    " A summary isn&rsquo;t fetched unless you ask &mdash; the buttons under the summary box do that." +
     (notes.length ? " " + esc(notes.join(" ")) : "") + "</p>";
 }
-$("sTitle").addEventListener("input", function(){
-  clearTimeout(acTimer);
+/* The one lookup on this field. It used to live inside the autocomplete
+   dropdown's debounce, which made it a casualty of closing that dropdown —
+   blur closed the menu, the close cleared the shared timer, and the check
+   that had not run yet never did. The dropdown is gone now, so that whole
+   class of interference is gone with it: this is the only thing listening,
+   and it runs once, on blur. */
+var lastTitleChecked = "";
+function hideTitleFix(){
+  var h = $("sTitleFix");
+  if(h){ h.hidden = true; h.innerHTML = ""; }
+  titleFixes = [];
+}
+async function checkTitleSpelling(why){
   var q = $("sTitle").value.trim();
-  if(q.length < 3){ acHits = []; closeAC(); return; }
-  acTimer = setTimeout(async function(){
-    acHits = (await searchBooks(q)).slice(0, 6);
-    renderAC();
-  }, 320);
+  if(LOOKUP_DEBUG) console.log("checkTitleSpelling(" + why + ") reading: " + JSON.stringify(q));
+  if(q.length < 3){ hideTitleFix(); return; }
+  if(q === lastTitleChecked) return;        /* already decided about this text */
+  lastTitleChecked = q;
+  var found = await lookupBook(q);
+  /* they may have typed on, or picked something, while we were asking */
+  if($("sTitle").value.trim() !== q){
+    if(LOOKUP_DEBUG) console.log("checkTitleSpelling: box moved on, dropping this answer");
+    return;
+  }
+  offerTitleFixes(q, found.hits);
+}
+
+/* Nothing happens while you type any more — no dropdown, and no search per
+   keystroke. The check runs once, when you leave the field. */
+$("sTitle").addEventListener("input", function(){
+  hideTitleFix();
+  lastTitleChecked = "";
 });
-$("sTitle").addEventListener("blur", function(){ setTimeout(closeAC, 180); });
+$("sTitle").addEventListener("blur", function(){
+  /* a beat, so a click on the correction band itself lands first */
+  setTimeout(function(){ checkTitleSpelling("blur"); }, 120);
+});
 $("sBlurb").addEventListener("input", function(){
   var v = $("sBlurb").value;
   if(sugMode === "fetched") sugFetched = v;
@@ -4880,11 +5553,46 @@ $("sBlurb").addEventListener("input", function(){
   else sugOwn = v;
 });
 document.addEventListener("click", async function(e){
-  var el = e.target.closest && e.target.closest("[data-achit]");
-  if(el){ await chooseACHit(Number(el.getAttribute("data-achit"))); return; }
   var sm = e.target.closest && e.target.closest("[data-summode]");
   if(sm){ setSugMode(sm.getAttribute("data-summode")); return; }
   if(e.target.closest && e.target.closest("#sAskAI")){ await askAIForDetails(); return; }
+  if(e.target.closest && e.target.closest("#sSumSearch")){ await fetchSummary(); return; }
+  if(e.target.closest && e.target.closest("#sRatingAdd")){
+    readRatingRows();
+    sugRatings.push({ score: "", source: "" });
+    renderRatingRows();
+    return;
+  }
+  var rd = e.target.closest && e.target.closest("[data-rdrop]");
+  if(rd){
+    readRatingRows();
+    sugRatings.splice(Number(rd.getAttribute("data-rdrop")), 1);
+    renderRatingRows();
+    return;
+  }
+  var tf = e.target.closest && e.target.closest("[data-titlefix]");
+  if(tf){
+    var pickT = titleFixes[Number(tf.getAttribute("data-titlefix"))];
+    if(pickT){
+      $("sTitle").value = pickT.title;
+      lastTitleChecked = pickT.title.trim();
+      hideTitleFix();
+      syncSearchLinks();
+    }
+    return;
+  }
+  var af = e.target.closest && e.target.closest("[data-authorfix]");
+  if(af){
+    var pickA = authorFixes[Number(af.getAttribute("data-authorfix"))];
+    if(pickA){
+      $("sAuthor").value = pickA;
+      $("sAuthorPick").hidden = true; $("sAuthorPick").innerHTML = "";
+      syncSearchLinks();
+    }
+    return;
+  }
+  if(e.target.closest && e.target.closest("#sAgeCheck")){ await ageFromWeb(); return; }
+  if(e.target.closest && e.target.closest("#sAgeAI")){ await ageFromAI(); return; }
   var ap = e.target.closest && e.target.closest("[data-authpick]");
   if(ap){
     var who = authorHits[Number(ap.getAttribute("data-authpick"))];
@@ -4894,8 +5602,9 @@ document.addEventListener("click", async function(e){
       syncSearchLinks();
       /* refill against this author, so the page count and genres are theirs —
          clearing first, or the "only if empty" guards keep the old values */
-      ["sPages", "sGenres", "sRating"].forEach(function(id){ $(id).value = ""; });
-      $("sRatingBy").value = "";
+      ["sPages", "sGenres"].forEach(function(id){ $(id).value = ""; });
+      sugRatings = [{ score: "", source: "" }];
+      renderRatingRows();
       await askAIForDetails();
     }
     return;
@@ -4904,8 +5613,7 @@ document.addEventListener("click", async function(e){
   if(uh){
     var pick = lookupHits[Number(uh.getAttribute("data-usehit"))];
     if(pick){
-      acHits = lookupHits;
-      await chooseACHit(Number(uh.getAttribute("data-usehit")));
+      await applyBookHit(pick, lookupHits);
       $("sLookupOut").innerHTML = '<p class="hint" style="margin-top:10px">Filled in from &ldquo;' +
         esc(pick.title) + '&rdquo;. Change anything that looks wrong.</p>';
       syncSearchLinks();
@@ -4913,7 +5621,14 @@ document.addEventListener("click", async function(e){
     return;
   }
 });
-$("sAuthor").addEventListener("input", syncSearchLinks);
+var authTimer = null;
+$("sAuthor").addEventListener("input", function(){
+  syncSearchLinks();
+  clearTimeout(authTimer);
+  if($("sAuthorPick") && !authorHits.length){ $("sAuthorPick").hidden = true; }
+  authTimer = setTimeout(checkAuthorSpelling, 500);
+});
+$("sAuthor").addEventListener("blur", function(){ clearTimeout(authTimer); setTimeout(checkAuthorSpelling, 120); });
 $("sTitle").addEventListener("input", syncSearchLinks);
 
 $("suggestForm").addEventListener("submit", async function(e){
@@ -4932,7 +5647,7 @@ $("suggestForm").addEventListener("submit", async function(e){
       title: title, author: author, pages: Number(el.pages.value) || null,
       ageMin: age.lo, ageMax: age.hi, level: levelText({ ageMin: age.lo, ageMax: age.hi }),
       genres: genres, blurb: blurb, summarySource: sugMode, cover: sugCover, by: by,
-      rating: clampRating(el.rating.value), ratingSource: el.ratingSource.value.trim().slice(0, 40)
+      ratings: ratingsForSubmit()
     });
     if(!res.ok){ note.textContent = submitFailMsg(res); return; }
     note.textContent = "Sent. The organiser will take a look.";
@@ -4948,9 +5663,9 @@ $("suggestForm").addEventListener("submit", async function(e){
     "**Pages:** " + (el.pages.value.trim() || "not given"),
     "**Reading level:** " + levelText({ ageMin: age.lo, ageMax: age.hi }),
     "**Genres:** " + (genres.join(", ") || "not given"),
-    "**Readers' rating:** " + (el.rating.value.trim()
-      ? el.rating.value.trim() + " / 5" + (el.ratingSource.value.trim() ? " (" + el.ratingSource.value.trim() + ")" : "")
-      : "not given"),
+    "**Readers' ratings:** " + (ratingsForSubmit().map(function(r){
+      return r.score + " / 5" + (r.source ? " (" + r.source + ")" : "");
+    }).join(", ") || "not given"),
     "**Cover:** " + (sugCover || "not given"),
     "", "**What it\u2019s about**", blurb || "(not given)",
     "", "\u2014 suggested by " + by
@@ -4968,7 +5683,8 @@ function renderWhoami(){
   var btn = $("loginOpen");
   if(!btn) return;
   var join = $("signupOpen");
-  if(!endpoint()){
+  /* signing in writes to the real members list, so it stays off here */
+  if(!endpoint() || DEV){
     btn.hidden = true;
     if(join) join.hidden = true;
     return;
