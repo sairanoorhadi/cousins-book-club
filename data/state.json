@@ -1,5 +1,5 @@
 {
-  "rev": 1155,
+  "rev": 1156,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -576,6 +576,11 @@
         {
           "id": "pred-mt9et0a6cpsbv",
           "text": "Jesper's dad is going the get used",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9etcev4b2pg",
+          "text": "Net is going to be their downfall",
           "by": ""
         }
       ],
