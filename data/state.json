@@ -1,5 +1,5 @@
 {
-  "rev": 1144,
+  "rev": 1145,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -513,6 +513,21 @@
       "place": "Condo",
       "chapters": "Section 6: Chapters 39-46 (Final Section)",
       "pages": "55",
+      "done": false,
+      "summary": "",
+      "photos": [],
+      "predictions": [],
+      "points": []
+    },
+    {
+      "id": "mt-mt9ekpm1dr88z",
+      "bookId": "bk-ck",
+      "kind": "meeting",
+      "date": "2026-07-25",
+      "time": "20:00",
+      "place": "Ferdinand",
+      "chapters": "Section 1 & 2: Chapters 1-10",
+      "pages": "143",
       "done": false,
       "summary": "",
       "photos": [],
