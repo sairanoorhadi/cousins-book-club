@@ -1,5 +1,5 @@
 {
-  "rev": 1110,
+  "rev": 1111,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -371,6 +371,11 @@
         {
           "id": "pred-mt9dofhjb5xh8",
           "text": "Jesper was faking ADHD and betrays everyone",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9doy1imupzk",
+          "text": "Inej might betray. There is something off with her",
           "by": ""
         }
       ],
