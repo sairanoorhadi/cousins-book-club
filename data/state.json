@@ -1,5 +1,5 @@
 {
-  "rev": 1138,
+  "rev": 1139,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -484,6 +484,11 @@
         {
           "id": "pred-mt9ebae475yoi",
           "text": "Wylan and Kuwei have history",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9ebnbgr61l5",
+          "text": "We get a Kaz and Inej moment",
           "by": ""
         }
       ],
