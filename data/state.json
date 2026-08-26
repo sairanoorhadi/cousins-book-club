@@ -1,5 +1,5 @@
 {
-  "rev": 1199,
+  "rev": 1200,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -35,7 +35,7 @@
       "notifyRef": "sub-595bdd4d-58a",
       "emailHint": "f••••@gmail.com",
       "notify": [],
-      "hue": ""
+      "hue": "grape"
     },
     {
       "id": "mb-mt3zy8m6cxe9o",
