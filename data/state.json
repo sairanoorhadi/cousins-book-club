@@ -1,5 +1,5 @@
 {
-  "rev": 1125,
+  "rev": 1126,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -437,6 +437,11 @@
         {
           "id": "pred-mt9e1dl9xe60r",
           "text": "Joost comes back",
+          "by": "Summar"
+        },
+        {
+          "id": "pred-mt9e1r3iylts7",
+          "text": "Inej turns into a Grish",
           "by": "Summar"
         }
       ],
