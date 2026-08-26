@@ -1,5 +1,5 @@
 {
-  "rev": 1186,
+  "rev": 1187,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -809,7 +809,7 @@
       "by": "Pareesa",
       "status": "approved",
       "at": "",
-      "cover": "",
+      "cover": "https://m.media-amazon.com/images/I/71jb9wceqsL.jpg",
       "blurb": "Vancouver, 1970s. Ten-year-old Journey Song finds two pandas stranded in a warehouse in her neighbourhood, caught up in a diplomatic standoff and going quietly neglected. She has no money and no connections, so she uses what her block does have: everybody on it.",
       "shortlist": false,
       "summarySource": "own",
