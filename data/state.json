@@ -1,5 +1,5 @@
 {
-  "rev": 1145,
+  "rev": 1146,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -528,7 +528,7 @@
       "place": "Ferdinand",
       "chapters": "Section 1 & 2: Chapters 1-10",
       "pages": "143",
-      "done": false,
+      "done": true,
       "summary": "",
       "photos": [],
       "predictions": [],
