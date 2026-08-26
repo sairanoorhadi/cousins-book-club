@@ -219,6 +219,19 @@
         "name": "Saira",
         "vote": "none"
       }
+    },
+    {
+      "id": "join-717b2b15-22b",
+      "kind": "join",
+      "at": "2026-08-26T20:01:43.710Z",
+      "payload": {
+        "name": "Eliza Hadi",
+        "fable": "https://fable.co/fabler/eliza-hadi-487093293960?referralID=2v71c1ojRf",
+        "goodreads": "",
+        "note": "Mystery, Fantasy",
+        "emailRef": "sub-f9a6f748-bc4",
+        "emailHint": "e••••@gmail.com"
+      }
     }
   ]
 }
