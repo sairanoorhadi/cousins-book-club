@@ -1,5 +1,5 @@
 {
-  "rev": 1124,
+  "rev": 1125,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -433,6 +433,11 @@
           "id": "pred-mt9e0nlc3flkb",
           "text": "Once the job is over Inej is going to search for her parents",
           "by": ""
+        },
+        {
+          "id": "pred-mt9e1dl9xe60r",
+          "text": "Joost comes back",
+          "by": "Summar"
         }
       ],
       "points": [
