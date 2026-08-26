@@ -1,5 +1,5 @@
 {
-  "rev": 1134,
+  "rev": 1135,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -462,6 +462,21 @@
           "by": ""
         }
       ]
+    },
+    {
+      "id": "mt-mt9e9cqdzkz2r",
+      "bookId": "bk-soc",
+      "kind": "meeting",
+      "date": "2026-06-21",
+      "time": "14:00",
+      "place": "Ferdinand",
+      "chapters": "Section 5: Chapters 27-38",
+      "pages": "82",
+      "done": false,
+      "summary": "",
+      "photos": [],
+      "predictions": [],
+      "points": []
     }
   ],
   "recs": [
