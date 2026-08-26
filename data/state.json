@@ -1,5 +1,5 @@
 {
-  "rev": 1131,
+  "rev": 1132,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -206,7 +206,7 @@
       "date": "2026-08-27",
       "time": "19:00",
       "place": "Online - Discord",
-      "chapters": "Section 5: 23-32",
+      "chapters": "Section 5: Chapters 23-32",
       "pages": "100",
       "done": false,
       "summary": "",
@@ -259,7 +259,7 @@
       "date": "2026-09-06",
       "time": "15:00",
       "place": "Ferdinand",
-      "chapters": "Section 6: 32-45",
+      "chapters": "Section 6: Chapters 32-45",
       "pages": "",
       "done": false,
       "summary": "",
@@ -319,7 +319,7 @@
       "date": "2026-08-18",
       "time": "19:00",
       "place": "Online - Discord",
-      "chapters": "Section 4 Chapter 17-23",
+      "chapters": "Section 4 Chapters 17-23",
       "pages": "80",
       "done": false,
       "summary": "",
