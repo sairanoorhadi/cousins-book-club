@@ -433,17 +433,21 @@ img{max-width:100%;display:block}
 .authrow__pick[aria-pressed="true"] small{color:var(--on-surf);opacity:.85}
 .authrow__web{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--muted);text-decoration:none}
 .authrow__web:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
-/* Only on the card that has been picked: the button that settles it. It keeps
-   its own size — the row gives way, never the button.
-
-   The picker used to sit inside the Author field, a third of the form wide,
-   where a name, a globe and a button could not fit across: the name pill was
-   the only thing that could give, so it did, three lines of it. The picker has
-   a band of its own now, the width of the whole field row, and the pill is
-   sized by the name rather than stretched to fill. */
-.authrow__ok{flex:none}
-#sAuthorPick .authrow{flex-wrap:wrap}
-#sAuthorPick .authrow__pick{flex:0 1 auto;max-width:100%}
+/* Only on the card that has been picked, and standing outside the card
+   entirely: Confirm sits in the Look up book column, under that button, level
+   with the top of its own row. The row is the anchor, so it always names the
+   right author; the column is a step to the right, which is the width of the
+   author cell plus the grid's gap. Nothing about the cards themselves changes
+   when one is picked — they are the size and shape they always were. */
+.authrow{position:relative}
+.authrow__ok{position:absolute;left:calc(100% + 16px);top:0;width:max-content}
+/* Measured, not guessed: below 766px the field row drops from three columns to
+   two, so there is no Look up book column beside the author to sit under. The
+   button rejoins the row on a line of its own rather than squeezing the name. */
+@media (max-width:765px){
+  .authrow{flex-wrap:wrap}
+  .authrow__ok{position:static;width:auto;margin-left:auto}
+}
 
 .lookupfix{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;border:2px dashed var(--edge);border-radius:var(--r);background:var(--sunk);padding:10px 14px;font-size:15px}
 
@@ -1038,12 +1042,12 @@ img{max-width:100%;display:block}
             <div class="field"><label for="sTitle">Book title</label>
               <input class="input" id="sTitle" name="title" required maxlength="140" autocomplete="off">
               <div class="authpick" id="sTitleFix" hidden></div></div>
-            <div class="field"><label for="sAuthor">Author</label><input class="input" id="sAuthor" name="author" required maxlength="140"></div>
+            <div class="field"><label for="sAuthor">Author</label><input class="input" id="sAuthor" name="author" required maxlength="140">
+              <div class="authpick" id="sAuthorPick" hidden></div></div>
             <div class="field field--action"><span class="field__cap" aria-hidden="true"></span>
               <button class="btn btn--grape lookupgo" type="button" id="sAskAI">Look up book</button>
               <p class="hint">A title on its own is enough &mdash; no author needed.</p></div>
           </div>
-          <div class="authpick" id="sAuthorPick" hidden></div>
           <div class="formgrid formgrid--rest">
             <div class="field"><label for="sPages">Page count</label><input class="input" id="sPages" name="pages" type="number" min="1" max="20000" inputmode="numeric"></div>
             <div class="field"><label for="sBy">Your name</label><input class="input" id="sBy" name="by" required maxlength="60"></div>
@@ -5131,10 +5135,10 @@ async function requestAISummary(){
    pick the wrong one. Each row links out to a Google search for the pair, so
    you can check before committing. */
 var authorHits = [];
-/* which card has been clicked, and whether the tick on it has been pressed.
-   Both are about what the reader has DONE, not about what the author box
-   happens to say — a name the lookup filled in is not a choice they made, and
-   the tick must not appear on a card nobody has picked. */
+/* which card has been clicked, and whether Confirm has been pressed. Both are
+   about what the reader has DONE, not about what the author box happens to
+   say — a name the lookup filled in is not a choice they made, and Confirm
+   must not appear against a card nobody has picked. */
 var authorPicked = -1;
 var authorSettled = false;
 function authorCandidates(hits, title){
@@ -5163,7 +5167,7 @@ function renderAuthorPick(){
      exactly one author. Speak up only when there is something to decide. */
   var worthIt = authorHits.length > 1 ||
     (authorHits.length === 1 && authorHits[0].name.toLowerCase() !== chosen);
-  /* settled by the tick: the question has been answered, so stop asking it */
+  /* settled by Confirm: the question is answered, so stop asking it */
   if(!worthIt || authorSettled){ host.hidden = true; host.innerHTML = ""; return; }
   host.hidden = false;
   host.innerHTML = '<span class="authpick__lab">' +
@@ -5671,7 +5675,7 @@ document.addEventListener("click", async function(e){
   }
   if(e.target.closest && e.target.closest("#sAgeCheck")){ await ageFromWeb(); return; }
   if(e.target.closest && e.target.closest("#sAgeAI")){ await ageFromAI(); return; }
-  /* a name on its own: take the name, show the tick, change nothing else.
+  /* a name on its own: take the name, show Confirm, change nothing else.
      The other names stay up, so a wrong pick costs one more click. */
   var ap = e.target.closest && e.target.closest("[data-authpick]");
   if(ap){
@@ -5685,7 +5689,7 @@ document.addEventListener("click", async function(e){
     }
     return;
   }
-  /* the tick: settle on this author, put the other cards away and fill in */
+  /* Confirm: settle on this author, put the other cards away and fill in */
   var ok = e.target.closest && e.target.closest("[data-authok]");
   if(ok){
     var confirmed = authorHits[Number(ok.getAttribute("data-authok"))];
