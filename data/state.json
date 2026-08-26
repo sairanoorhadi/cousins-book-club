@@ -1,5 +1,5 @@
 {
-  "rev": 1127,
+  "rev": 1128,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -447,6 +447,11 @@
         {
           "id": "pred-mt9e22j67vnbm",
           "text": "Pekka Rollins is a Grisha",
+          "by": "Summar"
+        },
+        {
+          "id": "pred-mt9e2uea4lg7p",
+          "text": "Nina betrays & kills everyone incl. Inej",
           "by": "Summar"
         }
       ],
