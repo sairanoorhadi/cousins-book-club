@@ -1,5 +1,5 @@
 {
-  "rev": 1136,
+  "rev": 1137,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -475,7 +475,13 @@
       "done": true,
       "summary": "",
       "photos": [],
-      "predictions": [],
+      "predictions": [
+        {
+          "id": "pred-mt9eas7il9evb",
+          "text": "Merchants Vs. Kaz with the payout",
+          "by": ""
+        }
+      ],
       "points": []
     }
   ],
