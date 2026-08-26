@@ -1,5 +1,5 @@
 {
-  "rev": 1156,
+  "rev": 1157,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -584,7 +584,13 @@
           "by": ""
         }
       ],
-      "points": []
+      "points": [
+        {
+          "id": "disc-mt9eua0ze0s73",
+          "text": "Why did they hide that Zoya was one of their refugees",
+          "by": ""
+        }
+      ]
     }
   ],
   "recs": [
