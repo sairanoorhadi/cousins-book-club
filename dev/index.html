@@ -291,15 +291,16 @@ img{max-width:100%;display:block}
    the padding. That leaves the two boxes genuinely separate while the grid's
    own rows go on doing the measuring, with nothing in pixels to keep in
    step. */
-.suggestform{--aside-col:208px;--aside-gap:46px;position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) var(--aside-col);column-gap:var(--aside-gap);row-gap:18px;align-items:start;padding:26px;max-width:1010px}
+.suggestform{--aside-col:208px;--aside-gap:46px;--pad:26px;position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) var(--aside-col);column-gap:var(--aside-gap);row-gap:18px;align-items:start;padding:var(--pad);max-width:1010px}
 /* the card is painted, not laid out: a grid item here would take the cells the
    fields are meant to auto-place into and push the whole form down a column */
 .suggestform::before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:0;right:calc(var(--aside-col) + var(--aside-gap));border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
 .suggestform > *{grid-column:1;min-width:0}
-/* rows one to seven: level with the card's top edge, stopping at Summary.
-   Stretched, because the form aligns everything else to the top and a track
-   only as tall as the buttons would give sticky nowhere to go. */
-.suggestform > .lookaside__track{grid-column:2;grid-row:1 / 8;align-self:stretch;margin-top:-26px}
+/* The track is the sidebar's whole travel: the card's top edge down to its
+   bottom. Taken out of the flow rather than placed on rows, so it spans the
+   form exactly — and there is no row number here to fall out of step when a
+   field is added. The column it sits over is still reserved by the grid. */
+.suggestform > .lookaside__track{position:absolute;top:0;bottom:0;right:var(--pad);width:var(--aside-col)}
 .formgrid--rest #sLookupOut{grid-column:1/-1}
 .lookaside{position:sticky;top:calc(var(--topbar-h) + 18px);display:flex;flex-direction:column;gap:8px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:16px}
 .lookaside__cap{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
@@ -597,7 +598,7 @@ img{max-width:100%;display:block}
 @media (max-width:1024px){
   .suggestform{display:flex;flex-direction:column;align-items:stretch;gap:18px;max-width:760px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
   .suggestform::before{display:none}
-  .suggestform > .lookaside__track{margin-top:0}
+  .suggestform > .lookaside__track{position:static;width:auto}
   .lookaside{position:static;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px}
   .lookaside .btn{width:auto}
   .lookaside__cap{width:100%;margin-bottom:0}
