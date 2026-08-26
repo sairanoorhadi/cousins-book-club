@@ -1,5 +1,5 @@
 {
-  "rev": 1137,
+  "rev": 1138,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -479,6 +479,11 @@
         {
           "id": "pred-mt9eas7il9evb",
           "text": "Merchants Vs. Kaz with the payout",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9ebae475yoi",
+          "text": "Wylan and Kuwei have history",
           "by": ""
         }
       ],
