@@ -1,5 +1,5 @@
 {
-  "rev": 1122,
+  "rev": 1123,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -427,6 +427,11 @@
         {
           "id": "pred-mt9e029ib1tpp",
           "text": "Wylan is not a traitor",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9e0nlc3flkb",
+          "text": "Once the job is over Inej is going to search for her parents",
           "by": ""
         }
       ],
