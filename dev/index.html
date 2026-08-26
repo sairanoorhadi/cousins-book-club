@@ -431,8 +431,14 @@ img{max-width:100%;display:block}
 .authrow__pick[aria-pressed="true"]{background:var(--surf);color:var(--on-surf);border-color:var(--surf)}
 .authrow__pick small{display:block;font-family:var(--f-mono);font-weight:400;font-size:10.5px;color:var(--muted);margin-top:1px}
 .authrow__pick[aria-pressed="true"] small{color:var(--on-surf);opacity:.85}
-.authrow__web{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--muted);text-decoration:none}
+/* the two icons stack at the top right of the row: the globe to go and look,
+   and under it the tick that settles on this author and fills the rest in */
+.authrow__acts{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;align-self:flex-start;margin:-5px -4px 0 0}
+.authrow__web,.authrow__ok{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--muted);text-decoration:none;cursor:pointer;padding:0;font-size:15px;line-height:1}
 .authrow__web:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
+.authrow__ok{color:var(--surf);font-family:var(--f-display);font-weight:700}
+.authrow__ok:hover{background:var(--surf);color:var(--on-surf);border-color:var(--surf)}
+.authrow__ok[hidden]{display:none}
 
 .lookupfix{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;border:2px dashed var(--edge);border-radius:var(--r);background:var(--sunk);padding:10px 14px;font-size:15px}
 
@@ -5120,6 +5126,12 @@ async function requestAISummary(){
    pick the wrong one. Each row links out to a Google search for the pair, so
    you can check before committing. */
 var authorHits = [];
+/* which card has been clicked, and whether the tick on it has been pressed.
+   Both are about what the reader has DONE, not about what the author box
+   happens to say — a name the lookup filled in is not a choice they made, and
+   the tick must not appear on a card nobody has picked. */
+var authorPicked = -1;
+var authorSettled = false;
 function authorCandidates(hits, title){
   var seen = {}, outList = [];
   hits.forEach(function(h){
@@ -5146,18 +5158,25 @@ function renderAuthorPick(){
      exactly one author. Speak up only when there is something to decide. */
   var worthIt = authorHits.length > 1 ||
     (authorHits.length === 1 && authorHits[0].name.toLowerCase() !== chosen);
-  if(!worthIt){ host.hidden = true; host.innerHTML = ""; return; }
+  /* settled by the tick: the question has been answered, so stop asking it */
+  if(!worthIt || authorSettled){ host.hidden = true; host.innerHTML = ""; return; }
   host.hidden = false;
   host.innerHTML = '<span class="authpick__lab">' +
-      (authorHits.length > 1 ? "Which author? Pick one and the rest fills in" : "Found this author") + "</span>" +
+      (authorHits.length > 1 ? "Which author? Pick one, then tick to fill the rest in" : "Found this author") + "</span>" +
     authorHits.map(function(a, i){
+      var on = i === authorPicked;
       return '<span class="authrow">' +
-        '<button class="authrow__pick" type="button" data-authpick="' + i + '" aria-pressed="' +
-          (a.name.toLowerCase() === chosen) + '">' + esc(a.name) +
+        '<button class="authrow__pick" type="button" data-authpick="' + i + '" aria-pressed="' + on + '">' +
+          esc(a.name) +
           "<small>" + esc(a.title) + (a.year ? " \u00b7 " + esc(a.year) : "") + "</small></button>" +
-        '<a class="authrow__web" href="' + esc(googlePair(title || a.title, a.name)) + '" target="_blank" ' +
-          'rel="noopener noreferrer" title="Google &ldquo;' + esc(title || a.title) + '&rdquo; &ldquo;' + esc(a.name) + '&rdquo;" ' +
-          'aria-label="Search the web for ' + esc(a.name) + '">&#127760;</a>' +
+        '<span class="authrow__acts">' +
+          '<a class="authrow__web" href="' + esc(googlePair(title || a.title, a.name)) + '" target="_blank" ' +
+            'rel="noopener noreferrer" title="Google &ldquo;' + esc(title || a.title) + '&rdquo; &ldquo;' + esc(a.name) + '&rdquo;" ' +
+            'aria-label="Search the web for ' + esc(a.name) + '">&#127760;</a>' +
+          '<button class="authrow__ok" type="button" data-authok="' + i + '"' + (on ? "" : " hidden") +
+            ' title="Fill the rest in from ' + esc(a.name) + '"' +
+            ' aria-label="Confirm ' + esc(a.name) + ' and fill in the rest">\u2713</button>' +
+        "</span>" +
       "</span>";
     }).join("");
 }
@@ -5255,6 +5274,7 @@ async function applyBookHit(h, siblings){
   renderSugCover();
   /* the picked title's other authors stay on offer, in case this was the wrong one */
   authorHits = authorCandidates(siblings || [h], h.title);
+  authorPicked = -1; authorSettled = false;   /* a different book, a new question */
   renderAuthorPick();
   /* these fields were filled in code, which fires no input event */
   syncSearchLinks();
@@ -5346,6 +5366,7 @@ function initSuggestForm(){
   lastTitleChecked = "";
   sugRatings = [{ score: "", source: "" }];
   sugIsbn = "";
+  authorHits = []; authorPicked = -1; authorSettled = false;
   renderRatingRows();
   syncSearchLinks();
 }
@@ -5648,11 +5669,27 @@ document.addEventListener("click", async function(e){
   }
   if(e.target.closest && e.target.closest("#sAgeCheck")){ await ageFromWeb(); return; }
   if(e.target.closest && e.target.closest("#sAgeAI")){ await ageFromAI(); return; }
+  /* a name on its own: take the name, show the tick, change nothing else.
+     The other names stay up, so a wrong pick costs one more click. */
   var ap = e.target.closest && e.target.closest("[data-authpick]");
   if(ap){
-    var who = authorHits[Number(ap.getAttribute("data-authpick"))];
+    var i = Number(ap.getAttribute("data-authpick"));
+    var who = authorHits[i];
     if(who){
+      authorPicked = i;
       $("sAuthor").value = who.name;
+      renderAuthorPick();
+      syncSearchLinks();
+    }
+    return;
+  }
+  /* the tick: settle on this author, put the other cards away and fill in */
+  var ok = e.target.closest && e.target.closest("[data-authok]");
+  if(ok){
+    var confirmed = authorHits[Number(ok.getAttribute("data-authok"))];
+    if(confirmed){
+      $("sAuthor").value = confirmed.name;
+      authorSettled = true;
       renderAuthorPick();
       syncSearchLinks();
       /* refill against this author, so the page count and genres are theirs —
@@ -5678,13 +5715,18 @@ document.addEventListener("click", async function(e){
 });
 var authTimer = null;
 $("sAuthor").addEventListener("input", function(){
+  /* typing over it is a choice of its own, so the cards may speak again */
+  authorPicked = -1; authorSettled = false;
   syncSearchLinks();
   clearTimeout(authTimer);
   if($("sAuthorPick") && !authorHits.length){ $("sAuthorPick").hidden = true; }
   authTimer = setTimeout(checkAuthorSpelling, 500);
 });
 $("sAuthor").addEventListener("blur", function(){ clearTimeout(authTimer); setTimeout(checkAuthorSpelling, 120); });
-$("sTitle").addEventListener("input", syncSearchLinks);
+$("sTitle").addEventListener("input", function(){
+  authorPicked = -1; authorSettled = false;   /* another book, another question */
+  syncSearchLinks();
+});
 
 $("suggestForm").addEventListener("submit", async function(e){
   e.preventDefault();
