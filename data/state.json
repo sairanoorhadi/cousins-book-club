@@ -1,5 +1,5 @@
 {
-  "rev": 1107,
+  "rev": 1108,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -350,6 +350,21 @@
       "chapters": "Section 2 Chapters 7-15",
       "pages": "77",
       "done": true,
+      "summary": "",
+      "photos": [],
+      "predictions": [],
+      "points": []
+    },
+    {
+      "id": "mt-mt9dnl2jsgeby",
+      "bookId": "bk-soc",
+      "kind": "meeting",
+      "date": "2026-05-30",
+      "time": "19:00",
+      "place": "Condo",
+      "chapters": "Section 3: Chapters 16-21",
+      "pages": "60",
+      "done": false,
       "summary": "",
       "photos": [],
       "predictions": [],
