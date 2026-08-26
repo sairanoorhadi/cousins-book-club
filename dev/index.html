@@ -75,6 +75,8 @@ img{max-width:100%;display:block}
 
 /* ============ chrome ============ */
 .topbar{position:sticky;top:0;z-index:60;background:var(--paper);border-bottom:2px solid var(--edge)}
+/* the header stays on screen, so anything else that sticks has to clear it */
+:root{--topbar-h:66px}
 .topbar__in{display:flex;align-items:center;gap:20px;min-height:64px}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
 .brand__mark{width:32px;height:32px;flex:none;border:2px solid var(--edge);border-radius:5px;background:var(--flare);position:relative;box-shadow:2px 2px 0 var(--stamp);overflow:hidden}
@@ -281,20 +283,26 @@ img{max-width:100%;display:block}
 
 .formcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:26px;max-width:760px}
 /* ============ the suggestion form and its sticky sidebar ============
-   The form is the track: one column of fields, and a second column the
-   sidebar sits in. Grid rows do the measuring, so the sidebar's bounds are
-   the fields themselves rather than pixel offsets — it starts at the page
-   count row and its area stops at the top of Summary, which is as far as it
-   can travel. The card is wider than a plain form card by exactly the
-   sidebar and its gap, so the fields keep the width they had. */
-.suggestform{display:grid;grid-template-columns:minmax(0,1fr) 176px;column-gap:20px;row-gap:18px;align-items:start;max-width:956px}
+   Two separate boxes that have to agree about where the form's rows are: the
+   sidebar starts level with the top of the form card and travels no lower
+   than Summary. So the form element itself is the grid — an invisible frame
+   holding a column of fields and a column for the sidebar — and the card look
+   is painted by a layer placed over the field column alone, spread past it by
+   the padding. That leaves the two boxes genuinely separate while the grid's
+   own rows go on doing the measuring, with nothing in pixels to keep in
+   step. */
+.suggestform{--aside-col:208px;--aside-gap:46px;position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) var(--aside-col);column-gap:var(--aside-gap);row-gap:18px;align-items:start;padding:26px;max-width:1010px}
+/* the card is painted, not laid out: a grid item here would take the cells the
+   fields are meant to auto-place into and push the whole form down a column */
+.suggestform::before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:0;right:calc(var(--aside-col) + var(--aside-gap));border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
 .suggestform > *{grid-column:1;min-width:0}
-/* the track has to fill its rows — the form aligns everything else to the
-   top, and a track only as tall as the buttons gives sticky nowhere to go */
-.suggestform > .lookaside__track{grid-column:2;grid-row:3 / 8;align-self:stretch}
+/* rows one to seven: level with the card's top edge, stopping at Summary.
+   Stretched, because the form aligns everything else to the top and a track
+   only as tall as the buttons would give sticky nowhere to go. */
+.suggestform > .lookaside__track{grid-column:2;grid-row:1 / 8;align-self:stretch;margin-top:-26px}
 .formgrid--rest #sLookupOut{grid-column:1/-1}
-.lookaside{position:sticky;top:18px;display:flex;flex-direction:column;gap:8px}
-.lookaside__cap{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.lookaside{position:sticky;top:calc(var(--topbar-h) + 18px);display:flex;flex-direction:column;gap:8px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:16px}
+.lookaside__cap{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 .lookaside .btn{width:100%}
 
 .picker{display:flex;gap:14px;align-items:flex-start}
@@ -581,13 +589,18 @@ img{max-width:100%;display:block}
 
 @media (max-width:960px){
   .hero__grid{grid-template-columns:1fr;gap:28px}
-  /* no room for a column beside the fields: the sidebar drops back into the
-     flow under the name row, laid out across as it used to be */
-  .suggestform{grid-template-columns:minmax(0,1fr)}
-  .suggestform > .lookaside__track{grid-column:1;grid-row:auto}
+}
+/* Below this the two boxes stop fitting side by side: the fields would be
+   squeezed until the title row broke onto two lines. The form goes back to
+   being one plain card and the sidebar drops into the flow under the name
+   row, still its own box, with its buttons laid across. */
+@media (max-width:1024px){
+  .suggestform{display:flex;flex-direction:column;align-items:stretch;gap:18px;max-width:760px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
+  .suggestform::before{display:none}
+  .suggestform > .lookaside__track{margin-top:0}
   .lookaside{position:static;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px}
   .lookaside .btn{width:auto}
-  .lookaside__cap{width:100%}
+  .lookaside__cap{width:100%;margin-bottom:0}
 }
 @media (max-width:700px){
   .hero__main{grid-template-columns:118px minmax(0,1fr);gap:20px}
@@ -1004,7 +1017,7 @@ img{max-width:100%;display:block}
         <div class="recgrid" id="shortGrid"></div>
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-suggest" aria-labelledby="tab-suggest" hidden>
-        <form class="formcard suggestform" id="suggestForm">
+        <form class="suggestform" id="suggestForm">
           <div>
             <h3 style="font-size:22px">Put a book forward</h3>
             <p class="hint" style="margin-top:8px">Type the title, then press <strong>Look up book</strong> &mdash; the author, page count, genres and rating fill themselves in. Everything stays editable. The organiser reads submissions and publishes the ones the club wants.</p>
