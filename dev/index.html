@@ -2014,6 +2014,102 @@ window.selfTest = async function(title, author){
   return rows;
 };
 
+/* ---- the typo suite ----
+   One case is not evidence that a correction rule holds. This runs a spread of
+   real misspellings against the real Open Library, through the page's own
+   lookup and filter, and separates the two ways a case can come out wrong:
+
+     CATALOGUE  the right book was never in the results, so no rule could have
+                offered it — a search or data problem, not ours
+     LOGIC      the right book WAS in the results and we still got it wrong —
+                ours
+
+   Run typoSuite() in the console on a ?debug=lookup page. */
+var TYPO_CASES = [
+  /* missing letter */
+  { typed: "lighning thief",                 expect: "The Lightning Thief",                    kind: "missing letter" },
+  { typed: "hary potter and the philosophers stone", expect: "Harry Potter and the Philosopher's Stone", kind: "missing letter" },
+  { typed: "wrinkle in tim",                 expect: "A Wrinkle in Time",                      kind: "missing letter" },
+  /* transposed */
+  { typed: "lightning theif",                expect: "The Lightning Thief",                    kind: "transposed" },
+  { typed: "the hobbti",                     expect: "The Hobbit",                             kind: "transposed" },
+  { typed: "six of crwos",                   expect: "Six of Crows",                           kind: "transposed" },
+  /* extra letter */
+  { typed: "crooked kingdomm",               expect: "Crooked Kingdom",                        kind: "extra letter" },
+  { typed: "the giverr",                     expect: "The Giver",                              kind: "extra letter" },
+  { typed: "matildaa",                       expect: "Matilda",                                kind: "extra letter" },
+  /* wrong word */
+  { typed: "crooked kigen",                  expect: "Crooked Kingdom",                        kind: "wrong word" },
+  { typed: "harry potter and the chamber of secrete", expect: "Harry Potter and the Chamber of Secrets", kind: "wrong word" },
+  { typed: "percy jackson and the titans course", expect: "The Titan's Curse",                  kind: "wrong word" },
+  /* spacing */
+  { typed: "sixofcrows",                     expect: "Six of Crows",                           kind: "spacing" },
+  { typed: "the  hunger  games",             expect: "The Hunger Games",                       kind: "spacing" },
+  { typed: "bridgeto terabithia",            expect: "Bridge to Terabithia",                   kind: "spacing" },
+  /* nothing to do with the club's usual shelf, to catch anything overfitted */
+  { typed: "the book theif",                 expect: "The Book Thief",                         kind: "outside the shelf" },
+  { typed: "to kill a mockingbrd",           expect: "To Kill a Mockingbird",                  kind: "outside the shelf" },
+  { typed: "the kite runer",                 expect: "The Kite Runner",                        kind: "outside the shelf" },
+  { typed: "anne of green gabels",           expect: "Anne of Green Gables",                   kind: "outside the shelf" },
+  /* correctly spelled: must stay silent */
+  { typed: "The Hunger Games",               expect: "",                                       kind: "already correct" },
+  { typed: "Six of Crows",                   expect: "",                                       kind: "already correct" },
+  { typed: "Harry Potter and the Goblet of Fire", expect: "",                                  kind: "already correct" }
+];
+
+/* on window so the list can be read, extended or replaced from the console:
+   typoSuite(TYPO_CASES.concat([{typed:"...", expect:"...", kind:"mine"}])) */
+window.TYPO_CASES = TYPO_CASES;
+
+function sameTitle(a, b){ return normTitle(a) === normTitle(b); }
+
+window.typoSuite = async function(cases){
+  cases = cases || TYPO_CASES;
+  var rows = [], i;
+  for(i = 0; i < cases.length; i++){
+    var c = cases[i];
+    var found = await lookupBook(c.typed);
+    var hits = found.hits;
+    /* exactly what offerTitleFixes would put on screen */
+    var offered = hits.filter(function(h){
+      return h.title && !titleHasQuery(c.typed, h.title) && titleCloseness(c.typed, h.title) < 1.5;
+    }).slice(0, 3).map(function(h){ return h.title; });
+
+    var wantSilence = !c.expect;
+    var got = offered[0] || "";
+    var right = wantSilence ? offered.length === 0 : (!!got && sameTitle(got, c.expect));
+
+    /* the right book was returned by the search, whether or not we offered it */
+    var expectPresent = !!c.expect && hits.some(function(h){ return sameTitle(h.title, c.expect); });
+    var verdict;
+    if(right) verdict = "OK";
+    else if(wantSilence) verdict = "LOGIC (false suggestion)";
+    else if(!hits.length) verdict = "CATALOGUE (no results)";
+    else if(!expectPresent) verdict = "CATALOGUE (right book not returned)";
+    else verdict = "LOGIC";
+
+    rows.push({
+      kind: c.kind,
+      typed: c.typed,
+      expected: c.expect || "(stay silent)",
+      openLibraryReturned: hits.slice(0, 3).map(function(h){
+        return h.title + " [" + (Math.round(h.near * 100) / 100) + (titleHasQuery(c.typed, h.title) ? ", contains typed" : "") + "]";
+      }).join("  ~  ") || "(nothing)",
+      offered: offered.join(" | ") || "(nothing)",
+      verdict: verdict
+    });
+    await new Promise(function(r){ setTimeout(r, 250); });   /* be kind to the API */
+  }
+
+  console.log("%ctypoSuite \u2014 " + rows.length + " cases against the real Open Library", "font-weight:bold");
+  try{ console.table(rows); }catch(e){ rows.forEach(function(r){ console.log(r.verdict, "|", r.typed, "->", r.offered); }); }
+  var tally = { OK: 0, LOGIC: 0, CATALOGUE: 0 };
+  rows.forEach(function(r){ tally[r.verdict.split(" ")[0]]++; });
+  console.log(tally.OK + " OK, " + tally.LOGIC + " logic bug(s), " + tally.CATALOGUE + " catalogue quirk(s)");
+  if(tally.LOGIC) console.log("LOGIC rows are ours to fix:", rows.filter(function(r){ return /^LOGIC/.test(r.verdict); }));
+  return rows;
+};
+
 function lookupLog(label, rows){
   if(!LOOKUP_DEBUG) return;
   try{ console.log("%c" + label, "font-weight:bold"); console.table(rows); }
