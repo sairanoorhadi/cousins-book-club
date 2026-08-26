@@ -1805,48 +1805,88 @@ function pickImage(maxW, type, cb){
 
 /* ---------- looking books up on the open web ----------
    Goodreads retired its public API in 2020, so the metadata here comes from
-   Google Books (titles, page counts, descriptions) and Open Library (richer
-   subject lists and a second source of cover art). Both allow browser calls. */
+   Open Library alone: titles, authors, page counts, subjects, covers and
+   ratings. No key, no quota, and it answers browser calls directly. */
 function httpsify(u){ return String(u || "").replace(/^http:/i, "https:"); }
 function gbCover(u){ return httpsify(u).replace(/&edge=curl/g, "").replace(/zoom=\d/, "zoom=2"); }
 function stripTags(s){ return String(s || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim(); }
 
+/* ---- book lookups: Open Library ----
+   Google Books was dropped: its keyless daily quota is zero
+   ("quota_limit_value": "0" against a shared anonymous project), so every
+   call returned 429. What still worked on the form — pages, genres, cover,
+   reading level — was Open Library all along, through openLibraryExtras;
+   what never worked, the spell-checks and the old autocomplete, was
+   Google-Books-only. Open Library needs no key and has no such quota. */
+var OL_FIELDS = "key,title,author_name,first_publish_year,number_of_pages_median," +
+  "cover_i,subject,isbn,ratings_average,ratings_count,first_sentence";
+
+function olGenres(list){
+  return (list || []).filter(function(s){
+    return s && s.length < 28 && !/^(accessible|protected daisy|in library|overdrive|nyt|large type)/i.test(s);
+  }).slice(0, 10);
+}
+function olIsbn13(list){
+  return (list || []).filter(function(x){ return String(x).length === 13; })[0] || "";
+}
+function olSentence(v){
+  if(!v) return "";
+  if(typeof v === "string") return v;
+  if(v.value) return String(v.value);
+  if(Array.isArray(v) && v.length) return String(v[0]);
+  return "";
+}
+function olHit(d){
+  return {
+    key: d.key || "",
+    title: d.title || "",
+    author: (d.author_name || []).join(", "),
+    pages: Number(d.number_of_pages_median) || null,
+    genres: olGenres(d.subject),
+    blurb: olSentence(d.first_sentence),
+    cover: d.cover_i ? "https://covers.openlibrary.org/b/id/" + d.cover_i + "-L.jpg" : "",
+    year: d.first_publish_year ? String(d.first_publish_year) : "",
+    rating: Math.round((Number(d.ratings_average) || 0) * 100) / 100,
+    ratingsCount: Number(d.ratings_count) || 0,
+    isbn13: olIsbn13(d.isbn),
+    mature: false
+  };
+}
 async function searchBooks(q){
   q = String(q || "").trim();
   if(q.length < 3) return [];
   try{
-    var url = "https://www.googleapis.com/books/v1/volumes?maxResults=8&q=" + encodeURIComponent(q);
-    if(LOOKUP_DEBUG) console.log("Google Books \u2192", url);
+    var url = "https://openlibrary.org/search.json?limit=8&fields=" + OL_FIELDS +
+      "&q=" + encodeURIComponent(q);
+    if(LOOKUP_DEBUG) console.log("Open Library \u2192", url);
     var res = await fetch(url, { cache: "no-store" });
     if(!res.ok){
-      if(LOOKUP_DEBUG) console.warn("Google Books answered " + res.status + " for " + url);
+      if(LOOKUP_DEBUG) console.warn("Open Library answered " + res.status + " for " + url);
       return [];
     }
-    var j = await res.json();
-    return (j.items || []).map(function(it){
-      var v = it.volumeInfo || {}, img = v.imageLinks || {};
-      return {
-        title: v.title || "",
-        author: (v.authors || []).join(", "),
-        pages: Number(v.pageCount) || null,
-        genres: (v.categories || []).slice(),
-        blurb: stripTags(v.description),
-        cover: gbCover(img.thumbnail || img.smallThumbnail || ""),
-        year: String(v.publishedDate || "").slice(0, 4),
-        /* Goodreads retired its public API in 2020, so this is the nearest
-           honest stand-in — and the form labels it as such */
-        rating: Number(v.averageRating) || 0,
-        ratingsCount: Number(v.ratingsCount) || 0,
-        /* the Fable link is built from this */
-        isbn13: (v.industryIdentifiers || []).filter(function(x){ return x.type === "ISBN_13"; })
-          .map(function(x){ return x.identifier; })[0] || "",
-        mature: v.maturityRating === "MATURE"
-      };
-    }).filter(function(x){ return x.title; });
-  }catch(e){ return []; }
+    var docs = (await res.json()).docs || [];
+    return docs.map(olHit).filter(function(x){ return x.title; });
+  }catch(e){
+    if(LOOKUP_DEBUG) console.warn("Open Library call failed:", e);
+    return [];
+  }
+}
+/* The search index carries no description, so a summary needs the work itself. */
+async function olDescription(key){
+  if(!key) return "";
+  try{
+    var res = await fetch("https://openlibrary.org" + key + ".json", { cache: "no-store" });
+    if(!res.ok) return "";
+    var d = await res.json();
+    var t = d.description;
+    if(t && typeof t === "object") t = t.value;
+    return stripTags(String(t || "")).split(/\n\s*-{3,}|\[source\]/i)[0].trim();
+  }catch(e){ return ""; }
 }
 
-/* Open Library's subject list is the closest free stand-in for Goodreads shelves */
+/* A tighter, field-scoped lookup than the general search: when the title and
+   author are typed correctly this finds the right edition where a loose query
+   might not. Same service, different question. */
 async function openLibraryExtras(title, author){
   try{
     var url = "https://openlibrary.org/search.json?limit=1&fields=subject,number_of_pages_median,cover_i,first_publish_year" +
@@ -1910,6 +1950,51 @@ function titleCloseness(query, title){
    otherwise, so the console stays usable — but there when the next "it just
    does nothing" needs answering without a rebuild. */
 var LOOKUP_DEBUG = /[?&]debug=lookup\b/.test(location.search);
+/* A real-call check of every lookup the form does, run from the browser that
+   will actually be running them. Added because the sandbox this was written in
+   cannot reach openlibrary.org, so the only honest verification is one that
+   runs where the code runs — mocks are what let the last two faults through.
+   Type selfTest() in the console on a ?debug=lookup page. */
+window.selfTest = async function(title, author){
+  title = title || "The Lightning Thief";
+  author = author || "Rick Riordan";
+  var typo = title.toLowerCase().replace(/ie/, "ei").replace(/^the /, "");
+  var rows = [];
+  var note = function(what, ok, detail){ rows.push({ check: what, result: ok ? "PASS" : "FAIL", detail: detail }); };
+
+  var hits = await searchBooks(title + " " + author);
+  note("1. search returns hits", hits.length > 0, hits.length + " hit(s); first: " + ((hits[0] || {}).title || "-"));
+  var b = hits[0] || {};
+  note("2. fill in details \u2014 author", !!b.author, b.author || "MISSING");
+  note("2. fill in details \u2014 pages", !!b.pages, String(b.pages || "MISSING"));
+  note("2. fill in details \u2014 genres", (b.genres || []).length > 0, (b.genres || []).slice(0, 4).join(", ") || "MISSING");
+  note("2. fill in details \u2014 cover", !!b.cover, b.cover || "MISSING");
+  note("2. fill in details \u2014 rating", b.rating > 0, b.rating ? b.rating + " / 5" : "none published");
+  note("2. fill in details \u2014 isbn13", !!b.isbn13, b.isbn13 || "MISSING");
+
+  var band = ageFromShelving(b.genres || [], false);
+  note("3. reading level from subjects", !!band, band ? "Ages " + band.lo + "-" + band.hi : "no age-bearing subject");
+
+  var desc = await olDescription(b.key);
+  note("4. summary from the work record", !!desc, desc ? desc.slice(0, 70) + "\u2026" : "MISSING");
+
+  var covers = await searchCovers(title, author);
+  note("5. cover search", covers.length > 0, covers.length + " cover(s)");
+
+  var mis = await searchBooks(typo);
+  var near = mis.length ? Math.round(titleCloseness(typo, mis[0].title) * 100) / 100 : null;
+  var offers = mis.length && !titleHasQuery(typo, mis[0].title) && near < 1.5;
+  note("6. typo \u201c" + typo + "\u201d finds the book", mis.length > 0,
+    mis.length ? mis[0].title + " (closeness " + near + ")" : "NOTHING RETURNED");
+  note("6. \u2026and would be offered as a correction", !!offers, offers ? "yes" : "no \u2014 see closeness above");
+
+  console.log("%cselfTest \u2014 " + title, "font-weight:bold");
+  try{ console.table(rows); }catch(e){ rows.forEach(function(r){ console.log(r.result, r.check, r.detail); }); }
+  var failed = rows.filter(function(r){ return r.result === "FAIL"; }).length;
+  console.log(failed ? failed + " FAILED \u2014 copy the table above" : "all " + rows.length + " passed");
+  return rows;
+};
+
 function lookupLog(label, rows){
   if(!LOOKUP_DEBUG) return;
   try{ console.log("%c" + label, "font-weight:bold"); console.table(rows); }
@@ -1958,13 +2043,13 @@ async function searchCovers(title, author){
     out.push({ url: url, src: src });
   }
   var q = [title, author].filter(Boolean).join(" ");
-  /* Two passes at Google Books: the plain phrase, then a field-qualified one.
+  /* Two passes at Open Library: the plain phrase, then a field-qualified one.
      The qualified query surfaces other editions — different jackets for the
      same book — which is usually what you actually want to choose between. */
   var queries = [q];
-  if(title) queries.push('intitle:"' + title + '"' + (author ? ' inauthor:"' + author + '"' : ""));
+  if(title) queries.push('title:"' + title + '"' + (author ? ' author:"' + author + '"' : ""));
   for(var i = 0; i < queries.length; i++){
-    (await searchBooks(queries[i])).forEach(function(b){ if(b.cover) add(b.cover, "Google Books"); });
+    (await searchBooks(queries[i])).forEach(function(b){ if(b.cover) add(b.cover, "Open Library"); });
     if(out.length >= 5) break;
   }
   try{
@@ -4680,14 +4765,16 @@ async function fetchSummary(){
   var hits = await searchBooks([title, $("sAuthor").value.trim()].filter(Boolean).join(" "));
   hits.forEach(function(h){ h.near = titleCloseness(title, h.title); });
   hits.sort(function(a, b){ return a.near - b.near; });
-  var withText = hits.filter(function(h){ return h.blurb; })[0];
-  if(!withText){
+  var best = hits[0];
+  /* the search index has no description, so ask the work record for one */
+  var text = best ? (await olDescription(best.key) || best.blurb) : "";
+  if(!text){
     hint.textContent = "Unable to gather a summary for this one \u2014 write your own, or try \u201cWrite it\u201d.";
     return;
   }
-  sugFetched = withText.blurb;
-  if(withText.isbn13){ sugIsbn = withText.isbn13; syncSearchLinks(); }
-  if(withText.rating > 0) offerRating(withText.rating, "Google Books");
+  sugFetched = text;
+  if(best.isbn13){ sugIsbn = best.isbn13; syncSearchLinks(); }
+  if(best.rating > 0) offerRating(best.rating, "Open Library");
   setSugMode("fetched");
 }
 async function requestAISummary(){
@@ -4723,7 +4810,7 @@ function authorCandidates(hits, title){
   var seen = {}, outList = [];
   hits.forEach(function(h){
     if(!h.author) return;
-    /* Google Books joins co-authors with ", " — that whole string is one credit */
+    /* co-authors arrive joined with ", " — that whole string is one credit */
     var key = h.author.toLowerCase();
     if(seen[key]) { seen[key].count++; return; }
     seen[key] = { name: h.author, count: 1, title: h.title, year: h.year || "", near: titleCloseness(title, h.title) };
@@ -4798,7 +4885,13 @@ var authorFixes = [];
 async function checkAuthorSpelling(){
   var title = $("sTitle").value.trim(), typed = $("sAuthor").value.trim();
   var host = $("sAuthorPick");
-  if(!title || !typed || authorHits.length){ return; }
+  /* Defer only while the picker is actually on screen offering names — not
+     merely because a lookup once filled authorHits. Testing the array meant
+     one press of "Fill in the details" switched the spell-check off for the
+     rest of the session, including when the picker had decided it had
+     nothing worth showing. */
+  var showing = host && !host.hidden && host.querySelector("[data-authpick]");
+  if(!title || !typed || showing){ return; }
   var hits = (await lookupBook(title)).hits;
   var names = [];
   hits.forEach(function(h){
@@ -4806,8 +4899,12 @@ async function checkAuthorSpelling(){
   });
   if(!names.length) return;
   var low = typed.toLowerCase();
-  /* already right, or at least a name on record for this book: say nothing */
-  if(names.some(function(n){ return n.toLowerCase().indexOf(low) !== -1 || low.indexOf(n.toLowerCase()) !== -1; })) return;
+  /* Already right, or part-way through typing a name on record: say nothing.
+     Only that direction — a name containing what you have typed so far. The
+     reverse, what you typed containing a name, swallows every trailing-letter
+     slip: "leigh bardugoo" contains "leigh bardugo", so the commonest kind of
+     typo was being read as correct. */
+  if(names.some(function(n){ return n.toLowerCase().indexOf(low) !== -1; })) return;
   authorFixes = names.filter(function(n){ return titleCloseness(typed, n) < 2; }).slice(0, 3);
   if(!authorFixes.length) return;
   fixBand(host, "Did you mean\u2026", authorFixes.map(function(n){
@@ -4828,7 +4925,7 @@ async function applyBookHit(h, siblings){
   if(h.pages) $("sPages").value = h.pages;
   sugCover = h.cover || "";
   var genres = (h.genres || []).slice();
-  /* Google Books hints at maturity; Open Library fills out the shelf-style genres */
+  /* the subject list is what the reading level is inferred from */
   if(h.mature){ dualState.sAge = { lo: 18, hi: AGE_TOP }; syncDual("sAge"); }
   var extras = await openLibraryExtras(h.title, h.author);
   if(extras){
@@ -4837,7 +4934,7 @@ async function applyBookHit(h, siblings){
     if(!sugCover && extras.cover) sugCover = extras.cover;
   }
   $("sGenres").value = normaliseGenres(genres).join(", ");
-  if(h.rating > 0) offerRating(h.rating, "Google Books");
+  if(h.rating > 0) offerRating(h.rating, "Open Library");
   if(h.isbn13){ sugIsbn = h.isbn13; }
   sugAI = "";
   setSugMode(sugMode);
@@ -5056,7 +5153,7 @@ async function askAIForDetails(){
   out.innerHTML = '<p class="hint" style="margin-top:10px">Looking it up&hellip;</p>';
   var filled = [], notes = [];
 
-  /* 1. the closest match on Google Books. lookupBook rather than searchBooks,
+  /* 1. the closest match on Open Library. lookupBook rather than searchBooks,
         because the typo correction used to live on the search button and that
         button has gone — this is the only lookup now, so it carries it. */
   var found = await lookupBook([title, author].filter(Boolean).join(" "));
@@ -5079,7 +5176,7 @@ async function askAIForDetails(){
   var genres = [];
   if(best){
     if(best.author && !author){ $("sAuthor").value = best.author; author = best.author; filled.push("author"); }
-    if(best.rating > 0 && offerRating(best.rating, "Google Books")) filled.push("a rating");
+    if(best.rating > 0 && offerRating(best.rating, "Open Library")) filled.push("a rating");
     if(best.isbn13){ sugIsbn = best.isbn13; }
     if(best.pages && !$("sPages").value){ $("sPages").value = best.pages; filled.push("page count"); }
     genres = genres.concat(best.genres || []);
@@ -5102,7 +5199,7 @@ async function askAIForDetails(){
   if(band){ setAgeSlider(band.lo, band.hi); filled.push("age rating"); }
 
   if(!best && !extras){
-    out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t find that one. Check the spelling, or fill it in yourself &mdash; the Goodreads and Google links are right there.</p>';
+    out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t find that one. Check the spelling, or fill it in yourself &mdash; the Goodreads, Google and Fable links are right there.</p>';
     return;
   }
 
@@ -5146,7 +5243,7 @@ async function askAIForDetails(){
       : "") +
     '<p class="hint" style="margin-top:10px">' +
     (uniq.length ? "Filled in the " + uniq.join(", ") + ". " : "Nothing new to fill in. ") +
-    (refined ? "Checked against Google Books, Open Library and Claude. " : "From Google Books and Open Library. ") +
+    (refined ? "Checked against Open Library and Claude. " : "From Open Library. ") +
     "Everything here is editable &mdash; give it a glance before you send it." +
     /* the summary is nobody's business but theirs, so say what's on offer
        rather than dropping it in */
