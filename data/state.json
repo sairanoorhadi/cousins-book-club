@@ -1,5 +1,5 @@
 {
-  "rev": 1139,
+  "rev": 1140,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -489,6 +489,11 @@
         {
           "id": "pred-mt9ebnbgr61l5",
           "text": "We get a Kaz and Inej moment",
+          "by": ""
+        },
+        {
+          "id": "pred-mt9ec8o6d4toh",
+          "text": "We get a reveal about what Kaz did to Pekka in the Ice Court",
           "by": ""
         }
       ],
