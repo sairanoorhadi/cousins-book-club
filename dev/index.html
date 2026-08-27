@@ -290,9 +290,8 @@ img{max-width:100%;display:block}
 #sSumBar{margin:0 0 10px}
 /* only asked when there is a choice to make: which of the summaries written
    or fetched so far is the one to send */
-.sumpick{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
+.sumpick{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:4px}
 .sumpick .select{flex:0 1 260px;width:auto}
-.sumpick__q{font-size:13.5px;color:var(--muted)}
 
 .formcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:26px;max-width:760px}
 /* ============ the suggestion form and its sticky sidebar ============
@@ -5147,8 +5146,8 @@ function renderSumPick(){
   if(have.indexOf(sugPick) === -1) sugPick = "";     /* that one has gone or emptied */
   if(have.length < 2){ host.hidden = true; host.innerHTML = ""; return; }
   host.hidden = false;
-  host.innerHTML = '<label class="sumpick__q" for="sSumWhich">Which summary do you want to submit?</label>' +
-    '<select class="select" id="sSumWhich">' +
+  host.innerHTML =
+    '<select class="select" id="sSumWhich" aria-label="Which summary to submit">' +
       '<option value=""' + (sugPick ? "" : " selected") + '>Submit \u2014</option>' +
       have.map(function(k){
         return '<option value="' + k + '"' + (k === sugPick ? " selected" : "") + ">" + esc(SUM_NAME[k]) + "</option>";
