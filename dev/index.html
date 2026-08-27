@@ -280,6 +280,13 @@ img{max-width:100%;display:block}
 /* the form is a flex stack with a gap, so an empty answer box would still
    push the next field down */
 #sLookupOut:empty{display:none}
+/* the lookup takes a second or two, and a button that does nothing visible
+   gets pressed again — so the wait says so, across the top of the form */
+.lookbar{height:8px;border:2px solid var(--edge);border-radius:999px;background:var(--sunk);overflow:hidden;margin:-4px 0 2px}
+.lookbar span{display:block;height:100%;width:34%;border-radius:999px;background:var(--grape);animation:lookslide 1.15s ease-in-out infinite}
+@keyframes lookslide{0%{margin-left:-36%}100%{margin-left:102%}}
+/* the animation is the whole point, so when motion is off the bar just fills */
+@media (prefers-reduced-motion:reduce){.lookbar span{width:100%;margin-left:0}}
 
 .formcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:26px;max-width:760px}
 /* ============ the suggestion form and its sticky sidebar ============
@@ -1043,6 +1050,7 @@ img{max-width:100%;display:block}
             <h3 style="font-size:22px">Put a book forward</h3>
             <p class="hint" style="margin-top:8px">Type the title, then press <strong>Look up book</strong> &mdash; the author, page count, genres and rating fill themselves in. Everything stays editable. The organiser reads submissions and publishes the ones the club wants.</p>
           </div>
+          <div class="lookbar" id="sLookBar" role="status" aria-label="Looking the book up" hidden><span></span></div>
           <div class="formgrid">
             <div class="field"><label for="sTitle">Book title</label>
               <input class="input" id="sTitle" name="title" required maxlength="140" autocomplete="off">
@@ -1746,7 +1754,7 @@ async function callEndpoint(kind, payload, urlOverride){
   if(!url) return { ok: false, error: "unconfigured" };
   var res;
   try{
-    res = await fetch(url, {
+    res = await fetchSoon(url, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ kind: kind, payload: payload || {}, at: new Date().toISOString() })
@@ -1943,7 +1951,7 @@ async function olSearch(q){
   var url = "https://openlibrary.org/search.json?limit=8&fields=" + OL_FIELDS +
     "&q=" + encodeURIComponent(q);
   if(LOOKUP_DEBUG) console.log("Open Library \u2192", url);
-  var res = await fetch(url, { cache: "no-store" });
+  var res = await fetchSoon(url, { cache: "no-store" });
   if(!res.ok){
     if(LOOKUP_DEBUG) console.warn("Open Library answered " + res.status + " for " + url);
     return [];
@@ -1975,7 +1983,7 @@ async function searchBooks(q){
 async function olDescription(key){
   if(!key) return "";
   try{
-    var res = await fetch("https://openlibrary.org" + key + ".json", { cache: "no-store" });
+    var res = await fetchSoon("https://openlibrary.org" + key + ".json", { cache: "no-store" });
     if(!res.ok) return "";
     var d = await res.json();
     var t = d.description;
@@ -1991,7 +1999,7 @@ async function openLibraryExtras(title, author){
   try{
     var url = "https://openlibrary.org/search.json?limit=1&fields=subject,number_of_pages_median,cover_i,first_publish_year" +
       "&title=" + encodeURIComponent(title) + (author ? "&author=" + encodeURIComponent(author) : "");
-    var res = await fetch(url, { cache: "no-store" });
+    var res = await fetchSoon(url, { cache: "no-store" });
     if(!res.ok) return null;
     var d = ((await res.json()).docs || [])[0];
     if(!d) return null;
@@ -2576,6 +2584,20 @@ function ratingPair(rev, small){
       '<span class="review__stars">' + stars(rev.community, small) + "</span></span>";
   }
   return '<div class="ratepair">' + out + "</div>";
+}
+/* A fetch with an end to it. Without one a request that never answers leaves
+   whatever is waiting on it waiting too — which is how a progress bar gets
+   stuck. Twelve seconds is far longer than any of these calls needs, and the
+   callers all treat a failure as "found nothing", so a slow day reads as an
+   empty answer rather than a frozen form. */
+function fetchSoon(url, opts){
+  opts = opts || {};
+  try{
+    if(typeof AbortSignal !== "undefined" && AbortSignal.timeout){
+      opts.signal = AbortSignal.timeout(12000);
+    }
+  }catch(e){}
+  return fetch(url, opts);
 }
 function safeUrl(u){
   u = String(u || "").trim();
@@ -5548,12 +5570,47 @@ async function ageFromAI(){
    The book databases do the work — they need no key and answer for anyone. The
    AI is only asked to refine afterwards, and only when the organiser has set a
    key up; without one this still fills everything in. */
+/* One lookup at a time, and it always ends. The button says what it is doing
+   and stops taking presses; the bar across the top of the form says the same
+   thing where the eye already is. Both are undone in a finally, so a throw, a
+   dead network or an answer that never comes leaves the form usable rather
+   than looking busy for ever. */
+var lookupBusy = false;
+function lookupStart(){
+  lookupBusy = true;
+  var b = $("sAskAI"), bar = $("sLookBar");
+  if(b){
+    if(!b.getAttribute("data-label")) b.setAttribute("data-label", b.textContent);
+    b.disabled = true;
+    b.textContent = "Looking up\u2026";
+  }
+  if(bar) bar.hidden = false;
+}
+function lookupEnd(){
+  lookupBusy = false;
+  var b = $("sAskAI"), bar = $("sLookBar");
+  if(b){
+    b.disabled = false;
+    b.textContent = b.getAttribute("data-label") || "Look up book";
+  }
+  if(bar) bar.hidden = true;
+}
+
 async function askAIForDetails(){
   var title = $("sTitle").value.trim(), author = $("sAuthor").value.trim();
   var out = $("sLookupOut");
   if(!title){ $("sTitle").focus(); return; }
+  if(lookupBusy) return;            /* already asking; a second press is the same question */
 
-  out.innerHTML = '<p class="hint" style="margin-top:10px">Looking it up&hellip;</p>';
+  lookupStart();
+  try{
+    return await lookupTheDetails(title, author, out);
+  }finally{
+    lookupEnd();
+  }
+}
+async function lookupTheDetails(title, author, out){
+  out.innerHTML = "";
   var filled = [], notes = [];
 
   /* 1. the closest match on Open Library. lookupBook rather than searchBooks,
