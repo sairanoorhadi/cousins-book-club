@@ -566,6 +566,15 @@ img{max-width:100%;display:block}
 .ratingrow .input--src{flex:1 1 180px;width:auto}
 .ratingrow__del{flex:none;border:2px solid var(--edge);border-radius:50%;width:30px;height:30px;background:var(--surface);cursor:pointer;font-family:var(--f-display);font-weight:700;line-height:1;color:var(--muted)}
 .ratingrow__del:hover{background:var(--flare);color:var(--on-flare);border-color:var(--flare)}
+/* said under a rating row filled in from Open Library, whose numbers run
+   loose — muted amber rather than the reading-level red, since nothing here
+   blocks the submission, it is only worth a second look. The house zest is
+   2:1 on white, nowhere near readable at this size, so light mode gets its
+   own darker value the way the reading-level warning did. */
+.ratingrow__warn{flex-basis:100%;font-size:12.5px;color:#8A5A00}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ratingrow__warn{color:var(--zest)}}
+:root[data-theme="dark"] .ratingrow__warn{color:var(--zest)}
+.ratingrow__warn[hidden]{display:none}
 .agecheck{margin-left:10px;text-transform:none;letter-spacing:0;vertical-align:middle;padding:4px 11px;font-size:12px;box-shadow:1px 1px 0 var(--stamp)}
 /* said in the space beside those buttons when a lookup came back with no age
    at all. The house pink is only 4.3:1 on white, so this takes the deeper red
@@ -5413,11 +5422,13 @@ function renderSugCover(){
    the form hold one meant choosing which to believe on the submitter's
    behalf. */
 var sugRatings = [{ score: "", source: "" }];
+function isOpenLibrarySource(v){ return String(v || "").trim().toLowerCase() === "open library"; }
 function renderRatingRows(){
   var host = $("sRatings");
   if(!host) return;
   if(!sugRatings.length) sugRatings = [{ score: "", source: "" }];
   host.innerHTML = sugRatings.map(function(r, i){
+    var fromOL = isOpenLibrarySource(r.source);
     return '<div class="ratingrow">' +
       '<input class="input mono" type="number" min="0" max="5" step="0.01" inputmode="decimal" ' +
         'placeholder="4.1" value="' + esc(r.score) + '" data-rscore="' + i + '" aria-label="Rating out of 5">' +
@@ -5427,6 +5438,8 @@ function renderRatingRows(){
         ? '<button class="ratingrow__del" type="button" data-rdrop="' + i + '" ' +
           'aria-label="Remove this rating" title="Remove">&times;</button>'
         : "") +
+      '<small class="ratingrow__warn"' + (fromOL ? "" : " hidden") + '>Open Library ratings are typically ' +
+        'inaccurate \u2014 double check with another source.</small>' +
     "</div>";
   }).join("");
 }
@@ -5943,7 +5956,16 @@ $("sTitle").addEventListener("input", function(){
 });
 $("sPages").addEventListener("input", function(){ fillTheirs("pages"); });
 $("sGenres").addEventListener("input", function(){ fillTheirs("genres"); });
-$("sRatings").addEventListener("input", function(){ fillTheirs("rating"); });
+$("sRatings").addEventListener("input", function(e){
+  fillTheirs("rating");
+  /* the warning is this row's own concern — no re-render, no reading the
+     other rows, just the one box that changed and the line under it */
+  if(e.target && e.target.hasAttribute("data-rsrc")){
+    var row = e.target.closest(".ratingrow");
+    var warn = row && row.querySelector(".ratingrow__warn");
+    if(warn) warn.hidden = !isOpenLibrarySource(e.target.value);
+  }
+});
 
 $("suggestForm").addEventListener("submit", async function(e){
   e.preventDefault();
