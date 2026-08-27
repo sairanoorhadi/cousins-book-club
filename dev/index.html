@@ -290,7 +290,8 @@ img{max-width:100%;display:block}
 #sSumBar{margin:0 0 10px}
 /* only asked when there is a choice to make: which of the summaries written
    or fetched so far is the one to send */
-.sumpick{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:10px}
+.sumpick{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
+.sumpick .select{flex:0 1 260px;width:auto}
 .sumpick__q{font-size:13.5px;color:var(--muted)}
 
 .formcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:26px;max-width:760px}
@@ -5103,7 +5104,7 @@ var SUM_ASK = {
 };
 var sugSaid = { own: "", fetched: "", ai: "" };
 var SUM_NAME = { own: "Submit my own", fetched: "Submit the book listing", ai: "Submit the AI summary" };
-var sugPick = "own";
+var sugPick = "";   /* nothing chosen until they choose */
 function sumFilled(){
   return ["own", "fetched", "ai"].filter(function(k){ return String(sugText[k] || "").trim(); });
 }
@@ -5143,22 +5144,26 @@ function renderSumPick(){
   var host = $("sSumPick");
   if(!host) return;
   var have = sumFilled();
-  if(have.indexOf(sugPick) === -1) sugPick = have.indexOf(sugMode) !== -1 ? sugMode : (have[0] || "own");
+  if(have.indexOf(sugPick) === -1) sugPick = "";     /* that one has gone or emptied */
   if(have.length < 2){ host.hidden = true; host.innerHTML = ""; return; }
   host.hidden = false;
-  host.innerHTML = '<span class="sumpick__q">Which summary do you want to submit?</span>' +
-    have.map(function(k){
-      return '<button class="btn btn--sm ' + (k === sugPick ? "btn--surf" : "btn--ghost") +
-        '" type="button" data-sumpick="' + k + '" aria-pressed="' + (k === sugPick) + '">' +
-        esc(SUM_NAME[k]) + "</button>";
-    }).join("");
+  host.innerHTML = '<label class="sumpick__q" for="sSumWhich">Which summary do you want to submit?</label>' +
+    '<select class="select" id="sSumWhich">' +
+      '<option value=""' + (sugPick ? "" : " selected") + '>Submit \u2014</option>' +
+      have.map(function(k){
+        return '<option value="' + k + '"' + (k === sugPick ? " selected" : "") + ">" + esc(SUM_NAME[k]) + "</option>";
+      }).join("") +
+    "</select>";
 }
-/* what actually goes to the organiser */
+/* What actually goes to the organiser. With one summary there is nothing to
+   ask and that one goes. With more than one, the choice is theirs to make —
+   picking for them is how the wrong summary gets sent quietly. */
 function sumToSend(){
   var have = sumFilled();
-  if(!have.length) return { text: "", from: sugMode };
-  var k = have.indexOf(sugPick) !== -1 ? sugPick : have[0];
-  return { text: String(sugText[k] || "").trim(), from: k };
+  if(!have.length) return { text: "", from: sugMode, unchosen: false };
+  if(have.length === 1) return { text: String(sugText[have[0]] || "").trim(), from: have[0], unchosen: false };
+  if(have.indexOf(sugPick) === -1) return { text: "", from: "", unchosen: true };
+  return { text: String(sugText[sugPick] || "").trim(), from: sugPick, unchosen: false };
 }
 /* the one button behind the summary box, doing whichever the chosen tab means */
 async function fetchSummary(){
@@ -5489,7 +5494,7 @@ function initSuggestForm(){
   sugAuto = {};
   sugText = { own: "", fetched: "", ai: "" };
   sugSaid = { own: "", fetched: "", ai: "" };
-  sugPick = "own";
+  sugPick = "";
   setSugMode("own");
   renderRatingRows();
   syncSearchLinks();
@@ -5831,6 +5836,11 @@ $("sTitle").addEventListener("blur", function(){
   /* a beat, so a click on the correction band itself lands first */
   setTimeout(function(){ checkTitleSpelling("blur"); }, 120);
 });
+/* the dropdown is rebuilt whenever the summaries change, so listen on the
+   section rather than on a control that comes and goes */
+$("sSumPick").addEventListener("change", function(e){
+  if(e.target && e.target.id === "sSumWhich"){ sugPick = e.target.value; }
+});
 $("sBlurb").addEventListener("input", function(){
   sugText[sugMode] = $("sBlurb").value;
   renderSumPick();     /* a box that has just been emptied is no longer a choice */
@@ -5838,8 +5848,6 @@ $("sBlurb").addEventListener("input", function(){
 document.addEventListener("click", async function(e){
   var sm = e.target.closest && e.target.closest("[data-summode]");
   if(sm){ setSugMode(sm.getAttribute("data-summode")); return; }
-  var sp = e.target.closest && e.target.closest("[data-sumpick]");
-  if(sp){ sugPick = sp.getAttribute("data-sumpick"); renderSumPick(); return; }
   if(e.target.closest && e.target.closest("#sAskAI")){ await askAIForDetails(); return; }
   if(e.target.closest && e.target.closest("#sSumSearch")){ await fetchSummary(); return; }
   if(e.target.closest && e.target.closest("#sRatingAdd")){
@@ -5948,6 +5956,11 @@ $("suggestForm").addEventListener("submit", async function(e){
   var chosen = sumToSend();
   var blurb = chosen.text;
   var note = $("suggestNote");
+  if(chosen.unchosen){
+    note.textContent = "There\u2019s more than one summary \u2014 pick which one to send.";
+    if($("sSumWhich")) $("sSumWhich").focus();
+    return;
+  }
 
   if(endpoint()){
     note.textContent = "Sending\u2026";
