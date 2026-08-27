@@ -5175,6 +5175,24 @@ function authorCandidates(hits, title){
 function googlePair(title, author){
   return "https://www.google.com/search?q=" + encodeURIComponent('"' + title + '" "' + author + '"');
 }
+/* Taking a candidate takes the whole record it came from, not just the name.
+   Each card stands for one catalogue entry, and that entry's title is often
+   not quite what was typed — an edition, a subtitle, a different arrangement
+   of the same words. Filling both boxes is what makes the fill that follows
+   come from the record on the card rather than from a title that no longer
+   matches it. The title is theirs now too: it came from a card they clicked,
+   so it is not a typo to be corrected. */
+function takeCandidate(a){
+  if(!a) return;
+  if(a.title){
+    $("sTitle").value = a.title;
+    lastTitleChecked = a.title.trim();
+    hideTitleFix();
+  }
+  $("sAuthor").value = a.name;
+  fillTheirs("author");        /* they chose it, so it is not ours to change */
+}
+
 /* One name that is already in the box is not a choice — showing it as one was
    the whole feature for most books, since a novel usually does have exactly
    one author. Speak up only when there is something to decide. The lookup asks
@@ -5593,8 +5611,13 @@ async function askAIForDetails(){
     if(extras.cover && canFill("cover")){ sugCover = extras.cover; fillMine("cover"); renderSugCover(); }
   }
 
-  if(genres.length && canFill("genres")){
-    $("sGenres").value = normaliseGenres(genres).join(", ");
+  /* Some records are shelved entirely in words we drop — "juvenile fiction" is
+     a shelf mark, not a genre. Writing that result would empty a box that had
+     something in it, so a lookup with nothing to say about genres says
+     nothing. The reading level still reads those same shelf marks. */
+  var gList = normaliseGenres(genres);
+  if(gList.length && canFill("genres")){
+    $("sGenres").value = gList.join(", ");
     fillMine("genres");
     filled.push("genres");
   }
@@ -5749,8 +5772,7 @@ document.addEventListener("click", async function(e){
     var who = authorHits[i];
     if(who){
       authorPicked = i;
-      $("sAuthor").value = who.name;
-      fillTheirs("author");
+      takeCandidate(who);
       renderAuthorPick();
       syncSearchLinks();
     }
@@ -5761,8 +5783,7 @@ document.addEventListener("click", async function(e){
   if(ok){
     var confirmed = authorHits[Number(ok.getAttribute("data-authok"))];
     if(confirmed){
-      $("sAuthor").value = confirmed.name;
-      fillTheirs("author");        /* they chose it, so it is not ours to change */
+      takeCandidate(confirmed);
       authorSettled = true;
       renderAuthorPick();
       syncSearchLinks();
