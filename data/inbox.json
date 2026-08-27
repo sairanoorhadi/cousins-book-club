@@ -232,6 +232,33 @@
         "emailRef": "sub-f9a6f748-bc4",
         "emailHint": "e••••@gmail.com"
       }
+    },
+    {
+      "id": "suggest-6970ce72-69f",
+      "kind": "suggest",
+      "at": "2026-08-27T03:04:25.062Z",
+      "payload": {
+        "title": "The Pigeon finds a hot dog!",
+        "author": "Mo Willems",
+        "pages": 40,
+        "ageMin": 8,
+        "ageMax": 12,
+        "level": "Ages 8-12",
+        "genres": [
+          "Sharing",
+          "Pigeons",
+          "Ducks",
+          "Humour",
+          "Children's"
+        ],
+        "blurb": "The Pigeon stumbles upon an unattended hot dog and can hardly believe his luck. Before he can take a bite, a very small duckling wanders over with a very large number of questions. The whole book unfolds as a conversation between the two, told in speech bubbles and simple line drawings. It runs short enough to read in a few minutes and works best out loud, with someone willing to do the voices.",
+        "summarySource": "ai",
+        "cover": "https://covers.openlibrary.org/b/olid/OL61955496M-L.jpg",
+        "by": "B man",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
