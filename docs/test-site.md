@@ -106,15 +106,28 @@ rebuilding and nothing needs changing.
 
 What to do, in order:
 
-1. **Re-run the failed job.** Actions → the failed "pages build and
-   deployment" run → *Re-run failed jobs*. Usually enough.
-2. **If the re-run sits in `queued`**, the stalled deployment is still holding
-   the lock and a re-run can't get past it. Push any new commit to `main` — the
-   fresh run takes a new lock and publishes.
-3. **Check what is actually live** rather than trusting the run list: the last
-   *successful* run's commit is the version being served. A string of green
-   runs can all be test-site commits while the promotion itself is the one that
-   failed.
+1. **Cancel the stalled run first.** Actions → the run that failed → the `…`
+   menu → *Cancel run*. Until that deployment is cancelled, GitHub refuses
+   every later one within about two seconds:
+
+   ```
+   Deployment request failed for <new sha> due to in progress deployment.
+   Please cancel <stalled sha> first or wait for it to complete.
+   ```
+
+2. **Then push a new commit to `main`.** The fresh run takes the lock and
+   publishes.
+
+**Not** *Re-run failed jobs* — on this repository a re-run goes into `queued`
+and never picks up a runner, and worse, it blocks the cancel: GitHub answers
+*"cannot cancel a workflow re-run that has not yet queued"*, so the stalled
+deployment can no longer be cleared from the API at all. Fresh runs from a new
+push start immediately; re-runs of a stalled deploy do not. Cancel first, push
+second, and don't re-run.
+
+**Check what is actually live** rather than trusting the run list: the last
+*successful* run's commit is the version being served. A string of green runs
+can all be test-site commits while the promotion itself is the one that failed.
 
 Telling the two apart matters: a failed deploy looks exactly like "the change
 didn't work" from the site itself.
