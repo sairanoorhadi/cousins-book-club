@@ -380,6 +380,10 @@ img{max-width:100%;display:block}
 .editor__body{padding-top:16px}
 .rotate{display:flex;align-items:center;gap:16px;flex-wrap:wrap;border:3px solid var(--edge);border-radius:var(--r);background:var(--zest);color:var(--on-zest);padding:16px 20px;box-shadow:var(--shadow);margin-bottom:28px}
 .rotate p{font-size:15px;max-width:46ch}
+/* the rotation button, now that it stands alone: the banded box around it
+   was there to hold the sentence beside it, and reads as stray chrome once
+   the sentence is gone */
+.rotate--act{margin-bottom:28px}
 .rotate strong{font-family:var(--f-display);font-weight:800}
 .adminrow{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:16px 18px}
 .adminrow + .adminrow{margin-top:14px}
@@ -627,6 +631,13 @@ img{max-width:100%;display:block}
 .status--busy{background:var(--zest);color:var(--on-zest)}
 .banner{border:2px solid var(--edge);border-radius:var(--r);background:var(--zest);color:var(--on-zest);padding:12px 18px;font-size:14.5px;margin-bottom:22px;box-shadow:var(--shadow-sm)}
 .banner[hidden]{display:none}
+/* the token banner: work is being lost here, not merely worth a second look,
+   so it takes a red rather than the zest the other banners share. The house
+   flare is only 4.3:1 under white at this size, so light mode takes a deeper
+   one; the dark flare is already 6.2:1 against its own ink. */
+.banner--alert{background:#C41648;color:#FFFFFF;margin-bottom:28px}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .banner--alert{background:var(--flare);color:var(--on-flare)}}
+:root[data-theme="dark"] .banner--alert{background:var(--flare);color:var(--on-flare)}
 .foot{padding:34px 0 54px;color:var(--muted);font-size:13.5px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 @media (max-width:960px){
@@ -997,7 +1008,6 @@ img{max-width:100%;display:block}
   <!-- ===== NOW READING ===== -->
   <section class="hero" id="now">
     <div class="wrap">
-      <div class="banner" id="roBanner" hidden></div>
       <div class="hero__grid">
         <div class="hero__main swipe" id="heroSwipe">
           <div class="hero__cover cover-wrap" id="heroCover"></div>
@@ -1599,16 +1609,35 @@ var TOKEN_KEY = "marginNotes.ghToken";
 function ghToken(){ try{ return localStorage.getItem(TOKEN_KEY) || ""; }catch(e){ return ""; } }
 function setGhToken(v){
   try{ if(v) localStorage.setItem(TOKEN_KEY, v); else localStorage.removeItem(TOKEN_KEY); }catch(e){}
+  tokenRefused = false;
   refreshWriteMode();
 }
+/* Nothing about the token belongs on the public page. A visitor has no use
+   for a token and no way to get one, so read-only is simply how the site
+   looks to them; the organiser hears about it inside Admin, where the
+   change that would fail is being made. */
 function refreshWriteMode(){
   readOnly = !ghToken();
   isAdmin = !readOnly;
-  var b = $("roBanner");
-  if(readOnly){
-    b.hidden = false;
-    b.innerHTML = "You\u2019re browsing. Saving needs the organiser\u2019s GitHub token \u2014 open <strong>Admin \u2192 Settings</strong> to add one.";
-  }else{ b.hidden = true; }
+  paintTokenWarning();
+}
+
+/* Two ways an edit here goes nowhere: no token at all, or one GitHub has
+   started refusing. The second is only knowable from a save that came back
+   401/403/404, so that answer is kept until a save works or the token is
+   changed. */
+var tokenRefused = false;
+function tokenWarning(){
+  if(!ghToken()) return "No GitHub token saved \u2014 changes here won\u2019t save. Add one in Settings.";
+  if(tokenRefused) return "GitHub is refusing the saved token \u2014 changes here aren\u2019t saving. Replace it in Settings.";
+  return "";
+}
+function paintTokenWarning(){
+  var el = $("shelfTokenWarn");
+  if(!el) return;
+  var msg = tokenWarning();
+  el.textContent = msg;
+  el.hidden = !msg;
 }
 function goReadOnly(){ setGhToken(""); renderAll(); }
 
@@ -1655,11 +1684,18 @@ async function save(label){
     var put = await ghFetch(CONTENTS_URL, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     if(!put.ok) throw { status: put.status };
     saveBusy = false;
+    tokenRefused = false;
+    paintTokenWarning();
     say("Saved. The live site catches up in about a minute.", "ok");
     return true;
   }catch(err){
     saveBusy = false;
     state.rev = Number(state.rev || 1) - 1;
+    /* 409/422/429 are about timing or traffic, not the token */
+    if(err && (err.status === 401 || err.status === 403 || err.status === 404)){
+      tokenRefused = true;
+      paintTokenWarning();
+    }
     if(err && err.status) say(ghMsg(err.status), "bad");
     else say("Couldn\u2019t reach GitHub. Check your connection and try again.", "bad");
     return false;
@@ -3859,7 +3895,8 @@ function renderAdmin(){
               ["meetings","Meetings"],["members","Members"],
               ["inbox","Inbox" + (waiting ? " (" + waiting + ")" : "")],["settings","Settings"]];
   $("adminModalBody").innerHTML =
-    (readOnly ? '<div class="banner" style="display:block">This view is read-only, so nothing you change here will be saved for others.</div>' : "") +
+    /* the Reading list tab carries its own, more specific version of this */
+    (readOnly && adminTab !== "shelf" ? '<div class="banner" style="display:block">This view is read-only, so nothing you change here will be saved for others.</div>' : "") +
     '<div class="tabbar" style="margin-bottom:24px">' +
       tabs.map(function(t){ return '<button class="tabbtn" type="button" data-atab="' + t[0] + '" aria-selected="' + (adminTab === t[0]) + '">' + esc(t[1]) + "</button>"; }).join("") +
     '</div><div id="adminPane"></div>';
@@ -3964,13 +4001,17 @@ function laneRow(b, opts){
 }
 function paneShelf(){
   var nowList = currentBooks(), q = nextBooks(), done = pastBooks(), out = "";
-  if(nowList.length || q.length){
-    var up = q.length ? q[0].title : null;
-    var nowNames = nowList.map(function(b){ return "<strong>" + esc(b.title) + "</strong>"; }).join(" and ");
-    out += '<div class="rotate"><p>' + (nowList.length ? "Currently reading " + nowNames + ". " : "") +
-      (up ? "Next up is <strong>" + esc(up) + "</strong>." : "Nothing queued yet — add a book to Up next below.") + "</p>" +
-      (up ? '<button class="btn btn--flare" type="button" data-advance="1" style="margin-left:auto">' +
-        (nowList.length ? "Finish " + (nowList.length > 1 ? "them" : "it") + " &amp; start " : "Start ") + esc(up) + "</button>" : "") + "</div>";
+  /* rendered empty when the token is fine, so a save refused while this tab is
+     open has somewhere to write without a full re-render */
+  var warn = tokenWarning();
+  out += '<div class="banner banner--alert" id="shelfTokenWarn"' + (warn ? "" : " hidden") + ">" + esc(warn) + "</div>";
+  /* the sentence that used to sit here only read back the lanes below it. What
+     earned the space is the one-press rotation, so that is all that is left,
+     and only when there is a book queued up to rotate to. */
+  var up = q.length ? q[0].title : null;
+  if(up){
+    out += '<div class="rotate--act"><button class="btn btn--flare" type="button" data-advance="1">' +
+      (nowList.length ? "Finish " + (nowList.length > 1 ? "them" : "it") + " &amp; start " : "Start ") + esc(up) + "</button></div>";
   }
   out += '<div class="lane"><div class="lane__label"><h4>Currently reading</h4><span class="rule"></span></div>' +
     (nowList.length
