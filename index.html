@@ -280,6 +280,18 @@ img{max-width:100%;display:block}
 /* the form is a flex stack with a gap, so an empty answer box would still
    push the next field down */
 #sLookupOut:empty{display:none}
+/* the lookup takes a second or two, and a button that does nothing visible
+   gets pressed again — so the wait says so, across the top of the form */
+.lookbar{height:8px;border:2px solid var(--edge);border-radius:999px;background:var(--sunk);overflow:hidden;margin:-4px 0 2px}
+.lookbar span{display:block;height:100%;width:34%;border-radius:999px;background:var(--grape);animation:lookslide 1.15s ease-in-out infinite}
+@keyframes lookslide{0%{margin-left:-36%}100%{margin-left:102%}}
+/* the animation is the whole point, so when motion is off the bar just fills */
+@media (prefers-reduced-motion:reduce){.lookbar span{width:100%;margin-left:0}}
+#sSumBar{margin:0 0 10px}
+/* only asked when there is a choice to make: which of the summaries written
+   or fetched so far is the one to send */
+.sumpick{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:4px}
+.sumpick .select{flex:0 1 260px;width:auto}
 
 .formcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:26px;max-width:760px}
 /* ============ the suggestion form and its sticky sidebar ============
@@ -1043,6 +1055,7 @@ img{max-width:100%;display:block}
             <h3 style="font-size:22px">Put a book forward</h3>
             <p class="hint" style="margin-top:8px">Type the title, then press <strong>Look up book</strong> &mdash; the author, page count, genres and rating fill themselves in. Everything stays editable. The organiser reads submissions and publishes the ones the club wants.</p>
           </div>
+          <div class="lookbar" id="sLookBar" role="status" aria-label="Looking the book up" hidden><span></span></div>
           <div class="formgrid">
             <div class="field"><label for="sTitle">Book title</label>
               <input class="input" id="sTitle" name="title" required maxlength="140" autocomplete="off">
@@ -1086,9 +1099,10 @@ img{max-width:100%;display:block}
               <button class="segbtn" type="button" data-summode="fetched" aria-pressed="false">From the book listing</button>
               <button class="segbtn" type="button" data-summode="ai" aria-pressed="false">Write one for me</button>
             </div>
-            <div class="sumbox"><textarea class="textarea" id="sBlurb" name="blurb" placeholder="A few sentences — no spoilers." maxlength="2400"></textarea>
+            <div class="lookbar" id="sSumBar" role="status" aria-label="Fetching a summary" hidden><span></span></div>
+            <div class="sumbox"><textarea class="textarea" id="sBlurb" name="blurb" maxlength="2400"></textarea>
               <button class="btn btn--sm btn--sky sumbox__go" type="button" id="sSumSearch" hidden>Search the web</button></div>
-            <p class="hint" id="sSumHint">All yours. A few sentences, no spoilers.</p>
+            <div class="sumpick" id="sSumPick" hidden></div>
           </div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
             <button class="btn btn--surf" type="submit" id="suggestSubmit">Send it to the organiser</button>
@@ -1745,7 +1759,7 @@ async function callEndpoint(kind, payload, urlOverride){
   if(!url) return { ok: false, error: "unconfigured" };
   var res;
   try{
-    res = await fetch(url, {
+    res = await fetchSoon(url, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ kind: kind, payload: payload || {}, at: new Date().toISOString() })
@@ -1942,7 +1956,7 @@ async function olSearch(q){
   var url = "https://openlibrary.org/search.json?limit=8&fields=" + OL_FIELDS +
     "&q=" + encodeURIComponent(q);
   if(LOOKUP_DEBUG) console.log("Open Library \u2192", url);
-  var res = await fetch(url, { cache: "no-store" });
+  var res = await fetchSoon(url, { cache: "no-store" });
   if(!res.ok){
     if(LOOKUP_DEBUG) console.warn("Open Library answered " + res.status + " for " + url);
     return [];
@@ -1974,7 +1988,7 @@ async function searchBooks(q){
 async function olDescription(key){
   if(!key) return "";
   try{
-    var res = await fetch("https://openlibrary.org" + key + ".json", { cache: "no-store" });
+    var res = await fetchSoon("https://openlibrary.org" + key + ".json", { cache: "no-store" });
     if(!res.ok) return "";
     var d = await res.json();
     var t = d.description;
@@ -1990,7 +2004,7 @@ async function openLibraryExtras(title, author){
   try{
     var url = "https://openlibrary.org/search.json?limit=1&fields=subject,number_of_pages_median,cover_i,first_publish_year" +
       "&title=" + encodeURIComponent(title) + (author ? "&author=" + encodeURIComponent(author) : "");
-    var res = await fetch(url, { cache: "no-store" });
+    var res = await fetchSoon(url, { cache: "no-store" });
     if(!res.ok) return null;
     var d = ((await res.json()).docs || [])[0];
     if(!d) return null;
@@ -2575,6 +2589,20 @@ function ratingPair(rev, small){
       '<span class="review__stars">' + stars(rev.community, small) + "</span></span>";
   }
   return '<div class="ratepair">' + out + "</div>";
+}
+/* A fetch with an end to it. Without one a request that never answers leaves
+   whatever is waiting on it waiting too — which is how a progress bar gets
+   stuck. Twelve seconds is far longer than any of these calls needs, and the
+   callers all treat a failure as "found nothing", so a slow day reads as an
+   empty answer rather than a frozen form. */
+function fetchSoon(url, opts){
+  opts = opts || {};
+  try{
+    if(typeof AbortSignal !== "undefined" && AbortSignal.timeout){
+      opts.signal = AbortSignal.timeout(12000);
+    }
+  }catch(e){}
+  return fetch(url, opts);
 }
 function safeUrl(u){
   u = String(u || "").trim();
@@ -5060,7 +5088,24 @@ tabGroup(["recs","short","suggest"], "tab-");
 tabGroup(["tree","time"], "tab-");
 
 /* ---------- the Suggest a Book form ---------- */
-var sugMode = "own", sugCover = "", sugFetched = "", sugAI = "", sugOwn = "";
+var sugMode = "own", sugCover = "";
+/* Three summaries, not one box with three states. Writing your own and then
+   fetching one used to throw the first away; each is kept where it was put,
+   and switching tabs shows that tab's own text. */
+var sugText = { own: "", fetched: "", ai: "" };
+/* what the box says when that tab has nothing in it — an invitation, or the
+   reason the last attempt came back empty */
+var SUM_ASK = {
+  own: "All yours. A few sentences, no spoilers.",
+  fetched: "Nothing fetched yet \u2014 press \u201cSearch the web\u201d.",
+  ai: "Nothing written yet \u2014 press \u201cWrite it\u201d."
+};
+var sugSaid = { own: "", fetched: "", ai: "" };
+var SUM_NAME = { own: "Submit my own", fetched: "Submit the book listing", ai: "Submit the AI summary" };
+var sugPick = "";   /* nothing chosen until they choose */
+function sumFilled(){
+  return ["own", "fetched", "ai"].filter(function(k){ return String(sugText[k] || "").trim(); });
+}
 
 /* ---- who last wrote each field ----
    The lookup may overwrite what it wrote itself, and may never overwrite what
@@ -5078,35 +5123,62 @@ function setSugMode(mode){
   Array.prototype.forEach.call($("sSumMode").querySelectorAll("[data-summode]"), function(b){
     b.setAttribute("aria-pressed", String(b.getAttribute("data-summode") === mode));
   });
-  var box = $("sBlurb"), hint = $("sSumHint"), go = $("sSumSearch");
+  var box = $("sBlurb"), go = $("sSumSearch");
   /* Picking a source no longer goes and gets one. Selecting a tab is how you
      say what you want, not an instruction to spend a lookup or an API call —
      the button is. */
-  if(mode === "fetched"){
-    box.value = sugFetched;
-    hint.textContent = sugFetched
-      ? "From the book listing. Edit it however you like."
-      : "Nothing fetched yet \u2014 press \u201cSearch the web\u201d.";
-    if(go){ go.hidden = false; go.textContent = "Search the web"; }
-  }else if(mode === "ai"){
-    box.value = sugAI;
-    hint.textContent = sugAI
-      ? "Written from the title and author. Edit it however you like."
-      : "Nothing written yet \u2014 press \u201cWrite it\u201d.";
-    if(go){ go.hidden = false; go.textContent = "Write it"; }
-  }else{
-    box.value = sugOwn;
-    hint.textContent = "All yours. A few sentences, no spoilers.";
-    if(go) go.hidden = true;
+  box.value = sugText[mode] || "";
+  box.placeholder = sugSaid[mode] || SUM_ASK[mode];
+  if(go){
+    go.hidden = mode === "own";
+    if(!sumBusy && mode !== "own") go.textContent = mode === "ai" ? "Write it" : "Search the web";
   }
+  renderSumPick();
+}
+/* The question is only worth asking when there is more than one answer: with
+   a single summary written or fetched, that is the one that goes, and nothing
+   is said. */
+function renderSumPick(){
+  var host = $("sSumPick");
+  if(!host) return;
+  var have = sumFilled();
+  if(have.indexOf(sugPick) === -1) sugPick = "";     /* that one has gone or emptied */
+  if(have.length < 2){ host.hidden = true; host.innerHTML = ""; return; }
+  host.hidden = false;
+  host.innerHTML =
+    '<select class="select" id="sSumWhich" aria-label="Which summary to submit">' +
+      '<option value=""' + (sugPick ? "" : " selected") + '>Submit \u2014</option>' +
+      have.map(function(k){
+        return '<option value="' + k + '"' + (k === sugPick ? " selected" : "") + ">" + esc(SUM_NAME[k]) + "</option>";
+      }).join("") +
+    "</select>";
+}
+/* What actually goes to the organiser. With one summary there is nothing to
+   ask and that one goes. With more than one, the choice is theirs to make —
+   picking for them is how the wrong summary gets sent quietly. */
+function sumToSend(){
+  var have = sumFilled();
+  if(!have.length) return { text: "", from: sugMode, unchosen: false };
+  if(have.length === 1) return { text: String(sugText[have[0]] || "").trim(), from: have[0], unchosen: false };
+  if(have.indexOf(sugPick) === -1) return { text: "", from: "", unchosen: true };
+  return { text: String(sugText[sugPick] || "").trim(), from: sugPick, unchosen: false };
 }
 /* the one button behind the summary box, doing whichever the chosen tab means */
 async function fetchSummary(){
-  var hint = $("sSumHint");
   var title = $("sTitle").value.trim();
   if(!title){ $("sTitle").focus(); return; }
+  if(sumBusy) return;                /* already asking; the press is the same question */
+  sumBusy = true;
+  busyOn("sSumBar", $("sSumSearch"), sugMode === "ai" ? "Writing\u2026" : "Searching\u2026");
+  try{
+    return await gatherSummary(title);
+  }finally{
+    sumBusy = false;
+    busyOff("sSumBar", $("sSumSearch"), sumLabel());
+  }
+}
+async function gatherSummary(title){
   if(sugMode === "ai"){ await requestAISummary(); return; }
-  hint.textContent = "Looking it up\u2026";
   var hits = await searchBooks([title, $("sAuthor").value.trim()].filter(Boolean).join(" "));
   hits.forEach(function(h){ h.near = titleCloseness(title, h.title); });
   hits.sort(function(a, b){ return a.near - b.near; });
@@ -5114,37 +5186,39 @@ async function fetchSummary(){
   /* the search index has no description, so ask the work record for one */
   var text = best ? (await olDescription(best.key) || best.blurb) : "";
   if(!text){
-    hint.textContent = "Unable to gather a summary for this one \u2014 write your own, or try \u201cWrite it\u201d.";
+    sugSaid.fetched = "Unable to gather a summary for this one \u2014 write your own, or try \u201cWrite it\u201d.";
+    setSugMode("fetched");
     return;
   }
-  sugFetched = text;
+  sugSaid.fetched = "";
+  sugText.fetched = text;
   if(best.isbn13){ sugIsbn = best.isbn13; syncSearchLinks(); }
   if(best.rating > 0) offerRating(best.rating, "Open Library");
   setSugMode("fetched");
 }
 async function requestAISummary(){
   var title = $("sTitle").value.trim(), author = $("sAuthor").value.trim();
-  if(!title){ $("sSumHint").textContent = "Type a title first, then try again."; return; }
+  if(!title){ sugSaid.ai = "Type a title first, then try again."; setSugMode("ai"); return; }
   if(!endpoint()){
-    $("sSumHint").textContent = "Writing summaries isn\u2019t switched on \u2014 ask the organiser, or write your own.";
+    sugSaid.ai = "Writing summaries isn\u2019t switched on \u2014 ask the organiser, or write your own.";
+    setSugMode("ai");
     return;
   }
-  $("sSumHint").textContent = "Writing a summary\u2026";
   var url = endpoint();
   try{
-    var res = await fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+    var res = await fetchSoon(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ kind: "summarise", payload: { title: title, author: author }, at: new Date().toISOString() }) });
     var j = res.ok ? await res.json() : null;
     if(j && j.summary){
-      sugAI = String(j.summary).trim();
-      if(sugMode === "ai"){ $("sBlurb").value = sugAI; }
-      $("sSumHint").textContent = "Written fresh from the title and author. Edit it however you like.";
+      sugText.ai = String(j.summary).trim();
+      sugSaid.ai = "";
     }else{
-      $("sSumHint").textContent = "Couldn\u2019t write one just now \u2014 try the other options.";
+      sugSaid.ai = "Couldn\u2019t write one just now \u2014 try the other options.";
     }
   }catch(e){
-    $("sSumHint").textContent = "Couldn\u2019t reach the club\u2019s inbox. Try the other options.";
+    sugSaid.ai = "Couldn\u2019t reach the club\u2019s inbox. Try the other options.";
   }
+  setSugMode(sugMode === "ai" ? "ai" : sugMode);
 }
 /* Every distinct author the search turned up for this title, so a book with
    several editions, a translator, or a same-titled namesake doesn't quietly
@@ -5174,14 +5248,31 @@ function authorCandidates(hits, title){
 function googlePair(title, author){
   return "https://www.google.com/search?q=" + encodeURIComponent('"' + title + '" "' + author + '"');
 }
-/* One name that is already in the box is not a choice — showing it as one was
-   the whole feature for most books, since a novel usually does have exactly
-   one author. Speak up only when there is something to decide. The lookup asks
-   this too, to know whether there is a list worth waiting on. */
+/* Taking a candidate takes the whole record it came from, not just the name.
+   Each card stands for one catalogue entry, and that entry's title is often
+   not quite what was typed — an edition, a subtitle, a different arrangement
+   of the same words. Filling both boxes is what makes the fill that follows
+   come from the record on the card rather than from a title that no longer
+   matches it. The title is theirs now too: it came from a card they clicked,
+   so it is not a typo to be corrected. */
+function takeCandidate(a){
+  if(!a) return;
+  if(a.title){
+    $("sTitle").value = a.title;
+    lastTitleChecked = a.title.trim();
+    hideTitleFix();
+  }
+  $("sAuthor").value = a.name;
+  fillTheirs("author");        /* they chose it, so it is not ours to change */
+}
+
+/* Every candidate is a choice, including a lone one. A single name used to be
+   waved through on the grounds that a novel usually has one author — but that
+   made the one common case the one case nobody was asked about, and the
+   details were filled from a record nobody had looked at. One card is a card:
+   it is clicked, and then confirmed, like any other. */
 function authorPickWorth(){
-  var chosen = $("sAuthor").value.trim().toLowerCase();
-  return authorHits.length > 1 ||
-    (authorHits.length === 1 && authorHits[0].name.toLowerCase() !== chosen);
+  return authorHits.length > 0;
 }
 function renderAuthorPick(){
   var host = $("sAuthorPick");
@@ -5191,7 +5282,9 @@ function renderAuthorPick(){
   if(!authorPickWorth() || authorSettled){ host.hidden = true; host.innerHTML = ""; return; }
   host.hidden = false;
   host.innerHTML = '<span class="authpick__lab">' +
-      (authorHits.length > 1 ? "Which author? Pick one, then confirm to fill the rest in" : "Found this author") + "</span>" +
+      (authorHits.length > 1
+        ? "Which author? Pick one, then confirm to fill the rest in"
+        : "Found this author \u2014 pick it, then confirm to fill the rest in") + "</span>" +
     authorHits.map(function(a, i){
       var on = i === authorPicked;
       return '<span class="authrow">' +
@@ -5297,7 +5390,8 @@ async function applyBookHit(h, siblings){
   if(canFill("genres")){ $("sGenres").value = normaliseGenres(genres).join(", "); fillMine("genres"); }
   if(h.rating > 0 && canFill("rating") && offerRating(h.rating, "Open Library")) fillMine("rating");
   if(h.isbn13){ sugIsbn = h.isbn13; }
-  sugAI = "";
+  sugText.ai = "";
+  sugSaid.ai = "";
   setSugMode(sugMode);
   renderSugCover();
   /* the picked title's other authors stay on offer, in case this was the wrong one */
@@ -5387,7 +5481,6 @@ function fableUrl(title, author, isbn){
 function initSuggestForm(){
   $("sAgeSlider").innerHTML = dualRangeHTML("sAge", 12, AGE_TOP, function(){ fillTheirs("age"); ageMiss(false); });
   renderSugCover();
-  setSugMode("own");
   $("sLookupOut").innerHTML = "";
   if($("sAgeNote")) $("sAgeNote").hidden = true;
   ageMiss(false);
@@ -5397,6 +5490,10 @@ function initSuggestForm(){
   sugIsbn = "";
   authorHits = []; authorPicked = -1; authorSettled = false;
   sugAuto = {};
+  sugText = { own: "", fetched: "", ai: "" };
+  sugSaid = { own: "", fetched: "", ai: "" };
+  sugPick = "";
+  setSugMode("own");
   renderRatingRows();
   syncSearchLinks();
 }
@@ -5528,12 +5625,48 @@ async function ageFromAI(){
    The book databases do the work — they need no key and answer for anyone. The
    AI is only asked to refine afterwards, and only when the organiser has set a
    key up; without one this still fills everything in. */
+/* One wait, said the same way wherever it happens: a bar in the space above
+   the boxes being filled, and the button that started it out of action and
+   saying so. Every caller undoes it in a finally, so a throw, a dead network
+   or an answer that never comes leaves the form usable rather than looking
+   busy for ever. */
+function busyOn(barId, btn, label){
+  var bar = $(barId);
+  if(bar) bar.hidden = false;
+  if(btn){ btn.disabled = true; btn.textContent = label; }
+}
+function busyOff(barId, btn, label){
+  var bar = $(barId);
+  if(bar) bar.hidden = true;
+  if(btn){ btn.disabled = false; btn.textContent = label; }
+}
+
+/* one lookup at a time: a second press is the same question */
+var lookupBusy = false;
+function lookupStart(){ lookupBusy = true; busyOn("sLookBar", $("sAskAI"), "Looking up\u2026"); }
+function lookupEnd(){ lookupBusy = false; busyOff("sLookBar", $("sAskAI"), "Look up book"); }
+
+/* and one summary at a time. The label depends on which tab is chosen, and
+   the tab can be changed while it runs, so it is read at the end rather than
+   remembered from the start. */
+var sumBusy = false;
+function sumLabel(){ return sugMode === "ai" ? "Write it" : "Search the web"; }
+
 async function askAIForDetails(){
   var title = $("sTitle").value.trim(), author = $("sAuthor").value.trim();
   var out = $("sLookupOut");
   if(!title){ $("sTitle").focus(); return; }
+  if(lookupBusy) return;            /* already asking; a second press is the same question */
 
-  out.innerHTML = '<p class="hint" style="margin-top:10px">Looking it up&hellip;</p>';
+  lookupStart();
+  try{
+    return await lookupTheDetails(title, author, out);
+  }finally{
+    lookupEnd();
+  }
+}
+async function lookupTheDetails(title, author, out){
+  out.innerHTML = "";
   var filled = [], notes = [];
 
   /* 1. the closest match on Open Library. lookupBook rather than searchBooks,
@@ -5561,16 +5694,19 @@ async function askAIForDetails(){
   }
   var best = hits[0] || null;
 
-  /* A name they typed is not a name they have settled on. Put the candidates
-     that name turns up on screen and touch nothing else until Confirm says so
-     — the same step the first lookup asks for. Confirm sets authorSettled, so
-     this only holds back the press that follows the typing. */
-  if(theirAuthor && !authorSettled && authorPickWorth()){
+  /* Whoever the author is meant to be, it is not settled until they say so.
+     Put the candidates on screen and touch nothing else until Confirm — one
+     candidate included, since a lone name is still a name nobody has looked
+     at. Confirm sets authorSettled, so this holds back the press before it
+     and not the fill it asks for. */
+  if(!authorSettled && authorPickWorth()){
     renderAuthorPick();
     syncSearchLinks();
     out.innerHTML = correctionBand(correction) +
-      '<p class="hint" style="margin-top:10px">Kept the author you typed. Pick one of the names below and press ' +
-      '<strong>Confirm</strong> to fill the rest in &mdash; nothing else has been touched.</p>';
+      '<p class="hint" style="margin-top:10px">' +
+      (theirAuthor ? "Kept the author you typed. " : "Found the book. ") +
+      'Pick the author below and press <strong>Confirm</strong> to fill the rest in ' +
+      '&mdash; nothing else has been touched.</p>';
     return;
   }
 
@@ -5592,8 +5728,13 @@ async function askAIForDetails(){
     if(extras.cover && canFill("cover")){ sugCover = extras.cover; fillMine("cover"); renderSugCover(); }
   }
 
-  if(genres.length && canFill("genres")){
-    $("sGenres").value = normaliseGenres(genres).join(", ");
+  /* Some records are shelved entirely in words we drop — "juvenile fiction" is
+     a shelf mark, not a genre. Writing that result would empty a box that had
+     something in it, so a lookup with nothing to say about genres says
+     nothing. The reading level still reads those same shelf marks. */
+  var gList = normaliseGenres(genres);
+  if(gList.length && canFill("genres")){
+    $("sGenres").value = gList.join(", ");
     fillMine("genres");
     filled.push("genres");
   }
@@ -5693,11 +5834,14 @@ $("sTitle").addEventListener("blur", function(){
   /* a beat, so a click on the correction band itself lands first */
   setTimeout(function(){ checkTitleSpelling("blur"); }, 120);
 });
+/* the dropdown is rebuilt whenever the summaries change, so listen on the
+   section rather than on a control that comes and goes */
+$("sSumPick").addEventListener("change", function(e){
+  if(e.target && e.target.id === "sSumWhich"){ sugPick = e.target.value; }
+});
 $("sBlurb").addEventListener("input", function(){
-  var v = $("sBlurb").value;
-  if(sugMode === "fetched") sugFetched = v;
-  else if(sugMode === "ai") sugAI = v;
-  else sugOwn = v;
+  sugText[sugMode] = $("sBlurb").value;
+  renderSumPick();     /* a box that has just been emptied is no longer a choice */
 });
 document.addEventListener("click", async function(e){
   var sm = e.target.closest && e.target.closest("[data-summode]");
@@ -5748,8 +5892,7 @@ document.addEventListener("click", async function(e){
     var who = authorHits[i];
     if(who){
       authorPicked = i;
-      $("sAuthor").value = who.name;
-      fillTheirs("author");
+      takeCandidate(who);
       renderAuthorPick();
       syncSearchLinks();
     }
@@ -5760,8 +5903,7 @@ document.addEventListener("click", async function(e){
   if(ok){
     var confirmed = authorHits[Number(ok.getAttribute("data-authok"))];
     if(confirmed){
-      $("sAuthor").value = confirmed.name;
-      fillTheirs("author");        /* they chose it, so it is not ours to change */
+      takeCandidate(confirmed);
       authorSettled = true;
       renderAuthorPick();
       syncSearchLinks();
@@ -5809,21 +5951,27 @@ $("suggestForm").addEventListener("submit", async function(e){
   if(!title || !author || !by) return;
   var age = dualValue("sAge");
   var genres = normaliseGenres(el.genres.value);
-  var blurb = el.blurb.value.trim();
+  var chosen = sumToSend();
+  var blurb = chosen.text;
   var note = $("suggestNote");
+  if(chosen.unchosen){
+    note.textContent = "There\u2019s more than one summary \u2014 pick which one to send.";
+    if($("sSumWhich")) $("sSumWhich").focus();
+    return;
+  }
 
   if(endpoint()){
     note.textContent = "Sending\u2026";
     var res = await submitPublic("suggest", {
       title: title, author: author, pages: Number(el.pages.value) || null,
       ageMin: age.lo, ageMax: age.hi, level: levelText({ ageMin: age.lo, ageMax: age.hi }),
-      genres: genres, blurb: blurb, summarySource: sugMode, cover: sugCover, by: by,
+      genres: genres, blurb: blurb, summarySource: chosen.from, cover: sugCover, by: by,
       ratings: ratingsForSubmit()
     });
     if(!res.ok){ note.textContent = submitFailMsg(res); return; }
     note.textContent = "Sent. The organiser will take a look.";
     e.target.reset();
-    sugFetched = sugAI = sugOwn = sugCover = "";
+    sugCover = "";
     initSuggestForm();
     return;
   }
