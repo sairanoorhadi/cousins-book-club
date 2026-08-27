@@ -288,6 +288,10 @@ img{max-width:100%;display:block}
 /* the animation is the whole point, so when motion is off the bar just fills */
 @media (prefers-reduced-motion:reduce){.lookbar span{width:100%;margin-left:0}}
 #sSumBar{margin:0 0 10px}
+/* only asked when there is a choice to make: which of the summaries written
+   or fetched so far is the one to send */
+.sumpick{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:10px}
+.sumpick__q{font-size:13.5px;color:var(--muted)}
 
 .formcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:26px;max-width:760px}
 /* ============ the suggestion form and its sticky sidebar ============
@@ -1096,9 +1100,9 @@ img{max-width:100%;display:block}
               <button class="segbtn" type="button" data-summode="ai" aria-pressed="false">Write one for me</button>
             </div>
             <div class="lookbar" id="sSumBar" role="status" aria-label="Fetching a summary" hidden><span></span></div>
-            <div class="sumbox"><textarea class="textarea" id="sBlurb" name="blurb" placeholder="A few sentences — no spoilers." maxlength="2400"></textarea>
+            <div class="sumbox"><textarea class="textarea" id="sBlurb" name="blurb" maxlength="2400"></textarea>
               <button class="btn btn--sm btn--sky sumbox__go" type="button" id="sSumSearch" hidden>Search the web</button></div>
-            <p class="hint" id="sSumHint">All yours. A few sentences, no spoilers.</p>
+            <div class="sumpick" id="sSumPick" hidden></div>
           </div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
             <button class="btn btn--surf" type="submit" id="suggestSubmit">Send it to the organiser</button>
@@ -5085,7 +5089,24 @@ tabGroup(["recs","short","suggest"], "tab-");
 tabGroup(["tree","time"], "tab-");
 
 /* ---------- the Suggest a Book form ---------- */
-var sugMode = "own", sugCover = "", sugFetched = "", sugAI = "", sugOwn = "";
+var sugMode = "own", sugCover = "";
+/* Three summaries, not one box with three states. Writing your own and then
+   fetching one used to throw the first away; each is kept where it was put,
+   and switching tabs shows that tab's own text. */
+var sugText = { own: "", fetched: "", ai: "" };
+/* what the box says when that tab has nothing in it — an invitation, or the
+   reason the last attempt came back empty */
+var SUM_ASK = {
+  own: "All yours. A few sentences, no spoilers.",
+  fetched: "Nothing fetched yet \u2014 press \u201cSearch the web\u201d.",
+  ai: "Nothing written yet \u2014 press \u201cWrite it\u201d."
+};
+var sugSaid = { own: "", fetched: "", ai: "" };
+var SUM_NAME = { own: "Submit my own", fetched: "Submit the book listing", ai: "Submit the AI summary" };
+var sugPick = "own";
+function sumFilled(){
+  return ["own", "fetched", "ai"].filter(function(k){ return String(sugText[k] || "").trim(); });
+}
 
 /* ---- who last wrote each field ----
    The lookup may overwrite what it wrote itself, and may never overwrite what
@@ -5103,27 +5124,41 @@ function setSugMode(mode){
   Array.prototype.forEach.call($("sSumMode").querySelectorAll("[data-summode]"), function(b){
     b.setAttribute("aria-pressed", String(b.getAttribute("data-summode") === mode));
   });
-  var box = $("sBlurb"), hint = $("sSumHint"), go = $("sSumSearch");
+  var box = $("sBlurb"), go = $("sSumSearch");
   /* Picking a source no longer goes and gets one. Selecting a tab is how you
      say what you want, not an instruction to spend a lookup or an API call —
      the button is. */
-  if(mode === "fetched"){
-    box.value = sugFetched;
-    hint.textContent = sugFetched
-      ? "From the book listing. Edit it however you like."
-      : "Nothing fetched yet \u2014 press \u201cSearch the web\u201d.";
-    if(go){ go.hidden = false; if(!sumBusy) go.textContent = "Search the web"; }
-  }else if(mode === "ai"){
-    box.value = sugAI;
-    hint.textContent = sugAI
-      ? "Written from the title and author. Edit it however you like."
-      : "Nothing written yet \u2014 press \u201cWrite it\u201d.";
-    if(go){ go.hidden = false; if(!sumBusy) go.textContent = "Write it"; }
-  }else{
-    box.value = sugOwn;
-    hint.textContent = "All yours. A few sentences, no spoilers.";
-    if(go) go.hidden = true;
+  box.value = sugText[mode] || "";
+  box.placeholder = sugSaid[mode] || SUM_ASK[mode];
+  if(go){
+    go.hidden = mode === "own";
+    if(!sumBusy && mode !== "own") go.textContent = mode === "ai" ? "Write it" : "Search the web";
   }
+  renderSumPick();
+}
+/* The question is only worth asking when there is more than one answer: with
+   a single summary written or fetched, that is the one that goes, and nothing
+   is said. */
+function renderSumPick(){
+  var host = $("sSumPick");
+  if(!host) return;
+  var have = sumFilled();
+  if(have.indexOf(sugPick) === -1) sugPick = have.indexOf(sugMode) !== -1 ? sugMode : (have[0] || "own");
+  if(have.length < 2){ host.hidden = true; host.innerHTML = ""; return; }
+  host.hidden = false;
+  host.innerHTML = '<span class="sumpick__q">Which summary do you want to submit?</span>' +
+    have.map(function(k){
+      return '<button class="btn btn--sm ' + (k === sugPick ? "btn--surf" : "btn--ghost") +
+        '" type="button" data-sumpick="' + k + '" aria-pressed="' + (k === sugPick) + '">' +
+        esc(SUM_NAME[k]) + "</button>";
+    }).join("");
+}
+/* what actually goes to the organiser */
+function sumToSend(){
+  var have = sumFilled();
+  if(!have.length) return { text: "", from: sugMode };
+  var k = have.indexOf(sugPick) !== -1 ? sugPick : have[0];
+  return { text: String(sugText[k] || "").trim(), from: k };
 }
 /* the one button behind the summary box, doing whichever the chosen tab means */
 async function fetchSummary(){
@@ -5140,9 +5175,7 @@ async function fetchSummary(){
   }
 }
 async function gatherSummary(title){
-  var hint = $("sSumHint");
   if(sugMode === "ai"){ await requestAISummary(); return; }
-  hint.textContent = "Looking it up\u2026";
   var hits = await searchBooks([title, $("sAuthor").value.trim()].filter(Boolean).join(" "));
   hits.forEach(function(h){ h.near = titleCloseness(title, h.title); });
   hits.sort(function(a, b){ return a.near - b.near; });
@@ -5150,37 +5183,39 @@ async function gatherSummary(title){
   /* the search index has no description, so ask the work record for one */
   var text = best ? (await olDescription(best.key) || best.blurb) : "";
   if(!text){
-    hint.textContent = "Unable to gather a summary for this one \u2014 write your own, or try \u201cWrite it\u201d.";
+    sugSaid.fetched = "Unable to gather a summary for this one \u2014 write your own, or try \u201cWrite it\u201d.";
+    setSugMode("fetched");
     return;
   }
-  sugFetched = text;
+  sugSaid.fetched = "";
+  sugText.fetched = text;
   if(best.isbn13){ sugIsbn = best.isbn13; syncSearchLinks(); }
   if(best.rating > 0) offerRating(best.rating, "Open Library");
   setSugMode("fetched");
 }
 async function requestAISummary(){
   var title = $("sTitle").value.trim(), author = $("sAuthor").value.trim();
-  if(!title){ $("sSumHint").textContent = "Type a title first, then try again."; return; }
+  if(!title){ sugSaid.ai = "Type a title first, then try again."; setSugMode("ai"); return; }
   if(!endpoint()){
-    $("sSumHint").textContent = "Writing summaries isn\u2019t switched on \u2014 ask the organiser, or write your own.";
+    sugSaid.ai = "Writing summaries isn\u2019t switched on \u2014 ask the organiser, or write your own.";
+    setSugMode("ai");
     return;
   }
-  $("sSumHint").textContent = "Writing a summary\u2026";
   var url = endpoint();
   try{
     var res = await fetchSoon(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ kind: "summarise", payload: { title: title, author: author }, at: new Date().toISOString() }) });
     var j = res.ok ? await res.json() : null;
     if(j && j.summary){
-      sugAI = String(j.summary).trim();
-      if(sugMode === "ai"){ $("sBlurb").value = sugAI; }
-      $("sSumHint").textContent = "Written fresh from the title and author. Edit it however you like.";
+      sugText.ai = String(j.summary).trim();
+      sugSaid.ai = "";
     }else{
-      $("sSumHint").textContent = "Couldn\u2019t write one just now \u2014 try the other options.";
+      sugSaid.ai = "Couldn\u2019t write one just now \u2014 try the other options.";
     }
   }catch(e){
-    $("sSumHint").textContent = "Couldn\u2019t reach the club\u2019s inbox. Try the other options.";
+    sugSaid.ai = "Couldn\u2019t reach the club\u2019s inbox. Try the other options.";
   }
+  setSugMode(sugMode === "ai" ? "ai" : sugMode);
 }
 /* Every distinct author the search turned up for this title, so a book with
    several editions, a translator, or a same-titled namesake doesn't quietly
@@ -5352,7 +5387,8 @@ async function applyBookHit(h, siblings){
   if(canFill("genres")){ $("sGenres").value = normaliseGenres(genres).join(", "); fillMine("genres"); }
   if(h.rating > 0 && canFill("rating") && offerRating(h.rating, "Open Library")) fillMine("rating");
   if(h.isbn13){ sugIsbn = h.isbn13; }
-  sugAI = "";
+  sugText.ai = "";
+  sugSaid.ai = "";
   setSugMode(sugMode);
   renderSugCover();
   /* the picked title's other authors stay on offer, in case this was the wrong one */
@@ -5442,7 +5478,6 @@ function fableUrl(title, author, isbn){
 function initSuggestForm(){
   $("sAgeSlider").innerHTML = dualRangeHTML("sAge", 12, AGE_TOP, function(){ fillTheirs("age"); ageMiss(false); });
   renderSugCover();
-  setSugMode("own");
   $("sLookupOut").innerHTML = "";
   if($("sAgeNote")) $("sAgeNote").hidden = true;
   ageMiss(false);
@@ -5452,6 +5487,10 @@ function initSuggestForm(){
   sugIsbn = "";
   authorHits = []; authorPicked = -1; authorSettled = false;
   sugAuto = {};
+  sugText = { own: "", fetched: "", ai: "" };
+  sugSaid = { own: "", fetched: "", ai: "" };
+  sugPick = "own";
+  setSugMode("own");
   renderRatingRows();
   syncSearchLinks();
 }
@@ -5793,14 +5832,14 @@ $("sTitle").addEventListener("blur", function(){
   setTimeout(function(){ checkTitleSpelling("blur"); }, 120);
 });
 $("sBlurb").addEventListener("input", function(){
-  var v = $("sBlurb").value;
-  if(sugMode === "fetched") sugFetched = v;
-  else if(sugMode === "ai") sugAI = v;
-  else sugOwn = v;
+  sugText[sugMode] = $("sBlurb").value;
+  renderSumPick();     /* a box that has just been emptied is no longer a choice */
 });
 document.addEventListener("click", async function(e){
   var sm = e.target.closest && e.target.closest("[data-summode]");
   if(sm){ setSugMode(sm.getAttribute("data-summode")); return; }
+  var sp = e.target.closest && e.target.closest("[data-sumpick]");
+  if(sp){ sugPick = sp.getAttribute("data-sumpick"); renderSumPick(); return; }
   if(e.target.closest && e.target.closest("#sAskAI")){ await askAIForDetails(); return; }
   if(e.target.closest && e.target.closest("#sSumSearch")){ await fetchSummary(); return; }
   if(e.target.closest && e.target.closest("#sRatingAdd")){
@@ -5906,7 +5945,8 @@ $("suggestForm").addEventListener("submit", async function(e){
   if(!title || !author || !by) return;
   var age = dualValue("sAge");
   var genres = normaliseGenres(el.genres.value);
-  var blurb = el.blurb.value.trim();
+  var chosen = sumToSend();
+  var blurb = chosen.text;
   var note = $("suggestNote");
 
   if(endpoint()){
@@ -5914,13 +5954,13 @@ $("suggestForm").addEventListener("submit", async function(e){
     var res = await submitPublic("suggest", {
       title: title, author: author, pages: Number(el.pages.value) || null,
       ageMin: age.lo, ageMax: age.hi, level: levelText({ ageMin: age.lo, ageMax: age.hi }),
-      genres: genres, blurb: blurb, summarySource: sugMode, cover: sugCover, by: by,
+      genres: genres, blurb: blurb, summarySource: chosen.from, cover: sugCover, by: by,
       ratings: ratingsForSubmit()
     });
     if(!res.ok){ note.textContent = submitFailMsg(res); return; }
     note.textContent = "Sent. The organiser will take a look.";
     e.target.reset();
-    sugFetched = sugAI = sugOwn = sugCover = "";
+    sugCover = "";
     initSuggestForm();
     return;
   }
