@@ -5193,14 +5193,13 @@ function takeCandidate(a){
   fillTheirs("author");        /* they chose it, so it is not ours to change */
 }
 
-/* One name that is already in the box is not a choice — showing it as one was
-   the whole feature for most books, since a novel usually does have exactly
-   one author. Speak up only when there is something to decide. The lookup asks
-   this too, to know whether there is a list worth waiting on. */
+/* Every candidate is a choice, including a lone one. A single name used to be
+   waved through on the grounds that a novel usually has one author — but that
+   made the one common case the one case nobody was asked about, and the
+   details were filled from a record nobody had looked at. One card is a card:
+   it is clicked, and then confirmed, like any other. */
 function authorPickWorth(){
-  var chosen = $("sAuthor").value.trim().toLowerCase();
-  return authorHits.length > 1 ||
-    (authorHits.length === 1 && authorHits[0].name.toLowerCase() !== chosen);
+  return authorHits.length > 0;
 }
 function renderAuthorPick(){
   var host = $("sAuthorPick");
@@ -5210,7 +5209,9 @@ function renderAuthorPick(){
   if(!authorPickWorth() || authorSettled){ host.hidden = true; host.innerHTML = ""; return; }
   host.hidden = false;
   host.innerHTML = '<span class="authpick__lab">' +
-      (authorHits.length > 1 ? "Which author? Pick one, then confirm to fill the rest in" : "Found this author") + "</span>" +
+      (authorHits.length > 1
+        ? "Which author? Pick one, then confirm to fill the rest in"
+        : "Found this author \u2014 pick it, then confirm to fill the rest in") + "</span>" +
     authorHits.map(function(a, i){
       var on = i === authorPicked;
       return '<span class="authrow">' +
@@ -5580,16 +5581,19 @@ async function askAIForDetails(){
   }
   var best = hits[0] || null;
 
-  /* A name they typed is not a name they have settled on. Put the candidates
-     that name turns up on screen and touch nothing else until Confirm says so
-     — the same step the first lookup asks for. Confirm sets authorSettled, so
-     this only holds back the press that follows the typing. */
-  if(theirAuthor && !authorSettled && authorPickWorth()){
+  /* Whoever the author is meant to be, it is not settled until they say so.
+     Put the candidates on screen and touch nothing else until Confirm — one
+     candidate included, since a lone name is still a name nobody has looked
+     at. Confirm sets authorSettled, so this holds back the press before it
+     and not the fill it asks for. */
+  if(!authorSettled && authorPickWorth()){
     renderAuthorPick();
     syncSearchLinks();
     out.innerHTML = correctionBand(correction) +
-      '<p class="hint" style="margin-top:10px">Kept the author you typed. Pick one of the names below and press ' +
-      '<strong>Confirm</strong> to fill the rest in &mdash; nothing else has been touched.</p>';
+      '<p class="hint" style="margin-top:10px">' +
+      (theirAuthor ? "Kept the author you typed. " : "Found the book. ") +
+      'Pick the author below and press <strong>Confirm</strong> to fill the rest in ' +
+      '&mdash; nothing else has been touched.</p>';
     return;
   }
 
