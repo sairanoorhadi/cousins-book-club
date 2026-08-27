@@ -287,6 +287,7 @@ img{max-width:100%;display:block}
 @keyframes lookslide{0%{margin-left:-36%}100%{margin-left:102%}}
 /* the animation is the whole point, so when motion is off the bar just fills */
 @media (prefers-reduced-motion:reduce){.lookbar span{width:100%;margin-left:0}}
+#sSumBar{margin:0 0 10px}
 
 .formcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:26px;max-width:760px}
 /* ============ the suggestion form and its sticky sidebar ============
@@ -1094,6 +1095,7 @@ img{max-width:100%;display:block}
               <button class="segbtn" type="button" data-summode="fetched" aria-pressed="false">From the book listing</button>
               <button class="segbtn" type="button" data-summode="ai" aria-pressed="false">Write one for me</button>
             </div>
+            <div class="lookbar" id="sSumBar" role="status" aria-label="Fetching a summary" hidden><span></span></div>
             <div class="sumbox"><textarea class="textarea" id="sBlurb" name="blurb" placeholder="A few sentences — no spoilers." maxlength="2400"></textarea>
               <button class="btn btn--sm btn--sky sumbox__go" type="button" id="sSumSearch" hidden>Search the web</button></div>
             <p class="hint" id="sSumHint">All yours. A few sentences, no spoilers.</p>
@@ -5110,13 +5112,13 @@ function setSugMode(mode){
     hint.textContent = sugFetched
       ? "From the book listing. Edit it however you like."
       : "Nothing fetched yet \u2014 press \u201cSearch the web\u201d.";
-    if(go){ go.hidden = false; go.textContent = "Search the web"; }
+    if(go){ go.hidden = false; if(!sumBusy) go.textContent = "Search the web"; }
   }else if(mode === "ai"){
     box.value = sugAI;
     hint.textContent = sugAI
       ? "Written from the title and author. Edit it however you like."
       : "Nothing written yet \u2014 press \u201cWrite it\u201d.";
-    if(go){ go.hidden = false; go.textContent = "Write it"; }
+    if(go){ go.hidden = false; if(!sumBusy) go.textContent = "Write it"; }
   }else{
     box.value = sugOwn;
     hint.textContent = "All yours. A few sentences, no spoilers.";
@@ -5125,9 +5127,20 @@ function setSugMode(mode){
 }
 /* the one button behind the summary box, doing whichever the chosen tab means */
 async function fetchSummary(){
-  var hint = $("sSumHint");
   var title = $("sTitle").value.trim();
   if(!title){ $("sTitle").focus(); return; }
+  if(sumBusy) return;                /* already asking; the press is the same question */
+  sumBusy = true;
+  busyOn("sSumBar", $("sSumSearch"), sugMode === "ai" ? "Writing\u2026" : "Searching\u2026");
+  try{
+    return await gatherSummary(title);
+  }finally{
+    sumBusy = false;
+    busyOff("sSumBar", $("sSumSearch"), sumLabel());
+  }
+}
+async function gatherSummary(title){
+  var hint = $("sSumHint");
   if(sugMode === "ai"){ await requestAISummary(); return; }
   hint.textContent = "Looking it up\u2026";
   var hits = await searchBooks([title, $("sAuthor").value.trim()].filter(Boolean).join(" "));
@@ -5155,7 +5168,7 @@ async function requestAISummary(){
   $("sSumHint").textContent = "Writing a summary\u2026";
   var url = endpoint();
   try{
-    var res = await fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+    var res = await fetchSoon(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ kind: "summarise", payload: { title: title, author: author }, at: new Date().toISOString() }) });
     var j = res.ok ? await res.json() : null;
     if(j && j.summary){
@@ -5570,31 +5583,32 @@ async function ageFromAI(){
    The book databases do the work — they need no key and answer for anyone. The
    AI is only asked to refine afterwards, and only when the organiser has set a
    key up; without one this still fills everything in. */
-/* One lookup at a time, and it always ends. The button says what it is doing
-   and stops taking presses; the bar across the top of the form says the same
-   thing where the eye already is. Both are undone in a finally, so a throw, a
-   dead network or an answer that never comes leaves the form usable rather
-   than looking busy for ever. */
-var lookupBusy = false;
-function lookupStart(){
-  lookupBusy = true;
-  var b = $("sAskAI"), bar = $("sLookBar");
-  if(b){
-    if(!b.getAttribute("data-label")) b.setAttribute("data-label", b.textContent);
-    b.disabled = true;
-    b.textContent = "Looking up\u2026";
-  }
+/* One wait, said the same way wherever it happens: a bar in the space above
+   the boxes being filled, and the button that started it out of action and
+   saying so. Every caller undoes it in a finally, so a throw, a dead network
+   or an answer that never comes leaves the form usable rather than looking
+   busy for ever. */
+function busyOn(barId, btn, label){
+  var bar = $(barId);
   if(bar) bar.hidden = false;
+  if(btn){ btn.disabled = true; btn.textContent = label; }
 }
-function lookupEnd(){
-  lookupBusy = false;
-  var b = $("sAskAI"), bar = $("sLookBar");
-  if(b){
-    b.disabled = false;
-    b.textContent = b.getAttribute("data-label") || "Look up book";
-  }
+function busyOff(barId, btn, label){
+  var bar = $(barId);
   if(bar) bar.hidden = true;
+  if(btn){ btn.disabled = false; btn.textContent = label; }
 }
+
+/* one lookup at a time: a second press is the same question */
+var lookupBusy = false;
+function lookupStart(){ lookupBusy = true; busyOn("sLookBar", $("sAskAI"), "Looking up\u2026"); }
+function lookupEnd(){ lookupBusy = false; busyOff("sLookBar", $("sAskAI"), "Look up book"); }
+
+/* and one summary at a time. The label depends on which tab is chosen, and
+   the tab can be changed while it runs, so it is read at the end rather than
+   remembered from the start. */
+var sumBusy = false;
+function sumLabel(){ return sugMode === "ai" ? "Write it" : "Search the web"; }
 
 async function askAIForDetails(){
   var title = $("sTitle").value.trim(), author = $("sAuthor").value.trim();
