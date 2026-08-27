@@ -87,3 +87,34 @@ would do without writing.
 
 While something is waiting for you, the two files deliberately differ: the test
 page is ahead. That's the review in progress.
+
+## When the real site doesn't change after a promotion
+
+GitHub publishes the page in two steps: a **build**, which packages the repo,
+and a **deploy**, which puts it behind the address. The build is the reliable
+one — it takes about thirty seconds. The deploy occasionally hangs on
+GitHub's side, sits at `updating_pages` for ten minutes, and gives up:
+
+```
+Error: Timeout reached, aborting!
+Canceling Pages deployment...
+```
+
+The commit is on `main` and the file is right; it simply never got published,
+so the address carries on serving the previous version. Nothing needs
+rebuilding and nothing needs changing.
+
+What to do, in order:
+
+1. **Re-run the failed job.** Actions → the failed "pages build and
+   deployment" run → *Re-run failed jobs*. Usually enough.
+2. **If the re-run sits in `queued`**, the stalled deployment is still holding
+   the lock and a re-run can't get past it. Push any new commit to `main` — the
+   fresh run takes a new lock and publishes.
+3. **Check what is actually live** rather than trusting the run list: the last
+   *successful* run's commit is the version being served. A string of green
+   runs can all be test-site commits while the promotion itself is the one that
+   failed.
+
+Telling the two apart matters: a failed deploy looks exactly like "the change
+didn't work" from the site itself.
