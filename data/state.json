@@ -1,5 +1,5 @@
 {
-  "rev": 1244,
+  "rev": 1245,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -277,7 +277,13 @@
       "done": false,
       "summary": "",
       "predictions": [],
-      "points": [],
+      "points": [
+        {
+          "id": "disc-f0969aa0-0c2",
+          "text": "What do you think it meant when Mattias called the merchant council Ravens",
+          "by": "Saira"
+        }
+      ],
       "sent": {},
       "kind": "meeting",
       "photos": []
