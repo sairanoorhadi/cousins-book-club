@@ -1,5 +1,5 @@
 {
-  "rev": 1222,
+  "rev": 1223,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -54,19 +54,6 @@
       "id": "mb-mt40250262772",
       "name": "Summar",
       "joined": "2026-09-06",
-      "avatar": "",
-      "fable": "",
-      "goodreads": "",
-      "email": "",
-      "notifyRef": "",
-      "emailHint": "",
-      "notify": [],
-      "hue": ""
-    },
-    {
-      "id": "mb-mt7aqkzhkhcew",
-      "name": "Pareesa",
-      "joined": "2026-09-12",
       "avatar": "",
       "fable": "",
       "goodreads": "",
