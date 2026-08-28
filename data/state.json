@@ -1,5 +1,5 @@
 {
-  "rev": 1210,
+  "rev": 1211,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -221,6 +221,11 @@
           "id": "pred-mtc9njjc7xj2t",
           "text": "Wylan kept an important piece of the plan secret from Pekk",
           "by": ""
+        },
+        {
+          "id": "pred-mtc9otnp7dusf",
+          "text": "Kaz is going to confront Pekka",
+          "by": "Filza, Eliza"
         }
       ],
       "points": [
