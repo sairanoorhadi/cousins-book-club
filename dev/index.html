@@ -609,6 +609,15 @@ img{max-width:100%;display:block}
 .whoami__n{font-family:var(--f-display);font-weight:700;font-size:13.5px}
 /* a quiet nudge while they still haven't said which member they are */
 .whoami__dot{width:8px;height:8px;border-radius:50%;background:var(--flare);border:1.5px solid var(--edge);flex:none}
+/* Email field and the answer about it, on one line. No gap on the row and the
+   margin on the note instead, so that with nothing to say the note is display:
+   none and the field has the width to itself — a gap would have left 14px of
+   air for a message that is not there. Bottom alignment puts the note against
+   the input rather than the label above it. */
+.loginrow{display:flex;align-items:flex-end;flex-wrap:wrap}
+.loginrow .field{flex:1 1 240px;margin:0}
+.loginrow__note{flex:1 1 260px;min-width:0;margin-left:14px;padding-bottom:12px}
+.loginrow__note:empty{display:none}
 
 /* ============ inbox ============ */
 .inboxrow{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:16px 18px;box-shadow:var(--shadow-sm)}
@@ -1199,7 +1208,7 @@ img{max-width:100%;display:block}
   </div>
 </div>
 <div class="scrim" id="loginScrim" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" style="max-width:520px">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" style="max-width:680px">
     <div class="modal__bar"><h2 id="loginModalTitle">Members</h2>
       <button class="xbtn" type="button" data-close="loginScrim" aria-label="Close">&times;</button></div>
     <div class="modal__body" id="loginModalBody"></div>
@@ -1859,18 +1868,13 @@ function signInTrouble(err){
   if(err === "pending") return "Your account is pending approval from an organiser.";
   return endpointTrouble(err);
 }
-/* said under the refusal, since the Sign up button is up in the header and
-   the person is looking at this box */
+/* The header's Sign up button is hidden behind this modal, so the way out is
+   offered here — in the row with Send me a code, since it is the other thing
+   you might press, not a remark about the address above. */
 function showSignupWay(){
-  var note = $("loginNote");
-  if(!note || $("loginToSignup")) return;
-  var go = document.createElement("button");
-  go.className = "btn btn--sm btn--surf";
-  go.id = "loginToSignup";
-  go.type = "button";
-  go.style.marginLeft = "10px";
-  go.textContent = "Sign up";
-  note.parentNode.appendChild(go);
+  var slot = $("loginSignupSlot");
+  if(!slot || $("loginToSignup")) return;
+  slot.innerHTML = '<button class="btn btn--surf" type="button" id="loginToSignup">Sign up</button>';
 }
 
 async function restoreSession(){
@@ -1916,11 +1920,16 @@ function renderLogin(){
     body.innerHTML =
       '<p class="eyebrow">Members</p><h3 style="font-size:24px;margin:8px 0 6px">Sign in</h3>' +
       '<p class="hint">Pop in your email and we&rsquo;ll send you a six-digit code. There&rsquo;s no password to remember or forget.</p>' +
-      '<div class="field" style="margin-top:18px"><label for="loginEmail">Email</label>' +
-        '<input class="input" id="loginEmail" type="email" autocomplete="email" maxlength="160" value="' + esc(loginEmail) + '"></div>' +
+      '<div class="loginrow" style="margin-top:18px">' +
+        '<div class="field"><label for="loginEmail">Email</label>' +
+          '<input class="input" id="loginEmail" type="email" autocomplete="email" maxlength="160" value="' + esc(loginEmail) + '"></div>' +
+        /* the answer belongs to the address, so it sits beside it rather than
+           down by the buttons where it read as a comment on the pressing */
+        '<span class="hint loginrow__note" id="loginNote"></span>' +
+      "</div>" +
       '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px">' +
         '<button class="btn btn--surf" type="button" id="loginSend">Send me a code</button>' +
-        '<span class="hint" id="loginNote"></span></div>' +
+        '<span id="loginSignupSlot"></span></div>' +
       '<p class="hint" style="margin-top:16px">Your address is kept privately by the organiser and never published on this site.</p>';
   }else{
     body.innerHTML =
