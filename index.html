@@ -631,6 +631,15 @@ img{max-width:100%;display:block}
 .status--busy{background:var(--zest);color:var(--on-zest)}
 .banner{border:2px solid var(--edge);border-radius:var(--r);background:var(--zest);color:var(--on-zest);padding:12px 18px;font-size:14.5px;margin-bottom:22px;box-shadow:var(--shadow-sm)}
 .banner[hidden]{display:none}
+/* the password prompt that stands in for the organiser tools until it is
+   answered. Deliberately plain — there is nothing to look at yet. */
+.lockgate{max-width:420px}
+.lockgate__ask{font-size:15px;margin-bottom:14px}
+.lockgate__row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.lockgate__row .input{flex:1 1 200px;width:auto}
+.lockgate__no{margin-top:12px;font-size:14px;font-weight:700;color:#C41648}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .lockgate__no{color:var(--flare)}}
+:root[data-theme="dark"] .lockgate__no{color:var(--flare)}
 /* the token banner: work is being lost here, not merely worth a second look,
    so it takes a red rather than the zest the other banners share. The house
    flare is only 4.3:1 under white at this size, so light mode takes a deeper
@@ -3885,8 +3894,56 @@ function openMemberForm(kind, bookId){
 
 /* ---------- admin ---------- */
 var adminTab = "shelf", openEditors = {};
-function openAdmin(){ renderAdmin(); openScrim("adminScrim"); }
+/* ---------- the way in ----------
+   The tools are not rendered until the password is right — not a disabled
+   copy of them, not a hidden one: the markup does not exist. Every path that
+   would paint the panel goes through renderAdmin, so the lock sits there
+   rather than on the button, and nothing can slip round it.
+
+   This is a separate gate from the GitHub token, which still decides whether
+   anything can actually be saved. This one only decides whether the tools
+   open at all.
+
+   Worth being plain about what it is: the page is a public file, so anyone
+   who reads its source can find the word below. It keeps the tools out of
+   the way of someone who wanders in; it does not keep them out of the hands
+   of someone who goes looking. The token is what protects the data. */
+var ADMIN_PASS = "2608";
+var adminUnlocked = false;
+
+function renderAdminLock(wrong){
+  $("adminModalBody").innerHTML =
+    '<div class="lockgate">' +
+      '<p class="lockgate__ask">Enter the organiser password to open these tools.</p>' +
+      '<div class="lockgate__row">' +
+        '<input class="input" id="admPass" type="password" inputmode="numeric" autocomplete="off" ' +
+          'aria-label="Organiser password"' + (wrong ? ' aria-invalid="true"' : "") + ">" +
+        '<button class="btn btn--grape" type="button" id="admUnlock">Unlock</button>' +
+      "</div>" +
+      (wrong ? '<p class="lockgate__no" role="alert">That isn\u2019t the password.</p>' : "") +
+    "</div>";
+  var f = $("admPass");
+  /* the field is new on every render, so this never stacks up */
+  if(f){
+    f.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); tryUnlock(); } });
+    f.focus();
+  }
+}
+function tryUnlock(){
+  /* trimmed: a space picked up on the way in is a slip, not a different word */
+  var v = ($("admPass") ? $("admPass").value : "").trim();
+  if(v === ADMIN_PASS){ adminUnlocked = true; renderAdmin(); return; }
+  /* a re-render, so the wrong word is cleared rather than left to be edited */
+  renderAdminLock(true);
+}
+function openAdmin(){
+  renderAdmin();
+  openScrim("adminScrim");
+  /* openScrim puts focus on the close button; the password field wants it */
+  var f = $("admPass"); if(f) f.focus();
+}
 function renderAdmin(){
+  if(!adminUnlocked){ renderAdminLock(false); return; }
   var pend = pendingRecs().length + inboxSuggestions().length;
   /* book suggestions are counted on the Recommendations tab, not here */
   var waiting = inbox.filter(function(i){ return i && !i.handled && i.kind !== "suggest"; }).length;
@@ -4746,6 +4803,7 @@ document.addEventListener("click", async function(e){
   }
 
   if(t.closest("#adminOpen")){ openAdmin(); return; }
+  if(t.closest("#admUnlock")){ tryUnlock(); return; }
   if((el = t.closest("[data-atab]"))){ adminTab = el.getAttribute("data-atab"); renderAdmin(); return; }
   if((el = t.closest("[data-mfilter]"))){ meetBookFilter = el.getAttribute("data-mfilter"); renderAdminPane(); return; }
   if((el = t.closest("[data-editfor]"))){ var eid = el.getAttribute("data-editfor"); openEditors[eid] = !openEditors[eid]; return; }
