@@ -1,5 +1,5 @@
 {
-  "rev": 1211,
+  "rev": 1212,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -226,6 +226,11 @@
           "id": "pred-mtc9otnp7dusf",
           "text": "Kaz is going to confront Pekka",
           "by": "Filza, Eliza"
+        },
+        {
+          "id": "pred-mtc9p9dn9dl77",
+          "text": "Pekka kills Kaz",
+          "by": "Summar"
         }
       ],
       "points": [
