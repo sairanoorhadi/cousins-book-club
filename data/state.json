@@ -1,5 +1,5 @@
 {
-  "rev": 1215,
+  "rev": 1216,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -246,6 +246,11 @@
           "id": "pred-mtc9ti9dgzu9q",
           "text": "A minor but emotionally significant character is going to dad",
           "by": "Saira, Zainab"
+        },
+        {
+          "id": "pred-mtc9wxnajgyfd",
+          "text": "Kaz is going to get a very significant moment with Van Eck",
+          "by": "Saira, Filza, Eliza"
         }
       ],
       "points": [
