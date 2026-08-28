@@ -325,6 +325,19 @@
         "emailRef": "sub-573ef9d9-f8d",
         "emailHint": "s••••@gmail.com"
       }
+    },
+    {
+      "id": "notedelete-93ce3e9a-b2e",
+      "kind": "notedelete",
+      "at": "2026-08-28T05:58:01.028Z",
+      "handled": true,
+      "payload": {
+        "meetingId": "mt-mt7bmjmu7e7iv",
+        "field": "disc",
+        "text": "The cookie monster is cool",
+        "by": "Saira",
+        "deletedBy": "Saira"
+      }
     }
   ]
 }
