@@ -1,5 +1,5 @@
 {
-  "rev": 1212,
+  "rev": 1213,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -231,6 +231,11 @@
           "id": "pred-mtc9p9dn9dl77",
           "text": "Pekka kills Kaz",
           "by": "Summar"
+        },
+        {
+          "id": "pred-mtc9qln4zthu0",
+          "text": "Someone from the crows is going to die",
+          "by": "Filza, Zainab, Eliza"
         }
       ],
       "points": [
