@@ -1,5 +1,5 @@
 {
-  "rev": 1214,
+  "rev": 1215,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -241,6 +241,11 @@
           "id": "pred-mtc9s392x4c1x",
           "text": "Jesper, Nina or Mattias die",
           "by": "Zainab, Filza, Eliza"
+        },
+        {
+          "id": "pred-mtc9ti9dgzu9q",
+          "text": "A minor but emotionally significant character is going to dad",
+          "by": "Saira, Zainab"
         }
       ],
       "points": [
