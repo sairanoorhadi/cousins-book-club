@@ -1,5 +1,5 @@
 {
-  "rev": 1235,
+  "rev": 1236,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -65,6 +65,18 @@
       "fable": "",
       "goodreads": "",
       "hue": "#ff94f0"
+    },
+    {
+      "id": "mb-mtch15b5tzysi",
+      "name": "Test",
+      "joined": "2026-08-28",
+      "avatar": "",
+      "email": "",
+      "notifyRef": "sub-573ef9d9-f8d",
+      "emailHint": "s••••@gmail.com",
+      "notify": [],
+      "fable": "",
+      "goodreads": ""
     }
   ],
   "books": [
@@ -932,6 +944,7 @@
     "suggest-6970ce72-69f",
     "endorse-cd737452-b00",
     "endorse-a134dbe0-fca",
-    "endorse-a134dbe0-fca"
+    "endorse-a134dbe0-fca",
+    "join-886e1bb9-af4"
   ]
 }
