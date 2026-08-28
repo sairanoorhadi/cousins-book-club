@@ -1,5 +1,5 @@
 {
-  "rev": 1224,
+  "rev": 1225,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -36,19 +36,6 @@
       "emailHint": "f••••@gmail.com",
       "notify": [],
       "hue": "grape"
-    },
-    {
-      "id": "mb-mt3zy8m6cxe9o",
-      "name": "Zainab",
-      "joined": "2026-07-25",
-      "avatar": "",
-      "fable": "",
-      "goodreads": "",
-      "email": "",
-      "notifyRef": "",
-      "emailHint": "",
-      "notify": [],
-      "hue": ""
     },
     {
       "id": "mb-mtaiuu788is5a",
@@ -92,7 +79,6 @@
       "members": [
         "mb-saira",
         "mb-mt3zx2lgcj3x8",
-        "mb-mt3zy8m6cxe9o",
         "mb-mtaiuu788is5a"
       ],
       "order": 0,
@@ -158,7 +144,6 @@
       "progressPage": 40,
       "members": [
         "mb-saira",
-        "mb-mt3zy8m6cxe9o",
         "mb-mtaiuu788is5a"
       ],
       "order": 2,
