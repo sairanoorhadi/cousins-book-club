@@ -290,6 +290,17 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "endorse-cd737452-b00",
+      "kind": "endorse",
+      "at": "2026-08-28T01:37:25.168Z",
+      "payload": {
+        "recId": "rc-champion",
+        "title": "Heart of a Champion",
+        "name": "Saira",
+        "vote": "up"
+      }
     }
   ]
 }
