@@ -61,7 +61,9 @@
       "email": "",
       "notifyRef": "sub-1cc4d1af-162",
       "emailHint": "z••••@gmail.com",
-      "notify": [],
+      "notify": [
+        "bk-ck"
+      ],
       "fable": "",
       "goodreads": "",
       "hue": "#ff94f0"
