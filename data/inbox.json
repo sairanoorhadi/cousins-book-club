@@ -312,6 +312,19 @@
         "name": "Saira",
         "vote": "none"
       }
+    },
+    {
+      "id": "join-886e1bb9-af4",
+      "kind": "join",
+      "at": "2026-08-28T04:46:48.628Z",
+      "payload": {
+        "name": "Test",
+        "fable": "",
+        "goodreads": "",
+        "note": "",
+        "emailRef": "sub-573ef9d9-f8d",
+        "emailHint": "s••••@gmail.com"
+      }
     }
   ]
 }
