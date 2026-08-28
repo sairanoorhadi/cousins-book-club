@@ -371,6 +371,19 @@
         "name": "Saira",
         "vote": "none"
       }
+    },
+    {
+      "id": "notedelete-adb26b98-710",
+      "kind": "notedelete",
+      "at": "2026-08-28T22:50:21.795Z",
+      "handled": true,
+      "payload": {
+        "meetingId": "mt-mt7bmjmu7e7iv",
+        "field": "disc",
+        "text": "Cookie monster is cool",
+        "by": "",
+        "deletedBy": "Saira"
+      }
     }
   ]
 }
