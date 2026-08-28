@@ -301,6 +301,17 @@
         "name": "Saira",
         "vote": "up"
       }
+    },
+    {
+      "id": "endorse-a134dbe0-fca",
+      "kind": "endorse",
+      "at": "2026-08-28T01:37:37.231Z",
+      "payload": {
+        "recId": "rc-champion",
+        "title": "Heart of a Champion",
+        "name": "Saira",
+        "vote": "none"
+      }
     }
   ]
 }
