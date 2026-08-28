@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-08-28a';
+var SCRIPT_VERSION = '2026-08-28b';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -80,6 +80,8 @@ function doPost(e) {
   if (kind === 'notify-set') return json(notifySet(payload));
   if (kind === 'profile-set') return json(profileSet(payload));
   if (kind === 'approve-notify') return json(approveNotify(payload));
+  if (kind === 'notes-add') return json(notesAdd(payload));
+  if (kind === 'notes-del') return json(notesDel(payload));
   if (kind === 'photo-add') return json(photoAdd(payload));
   if (kind === 'photo-list') return json(photoList(payload));
   if (kind === 'photo-delete') return json(photoDelete(payload));
@@ -402,6 +404,135 @@ function notifySet(payload) {
   return { ok: true, books: books };
 }
 
+/* ---------------------------------------------------------- meeting notes
+   Predictions and discussion points, for any signed-in member, on any meeting
+   an organiser hasn't marked done. Both are lists, so unlike a profile change
+   this never touches more than one meeting's one field: read, add or remove
+   one item, write back. Two members acting on the same meeting at once are
+   serialised by the lock the same way profileSet's own field is, so neither
+   loses the other's.
+
+   The "your name" box stays free text — one member often enters several
+   names on another's behalf, so it is not tied to who is signed in, and
+   never has been. What IS tied to the session is who gets to act at all, and
+   whose name lands in the deletion log below. */
+function noteField(f) { return f === 'pred' ? 'predictions' : f === 'disc' ? 'points' : ''; }
+
+function notesAdd(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var member = memberFor(email);
+  if (!member) return { ok: false, error: 'not a member yet' };
+
+  var key = noteField(String(payload.field || ''));
+  if (!key) return { ok: false, error: 'bad field' };
+  var text = String(payload.text || '').trim().slice(0, 400);
+  if (!text) return { ok: false, error: 'no text' };
+  var by = String(payload.by || '').trim().slice(0, 60);
+
+  if (!propKey('GITHUB_TOKEN', '')) return { ok: false, error: 'no github token' };
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      var file;
+      try { file = ghGetFile(STATE_PATH); }
+      catch (err) { return { ok: false, error: 'no github token', detail: String(err) }; }
+      var state;
+      try { state = JSON.parse(file.content || '{}'); } catch (err) { return { ok: false, error: 'unreadable state' }; }
+
+      var meeting = (state.meetings || []).filter(function (m) { return m.id === payload.meetingId; })[0];
+      if (!meeting) return { ok: false, error: 'no such meeting' };
+      if (meeting.done) return { ok: false, error: 'meeting closed' };
+      if (!Array.isArray(meeting[key])) meeting[key] = [];
+
+      var item = { id: payload.field + '-' + Utilities.getUuid().slice(0, 12), text: text, by: by };
+      meeting[key].push(item);
+      state.rev = Number(state.rev || 0) + 1;
+
+      try {
+        ghPutFile(STATE_PATH, JSON.stringify(state, null, 2), file.sha, 'Member added a note');
+        return { ok: true, item: item };
+      } catch (err) {
+        if (attempt === 1) return { ok: false, error: 'busy, try again' };
+      }
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  return { ok: false, error: 'busy' };
+}
+
+/* Anyone signed in may remove anyone's prediction or discussion point — that
+   was the trade the free-text name above already made, and closing it back
+   off per-author would only fight that decision in a second place. What
+   keeps it safe is the record: every removal is appended to the inbox file
+   as its own kind, the same mechanism a join request or a suggestion already
+   arrives through, so it rides the existing weekly round-up rather than
+   needing a channel of its own. It carries what was deleted, who deleted it
+   — the signed-in member, not the free-text name on the item — which
+   meeting, and when, which is what putting it back by hand needs. */
+function notesDel(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var member = memberFor(email);
+  if (!member) return { ok: false, error: 'not a member yet' };
+
+  var key = noteField(String(payload.field || ''));
+  if (!key) return { ok: false, error: 'bad field' };
+  var itemId = String(payload.itemId || '');
+  if (!itemId) return { ok: false, error: 'no item' };
+
+  if (!propKey('GITHUB_TOKEN', '')) return { ok: false, error: 'no github token' };
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      var file;
+      try { file = ghGetFile(STATE_PATH); }
+      catch (err) { return { ok: false, error: 'no github token', detail: String(err) }; }
+      var state;
+      try { state = JSON.parse(file.content || '{}'); } catch (err) { return { ok: false, error: 'unreadable state' }; }
+
+      var meeting = (state.meetings || []).filter(function (m) { return m.id === payload.meetingId; })[0];
+      if (!meeting) return { ok: false, error: 'no such meeting' };
+      if (meeting.done) return { ok: false, error: 'meeting closed' };
+      var list = Array.isArray(meeting[key]) ? meeting[key] : [];
+      var removed = list.filter(function (x) { return x.id === itemId; })[0];
+      if (!removed) return { ok: false, error: 'not found' };
+      meeting[key] = list.filter(function (x) { return x.id !== itemId; });
+      state.rev = Number(state.rev || 0) + 1;
+
+      try {
+        ghPutFile(STATE_PATH, JSON.stringify(state, null, 2), file.sha, 'Member removed a note');
+        try {
+          appendToInbox({
+            id: 'notedelete-' + Utilities.getUuid().slice(0, 12),
+            kind: 'notedelete',
+            at: new Date().toISOString(),
+            handled: true,
+            payload: {
+              meetingId: payload.meetingId,
+              field: payload.field,
+              text: removed.text,
+              by: removed.by,
+              deletedBy: member.name || email
+            }
+          });
+        } catch (logErr) { /* the deletion itself already succeeded; a failed log entry should not undo it */ }
+        return { ok: true };
+      } catch (err) {
+        if (attempt === 1) return { ok: false, error: 'busy, try again' };
+      }
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  return { ok: false, error: 'busy' };
+}
+
 function profileSet(payload) {
   var email = whoIs(payload.token);
   if (!email) return { ok: false, error: 'signed out' };
@@ -710,6 +841,11 @@ function digestLine(item) {
   if (item.kind === 'notify') {
     return day + '  ' + (p.name || 'Someone') + ' signed up for meeting emails';
   }
+  if (item.kind === 'notedelete') {
+    return day + '  ' + (p.deletedBy || 'Someone') + ' removed a ' +
+      (p.field === 'pred' ? 'prediction' : 'discussion point') +
+      (p.by ? ' (written by ' + p.by + ')' : '') + ': \u201c' + (p.text || '') + '\u201d';
+  }
   return day + '  ' + item.kind;
 }
 
@@ -718,8 +854,14 @@ var DIGEST_HEADINGS = {
   join: 'Asked to join',
   endorse: 'Endorsements',
   profile: 'Profile changes',
-  notify: 'Reminder sign-ups'
+  notify: 'Reminder sign-ups',
+  notedelete: 'Predictions & discussion points removed'
 };
+/* KINDS stays the accept-list for the anonymous public-submission endpoint —
+   a deletion is never that, it is logged from inside an authenticated call.
+   This is the wider list the digest groups by, so a removal still shows up
+   in the round-up without being something a stranger could post. */
+var DIGEST_KINDS = KINDS.concat(['notedelete']);
 
 function weeklyDigest() {
   var to = propEmail('ORGANISER_EMAIL');
@@ -749,7 +891,7 @@ function weeklyDigest() {
   var body = [];
   if (fresh.length) {
     body.push(fresh.length + ' thing' + (fresh.length === 1 ? '' : 's') + ' arrived this week.');
-    KINDS.forEach(function (kind) {
+    DIGEST_KINDS.forEach(function (kind) {
       var of = fresh.filter(function (it) { return it.kind === kind; });
       if (!of.length) return;
       body.push('', (DIGEST_HEADINGS[kind] || kind) + ' (' + of.length + ')');

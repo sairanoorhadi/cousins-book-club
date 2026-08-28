@@ -1640,6 +1640,14 @@ function refreshWriteMode(){
   paintTokenWarning();
 }
 
+/* The two ways a note write is turned away, beyond the ones already covered
+   by repoWriteTrouble. */
+function notesTrouble(err){
+  if(err === "meeting closed") return "This meeting is marked done \u2014 only the organiser can still change its notes.";
+  if(err === "not found") return "That one\u2019s already gone \u2014 someone else must have removed it.";
+  if(err === "no text") return "Type something first.";
+  return repoWriteTrouble(err);
+}
 /* Two ways an edit here goes nowhere: no token at all, or one GitHub has
    started refusing. The second is only knowable from a save that came back
    401/403/404, so that answer is kept until a save works or the token is
@@ -1663,6 +1671,11 @@ function b64(str){
   var bytes = new TextEncoder().encode(str), bin = "";
   for(var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin);
+}
+function unb64(str){
+  var bin = atob(String(str || "").replace(/\n/g, "")), bytes = new Uint8Array(bin.length);
+  for(var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
 }
 function ghFetch(url, opts){
   opts = opts || {};
@@ -1690,7 +1703,11 @@ async function save(label){
   try{
     var sha = null;
     var head = await ghFetch(CONTENTS_URL + "?ref=" + encodeURIComponent(GH.branch));
-    if(head.ok) sha = (await head.json()).sha;
+    if(head.ok){
+      var headJson = await head.json();
+      sha = headJson.sha;
+      adoptFreshNotes(headJson.content);
+    }
     else if(head.status !== 404) throw { status: head.status };
 
     var payload = {
@@ -1718,6 +1735,25 @@ async function save(label){
     else say("Couldn\u2019t reach GitHub. Check your connection and try again.", "bad");
     return false;
   }
+}
+/* Predictions and discussion points are never mutated here and then saved —
+   every add and delete for both, organiser included, goes straight through
+   the notes endpoint instead. So the copy just fetched for the sha is
+   authoritative for those two fields on every meeting, and folding it in
+   here is what stops a save of anything else \u2014 a date, a cover, an
+   accepted request \u2014 from carrying a stale set of notes back over
+   whatever was added or removed elsewhere while this tab held the old one. */
+function adoptFreshNotes(rawContent){
+  if(!rawContent || !state || !Array.isArray(state.meetings)) return;
+  var fresh;
+  try{ fresh = JSON.parse(unb64(rawContent)); }catch(e){ return; }
+  if(!fresh || !Array.isArray(fresh.meetings)) return;
+  state.meetings.forEach(function(m){
+    var f = fresh.meetings.filter(function(x){ return x.id === m.id; })[0];
+    if(!f) return;
+    if(Array.isArray(f.predictions)) m.predictions = f.predictions;
+    if(Array.isArray(f.points)) m.points = f.points;
+  });
 }
 function downloadState(){
   var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
@@ -1894,6 +1930,17 @@ async function signOut(){
 }
 /* the member's own record, when the organiser has added them to the club */
 function myMember(){ return me && me.memberId ? memberById(me.memberId) : null; }
+/* predictions and discussion points: any signed-in member, on any meeting an
+   organiser hasn't closed. Membership is the same server-side answer as
+   everywhere else — this only decides whether the controls are worth
+   drawing, the endpoint decides for real. */
+function canEditNotes(m){ return !!(me && myMember() && m && !m.done); }
+function notesLockedReason(m){
+  if(m && m.done) return "This meeting is marked done \u2014 only the organiser can still change its notes.";
+  if(!me) return "Sign in to add one.";
+  if(!myMember()) return "Your account isn\u2019t on the members list yet.";
+  return "";
+}
 function myName(){ return (me && (me.name || "")) || ""; }
 
 var loginStep = "email", loginEmail = "";
@@ -3343,12 +3390,13 @@ function openMeeting(id){
   openScrim("meetScrim");
   if(m.kind === "party") loadPhotos(m.id);
 }
-function noteList(items, kind, mid){
+function noteList(items, kind, mid, m){
   if(!items || !items.length) return '<p class="empty">' + (kind === "pred" ? "No predictions yet. Call it before you read it." : "No discussion points yet.") + "</p>";
+  var can = canEditNotes(m);
   return '<ul class="notelist">' + items.map(function(p, i){
     return "<li><span class=\"n\">" + (i+1) + "</span><span>" + esc(p.text) +
       (p.by ? '<span class="who">' + esc(p.by) + "</span>" : "") + "</span>" +
-      (readOnly ? "<span></span>" : '<button class="btn btn--sm btn--ghost" type="button" data-del="' + kind + '" data-mid="' + esc(mid) + '" data-iid="' + esc(p.id) + '">Remove</button>') +
+      (can ? '<button class="btn btn--sm btn--ghost" type="button" data-del="' + kind + '" data-mid="' + esc(mid) + '" data-iid="' + esc(p.id) + '">Remove</button>' : "<span></span>") +
     "</li>";
   }).join("") + "</ul>";
 }
@@ -3370,16 +3418,18 @@ function meetingHTML(m, b){
        and no chapters to argue about */
     (party ? "" :
       '<section class="noteblock noteblock--pred"><div class="noteblock__head"><h3>Predictions</h3></div><div class="noteblock__body">' +
-        noteList(m.predictions, "pred", m.id) +
-        (readOnly ? "" : '<div class="addrow"><input class="input" type="text" placeholder="What do you think happens?" data-add="pred-text" maxlength="400">' +
+        noteList(m.predictions, "pred", m.id, m) +
+        (canEditNotes(m) ? '<div class="addrow"><input class="input" type="text" placeholder="What do you think happens?" data-add="pred-text" maxlength="400">' +
           '<input class="input input--who" type="text" placeholder="Your name" data-add="pred-by" maxlength="60">' +
-          '<button class="btn btn--sm btn--grape" type="button" data-addbtn="pred" data-mid="' + esc(m.id) + '">Add</button></div>') +
+          '<button class="btn btn--sm btn--grape" type="button" data-addbtn="pred" data-mid="' + esc(m.id) + '">Add</button></div>'
+          : '<p class="hint" style="margin-top:12px">' + esc(notesLockedReason(m)) + '</p>') +
       "</div></section>" +
       '<section class="noteblock noteblock--disc"><div class="noteblock__head"><h3>Discussion points</h3></div><div class="noteblock__body">' +
-        noteList(m.points, "disc", m.id) +
-        (readOnly ? "" : '<div class="addrow"><input class="input" type="text" placeholder="A question worth arguing about" data-add="disc-text" maxlength="400">' +
+        noteList(m.points, "disc", m.id, m) +
+        (canEditNotes(m) ? '<div class="addrow"><input class="input" type="text" placeholder="A question worth arguing about" data-add="disc-text" maxlength="400">' +
           '<input class="input input--who" type="text" placeholder="Added by" data-add="disc-by" maxlength="60">' +
-          '<button class="btn btn--sm btn--surf" type="button" data-addbtn="disc" data-mid="' + esc(m.id) + '">Add</button></div>') +
+          '<button class="btn btn--sm btn--surf" type="button" data-addbtn="disc" data-mid="' + esc(m.id) + '">Add</button></div>'
+          : '<p class="hint" style="margin-top:12px">' + esc(notesLockedReason(m)) + '</p>') +
       "</div></section>") +
     (party
       ? '<section class="noteblock"><div class="noteblock__head" style="background:var(--grape);color:var(--on-grape)"><h3>Photos</h3></div>' +
@@ -4795,25 +4845,38 @@ document.addEventListener("click", async function(e){
   if((el = t.closest("[data-clearimg]"))){ setImage(el.getAttribute("data-clearimg"), el.getAttribute("data-pid"), ""); return; }
 
   /* meeting notes */
+  /* Predictions and discussion points: never a whole-state save. The
+     browser sends "add this one item" or "remove this one item" and the
+     script does a locked read-modify-write of just that meeting's field —
+     see notesAdd/notesDel in Code.gs. This is true for the organiser too;
+     Admin's own Add/Remove here go through the identical call, which is what
+     lets save() elsewhere adopt the fresh copy of both fields without ever
+     discarding an edit made through this box. */
   if((el = t.closest("[data-addbtn]"))){
     var kind = el.getAttribute("data-addbtn"), mid = el.getAttribute("data-mid"), box = $("meetModalBody");
     var txt = box.querySelector('[data-add="' + kind + '-text"]'), who = box.querySelector('[data-add="' + kind + '-by"]');
     var val = (txt.value || "").trim(); if(!val){ txt.focus(); return; }
     var m = meetingById(mid); if(!m) return;
-    var item = { id: uid(kind), text: val, by: (who.value || "").trim() }, memo = item.by;
-    if(kind === "pred") m.predictions.push(item); else m.points.push(item);
-    if(await save("Adding…")){
-      box.innerHTML = meetingHTML(m, bookById(m.bookId)); renderAll();
-      var again = box.querySelector('[data-add="' + kind + '-by"]'); if(again) again.value = memo;
-    }
+    var memo = (who.value || "").trim();
+    say("Adding…", "busy", true);
+    var ares = await callEndpoint("notes-add", { token: sessionToken(), meetingId: mid, field: kind, text: val, by: memo });
+    if(!ares.ok){ say(notesTrouble(ares.error), "bad"); return; }
+    if(kind === "pred") m.predictions.push(ares.item); else m.points.push(ares.item);
+    box.innerHTML = meetingHTML(m, bookById(m.bookId));
+    var again = box.querySelector('[data-add="' + kind + '-by"]'); if(again) again.value = memo;
+    say("Added.", "ok");
     return;
   }
   if((el = t.closest("[data-del]"))){
     var dk = el.getAttribute("data-del"), dm = meetingById(el.getAttribute("data-mid")), iid = el.getAttribute("data-iid");
     if(!dm) return;
     var key = dk === "pred" ? "predictions" : "points";
+    say("Removing…", "busy", true);
+    var dres = await callEndpoint("notes-del", { token: sessionToken(), meetingId: dm.id, field: dk, itemId: iid });
+    if(!dres.ok){ say(notesTrouble(dres.error), "bad"); return; }
     dm[key] = dm[key].filter(function(x){ return x.id !== iid; });
-    if(await save("Removing…")){ $("meetModalBody").innerHTML = meetingHTML(dm, bookById(dm.bookId)); renderAll(); }
+    $("meetModalBody").innerHTML = meetingHTML(dm, bookById(dm.bookId));
+    say("Removed.", "ok");
     return;
   }
   if((el = t.closest("[data-savesum]"))){
