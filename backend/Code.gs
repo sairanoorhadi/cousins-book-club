@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-08-25b';
+var SCRIPT_VERSION = '2026-08-28a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -79,7 +79,7 @@ function doPost(e) {
   if (kind === 'notify-get') return json(notifyGet(payload));
   if (kind === 'notify-set') return json(notifySet(payload));
   if (kind === 'profile-set') return json(profileSet(payload));
-  if (kind === 'claim') return json(claimMember(payload));
+  if (kind === 'approve-notify') return json(approveNotify(payload));
   if (kind === 'photo-add') return json(photoAdd(payload));
   if (kind === 'photo-list') return json(photoList(payload));
   if (kind === 'photo-delete') return json(photoDelete(payload));
@@ -215,6 +215,14 @@ function loginRequest(payload) {
   var email = normEmail(payload.email);
   if (!email || email.indexOf('@') < 1) return { ok: false, error: 'bad email' };
 
+  /* Three answers, and only one of them sends anything. Someone waiting on the
+     organiser is told so rather than left wondering; someone we have never
+     heard of is pointed at signing up. Neither gets a code, so neither gets a
+     session. */
+  if (!memberFor(email)) {
+    return { ok: false, error: pendingFor(email) ? 'pending' : 'not a member' };
+  }
+
   var code = String(Math.floor(100000 + Math.random() * 900000));
   PropertiesService.getScriptProperties().setProperty('code:' + email, JSON.stringify({
     hash: hashCode(code, email),
@@ -254,6 +262,12 @@ function loginVerify(payload) {
 
   store.deleteProperty(key);
 
+  /* Checked again here, not only when the code was asked for: a request can be
+     withdrawn in the ten minutes a code is good for. */
+  if (!memberFor(email)) {
+    return { ok: false, error: pendingFor(email) ? 'pending' : 'not a member' };
+  }
+
   var token = Utilities.getUuid() + Utilities.getUuid().slice(0, 8);
   store.setProperty('sess:' + token, JSON.stringify({
     email: email,
@@ -272,6 +286,53 @@ function loginVerify(payload) {
   return { ok: true, token: token, profile: profileFor(email) };
 }
 
+/* ------------------------------------------------------- who counts as a member
+   One function, deliberately. Membership used to be decided in three places
+   with slightly different rules; when the way people join changes again, this
+   is the only thing that has to change with it.
+
+   A member row carries notifyRef, an opaque handle whose real address lives in
+   this script's properties. So the question "is this address a member?" is
+   answered by resolving each row's handle back and comparing. A club this size
+   makes that a handful of property reads. */
+function memberFor(email) {
+  var want = normEmail(email);
+  if (!want) return null;
+  var state;
+  try { state = JSON.parse(ghGetFile(STATE_PATH).content || '{}'); }
+  catch (err) { return null; }
+  var rows = state.members || [];
+  for (var i = 0; i < rows.length; i++) {
+    var ref = rows[i] && rows[i].notifyRef;
+    if (ref && normEmail(lookupEmail(ref)) === want) return rows[i];
+  }
+  return null;
+}
+
+/* Someone who asked to join and is still waiting on the organiser. Their
+   request sits unhandled in the inbox with the address behind a handle, the
+   same as a member row. */
+function pendingFor(email) {
+  var want = normEmail(email);
+  if (!want) return false;
+  var items;
+  try { items = JSON.parse(ghGetFile(INBOX_PATH).content || '{"items":[]}').items || []; }
+  catch (err) { return false; }
+  var state;
+  try { state = JSON.parse(ghGetFile(STATE_PATH).content || '{}'); }
+  catch (err) { state = {}; }
+  /* the site marks a submission handled by listing its id here */
+  var done = state.inbox || [];
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    if (!it || it.kind !== 'join') continue;
+    if (done.indexOf(it.id) !== -1) continue;
+    var ref = (it.payload || {}).emailRef;
+    if (ref && normEmail(lookupEmail(ref)) === want) return true;
+  }
+  return false;
+}
+
 /* Every privileged call goes through here. Returns the email or ''. */
 function whoIs(token) {
   if (!token) return '';
@@ -286,14 +347,7 @@ function whoIs(token) {
 
 function profileFor(email) {
   var entry = directory()[email] || { ref: '', name: '', books: [], memberId: '' };
-  var member = null;
-  try {
-    var state = JSON.parse(ghGetFile(STATE_PATH).content || '{}');
-    member = (state.members || []).filter(function (m) {
-      return (entry.memberId && m.id === entry.memberId) ||
-             (entry.ref && m.notifyRef === entry.ref);
-    })[0] || null;
-  } catch (err) {}
+  var member = memberFor(email);
   return {
     email: email,
     emailHint: maskEmail(email),
@@ -348,66 +402,6 @@ function notifySet(payload) {
   return { ok: true, books: books };
 }
 
-/**
- * Someone who was already on the members list, signing in for the first time.
- *
- * The club existed before sign-in did, so those rows have no address attached.
- * Rather than the organiser typing addresses in by hand, a member signs in and
- * says which row is theirs; that links the two. Rows already linked to someone
- * else can't be taken.
- */
-function claimMember(payload) {
-  var email = whoIs(payload.token);
-  if (!email) return { ok: false, error: 'signed out' };
-
-  var wantId = String(payload.memberId || '');
-  var dir = directory();
-  var entry = dir[email];
-  if (!entry) return { ok: false, error: 'no profile' };
-
-  /* This one has to write to the repo, so a dead token stops it dead —
-     unlike signing in, which shrugs a failed read off. Say so plainly
-     rather than letting the whole call blow up into an error page. */
-  if (!propKey('GITHUB_TOKEN', '')) return { ok: false, error: 'no github token' };
-
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
-    for (var attempt = 0; attempt < 2; attempt++) {
-      var file;
-      try { file = ghGetFile(STATE_PATH); }
-      catch (err) { return { ok: false, error: 'no github token', detail: String(err) }; }
-      var state;
-      try { state = JSON.parse(file.content || '{}'); } catch (err) { return { ok: false, error: 'unreadable state' }; }
-
-      var member = (state.members || []).filter(function (m) { return m.id === wantId; })[0];
-      if (!member) return { ok: false, error: 'no such member' };
-      if (member.notifyRef && member.notifyRef !== entry.ref) return { ok: false, error: 'already claimed' };
-
-      member.notifyRef = entry.ref;
-      member.emailHint = maskEmail(email);
-      state.rev = Number(state.rev || 0) + 1;
-
-      try {
-        ghPutFile(STATE_PATH, JSON.stringify(state, null, 2), file.sha, 'Member linked their sign-in');
-        entry.memberId = member.id;
-        if (!entry.name) entry.name = member.name;
-        dir[email] = entry;
-        saveDirectory(dir);
-        return { ok: true, profile: profileFor(email) };
-      } catch (err) {
-        if (attempt === 1) return { ok: false, error: 'busy, try again' };
-      }
-    }
-  } finally {
-    lock.releaseLock();
-  }
-  return { ok: false, error: 'busy' };
-}
-
-/* A member editing their own row in state.json — their display name and the
-   colour their badge uses. Read-modify-write under a lock, with one retry if
-   the organiser saved at the same moment. */
 function profileSet(payload) {
   var email = whoIs(payload.token);
   if (!email) return { ok: false, error: 'signed out' };
@@ -460,6 +454,49 @@ function profileSet(payload) {
     lock.releaseLock();
   }
   return { ok: false, error: 'busy' };
+}
+
+/* ------------------------------------------------- telling someone they're in
+   Accepting a join request happens in the organiser's browser, which writes
+   state.json with its own token and never speaks to this script. So the site
+   calls here afterwards to have the email sent, since the address only exists
+   on this side.
+
+   Two guards, because nothing about this call proves who is making it. The
+   handle must belong to a row that is actually on the members list now — so
+   the only message this can ever send is a true one — and it sends once per
+   handle, so a second Accept, or a page reloaded and pressed again, is quiet. */
+function approveNotify(payload) {
+  var ref = String(payload.ref || '').trim();
+  if (!ref) return { ok: false, error: 'no ref' };
+
+  var address = lookupEmail(ref);
+  if (!address) return { ok: false, error: 'unknown ref' };
+
+  var state;
+  try { state = JSON.parse(ghGetFile(STATE_PATH).content || '{}'); }
+  catch (err) { return { ok: false, error: 'unreadable state' }; }
+  var member = (state.members || []).filter(function (m) { return m.notifyRef === ref; })[0];
+  if (!member) return { ok: false, error: 'not approved' };
+
+  var store = PropertiesService.getScriptProperties();
+  var sentKey = 'approved:' + ref;
+  if (store.getProperty(sentKey)) return { ok: true, already: true };
+
+  var site = 'https://sairanoorhadi.github.io/cousins-book-club/';
+  var club = (state.club && state.club.name) || 'Cousins Book Club';
+  MailApp.sendEmail({
+    to: address,
+    subject: "You're in \u2014 " + club,
+    body:
+    'Hi ' + (member.name || 'there') + ',\n\n' +
+    'An organiser has approved your account, so you\u2019re a member of the ' + club + ' now.\n\n' +
+    'Sign in at ' + site + ' with this address \u2014 you\u2019ll get a six-digit code by email each ' +
+    'time, so there\u2019s no password to remember.\n\n' +
+    'See you at the next meeting.'
+  });
+  store.setProperty(sentKey, new Date().toISOString());
+  return { ok: true };
 }
 
 /* ------------------------------------------------------------ party photos
@@ -1191,6 +1228,41 @@ function listSubscribers() {
     .filter(function (k) { return k.indexOf('email:') === 0; })
     .map(function (k) { return k.slice(6) + '  ' + all[k]; });
   Logger.log(rows.length ? rows.join('\n') : 'Nobody has signed up yet.');
+}
+
+/**
+ * Run before any risky change. Writes every script property to a file in your
+ * Drive and logs its name.
+ *
+ * These properties are the one thing here that git does not hold: the club's
+ * addresses, the reference each one hides behind, live sessions, the login
+ * salt. state.json and inbox.json are recoverable from the repo's history;
+ * this is not, so it is worth a minute before a deploy.
+ *
+ * The file contains real email addresses. Keep it in your Drive \u2014 don't
+ * commit it, don't share the folder.
+ */
+function backupProperties() {
+  var all = PropertiesService.getScriptProperties().getProperties();
+  var name = 'book-club-properties-' +
+    Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd-HHmm') + '.json';
+  var file = DriveApp.createFile(name, JSON.stringify(all, null, 2), MimeType.PLAIN_TEXT);
+  Logger.log('Saved ' + Object.keys(all).length + ' properties to ' + name +
+    ' in your Drive.\nTo put them back, run restoreProperties() with the file id: ' + file.getId());
+}
+
+/**
+ * The way back from backupProperties(). Put the file id below \u2014 it is in
+ * that run's log \u2014 and run it. Existing properties with the same names are
+ * overwritten; anything added since is left alone.
+ */
+function restoreProperties() {
+  var fileId = '';                                // <- put the backup file id here
+  if (!fileId) { Logger.log('Set fileId first.'); return; }
+  var text = DriveApp.getFileById(fileId).getBlob().getDataAsString();
+  var all = JSON.parse(text);
+  PropertiesService.getScriptProperties().setProperties(all, false);
+  Logger.log('Restored ' + Object.keys(all).length + ' properties.');
 }
 
 /**
