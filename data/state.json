@@ -1,5 +1,5 @@
 {
-  "rev": 1229,
+  "rev": 1230,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -52,6 +52,18 @@
       "fable": "https://fable.co/fabler/eliza-hadi-487093293960?referralID=2v71c1ojRf",
       "goodreads": "",
       "hue": ""
+    },
+    {
+      "id": "mb-mtcdg54c8cyyc",
+      "name": "Zainab",
+      "joined": "2026-07-25",
+      "avatar": "",
+      "email": "",
+      "notifyRef": "",
+      "emailHint": "",
+      "notify": [],
+      "fable": "",
+      "goodreads": ""
     }
   ],
   "books": [
