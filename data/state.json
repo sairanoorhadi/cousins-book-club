@@ -1,5 +1,5 @@
 {
-  "rev": 1213,
+  "rev": 1214,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -236,6 +236,11 @@
           "id": "pred-mtc9qln4zthu0",
           "text": "Someone from the crows is going to die",
           "by": "Filza, Zainab, Eliza"
+        },
+        {
+          "id": "pred-mtc9s392x4c1x",
+          "text": "Jesper, Nina or Mattias die",
+          "by": "Zainab, Filza, Eliza"
         }
       ],
       "points": [
