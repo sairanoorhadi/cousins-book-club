@@ -1,5 +1,5 @@
 {
-  "rev": 1216,
+  "rev": 1217,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -251,6 +251,11 @@
           "id": "pred-mtc9wxnajgyfd",
           "text": "Kaz is going to get a very significant moment with Van Eck",
           "by": "Saira, Filza, Eliza"
+        },
+        {
+          "id": "pred-mtc9yamw7nn15",
+          "text": "Wylan is going to get himself out and he is gonna be the saving grace for this plan",
+          "by": "Saira, Eliza, Filza, Zainab"
         }
       ],
       "points": [
