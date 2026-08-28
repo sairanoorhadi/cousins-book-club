@@ -259,6 +259,37 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-2603dba6-457",
+      "kind": "suggest",
+      "at": "2026-08-28T01:35:27.057Z",
+      "payload": {
+        "title": "The Cruel Prince",
+        "author": "Holly Black",
+        "pages": 370,
+        "ageMin": 12,
+        "ageMax": 100,
+        "level": "Ages 12+",
+        "genres": [
+          "Fairies--Fiction.",
+          "Sisters--Fiction.",
+          "Orphans--Fiction.",
+          "Princes--Fiction.",
+          "Fantasy",
+          "Princes",
+          "Courts and courtiers",
+          "Orphans",
+          "Fairies"
+        ],
+        "blurb": "Jude and her two sisters are taken to the High Court of Faerie as children, after the fae knight Madoc kills their parents and claims them as his own. Ten years on, Jude is seventeen and mortal in a world that treats humans as pets or amusements, and she wants a place at court badly enough to bleed for it. Standing in her way is Prince Cardan, the youngest son of the High King, who makes her humiliation something close to a hobby. The court runs on old rules about lying, debts, and hospitality, and Jude learns quickly that the rules are the only weapon a human gets.",
+        "summarySource": "ai",
+        "cover": "https://covers.openlibrary.org/b/id/8361789-L.jpg",
+        "by": "Eliza",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
