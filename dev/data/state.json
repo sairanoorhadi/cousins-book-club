@@ -1,5 +1,5 @@
 {
-  "rev": 1102,
+  "rev": 1103,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -277,7 +277,7 @@
       "place": "Camping",
       "chapters": "1-5",
       "pages": "45",
-      "done": false,
+      "done": true,
       "summary": "",
       "predictions": [
         {
@@ -365,8 +365,7 @@
       "ageMin": 13,
       "ageMax": 100,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-1984",
@@ -391,8 +390,7 @@
       "ageMin": 15,
       "ageMax": 100,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-kite",
@@ -417,8 +415,7 @@
       "ageMin": 16,
       "ageMax": 100,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-mockingbird",
@@ -443,8 +440,7 @@
       "ageMin": 13,
       "ageMax": 100,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-elevator",
@@ -474,8 +470,7 @@
       "ageMin": 8,
       "ageMax": 11,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-champion",
@@ -500,8 +495,7 @@
       "ageMin": 9,
       "ageMax": 12,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-grace",
@@ -526,8 +520,7 @@
       "ageMin": 10,
       "ageMax": 13,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-trouts",
@@ -552,8 +545,7 @@
       "ageMin": 8,
       "ageMax": 12,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-pandas",
@@ -578,8 +570,7 @@
       "ageMin": 9,
       "ageMax": 12,
       "dislikes": [],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     },
     {
       "id": "rc-heartless",
@@ -610,8 +601,7 @@
           "at": "2026-08-25T15:52:10.000Z"
         }
       ],
-      "rating": 0,
-      "ratingSource": ""
+      "ratings": []
     }
   ],
   "inbox": [
