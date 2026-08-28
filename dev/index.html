@@ -1842,17 +1842,37 @@ function endpointTrouble(err){
   if(String(err || "").indexOf("http ") === 0) return "The script answered with an error (" + err + "). Re-deploy it and try again.";
   return "";
 }
-/* Linking a name has to write to the repo, so it fails in ways signing in
-   doesn't — signing in survives a dead GitHub token, this can't. */
-function claimTrouble(err){
-  if(err === "already claimed") return "Someone else has already linked that name.";
+/* A call that writes to the club's files fails in ways signing in doesn't —
+   signing in survives a dead GitHub token, these can't. */
+function repoWriteTrouble(err){
   if(err === "busy, try again" || err === "busy") return "Someone was saving just then — try again.";
-  if(err === "no such member") return "That name isn't on the club's list any more. Reload the page.";
+  if(err === "not a member yet") return "You're not on the club's list. Reload the page.";
   if(err === "signed out" || err === "no profile") return "Your sign-in has expired. Sign out and back in.";
   if(err === "no github token" || err === "github" || err === "crashed")
     return "The script couldn't save to the club's files. Its GitHub token is missing or has expired — make a new one and update GITHUB_TOKEN in the script (docs/notifications.md, step 1).";
-  return endpointTrouble(err) || "Couldn't link that just now.";
+  return endpointTrouble(err) || "Couldn't save that just now.";
 }
+/* The two ways sign-in can be turned away. Neither is a fault to apologise
+   for, so both say what to do next rather than what went wrong. */
+function signInTrouble(err){
+  if(err === "not a member") return "Email not linked to account. Please sign up.";
+  if(err === "pending") return "Your account is pending approval from an organiser.";
+  return endpointTrouble(err);
+}
+/* said under the refusal, since the Sign up button is up in the header and
+   the person is looking at this box */
+function showSignupWay(){
+  var note = $("loginNote");
+  if(!note || $("loginToSignup")) return;
+  var go = document.createElement("button");
+  go.className = "btn btn--sm btn--surf";
+  go.id = "loginToSignup";
+  go.type = "button";
+  go.style.marginLeft = "10px";
+  go.textContent = "Sign up";
+  note.parentNode.appendChild(go);
+}
+
 async function restoreSession(){
   var token = sessionToken();
   if(!token || !endpoint()) return;
@@ -1888,7 +1908,7 @@ function renderLogin(){
     body.innerHTML =
       '<p class="eyebrow">Signed in</p>' +
       '<h3 style="font-size:24px;margin:8px 0 6px">' + esc(myName() || me.emailHint) + "</h3>" +
-      '<p class="hint">' + esc(me.emailHint) + (me.isMember ? "" : " &mdash; not on the members list yet, so the badge tree doesn't show you") + "</p>" +
+      '<p class="hint">' + esc(me.emailHint) + "</p>" +
       '<div style="margin-top:20px"><button class="btn btn--ghost" type="button" id="loginOut">Sign out</button></div>';
     return;
   }
@@ -3642,7 +3662,7 @@ async function saveMyHue(hue){
     if(note) note.textContent = hres.error === "bad colour"
       ? "The club's script hasn't been updated for custom colours yet — the five presets still work."
       : hres.error === "busy, try again" ? "Someone else was saving — try again in a moment."
-      : claimTrouble(hres.error);
+      : repoWriteTrouble(hres.error);
     return false;
   }
   var mm3 = myMember();
@@ -3751,35 +3771,11 @@ function renderMe(){
   var books = currentBooks().concat(nextBooks());
   var all = myNotify.indexOf("*") !== -1;
 
-  /* Members who were on the list before sign-in existed and haven't linked an
-     address yet. A new signer-in picks themselves from here once. */
-  var unlinked = state.members.filter(function(m){ return !m.notifyRef; });
-
   $("meModalTitle").textContent = myName() || "Your account";
   $("meModalBody").innerHTML =
     '<p class="eyebrow">Signed in as</p>' +
     '<h3 style="font-size:24px;margin:8px 0 4px">' + esc(myName() || me.emailHint) + "</h3>" +
     '<p class="hint">' + esc(me.emailHint) + "</p>" +
-
-    (!mem
-      ? '<hr class="divider"><p class="eyebrow">One thing first</p>' +
-        '<h3 style="font-size:20px;margin:8px 0 6px">Which one are you?</h3>' +
-        (unlinked.length
-          ? '<p class="hint" style="margin-bottom:14px">Pick your name and this address is linked to you. You only do this once.</p>' +
-            '<div class="focusbar" style="margin:0">' + unlinked.map(function(m){
-              return '<button class="focuschip" type="button" data-claim="' + esc(m.id) + '">' +
-                '<span class="focuschip__pic" ' + hueStyle(m) + ">" +
-                  (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
-                esc(m.name) + "</button>";
-            }).join("") +
-              /* signing in hides the Sign up button, so the way out has to
-                 live here or there isn't one */
-              '<button class="focuschip focuschip--all" type="button" data-notme="1">' +
-                "I&rsquo;m not on this list</button>" + "</div>" +
-            '<p class="hint" style="margin-top:10px" id="meClaimNote">Pick <strong>I&rsquo;m not on this list</strong> and the organiser will add you.</p>'
-          : '<p class="empty">Everyone on the list is already linked. ' +
-            '<button class="btn btn--sm btn--surf" type="button" data-notme="1" style="margin-top:10px">Ask the organiser to add me</button></p>')
-      : "") +
 
     '<hr class="divider"><p class="eyebrow">Meeting emails</p>' +
     '<p class="hint" style="margin:6px 0 14px">One when a meeting is scheduled, one five days before, one thirty minutes before.</p>' +
@@ -3854,7 +3850,8 @@ function openMemberForm(kind, bookId){
   var body =
     (kind === "join"
       ? '<p class="eyebrow">New member</p><h3 style="font-size:24px;margin:8px 0 6px">Ask to join</h3>' +
-        '<p class="hint">The organiser gets your request and adds you to the club. No account needed.</p>'
+        '<p class="hint">An organiser reads your request and approves it. Until then you won\u2019t be able ' +
+        'to sign in \u2014 we\u2019ll email you the moment you\u2019re in.</p>'
       : kind === "profile"
       ? '<p class="eyebrow">Existing member</p><h3 style="font-size:24px;margin:8px 0 6px">Request a change</h3>' +
         '<p class="hint">Say what you want changed on your profile and the organiser will apply it.</p>'
@@ -4372,10 +4369,13 @@ function paneInbox(){
   /* book suggestions live on the Recommendations tab so a submission is only
      ever approved in one place */
   var waiting = inbox.filter(function(i){ return i && !i.handled && i.kind !== "suggest"; });
-  var labels = { join:"Join request", profile:"Profile change", endorse:"Endorsement", notify:"Meeting emails" };
+  var labels = { join:"Waiting for approval", profile:"Profile change", endorse:"Endorsement", notify:"Meeting emails" };
   var out = '<p class="eyebrow">From the site</p><h3 style="font-size:22px;margin:8px 0 6px">' +
     (waiting.length ? waiting.length + " waiting" : "Nothing waiting") + "</h3>" +
-    '<p class="hint" style="margin-bottom:18px">Join requests, profile changes and reminder signups. Accepting a join request adds the member. Books people put forward are reviewed on the Recommendations tab.</p>';
+    '<p class="hint" style="margin-bottom:18px">People waiting to be approved, profile changes and reminder signups. ' +
+    '<strong>Approve</strong> adds them to the club and emails them to say so \u2014 until then they can\u2019t sign in. ' +
+    '<strong>Reject</strong> turns the request down and tells them nothing. ' +
+    'Books people put forward are reviewed on the Recommendations tab.</p>';
   if(!endpoint()){
     return out + '<p class="empty">No submissions endpoint set yet — add one under Settings and the inbox starts filling up.</p>';
   }
@@ -4392,8 +4392,10 @@ function paneInbox(){
       '<span class="lanerow__meta">' + esc(it.at ? shortDate(String(it.at).slice(0, 10)) : "") + "</span>" +
       '<span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">' +
         (it.kind === "join" || it.kind === "notify"
-          ? '<button class="btn btn--sm btn--surf" type="button" data-inaccept="' + esc(it.id) + '">Accept</button>' : "") +
-        '<button class="btn btn--sm btn--ghost" type="button" data-indismiss="' + esc(it.id) + '">Dismiss</button>' +
+          ? '<button class="btn btn--sm btn--surf" type="button" data-inaccept="' + esc(it.id) + '">' +
+            (it.kind === "join" ? "Approve" : "Accept") + "</button>" : "") +
+        '<button class="btn btn--sm btn--ghost" type="button" data-indismiss="' + esc(it.id) + '">' +
+          (it.kind === "join" ? "Reject" : "Dismiss") + "</button>" +
       "</span></div>" +
       '<div class="kv">' + rows + "</div></div>";
   }).join("");
@@ -4480,13 +4482,16 @@ document.addEventListener("click", async function(e){
   if(t.closest("#loginOpen") || t.closest("#meetManageNotify")){ if(me) await openMe(); else openLogin(); return; }
   if(t.closest("#loginOut")){ closeScrim($("meScrim").hidden ? "loginScrim" : "meScrim"); await signOut(); return; }
   if(t.closest("#loginBack")){ loginStep = "email"; renderLogin(); return; }
+  if(t.closest("#loginToSignup")){ closeScrim("loginScrim"); openMemberForm("join"); return; }
   if(t.closest("#loginSend")){
     var lem = $("loginEmail").value.trim();
     if(!lem || lem.indexOf("@") < 1){ $("loginEmail").focus(); say("That doesn't look like an email address.", "bad"); return; }
     $("loginNote").textContent = "Sending…";
     var lres = await callEndpoint("login-request", { email: lem });
     if(!lres.ok){
-      $("loginNote").textContent = endpointTrouble(lres.error) || "Couldn't send a code just now.";
+      $("loginNote").textContent = signInTrouble(lres.error) || "Couldn't send a code just now.";
+      /* nothing to sign up for if the organiser already has the request */
+      if(lres.error === "not a member") showSignupWay();
       return;
     }
     loginEmail = lem; loginStep = "code"; renderLogin();
@@ -4500,7 +4505,8 @@ document.addEventListener("click", async function(e){
     if(!vres.ok){
       $("loginNote").textContent = vres.error === "expired" ? "That code has expired — send a new one."
         : vres.error === "wrong" ? "Not right. " + (vres.left ? vres.left + " tries left." : "Send a new code.")
-        : "Couldn't sign you in.";
+        : signInTrouble(vres.error) || "Couldn't sign you in.";
+      if(vres.error === "not a member") showSignupWay();
       return;
     }
     setSessionToken(vres.token);
@@ -4526,30 +4532,6 @@ document.addEventListener("click", async function(e){
     myNotify = nres.books || want;
     renderMe();
     say(myNotify.length ? "Reminders updated." : "Reminders switched off.", "ok");
-    return;
-  }
-  if(t.closest("[data-notme]")){
-    closeScrim("meScrim");
-    openMemberForm("join");
-    /* they're signed in, so we already know where to reach them */
-    if(me && me.email && $("mfEmail")) $("mfEmail").value = me.email;
-    if($("mfNote2")) $("mfNote2").textContent = "The organiser adds you, then your sign-in links itself.";
-    return;
-  }
-  if((el = t.closest("[data-claim]"))){
-    var cnote = $("meClaimNote");
-    if(cnote) cnote.textContent = "Linking…";
-    var cres = await callEndpoint("claim", { token: sessionToken(), memberId: el.getAttribute("data-claim") });
-    if(!cres.ok){
-      if(cnote) cnote.textContent = claimTrouble(cres.error);
-      return;
-    }
-    me = cres.profile;
-    /* the endpoint wrote it to state.json; mirror it here so the page agrees */
-    var claimed = memberById(me.memberId);
-    if(claimed){ claimed.notifyRef = me.ref; claimed.emailHint = me.emailHint; }
-    renderMe(); renderAll();
-    say("Linked — welcome back, " + (myName() || "") + ".", "ok");
     return;
   }
   if(t.closest("#meHueCustom")){
@@ -4711,6 +4693,21 @@ document.addEventListener("click", async function(e){
     say("Sending…", "busy", true);
     var mres = await submitPublic(mk, pay);
     if(!mres.ok){ say(submitFailMsg(mres), "bad"); return; }
+    if(mk === "join"){
+      /* the one submission that leaves someone waiting on a person, so it is
+         told properly rather than in a chip that fades after three seconds */
+      $("memberModalTitle").textContent = "Request sent";
+      $("memberModalBody").innerHTML =
+        '<p class="eyebrow">Waiting on an organiser</p>' +
+        '<h3 style="font-size:24px;margin:8px 0 10px">Thanks, ' + esc((pay.name || "").split(" ")[0]) + "</h3>" +
+        '<p>Your account must be approved by an organiser before you can sign in. ' +
+        'You\u2019re not a member yet \u2014 the request is with them now.</p>' +
+        '<p class="hint" style="margin-top:12px">We\u2019ll email this address as soon as it\u2019s approved, ' +
+        'and then you can sign in with it.</p>' +
+        '<div style="margin-top:20px"><button class="btn btn--surf" type="button" data-close="memberScrim">Got it</button></div>';
+      say("Request sent.", "ok");
+      return;
+    }
     say("Sent — the organiser will pick it up.", "ok");
     closeScrim("memberScrim");
     return;
@@ -4737,7 +4734,21 @@ document.addEventListener("click", async function(e){
     if(!item) return;
     acceptSubmission(item);
     state.inbox.push(iid0);
-    if(await save("Accepting…")){ item.handled = true; renderAll(); renderAdmin(); }
+    if(await save(item.kind === "join" ? "Approving…" : "Accepting…")){
+      item.handled = true;
+      renderAll(); renderAdmin();
+      /* only after the save, because the script checks the members list before
+         it will send — and it is the save that puts them on it */
+      if(item.kind === "join"){
+        var jref = (item.payload || {}).emailRef;
+        if(jref){
+          var ares = await callEndpoint("approve-notify", { ref: jref });
+          say(ares.ok
+            ? (ares.already ? "Approved. They were already told." : "Approved, and they've been emailed.")
+            : "Approved, but the email didn't go: " + (endpointTrouble(ares.error) || ares.error), ares.ok ? "ok" : "bad");
+        }
+      }
+    }
     return;
   }
   if((el = t.closest("[data-indismiss]"))){
@@ -6136,13 +6147,12 @@ function renderWhoami(){
   if(me){
     /* signed in: the two buttons give way to the member's own badge */
     var mem = myMember();
-    btn.className = "btn btn--sm whoami" + (mem ? "" : " whoami--new");
+    btn.className = "btn btn--sm whoami";
     btn.innerHTML =
       '<span class="whoami__pic" ' + hueStyle(mem) + ">" +
         (mem && mem.avatar ? '<img src="' + esc(mem.avatar) + '" alt="">' : esc(initials(myName() || "?"))) + "</span>" +
-      '<span class="whoami__n">' + esc((myName() || "Account").split(" ")[0]) + "</span>" +
-      (mem ? "" : '<span class="whoami__dot" title="Link your name" aria-hidden="true"></span>');
-    btn.title = mem ? "Your account" : "Pick which member you are";
+      '<span class="whoami__n">' + esc((myName() || "Account").split(" ")[0]) + "</span>";
+    btn.title = "Your account";
   }else{
     btn.className = "btn btn--sm btn--ghost";
     btn.textContent = "Sign in";
