@@ -1,5 +1,5 @@
 {
-  "rev": 1223,
+  "rev": 1224,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -41,19 +41,6 @@
       "id": "mb-mt3zy8m6cxe9o",
       "name": "Zainab",
       "joined": "2026-07-25",
-      "avatar": "",
-      "fable": "",
-      "goodreads": "",
-      "email": "",
-      "notifyRef": "",
-      "emailHint": "",
-      "notify": [],
-      "hue": ""
-    },
-    {
-      "id": "mb-mt40250262772",
-      "name": "Summar",
-      "joined": "2026-09-06",
       "avatar": "",
       "fable": "",
       "goodreads": "",
@@ -172,7 +159,6 @@
       "members": [
         "mb-saira",
         "mb-mt3zy8m6cxe9o",
-        "mb-mt40250262772",
         "mb-mtaiuu788is5a"
       ],
       "order": 2,
