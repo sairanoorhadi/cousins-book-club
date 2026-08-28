@@ -1,5 +1,5 @@
 {
-  "rev": 1209,
+  "rev": 1210,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -216,7 +216,13 @@
       "pages": "100",
       "done": false,
       "summary": "",
-      "predictions": [],
+      "predictions": [
+        {
+          "id": "pred-mtc9njjc7xj2t",
+          "text": "Wylan kept an important piece of the plan secret from Pekk",
+          "by": ""
+        }
+      ],
       "points": [
         {
           "id": "d2",
