@@ -1,5 +1,5 @@
 {
-  "rev": 1238,
+  "rev": 1239,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -274,13 +274,7 @@
       "done": false,
       "summary": "",
       "predictions": [],
-      "points": [
-        {
-          "id": "disc-411bc109-dda",
-          "text": "The cookie monster is cool",
-          "by": "Saira"
-        }
-      ],
+      "points": [],
       "sent": {},
       "kind": "meeting",
       "photos": []
