@@ -1,5 +1,5 @@
 {
-  "rev": 1227,
+  "rev": 1228,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -318,7 +318,7 @@
       "place": "Online - Discord",
       "chapters": "Section 4 Chapters 17-23",
       "pages": "80",
-      "done": false,
+      "done": true,
       "summary": "",
       "predictions": [],
       "points": [
