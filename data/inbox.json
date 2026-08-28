@@ -338,6 +338,17 @@
         "by": "Saira",
         "deletedBy": "Saira"
       }
+    },
+    {
+      "id": "endorse-3284199b-0c6",
+      "kind": "endorse",
+      "at": "2026-08-28T06:01:12.421Z",
+      "payload": {
+        "recId": "rc-trouts",
+        "title": "Look Out for the Fitzgerald-Trouts",
+        "name": "Saira",
+        "vote": "up"
+      }
     }
   ]
 }
