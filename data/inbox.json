@@ -384,6 +384,30 @@
         "by": "",
         "deletedBy": "Saira"
       }
+    },
+    {
+      "id": "suggest-a68f18ee-188",
+      "kind": "suggest",
+      "at": "2026-08-29T05:03:16.284Z",
+      "payload": {
+        "title": "The Namesake",
+        "author": "Jhumpa Lahiri",
+        "pages": 300,
+        "ageMin": 14,
+        "ageMax": 100,
+        "level": "Ages 14+",
+        "genres": [
+          "Coming-of-age story",
+          "Domestic Fiction"
+        ],
+        "blurb": "Ashoke and Ashima Ganguli leave Calcutta for a university town outside Boston, where they raise two children in a country whose customs never quite become their own. Their son carries the name Gogol, chosen under hospital pressure and tied to something in his father's past, and he spends much of his life resenting it. The novel follows the family across decades, moving between the parents' careful preservation of what they left behind and the children's easy, sometimes careless American lives. Lahiri writes in a quiet register, attentive to meals, houses, and the small negotiations that make up a marriage.",
+        "summarySource": "ai",
+        "cover": "https://m.media-amazon.com/images/I/71l7PUSR4kL._AC_UF1000,1000_QL80_.jpg",
+        "by": "Saira",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
