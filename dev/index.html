@@ -4215,7 +4215,40 @@ async function recAgeAI(r){
       ? "Asking the AI isn\u2019t switched on \u2014 try the other three."
       : "The AI couldn\u2019t put an age on this one \u2014 try the other three.") + "</p>";
 }
-function recEditor(r){
+/* A submission still sitting in the inbox is not a record yet, so there is
+   nothing on state.recs to type into. It gets a draft instead: the same shape
+   a rec has, built from the payload the first time the editor is drawn and
+   kept in memory until the decision is made. Every field binds by data-rid
+   exactly as it does for a real rec, so the editor, the tools and the cover
+   picker all work against it without knowing the difference.
+
+   Nothing here is saved anywhere. Edits live for as long as the tab does, and
+   are read off the boxes at the moment Approve is pressed \u2014 which is the
+   point: the record is built from what was corrected, not from what arrived. */
+var recDrafts = {};
+function recDraft(it){
+  var id = it.id;
+  if(!recDrafts[id]){
+    var p = it.payload || {};
+    recDrafts[id] = withAges({
+      id: id, title: p.title || "Untitled", author: p.author || "",
+      pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
+      genres: normaliseGenres(p.genres), by: String(p.by || ""), at: String(it.at || "").slice(0, 10),
+      cover: safeUrl(p.cover), blurb: String(p.blurb || ""),
+      summarySource: String(p.summarySource || "own"),
+      status: "pending", shortlist: false, reviews: [], endorsements: [], dislikes: [],
+      ratings: cleanRatings(p.ratings).length ? cleanRatings(p.ratings)
+        : (Number(p.rating) > 0 ? [{ score: clampRating(p.rating), source: String(p.ratingSource || "").slice(0, 40) }] : [])
+    });
+  }
+  return recDrafts[id];
+}
+/* the editor's handlers ask this rather than recById, so one lookup covers a
+   real record and a draft alike */
+function recOrDraft(id){ return recById(id) || recDrafts[id] || null; }
+
+function recEditor(r, opts){
+  opts = opts || {};
   return '<details class="editor"' + (openEditors[r.id] ? " open" : "") + '>' +
     '<summary data-editfor="' + esc(r.id) + '">Edit details &amp; cover</summary>' +
     '<div class="editor__body"><div class="formgrid">' +
@@ -4269,17 +4302,24 @@ function recEditor(r){
         }).join("") + "</div></div>";
     }).join("") +
     '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center">' +
-      '<button class="btn btn--sm btn--zest" type="button" data-rsave="' + esc(r.id) + '">Save changes</button>' +
-      /* Only while it is still waiting on a decision. Approving something
-         already approved means nothing, and taking a live one down is what
-         Unpublish above already does. */
-      (r.status === "pending"
-        ? '<button class="btn btn--sm btn--surf" type="button" data-approve="' + esc(r.id) + '">Approve</button>' +
-          '<button class="btn btn--sm btn--flare" type="button" data-reject="' + esc(r.id) + '">Deny</button>'
-        : "") +
-      '<button class="btn btn--sm ' + (r.shortlist ? "btn--flare" : "btn--ghost") + '" type="button" data-rshort="' + esc(r.id) + '">' +
-        (r.shortlist ? "On the shortlist" : "Add to shortlist") + "</button>" +
-      '<button class="btn btn--sm btn--ghost" type="button" data-rdel="' + esc(r.id) + '" style="margin-left:auto">Delete permanently</button>' +
+      /* A draft has nowhere to save to and nothing to shortlist or delete yet:
+         the only thing to do with it is decide, and Approve is what writes the
+         corrected values down. A real record keeps its own row. */
+      (opts.draft
+        ? '<button class="btn btn--sm btn--surf" type="button" data-inapprove="' + esc(r.id) + '">Approve</button>' +
+          '<button class="btn btn--sm btn--flare" type="button" data-inreject="' + esc(r.id) + '">Deny</button>' +
+          '<span class="hint" style="margin-left:auto">Approving saves these details \u2014 nothing is kept until then.</span>'
+        : '<button class="btn btn--sm btn--zest" type="button" data-rsave="' + esc(r.id) + '">Save changes</button>' +
+          /* Only while it is still waiting on a decision. Approving something
+             already approved means nothing, and taking a live one down is what
+             Unpublish above already does. */
+          (r.status === "pending"
+            ? '<button class="btn btn--sm btn--surf" type="button" data-approve="' + esc(r.id) + '">Approve</button>' +
+              '<button class="btn btn--sm btn--flare" type="button" data-reject="' + esc(r.id) + '">Deny</button>'
+            : "") +
+          '<button class="btn btn--sm ' + (r.shortlist ? "btn--flare" : "btn--ghost") + '" type="button" data-rshort="' + esc(r.id) + '">' +
+            (r.shortlist ? "On the shortlist" : "Add to shortlist") + "</button>" +
+          '<button class="btn btn--sm btn--ghost" type="button" data-rdel="' + esc(r.id) + '" style="margin-left:auto">Delete permanently</button>') +
     "</div></div></details>";
 }
 /* A book someone sent from the site, still sitting in the inbox. It's shown
@@ -4308,12 +4348,13 @@ function paneRecs(){
     (waiting ? waiting + " submission" + (waiting > 1 ? "s" : "") + " to review" : "Nothing waiting") + "</h3>";
   out += waiting
     ? fresh.map(function(it){
-        var p = it.payload || {};
-        return pendingCard(withAges({
-          title: p.title || "Untitled", author: p.author, pages: p.pages,
-          ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
-          genres: p.genres, blurb: p.blurb, by: p.by, at: it.at
-        }), 'data-inapprove="' + esc(it.id) + '"', 'data-inreject="' + esc(it.id) + '"');
+        /* Every real submission arrives this way, so this is the one that has
+           to carry the editor \u2014 the record does not exist yet, so it is
+           drafted from the payload and written down on Approve. */
+        var d = recDraft(it);
+        return '<div class="adminrow">' +
+          pendingCard(d, 'data-inapprove="' + esc(it.id) + '"', 'data-inreject="' + esc(it.id) + '"') +
+          recEditor(d, { draft: true }) + "</div>";
       }).join("") +
       /* A waiting submission gets the same editor a live one has, so it can
          be looked up, corrected and decided on in one place rather than
@@ -4552,6 +4593,18 @@ function parseReviewLines(text){
 
 /* ---------- image actions ---------- */
 async function setImage(kind, id, url){
+  /* A cover chosen for a submission that is still a draft has nowhere to be
+     committed to yet: it is held on the draft and written down with the rest
+     when Approve is pressed. Redraw, but do not save. */
+  if(kind === "rcover" && !recById(id) && recDrafts[id]){
+    /* the redraw below rebuilds every box from the draft, so anything typed
+       and not yet on it has to be read across first or picking a cover would
+       quietly undo the correction that prompted the lookup */
+    readRecFields(recDrafts[id]);
+    recDrafts[id].cover = url;
+    renderAdminPane();
+    return;
+  }
   if(kind === "logo"){ state.club.logo = url; }
   else if(kind === "avatar"){ var m = memberById(id); if(!m) return; m.avatar = url; }
   else if(kind === "rcover"){ var r = recById(id); if(!r) return; r.cover = url; }
@@ -4856,10 +4909,24 @@ document.addEventListener("click", async function(e){
     var sid = el.getAttribute(rejecting ? "data-inreject" : "data-inapprove");
     var sit = inbox.filter(function(x){ return x && x.id === sid; })[0];
     if(!sit) return;
-    if(!rejecting) acceptSubmission(sit, { approve: true });
+    if(!rejecting){
+      acceptSubmission(sit, { approve: true });
+      /* The record was just built from the payload and carries the same id, so
+         the editor's boxes \u2014 still on screen, still bound to that id \u2014 are
+         read straight onto it. That is what makes this edit-then-approve
+         rather than approve-then-tidy. A cover picked while it was a draft
+         lives on the draft, not in a box, so it comes across separately. */
+      var made = recById(sid);
+      if(made){
+        readRecFields(made);
+        var draft = recDrafts[sid];
+        if(draft && draft.cover) made.cover = draft.cover;
+      }
+    }
     state.inbox.push(sid);
     if(await save(rejecting ? "Rejecting…" : "Approving…")){
       sit.handled = true;
+      delete recDrafts[sid];
       renderAll(); renderAdmin();
     }
     return;
@@ -4971,7 +5038,7 @@ document.addEventListener("click", async function(e){
 
   /* recommendations admin */
   if((el = t.closest("[data-rtool]"))){
-    var rt = recById(el.getAttribute("data-rid")); if(!rt) return;
+    var rt = recOrDraft(el.getAttribute("data-rid")); if(!rt) return;
     var q = recLive(rt);
     if(!q.title){ say("Give it a title first.", "bad"); return; }
     var kind = el.getAttribute("data-rtool");
@@ -4983,7 +5050,7 @@ document.addEventListener("click", async function(e){
     return;
   }
   if((el = t.closest("[data-rageai]"))){
-    var ra = recById(el.getAttribute("data-rageai")); if(!ra) return;
+    var ra = recOrDraft(el.getAttribute("data-rageai")); if(!ra) return;
     await recAgeAI(ra);
     return;
   }
@@ -5007,17 +5074,7 @@ document.addEventListener("click", async function(e){
   }
   if((el = t.closest("[data-rsave]"))){
     var rs = recById(el.getAttribute("data-rsave")); if(!rs) return;
-    var rp = $("adminPane");
-    var rget = function(f){ return rp.querySelector('[data-rfield="' + f + '"][data-rid="' + rs.id + '"]'); };
-    ["title","author","by","blurb"].forEach(function(f){ var n = rget(f); if(n) rs[f] = f === "blurb" ? n.value : n.value.trim(); });
-    var rpg = rget("pages"); if(rpg) rs.pages = Number(rpg.value) || null;
-    var rgn = rget("genres"); if(rgn) rs.genres = normaliseGenres(rgn.value);
-    var rAge = dualValue("rc:" + rs.id);
-    rs.ageMin = rAge.lo; rs.ageMax = rAge.hi; rs.level = levelText(rs);
-    var rrv = rget("reviews");
-    if(rrv) rs.reviews = parseReviewLines(rrv.value);
-    var rrt = rget("ratings"); if(rrt) rs.ratings = parseRatingLines(rrt.value);
-    if(!rs.title) rs.title = "Untitled";
+    readRecFields(rs);
     if(await save("Saving…")){ renderAll(); renderAdmin(); }
     return;
   }
@@ -5295,6 +5352,30 @@ document.addEventListener("click", async function(e){
 });
 
 /* fold an inbox item into the club's own data */
+/* Reads the editor's boxes onto a record. Shared by Save changes and by
+   Approve, so a submission is written down exactly as the same boxes would
+   have saved it had it already been a record. Silently does nothing for any
+   field whose box is not on screen, which is what makes it safe to call after
+   a record has just been created from a draft: the ids match, so the boxes
+   that were being edited are still the ones being read. */
+function readRecFields(rec){
+  var pane = $("adminPane"); if(!pane) return rec;
+  var get = function(f){ return pane.querySelector('[data-rfield="' + f + '"][data-rid="' + rec.id + '"]'); };
+  ["title","author","by","blurb"].forEach(function(f){
+    var n = get(f); if(n) rec[f] = f === "blurb" ? n.value : n.value.trim();
+  });
+  var pg = get("pages"); if(pg) rec.pages = Number(pg.value) || null;
+  var gn = get("genres"); if(gn) rec.genres = normaliseGenres(gn.value);
+  if(pane.querySelector('[data-dualid="rc:' + rec.id + '"]')){
+    var age = dualValue("rc:" + rec.id);
+    rec.ageMin = age.lo; rec.ageMax = age.hi; rec.level = levelText(rec);
+  }
+  var rv = get("reviews"); if(rv) rec.reviews = parseReviewLines(rv.value);
+  var rt = get("ratings"); if(rt) rec.ratings = parseRatingLines(rt.value);
+  if(!rec.title) rec.title = "Untitled";
+  return rec;
+}
+
 function acceptSubmission(item, opts){
   var p = item.payload || {};
   opts = opts || {};
