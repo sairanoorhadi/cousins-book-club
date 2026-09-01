@@ -1,5 +1,5 @@
 {
-  "rev": 1251,
+  "rev": 1252,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -894,15 +894,11 @@
       "ageMin": 14,
       "ageMax": 100,
       "genres": [
-        "Fairies--Fiction.",
-        "Sisters--Fiction.",
-        "Orphans--Fiction.",
-        "Princes--Fiction.",
+        "Fairies",
+        "Orphans",
         "Fantasy",
         "Princes",
-        "Courts and courtiers",
-        "Orphans",
-        "Fairies"
+        "Courts and courtiers"
       ],
       "by": "Eliza",
       "status": "approved",
