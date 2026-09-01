@@ -456,6 +456,13 @@ img{max-width:100%;display:block}
 .askai{margin-top:12px;border:2px solid var(--edge);border-radius:var(--r);background:var(--sunk);padding:12px 14px}
 .askai[hidden]{display:none}
 .askai__lab{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.askai p+p{margin-top:9px}
+/* said under the answer, because the whole point is that it changed nothing */
+.askai__foot{margin-top:10px;font-size:12.5px;color:var(--muted);font-style:italic}
+/* inside the Look it up card it is one more thing in the same box, so it drops
+   its own border for a rule, and is capped: a sticky card taller than the
+   window has a bottom nobody can reach. */
+.askai--aside{margin-top:4px;border:0;border-top:2px solid var(--hairline);border-radius:0;background:none;padding:12px 0 0;max-height:min(46vh,420px);overflow-y:auto;font-size:14px}
 .askai__age{font-family:var(--f-display);font-weight:800;font-size:19px;margin-top:3px}
 .askai__note{font-size:13.5px;color:var(--muted);margin-top:5px}
 .authrow__web:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
@@ -680,6 +687,8 @@ img{max-width:100%;display:block}
   .suggestform::before{display:none}
   .suggestform > .lookaside__track{position:static;width:auto}
   .lookaside{position:static;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px}
+  /* the links sit in a row here, so the answer takes its own full line */
+  .askai--aside{flex-basis:100%;max-height:none}
   .lookaside .btn{width:auto}
   .lookaside__cap{width:100%;margin-bottom:0}
 }
@@ -1123,7 +1132,10 @@ img{max-width:100%;display:block}
               <p class="lookaside__cap">Look it up</p>
               <a class="btn btn--sm btn--ghost" id="sGoodreads" href="https://www.goodreads.com" target="_blank" rel="noopener noreferrer">Open on Goodreads</a>
               <a class="btn btn--sm btn--ghost" id="sGoogle" href="https://www.google.com" target="_blank" rel="noopener noreferrer">Google it</a>
-              <a class="btn btn--sm btn--ghost" id="sFable" href="https://fable.co" target="_blank" rel="noopener noreferrer">Check on Fable</a>
+              <!-- Ask AI's answer, under the links and inside the same sticky
+                   card so the two travel together. As a sibling of the card it
+                   was painted over by it the moment the page scrolled. -->
+              <div class="askai askai--aside" id="sAgeAIOut" hidden></div>
             </aside>
           </div>
           <div class="field"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span>
@@ -1137,7 +1149,7 @@ img{max-width:100%;display:block}
             <div id="sRatings"></div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">
               <button class="btn btn--sm btn--ghost" type="button" id="sRatingAdd">+ Add rating</button>
-              <span class="hint" id="sRatingNote">Read them off Goodreads or Fable and type them in &mdash; the Look it up links open both.</span>
+              <span class="hint" id="sRatingNote">Read them off Goodreads and type them in &mdash; the Look it up links are right there.</span>
             </div></div>
           <div class="field"><label>Cover</label><div id="sCoverPick"></div></div>
           <div class="field"><label>Summary</label>
@@ -1578,7 +1590,7 @@ function migrate(s){
     if(!Array.isArray(r.endorsements)) r.endorsements = [];
     if(!Array.isArray(r.dislikes)) r.dislikes = [];
     /* What readers elsewhere gave it. Several, because a book has a Goodreads
-       score and a Fable score and they disagree — worth seeing both rather
+       score and a StoryGraph score and they disagree — worth seeing both rather
        than picking one. The old single pair folds in, so nothing already
        saved is lost. */
     r.ratings = cleanRatings(r.ratings);
@@ -1861,7 +1873,7 @@ function setSessionToken(v){
    and return; they write nothing to the repo and email nobody. Everything else
    — submissions, sign-in, claiming a name, photos, subscriptions — either
    writes to the real repo or reaches real members, and stays blocked. */
-var DEV_SAFE = ["ping", "details", "summarise", "images"];
+var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
 
 async function callEndpoint(kind, payload, urlOverride){
   if(DEV && DEV_SAFE.indexOf(kind) === -1) return { ok: false, error: "dev-blocked" };
@@ -4186,9 +4198,9 @@ function recLive(r){
   };
   return { title: f("title") || r.title || "", author: f("author") || r.author || "" };
 }
-/* A second opinion on the age, shown and nothing more. ageFromAI on the
-   submission form moves the slider; this deliberately does not \u2014 it is
-   here to be read while deciding, not to decide. */
+/* A second opinion on the age, shown and nothing more \u2014 the same bargain
+   Ask AI on the submission form now makes. Neither moves the slider: the
+   handles belong to whoever is deciding. */
 async function recAgeAI(r){
   var out = document.querySelector('[data-rageout="' + r.id + '"]');
   if(!out) return;
@@ -4259,7 +4271,7 @@ function recEditor(r, opts){
       '<div class="field"><label>Recommended by</label><input class="input" type="text" value="' + esc(r.by || "") + '" data-rfield="by" data-rid="' + esc(r.id) + '" maxlength="60"></div>' +
     "</div>" +
     '<div class="field" style="margin-top:14px"><label>Readers&rsquo; ratings <span style="text-transform:none;letter-spacing:0">(one per line, as &ldquo;4.35 Goodreads&rdquo;)</span></label>' +
-      '<textarea class="textarea" data-rfield="ratings" data-rid="' + esc(r.id) + '" placeholder="4.35 Goodreads&#10;4.1 Fable" style="min-height:70px">' +
+      '<textarea class="textarea" data-rfield="ratings" data-rid="' + esc(r.id) + '" placeholder="4.35 Goodreads&#10;4.1 StoryGraph" style="min-height:70px">' +
       esc((r.ratings || []).map(function(rt){ return rt.score + (rt.source ? " " + rt.source : ""); }).join("\n")) + "</textarea></div>" +
     '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
       '<input class="input" type="text" value="' + esc((r.genres || []).join(", ")) + '" data-rfield="genres" data-rid="' + esc(r.id) + '" maxlength="300"></div>' +
@@ -5775,7 +5787,7 @@ function renderSugCover(){
       function(url){ fillTheirs("cover"); sugCover = url; renderSugCover(); });
 }
 /* ---- ratings: as many as the book has ----
-   A book has a Goodreads score and a Fable score and they disagree. Making
+   A book has a Goodreads score and a StoryGraph score and they disagree. Making
    the form hold one meant choosing which to believe on the submitter's
    behalf. */
 var sugRatings = [{ score: "", source: "" }];
@@ -5789,7 +5801,7 @@ function renderRatingRows(){
     return '<div class="ratingrow">' +
       '<input class="input mono" type="number" min="0" max="5" step="0.01" inputmode="decimal" ' +
         'placeholder="4.1" value="' + esc(r.score) + '" data-rscore="' + i + '" aria-label="Rating out of 5">' +
-      '<input class="input input--src" type="text" maxlength="40" placeholder="Goodreads, Fable, StoryGraph\u2026" ' +
+      '<input class="input input--src" type="text" maxlength="40" placeholder="Goodreads, StoryGraph\u2026" ' +
         'value="' + esc(r.source) + '" data-rsrc="' + i + '" aria-label="Where the rating came from">' +
       (sugRatings.length > 1
         ? '<button class="ratingrow__del" type="button" data-rdrop="' + i + '" ' +
@@ -5830,25 +5842,7 @@ function offerRating(score, source){
   return true;
 }
 
-/* ---- Fable ----
-   Fable's pages can't be read from here: the browser blocks a cross-site read,
-   and fetching their HTML to pull numbers out of it is against the terms most
-   sites publish. So this is a link, and the rating rows above are where what
-   you find there goes. */
-function slugify(t){
-  return String(t || "").toLowerCase()
-    .replace(/[\u2018\u2019']/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
 var sugIsbn = "";
-function fableUrl(title, author, isbn){
-  if(isbn && title){
-    return "https://fable.co/book/" + slugify(title) + "-by-" + slugify(author) + "-" + isbn;
-  }
-  return "https://fable.co/search?q=" + encodeURIComponent([title, author].filter(Boolean).join(" "));
-}
-
 function initSuggestForm(){
   $("sAgeSlider").innerHTML = dualRangeHTML("sAge", 12, AGE_TOP, function(){ fillTheirs("age"); ageMiss(false); });
   renderSugCover();
@@ -5873,7 +5867,6 @@ function syncSearchLinks(){
   var t = $("sTitle").value.trim(), a = $("sAuthor").value.trim();
   $("sGoodreads").href = goodreadsSearch(t, a);
   $("sGoogle").href = googleSearch(t, a);
-  if($("sFable")) $("sFable").href = fableUrl(t, a, sugIsbn);
 }
 /* the explicit "search the web" pass: correct the title, offer the authors it
    found, and fill in everything it can */
@@ -5918,20 +5911,6 @@ function setAgeSlider(lo, hi){
    either. Keeping them apart means you choose which you are getting, and the
    note always says which answered: "Ages 13+" from a publisher and from a
    model are not the same claim. */
-function ageStart(){
-  var title = $("sTitle").value.trim();
-  var note = $("sAgeNote");
-  if(!title){ $("sTitle").focus(); return null; }
-  note.hidden = false;
-  note.textContent = "Checking\u2026";
-  return { title: title, author: $("sAuthor").value.trim(), note: note };
-}
-function ageApply(lo, hi, said){
-  setAgeSlider(lo, hi);
-  fillTheirs("age");   /* they pressed the button, so the lookup leaves it be */
-  ageMiss(false);
-  $("sAgeNote").textContent = "Set to " + levelText({ ageMin: lo, ageMax: hi }) + ". " + said;
-}
 /* Shown only when a lookup has been run and came back with no age at all —
    never before anyone has asked, and gone the moment a level arrives, from a
    source or from the reader's own hand. The slider goes back to its full
@@ -5944,52 +5923,59 @@ function ageMiss(missing){
 }
 
 /* What the book databases shelve it under. */
-async function ageFromWeb(){
-  var c = ageStart(); if(!c) return;
+/* Check online, and Ask AI, both changed from setting the handles to giving
+   something to read. The handles are the reader's; these two are the sources
+   they weigh before moving them. "Look up book" still fills the slider from
+   how the catalogues shelve it \u2014 that one is a lookup, and it is asked for.
 
-  var genres = normaliseGenres($("sGenres").value);
-  var mature = false;
-  var hits = await searchBooks([c.title, c.author].filter(Boolean).join(" "));
-  if(hits.length){
-    hits.forEach(function(h){ h.near = titleCloseness(c.title, h.title); });
-    hits.sort(function(a, b){ return a.near - b.near; });
-    genres = genres.concat(hits[0].genres || []);
-    mature = !!hits[0].mature;
-  }
-  var extras = await openLibraryExtras(c.title, c.author);
-  if(extras) genres = genres.concat(extras.genres || []);
-
-  var band = ageFromShelving(genres, mature);
-  if(band){
-    ageApply(band.lo, band.hi, "That\u2019s how shops and libraries shelve it. Drag the handles if you disagree.");
-    return;
-  }
-  c.note.textContent = hits.length || extras
-    ? "Found the book, but nothing says what age it\u2019s for \u2014 try \u201cAsk AI\u201d, or set it yourself."
-    : "Couldn\u2019t find that one online \u2014 try \u201cAsk AI\u201d, or set it yourself.";
+   Check online is the Admin editor's Age rating tool: the same search, in a
+   new tab, so the answer is the whole open web rather than whatever a shelving
+   category happens to imply. */
+function ageOnline(){
+  var title = $("sTitle").value.trim();
+  if(!title){ $("sTitle").focus(); say("Give it a title first.", "bad"); return; }
+  var author = $("sAuthor").value.trim();
+  window.open("https://www.google.com/search?q=" +
+    encodeURIComponent([title, author, "age rating reading level"].filter(Boolean).join(" ")),
+    "_blank", "noopener");
 }
 
-/* What Claude makes of the book, asked through the club's endpoint. */
-async function ageFromAI(){
-  var c = ageStart(); if(!c) return;
+/* Ask AI answers in sentences now, under the Look it up links, and writes
+   nothing into Reading level. Its old shape put a number on the slider, which
+   read as the answer rather than as one opinion about it. */
+async function ageAskAI(){
+  var out = $("sAgeAIOut");
+  var title = $("sTitle").value.trim();
+  if(!title){ $("sTitle").focus(); say("Give it a title first.", "bad"); return; }
+  var author = $("sAuthor").value.trim();
+  var btn = $("sAgeAI");
 
-  if(!endpoint()){
-    c.note.textContent = "Asking the AI isn\u2019t switched on \u2014 use \u201cCheck online\u201d, or set the level yourself.";
-    return;
+  out.hidden = false;
+  out.innerHTML = '<p class="askai__lab">Asking\u2026</p>';
+  if(btn){ btn.disabled = true; btn.textContent = "Asking\u2026"; }
+  try{
+    if(!endpoint()){
+      out.innerHTML = '<p class="askai__lab">Ask AI</p><p>Asking the AI isn\u2019t switched on yet.</p>';
+      return;
+    }
+    var j = await callEndpoint("agenote", { title: title, author: author });
+    if(j && j.ok && j.note){
+      out.innerHTML = '<p class="askai__lab">Ask AI &middot; for reference</p>' +
+        String(j.note).split(/\n{2,}/).map(function(par){
+          return "<p>" + esc(par.replace(/\s*\n\s*/g, " ").trim()) + "</p>";
+        }).join("") +
+        '<p class="askai__foot">Reading level is yours to set \u2014 this changes nothing.</p>';
+      return;
+    }
+    out.innerHTML = '<p class="askai__lab">Ask AI</p><p>' +
+      esc(j && j.error === "no api key"
+        ? "Asking the AI isn\u2019t switched on \u2014 try Check online instead."
+        : j && j.error === "unknown kind"
+        ? "The club\u2019s script is an older copy that can\u2019t answer this yet."
+        : "Couldn\u2019t get an answer just now \u2014 try Check online instead.") + "</p>";
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = "Ask AI"; }
   }
-  var j = await callEndpoint("details", { title: c.title, author: c.author });
-  if(j && j.ok && j.details &&
-     typeof j.details.ageMin === "number" && typeof j.details.ageMax === "number" &&
-     j.details.ageMax > 0 && j.details.ageMax >= j.details.ageMin){
-    ageApply(j.details.ageMin, j.details.ageMax,
-      j.details.confident === false
-        ? "That\u2019s Claude\u2019s reading, and it wasn\u2019t certain \u2014 do check."
-        : "That\u2019s Claude\u2019s reading of it \u2014 worth a check.");
-    return;
-  }
-  c.note.textContent = j && j.error === "no api key"
-    ? "Asking the AI isn\u2019t switched on \u2014 use \u201cCheck online\u201d, or set the level yourself."
-    : "The AI couldn\u2019t put an age on this one \u2014 try \u201cCheck online\u201d, or set it yourself.";
 }
 
 /* "Fill in the details for me".
@@ -6114,7 +6100,7 @@ async function lookupTheDetails(title, author, out){
 
   if(!best && !extras){
     ageMiss(canFill("age"));
-    out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t find that one. Check the spelling, or fill it in yourself &mdash; the Goodreads, Google and Fable links are right there.</p>';
+    out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn&rsquo;t find that one. Check the spelling, or fill it in yourself &mdash; the Goodreads and Google links are right there.</p>';
     return;
   }
 
@@ -6253,8 +6239,8 @@ document.addEventListener("click", async function(e){
     }
     return;
   }
-  if(e.target.closest && e.target.closest("#sAgeCheck")){ await ageFromWeb(); return; }
-  if(e.target.closest && e.target.closest("#sAgeAI")){ await ageFromAI(); return; }
+  if(e.target.closest && e.target.closest("#sAgeCheck")){ ageOnline(); return; }
+  if(e.target.closest && e.target.closest("#sAgeAI")){ await ageAskAI(); return; }
   /* a name on its own: take the name, show Confirm, change nothing else.
      The other names stay up, so a wrong pick costs one more click. */
   var ap = e.target.closest && e.target.closest("[data-authpick]");

@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-08-28b';
+var SCRIPT_VERSION = '2026-09-01a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -94,6 +94,9 @@ function doPost(e) {
 
   /* Cover search against Google Images. */
   if (kind === 'images') return json({ ok: true, images: imageSearch(body.payload || {}) });
+
+  /* "Ask AI" beside Reading level. Prose to weigh, not a number to apply. */
+  if (kind === 'agenote') return json(ageNote(body.payload || {}));
 
   if (KINDS.indexOf(kind) === -1) return json({ ok: false, error: 'unknown kind' });
 
@@ -1018,6 +1021,60 @@ function summarise(payload) {
     .trim();
 
   return text ? { ok: true, summary: text } : { ok: false, error: 'empty' };
+}
+
+/* ------------------------------------------------- what age is this for (AI)
+   The sibling of summarise: a question asked plainly and an answer given
+   plainly. bookDetails already returns an ageMin/ageMax pair, but a pair is a
+   thing to apply, and this is deliberately a thing to read \u2014 the reader
+   weighs it and moves the handles themselves, or does not.
+
+   Nothing about the slider's current position goes into the prompt. Telling it
+   where the handles sit would invite it to agree with them, and an opinion
+   that agrees with the guess it was shown is not worth asking for. */
+function ageNote(payload) {
+  var key = propKey('ANTHROPIC_API_KEY', 'sk-ant-');
+  if (!key) return { ok: false, error: 'no api key' };
+
+  var title = String(payload.title || '').slice(0, 200);
+  var author = String(payload.author || '').slice(0, 200);
+  if (!title) return { ok: false, error: 'no title' };
+
+  var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    muteHttpExceptions: true,
+    payload: JSON.stringify({
+      model: 'claude-opus-5',
+      max_tokens: 800,
+      output_config: { effort: 'low' },
+      system: 'You advise a family book club on what age a book suits. Answer in two or ' +
+              'three plain sentences: the age or school-year range you would put on it, and ' +
+              'what in the book decides that \u2014 reading difficulty, and any content a ' +
+              'parent would want to know about. No headings, no bullet points, no star ' +
+              'ratings. If you do not know the book, say so in one sentence rather than ' +
+              'guessing.',
+      messages: [{
+        role: 'user',
+        content: 'What age rating or reading level would you suggest for "' + title + '"' +
+                 (author ? ' by ' + author : '') + '?'
+      }]
+    })
+  });
+
+  if (res.getResponseCode() >= 300) return { ok: false, error: 'api ' + res.getResponseCode() };
+
+  var body = JSON.parse(res.getContentText());
+  if (body.stop_reason === 'refusal') return { ok: false, error: 'refused' };
+
+  var text = (body.content || [])
+    .filter(function (b) { return b.type === 'text'; })
+    .map(function (b) { return b.text; })
+    .join('\n')
+    .trim();
+
+  return text ? { ok: true, note: text } : { ok: false, error: 'empty' };
 }
 
 /* ------------------------------------------------------- book details (AI)
