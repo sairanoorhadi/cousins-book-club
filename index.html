@@ -448,6 +448,16 @@ img{max-width:100%;display:block}
 .authrow__pick small{display:block;font-family:var(--f-mono);font-weight:400;font-size:10.5px;color:var(--muted);margin-top:1px}
 .authrow__pick[aria-pressed="true"] small{color:var(--on-surf);opacity:.85}
 .authrow__web{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--muted);text-decoration:none}
+/* the checking tools above the cover in the recommendation editor */
+.rectools{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.rectools__globe{display:inline-flex;align-items:center;gap:7px}
+.rectools__glyph{font-size:15px;line-height:1}
+/* what the AI made of the age \u2014 shown beside the decision, never written into it */
+.askai{margin-top:12px;border:2px solid var(--edge);border-radius:var(--r);background:var(--sunk);padding:12px 14px}
+.askai[hidden]{display:none}
+.askai__lab{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.askai__age{font-family:var(--f-display);font-weight:800;font-size:19px;margin-top:3px}
+.askai__note{font-size:13.5px;color:var(--muted);margin-top:5px}
 .authrow__web:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
 /* Only on the card that has been picked, and standing outside the card
    entirely: Confirm sits in the Look up book column, under that button, level
@@ -4164,6 +4174,46 @@ function paneShelf(){
   return out;
 }
 
+/* The title and author as they stand in the boxes right now, falling back to
+   the stored record for anything not on screen. Every checking tool goes
+   through here so they all search for the same thing. */
+function recLive(r){
+  var p = $("adminPane");
+  var f = function(name){
+    var n = p && p.querySelector('[data-rfield="' + name + '"][data-rid="' + r.id + '"]');
+    return n ? n.value.trim() : "";
+  };
+  return { title: f("title") || r.title || "", author: f("author") || r.author || "" };
+}
+/* A second opinion on the age, shown and nothing more. ageFromAI on the
+   submission form moves the slider; this deliberately does not \u2014 it is
+   here to be read while deciding, not to decide. */
+async function recAgeAI(r){
+  var out = document.querySelector('[data-rageout="' + r.id + '"]');
+  if(!out) return;
+  var q = recLive(r);
+  out.hidden = false;
+  if(!q.title){ out.innerHTML = '<p class="askai__note">Give it a title first.</p>'; return; }
+  if(!endpoint()){
+    out.innerHTML = '<p class="askai__note">Asking the AI isn\u2019t switched on \u2014 try the other three.</p>';
+    return;
+  }
+  out.innerHTML = '<p class="askai__note">Asking\u2026</p>';
+  var j = await callEndpoint("details", { title: q.title, author: q.author });
+  var d = j && j.ok && j.details;
+  if(d && typeof d.ageMin === "number" && typeof d.ageMax === "number" && d.ageMax > 0 && d.ageMax >= d.ageMin){
+    out.innerHTML = '<p class="askai__lab">The AI\u2019s reading</p>' +
+      '<p class="askai__age">' + esc(levelText({ ageMin: d.ageMin, ageMax: d.ageMax })) + "</p>" +
+      '<p class="askai__note">' +
+        (d.confident === false ? "It wasn\u2019t certain about this one." : "For reference while you decide.") +
+        " Reading level above is untouched \u2014 set it yourself if you agree.</p>";
+    return;
+  }
+  out.innerHTML = '<p class="askai__note">' +
+    (j && j.error === "no api key"
+      ? "Asking the AI isn\u2019t switched on \u2014 try the other three."
+      : "The AI couldn\u2019t put an age on this one \u2014 try the other three.") + "</p>";
+}
 function recEditor(r){
   return '<details class="editor"' + (openEditors[r.id] ? " open" : "") + '>' +
     '<summary data-editfor="' + esc(r.id) + '">Edit details &amp; cover</summary>' +
@@ -4185,6 +4235,21 @@ function recEditor(r){
       '<textarea class="textarea" data-rfield="reviews" data-rid="' + esc(r.id) + '" placeholder="Could not put it down — A reader">' +
       esc((r.reviews || []).map(function(rv){ return rv.text + (rv.by ? " — " + rv.by : ""); }).join("\n")) + "</textarea>" +
       '<p class="hint">Up to three show on the book&rsquo;s page.</p></div>' +
+    /* Checking tools, above the cover because that is where the reviewing
+       happens: read the record, look it up, then decide. Each one reads the
+       title and author boxes as they stand right now rather than as they were
+       when this was drawn \u2014 a typo is usually fixed before it is searched
+       for, and searching for the unfixed version would be useless. */
+    '<div class="rectools" style="margin-top:18px">' +
+      '<button class="btn btn--sm btn--ghost" type="button" data-rtool="google" data-rid="' + esc(r.id) + '">Google It</button>' +
+      '<button class="btn btn--sm btn--ghost" type="button" data-rtool="goodreads" data-rid="' + esc(r.id) + '">Check on Goodreads</button>' +
+      '<button class="btn btn--sm btn--ghost rectools__globe" type="button" data-rtool="age" data-rid="' + esc(r.id) + '">' +
+        '<span class="rectools__glyph" aria-hidden="true">&#127760;</span>Age rating</button>' +
+      '<button class="btn btn--sm btn--grape" type="button" data-rageai="' + esc(r.id) + '">Ask AI</button>' +
+    "</div>" +
+    /* Reference only. It deliberately writes nothing into Reading level \u2014
+       the point is a second opinion to weigh, not another hand on the slider. */
+    '<div class="askai" data-rageout="' + esc(r.id) + '" hidden></div>' +
     '<div class="formgrid" style="margin-top:18px">' + imgField("Book cover", "rcover", r.id, r.cover, false) + "</div>" +
     '<div style="margin-top:12px">' + coverSearchHTML("rc:" + r.id, function(){
       var p = $("adminPane");
@@ -4204,6 +4269,13 @@ function recEditor(r){
     }).join("") +
     '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center">' +
       '<button class="btn btn--sm btn--zest" type="button" data-rsave="' + esc(r.id) + '">Save changes</button>' +
+      /* Only while it is still waiting on a decision. Approving something
+         already approved means nothing, and taking a live one down is what
+         Unpublish above already does. */
+      (r.status === "pending"
+        ? '<button class="btn btn--sm btn--surf" type="button" data-approve="' + esc(r.id) + '">Approve</button>' +
+          '<button class="btn btn--sm btn--flare" type="button" data-reject="' + esc(r.id) + '">Deny</button>'
+        : "") +
       '<button class="btn btn--sm ' + (r.shortlist ? "btn--flare" : "btn--ghost") + '" type="button" data-rshort="' + esc(r.id) + '">' +
         (r.shortlist ? "On the shortlist" : "Add to shortlist") + "</button>" +
       '<button class="btn btn--sm btn--ghost" type="button" data-rdel="' + esc(r.id) + '" style="margin-left:auto">Delete permanently</button>' +
@@ -4242,8 +4314,13 @@ function paneRecs(){
           genres: p.genres, blurb: p.blurb, by: p.by, at: it.at
         }), 'data-inapprove="' + esc(it.id) + '"', 'data-inreject="' + esc(it.id) + '"');
       }).join("") +
+      /* A waiting submission gets the same editor a live one has, so it can
+         be looked up, corrected and decided on in one place rather than
+         approved blind and tidied up afterwards while it is already public. */
       pend.map(function(r){
-        return pendingCard(r, 'data-approve="' + esc(r.id) + '"', 'data-reject="' + esc(r.id) + '"');
+        return '<div class="adminrow">' +
+          pendingCard(r, 'data-approve="' + esc(r.id) + '"', 'data-reject="' + esc(r.id) + '"') +
+          recEditor(r) + "</div>";
       }).join("")
     : '<p class="empty">When someone submits a book it lands here. Nothing reaches the public list until you approve it.</p>';
 
@@ -4892,6 +4969,23 @@ document.addEventListener("click", async function(e){
   if((el = t.closest("[data-editfor]"))){ var eid = el.getAttribute("data-editfor"); openEditors[eid] = !openEditors[eid]; return; }
 
   /* recommendations admin */
+  if((el = t.closest("[data-rtool]"))){
+    var rt = recById(el.getAttribute("data-rid")); if(!rt) return;
+    var q = recLive(rt);
+    if(!q.title){ say("Give it a title first.", "bad"); return; }
+    var kind = el.getAttribute("data-rtool");
+    var url = kind === "goodreads" ? goodreadsSearch(q.title, q.author)
+      : kind === "age" ? "https://www.google.com/search?q=" +
+          encodeURIComponent([q.title, q.author, "age rating"].filter(Boolean).join(" "))
+      : googleSearch(q.title, q.author);
+    window.open(url, "_blank", "noopener");
+    return;
+  }
+  if((el = t.closest("[data-rageai]"))){
+    var ra = recById(el.getAttribute("data-rageai")); if(!ra) return;
+    await recAgeAI(ra);
+    return;
+  }
   if((el = t.closest("[data-approve]"))){
     var ar = recById(el.getAttribute("data-approve")); if(!ar) return;
     ar.status = "approved";
