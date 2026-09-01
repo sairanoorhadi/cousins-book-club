@@ -891,13 +891,13 @@
       "title": "The Cruel Prince",
       "author": "Holly Black",
       "pages": 370,
-      "ageMin": 13,
+      "ageMin": 12,
       "ageMax": 100,
       "genres": [
-        "Fairies Fiction.",
-        "Sisters Fiction.",
-        "Orphans Fiction.",
-        "Princes Fiction.",
+        "Fairies--Fiction.",
+        "Sisters--Fiction.",
+        "Orphans--Fiction.",
+        "Princes--Fiction.",
         "Fantasy",
         "Princes",
         "Courts and courtiers",
@@ -914,13 +914,8 @@
       "reviews": [],
       "endorsements": [],
       "dislikes": [],
-      "ratings": [
-        {
-          "score": 4,
-          "source": "Goodreads"
-        }
-      ],
-      "level": "Ages 13+"
+      "ratings": [],
+      "level": "Ages 12+"
     }
   ],
   "inbox": [
