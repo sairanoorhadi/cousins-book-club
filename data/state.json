@@ -1,5 +1,5 @@
 {
-  "rev": 1250,
+  "rev": 1251,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -891,7 +891,7 @@
       "title": "The Cruel Prince",
       "author": "Holly Black",
       "pages": 370,
-      "ageMin": 12,
+      "ageMin": 14,
       "ageMax": 100,
       "genres": [
         "Fairies--Fiction.",
@@ -914,8 +914,13 @@
       "reviews": [],
       "endorsements": [],
       "dislikes": [],
-      "ratings": [],
-      "level": "Ages 12+"
+      "ratings": [
+        {
+          "score": 4,
+          "source": "Goodreads"
+        }
+      ],
+      "level": "Ages 14+"
     }
   ],
   "inbox": [
