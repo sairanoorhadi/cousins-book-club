@@ -1,5 +1,5 @@
 {
-  "rev": 1252,
+  "rev": 1253,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -917,6 +917,35 @@
         }
       ],
       "level": "Ages 14+"
+    },
+    {
+      "id": "suggest-a68f18ee-188",
+      "title": "The Namesake",
+      "author": "Jhumpa Lahiri",
+      "pages": 300,
+      "ageMin": 14,
+      "ageMax": 100,
+      "genres": [
+        "Coming-of-age story",
+        "Domestic Fiction"
+      ],
+      "by": "Saira",
+      "status": "approved",
+      "at": "2026-08-29",
+      "cover": "https://m.media-amazon.com/images/I/71l7PUSR4kL._AC_UF1000,1000_QL80_.jpg",
+      "blurb": "Ashoke and Ashima Ganguli leave Calcutta for a university town outside Boston, where they raise two children in a country whose customs never quite become their own. Their son carries the name Gogol, chosen under hospital pressure and tied to something in his father's past, and he spends much of his life resenting it. The novel follows the family across decades, moving between the parents' careful preservation of what they left behind and the children's easy, sometimes careless American lives. Lahiri writes in a quiet register, attentive to meals, houses, and the small negotiations that make up a marriage.",
+      "summarySource": "ai",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [
+        {
+          "score": 4,
+          "source": "Goodreads"
+        }
+      ],
+      "level": "Ages 14+"
     }
   ],
   "inbox": [
@@ -980,6 +1009,7 @@
     "endorse-939d572d-23a",
     "endorse-939d572d-23a",
     "endorse-a0fcd14d-aa4",
-    "suggest-2603dba6-457"
+    "suggest-2603dba6-457",
+    "suggest-a68f18ee-188"
   ]
 }
