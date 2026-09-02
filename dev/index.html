@@ -5661,21 +5661,85 @@ function takeCandidate(a){
    has named someone and wants to know what they wrote.
 
    It runs the same way round as the title-first flow, with the two questions
-   swapped. The name is settled first \u2014 corrected if the catalogue spells it
-   differently \u2014 and then the books under it are offered as cards, one of
-   which is picked and then confirmed. Nothing is filled in before that
-   Confirm, a lone book included: one card is still a card.
+   swapped. The name is settled first, and then the books under it are offered
+   as cards, one of which is picked and then confirmed. Both questions are
+   asked the same way \u2014 pick, then Confirm \u2014 and neither is waved through for
+   having only one answer. Nothing is filled in before the second Confirm.
 
    The two flows draw into boxes of their own, each under the field it is
    asking about: author cards under Author, book cards under Book Title, since
-   picking a book is what fills the title in. Only the name correction in this
-   flow shares #sAuthorPick with the author cards, and pickMode keeps those
-   two from painting over each other. */
+   picking a book is what fills the title in. This flow\u2019s name band shares
+   #sAuthorPick with the author cards, and pickMode keeps those two from
+   painting over each other. */
 var pickMode = "";              /* "", "author" or "book" */
 var bookHits = [];
 var bookPicked = -1;
 var bookSettled = false;
-var authorNameFixes = [];
+
+/* ---- the name, asked properly ----
+   The name used to be offered only when the catalogue spelt it differently,
+   and one it recognised went straight through to the books. That made the
+   commonest case the one case nobody was asked about — the same shortcut the
+   cards themselves gave up long ago. It is asked every time now, and picking
+   a name is not the same as settling on it: the Confirm beside it is what
+   settles it, one candidate or five.
+
+   nameSettled holds the name that was confirmed, so re-entering the lookup
+   under that name goes straight to the books while any other name reopens
+   the question. */
+var namePicks = [];
+var namePicked = -1;
+var nameTypo = false;           /* the catalogue spells it otherwise */
+var nameSettled = "";           /* "" while the question still stands */
+
+function sameName(a, b){
+  return String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+}
+
+/* What to offer under the typed name: the names on record that contain it,
+   or failing that the near spellings, or failing both the names the search
+   came back with. While there are hits at all there is something to confirm,
+   so the question is never skipped for want of a candidate. */
+function nameCandidates(names, typed){
+  var low = String(typed || "").trim().toLowerCase();
+  var held = names.filter(function(n){ return n.toLowerCase().indexOf(low) !== -1; });
+  if(held.length) return { list: held.slice(0, 3), typo: false };
+  var near = names.filter(function(n){ return titleCloseness(typed, n) < 2; });
+  if(near.length) return { list: near.slice(0, 3), typo: true };
+  return { list: names.slice(0, 3), typo: true };
+}
+
+/* Answered questions come off the page. The band lived in the column the book
+   cards’ Confirm reaches into, so leaving it up did not merely look untidy —
+   it sat under that button. */
+function clearNamePick(){
+  namePicks = []; namePicked = -1;
+  var host = $("sAuthorPick");
+  if(host){ host.hidden = true; host.innerHTML = ""; }
+}
+
+function renderNamePick(){
+  var host = $("sAuthorPick");
+  if(!host) return;
+  if(!namePicks.length){ host.hidden = true; host.innerHTML = ""; return; }
+  host.hidden = false;
+  host.innerHTML = '<span class="authpick__lab">' +
+      (nameTypo ? "Did you mean\u2026"
+        : namePicks.length > 1
+          ? "Which author? Pick one, then confirm to see their books"
+          : "Found this author \u2014 pick it, then confirm to see their books") + "</span>" +
+    namePicks.map(function(n, i){
+      var on = i === namePicked;
+      return '<span class="authrow">' +
+        '<button class="authrow__pick" type="button" data-namepick="' + i + '" aria-pressed="' + on + '">' +
+          esc(n) + "</button>" +
+        '<a class="authrow__web" href="' + esc(googleSearch(n, "")) + '" target="_blank" ' +
+          'rel="noopener noreferrer" aria-label="Search the web for ' + esc(n) + '">&#127760;</a>' +
+        '<button class="btn btn--sm btn--surf authrow__ok" type="button" data-nameok="' + i + '"' + (on ? "" : " hidden") +
+          ' aria-label="Confirm ' + esc(n) + ' and see their books">Confirm</button>' +
+      "</span>";
+    }).join("");
+}
 
 /* Distinct titles under one name. Deduped on the title itself, since a work
    with several editions comes back several times and they are all the same
@@ -5801,7 +5865,7 @@ async function checkAuthorSpelling(){
      one press of "Fill in the details" switched the spell-check off for the
      rest of the session, including when the picker had decided it had
      nothing worth showing. */
-  var showing = host && !host.hidden && host.querySelector("[data-authpick]");
+  var showing = host && !host.hidden && host.querySelector("[data-authpick],[data-namepick]");
   if(!title || !typed || showing){ return; }
   var hits = (await lookupBook(title)).hits;
   var names = [];
@@ -6103,7 +6167,7 @@ async function lookupFromAuthor(author, out){
   if(!hits.length) hits = await searchBooks(author);
 
   if(!hits.length){
-    $("sAuthorPick").hidden = true; $("sAuthorPick").innerHTML = "";
+    clearNamePick();
     bookHits = []; bookPicked = -1; renderBookPick();
     out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn\u2019t find an author by that name. ' +
       'Check the spelling, or put a title in as well.</p>';
@@ -6112,20 +6176,20 @@ async function lookupFromAuthor(author, out){
 
   var names = [];
   hits.forEach(function(h){ if(h.author && names.indexOf(h.author) === -1) names.push(h.author); });
-  var low = author.toLowerCase();
-  var onRecord = names.some(function(n){ return n.toLowerCase().indexOf(low) !== -1; });
-  if(!onRecord){
-    authorNameFixes = names.filter(function(n){ return titleCloseness(author, n) < 2; }).slice(0, 3);
-    if(authorNameFixes.length){
-      fixBand($("sAuthorPick"), "Did you mean\u2026", authorNameFixes.map(function(n){
-        return { text: n, href: googleSearch(n, "") };
-      }), "data-authorname");
-      out.innerHTML = '<p class="hint" style="margin-top:10px">Pick the name to search under ' +
-        '\u2014 nothing has been filled in.</p>';
-      return;
-    }
+
+  /* The name first, every time. Only the name Confirm was pressed on gets
+     past this — type a different one and it is asked again. */
+  if(!sameName(nameSettled, author)){
+    var cand = nameCandidates(names, author);
+    namePicks = cand.list; nameTypo = cand.typo; namePicked = -1;
+    renderNamePick();
+    bookHits = []; bookPicked = -1; renderBookPick();
+    out.innerHTML = '<p class="hint" style="margin-top:10px">Pick the author and press ' +
+      '<strong>Confirm</strong> to see their books \u2014 nothing has been filled in.</p>';
+    return;
   }
 
+  clearNamePick();     /* answered, so it comes off the page before the books */
   bookHits = bookCandidates(hits, author);
   bookPicked = -1;
   renderBookPick();
@@ -6373,13 +6437,32 @@ document.addEventListener("click", async function(e){
   }
   if(e.target.closest && e.target.closest("#sAgeCheck")){ ageOnline(); return; }
   if(e.target.closest && e.target.closest("#sAgeAI")){ await ageAskAI(); return; }
-  /* the spelling of the name, settled before anything is searched under it */
-  var an = e.target.closest && e.target.closest("[data-authorname]");
-  if(an){
-    var pickN = authorNameFixes[Number(an.getAttribute("data-authorname"))];
-    if(pickN){
-      $("sAuthor").value = pickN;
+  /* the name: taken here, and nothing more than taken. Selecting it puts it
+     in the box so it can be read and searched from; the books stay unasked
+     for until the Confirm beside it is pressed. */
+  var np = e.target.closest && e.target.closest("[data-namepick]");
+  if(np){
+    var whichN = Number(np.getAttribute("data-namepick"));
+    if(namePicks[whichN]){
+      namePicked = whichN;
+      $("sAuthor").value = namePicks[whichN];
       fillTheirs("author");      /* they chose it, so the lookup leaves it be */
+      renderNamePick();
+      syncSearchLinks();
+    }
+    return;
+  }
+  /* Confirm: the name is settled, the band comes down, and the books under
+     it are fetched. Clearing it here as well as in the lookup means it is
+     gone the moment it is answered rather than when the answer comes back. */
+  var nok = e.target.closest && e.target.closest("[data-nameok]");
+  if(nok){
+    var okN = namePicks[Number(nok.getAttribute("data-nameok"))];
+    if(okN){
+      $("sAuthor").value = okN;
+      fillTheirs("author");
+      nameSettled = okN;
+      clearNamePick();
       syncSearchLinks();
       await askAIForDetails();   /* now go and find what is under that name */
     }
@@ -6470,7 +6553,9 @@ $("sAuthor").addEventListener("input", function(){
      answer to anything and neither is the pick inside it */
   bookHits = []; bookPicked = -1; bookSettled = false;
   renderBookPick();
-  if(pickMode === "book"){ pickMode = ""; if($("sAuthorPick")) $("sAuthorPick").innerHTML = ""; }
+  /* and the name is a question again, so the answer to the old one goes */
+  nameSettled = "";
+  if(pickMode === "book"){ pickMode = ""; clearNamePick(); }
   syncSearchLinks();
   clearTimeout(authTimer);
   if($("sAuthorPick") && !authorHits.length){ $("sAuthorPick").hidden = true; }
