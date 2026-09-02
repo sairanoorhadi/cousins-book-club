@@ -491,6 +491,15 @@ img{max-width:100%;display:block}
    little more air than the 9px the other bands use keeps the top card, and
    the Confirm level with it, clear of the field beside them. */
 #sBookPick{margin-top:14px}
+/* The arrows sit under the cards, in the globe's column and the same shape as
+   it, so the row reads as part of the list rather than as a control bar bolted
+   under it. Back keeps its place on the first page — invisible, still there —
+   so Forward does not move between pages. */
+.bookpage{display:flex;align-items:center;gap:8px;margin-top:2px}
+.bookpage__go{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:15px;line-height:1}
+.bookpage__go:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
+.bookpage__go--off{visibility:hidden;pointer-events:none}
+.bookpage__of{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)}
 /* Measured, not guessed: below 766px the field row drops from three columns to
    two, so there is no Look up book column beside the author to sit under. The
    button rejoins the row on a line of its own rather than squeezing the name. */
@@ -2157,8 +2166,8 @@ function wildcardQuery(q){
   }).join(" ");
 }
 
-async function olSearch(q){
-  var url = "https://openlibrary.org/search.json?limit=8&fields=" + OL_FIELDS +
+async function olSearch(q, limit){
+  var url = "https://openlibrary.org/search.json?limit=" + (limit || 8) + "&fields=" + OL_FIELDS +
     "&q=" + encodeURIComponent(q);
   if(LOOKUP_DEBUG) console.log("Open Library \u2192", url);
   var res = await fetchSoon(url, { cache: "no-store" });
@@ -2169,18 +2178,21 @@ async function olSearch(q){
   return ((await res.json()).docs || []).map(olHit).filter(function(x){ return x.title; });
 }
 
-async function searchBooks(q){
+/* Eight is right for a title: the answer is one book and the rest are there to
+   correct a typo. Asking for someone's whole shelf is a different question, so
+   that caller says how many it wants. */
+async function searchBooks(q, limit){
   q = String(q || "").trim();
   if(q.length < 3) return [];
   try{
-    var hits = await olSearch(q);
+    var hits = await olSearch(q, limit);
     /* only when the plain question got no answer at all — a second request on
        failure, never on success */
     if(!hits.length){
       var loose = wildcardQuery(q);
       if(loose !== q){
         if(LOOKUP_DEBUG) console.log("nothing found; trying the looser form");
-        hits = await olSearch(loose);
+        hits = await olSearch(loose, limit);
       }
     }
     return hits;
@@ -5717,6 +5729,14 @@ var pickMode = "";              /* "", "author" or "book" */
 var bookHits = [];
 var bookPicked = -1;
 var bookSettled = false;
+/* Someone with a shelf has more than fits under the box, and six was all that
+   was ever kept — of eight that were ever asked for. The lookup asks for the
+   shelf now and the cards are paged through five at a time. One request, not
+   one per page: what pages is a list already in hand, so an arrow is instant
+   and a pick made on page four is the same pick as one made on page one. */
+var AUTHOR_SHELF = 60;          /* how many of an author's books to fetch */
+var BOOK_PAGE = 5;              /* how many cards to show at once */
+var bookPage = 0;
 
 /* ---- the name, asked properly ----
    The name used to be offered only when the catalogue spelt it differently,
@@ -5799,8 +5819,9 @@ function bookCandidates(hits, author){
     outList.push(seen[key]);
   });
   outList.sort(function(a, b){ return (a.mine - b.mine) || (b.count - a.count); });
-  return outList.slice(0, 6);
+  return outList.slice(0, AUTHOR_SHELF);
 }
+function bookPageCount(){ return Math.ceil(bookHits.length / BOOK_PAGE) || 1; }
 
 function bookPickWorth(){ return bookHits.length > 0; }
 
@@ -5809,12 +5830,20 @@ function renderBookPick(){
   if(!host) return;
   if(!bookPickWorth() || bookSettled){ host.hidden = true; host.innerHTML = ""; return; }
   var author = $("sAuthor").value.trim();
+  var pages = bookPageCount();
+  if(bookPage > pages - 1) bookPage = pages - 1;
+  if(bookPage < 0) bookPage = 0;
+  var from = bookPage * BOOK_PAGE;
+  var shown = bookHits.slice(from, from + BOOK_PAGE);
   host.hidden = false;
   host.innerHTML = '<span class="authpick__lab">' +
       (bookHits.length > 1
         ? "Which book? Pick one, then confirm to fill the rest in"
         : "Found this one \u2014 pick it, then confirm to fill the rest in") + "</span>" +
-    bookHits.map(function(bk, i){
+    shown.map(function(bk, n){
+      /* the index into the whole shelf, not into this page: a pick made on
+         page four has to still be that book when page one is drawn again */
+      var i = from + n;
       var on = i === bookPicked;
       return '<span class="authrow">' +
         '<button class="authrow__pick" type="button" data-bookpick="' + i + '" aria-pressed="' + on + '">' +
@@ -5826,7 +5855,21 @@ function renderBookPick(){
         '<button class="btn btn--sm btn--surf authrow__ok" type="button" data-bookok="' + i + '"' + (on ? "" : " hidden") +
           ' aria-label="Confirm ' + esc(bk.title) + ' and fill in the rest">Confirm</button>' +
       "</span>";
-    }).join("");
+    }).join("") +
+    /* Back keeps its place on the first page rather than being taken away, so
+       Forward does not move under the finger between pages. */
+    (pages > 1
+      ? '<span class="bookpage">' +
+          '<button class="bookpage__go' + (bookPage === 0 ? " bookpage__go--off" : "") + '" type="button" ' +
+            'data-bookpage="prev"' + (bookPage === 0 ? ' tabindex="-1" aria-hidden="true"' : "") +
+            ' aria-label="The books before these">&#8592;</button>' +
+          '<button class="bookpage__go' + (bookPage >= pages - 1 ? " bookpage__go--off" : "") + '" type="button" ' +
+            'data-bookpage="next"' + (bookPage >= pages - 1 ? ' tabindex="-1" aria-hidden="true"' : "") +
+            ' aria-label="More books by this author">&#8594;</button>' +
+          '<span class="bookpage__of">' + (from + 1) + "\u2013" + (from + shown.length) +
+            " of " + bookHits.length + "</span>" +
+        "</span>"
+      : "");
 }
 
 /* Every candidate is a choice, including a lone one. A single name used to be
@@ -6058,7 +6101,7 @@ function clearSuggestForm(){
   /* the pickers, and everything that decides what they are asking */
   pickMode = "";
   authorHits = []; authorPicked = -1; authorSettled = false;
-  bookHits = []; bookPicked = -1; bookSettled = false;
+  bookHits = []; bookPicked = -1; bookPage = 0; bookSettled = false;
   namePicks = []; namePicked = -1; nameTypo = false; nameSettled = "";
   titleFixes = []; authorFixes = [];
   clearNamePick();
@@ -6296,12 +6339,12 @@ async function lookupFromAuthor(author, out){
   hideTitleFix();      /* the title box is empty here; an old correction is stale */
   /* the fielded search first, since it answers with that person's work rather
      than every book that mentions them */
-  var hits = await searchBooks('author:"' + author + '"');
-  if(!hits.length) hits = await searchBooks(author);
+  var hits = await searchBooks('author:"' + author + '"', AUTHOR_SHELF);
+  if(!hits.length) hits = await searchBooks(author, AUTHOR_SHELF);
 
   if(!hits.length){
     clearNamePick();
-    bookHits = []; bookPicked = -1; renderBookPick();
+    bookHits = []; bookPicked = -1; bookPage = 0; renderBookPick();
     out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn\u2019t find an author by that name. ' +
       'Check the spelling, or put a title in as well.</p>';
     return;
@@ -6324,7 +6367,7 @@ async function lookupFromAuthor(author, out){
 
   clearNamePick();     /* answered, so it comes off the page before the books */
   bookHits = bookCandidates(hits, author);
-  bookPicked = -1;
+  bookPicked = -1; bookPage = 0;      /* a new author starts at their first shelf */
   renderBookPick();
   out.innerHTML = '<p class="hint" style="margin-top:10px">' +
     'Books by <strong>' + esc(author) + '</strong>. Pick one and press <strong>Confirm</strong> ' +
@@ -6602,6 +6645,14 @@ document.addEventListener("click", async function(e){
     }
     return;
   }
+  /* forward and back through the shelf. Nothing is fetched and nothing is
+     unpicked — the same list, five at a time. */
+  var bpg = e.target.closest && e.target.closest("[data-bookpage]");
+  if(bpg){
+    bookPage += bpg.getAttribute("data-bookpage") === "next" ? 1 : -1;
+    renderBookPick();
+    return;
+  }
   /* a book under that author: take the title, show Confirm, fill nothing.
      Same bargain as the author cards \u2014 select first, confirm second. */
   var bp = e.target.closest && e.target.closest("[data-bookpick]");
@@ -6685,7 +6736,7 @@ $("sAuthor").addEventListener("input", function(){
   authorPicked = -1; authorSettled = false;
   /* a different name means different books, so that list is no longer an
      answer to anything and neither is the pick inside it */
-  bookHits = []; bookPicked = -1; bookSettled = false;
+  bookHits = []; bookPicked = -1; bookPage = 0; bookSettled = false;
   renderBookPick();
   /* and the name is a question again, so the answer to the old one goes */
   nameSettled = "";
