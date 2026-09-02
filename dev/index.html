@@ -474,6 +474,12 @@ img{max-width:100%;display:block}
    when one is picked — they are the size and shape they always were. */
 .authrow{position:relative}
 .authrow__ok{position:absolute;left:calc(100% + 16px);top:0;width:max-content}
+/* The book cards sit a column further left than the author cards, so their
+   Confirm lands under the Author box rather than under Look up book — which
+   is where it belongs, the author being the settled half of this flow. A
+   little more air than the 9px the other bands use keeps the top card, and
+   the Confirm level with it, clear of the field beside them. */
+#sBookPick{margin-top:14px}
 /* Measured, not guessed: below 766px the field row drops from three columns to
    two, so there is no Look up book column beside the author to sit under. The
    button rejoins the row on a line of its own rather than squeezing the name. */
@@ -1115,7 +1121,11 @@ img{max-width:100%;display:block}
           <div class="formgrid">
             <div class="field"><label for="sTitle">Book title</label>
               <input class="input" id="sTitle" name="title" required maxlength="140" autocomplete="off">
-              <div class="authpick" id="sTitleFix" hidden></div></div>
+              <div class="authpick" id="sTitleFix" hidden></div>
+              <!-- books by the named author. Under the title box because the
+                   title is what picking one fills in; the author above is
+                   already settled by the time these appear. -->
+              <div class="authpick" id="sBookPick" hidden></div></div>
             <div class="field"><label for="sAuthor">Author</label><input class="input" id="sAuthor" name="author" required maxlength="140">
               <div class="authpick" id="sAuthorPick" hidden></div></div>
             <div class="field field--action"><span class="field__cap" aria-hidden="true"></span>
@@ -5656,9 +5666,10 @@ function takeCandidate(a){
    which is picked and then confirmed. Nothing is filled in before that
    Confirm, a lone book included: one card is still a card.
 
-   Both flows draw into #sAuthorPick, which sits under the Author box. That is
-   where this one's Confirm belongs anyway, since the author is the settled
-   half here and the title is the half still being chosen. pickMode keeps the
+   The two flows draw into boxes of their own, each under the field it is
+   asking about: author cards under Author, book cards under Book Title, since
+   picking a book is what fills the title in. Only the name correction in this
+   flow shares #sAuthorPick with the author cards, and pickMode keeps those
    two from painting over each other. */
 var pickMode = "";              /* "", "author" or "book" */
 var bookHits = [];
@@ -5688,7 +5699,7 @@ function bookCandidates(hits, author){
 function bookPickWorth(){ return bookHits.length > 0; }
 
 function renderBookPick(){
-  var host = $("sAuthorPick");
+  var host = $("sBookPick");
   if(!host) return;
   if(!bookPickWorth() || bookSettled){ host.hidden = true; host.innerHTML = ""; return; }
   var author = $("sAuthor").value.trim();
@@ -6085,6 +6096,7 @@ function sumLabel(){ return sugMode === "ai" ? "Write it" : "Search the web"; }
 async function lookupFromAuthor(author, out){
   pickMode = "book";
   bookSettled = false;
+  hideTitleFix();      /* the title box is empty here; an old correction is stale */
   /* the fielded search first, since it answers with that person's work rather
      than every book that mentions them */
   var hits = await searchBooks('author:"' + author + '"');
@@ -6092,6 +6104,7 @@ async function lookupFromAuthor(author, out){
 
   if(!hits.length){
     $("sAuthorPick").hidden = true; $("sAuthorPick").innerHTML = "";
+    bookHits = []; bookPicked = -1; renderBookPick();
     out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn\u2019t find an author by that name. ' +
       'Check the spelling, or put a title in as well.</p>';
     return;
@@ -6456,6 +6469,7 @@ $("sAuthor").addEventListener("input", function(){
   /* a different name means different books, so that list is no longer an
      answer to anything and neither is the pick inside it */
   bookHits = []; bookPicked = -1; bookSettled = false;
+  renderBookPick();
   if(pickMode === "book"){ pickMode = ""; if($("sAuthorPick")) $("sAuthorPick").innerHTML = ""; }
   syncSearchLinks();
   clearTimeout(authTimer);
@@ -6465,7 +6479,12 @@ $("sAuthor").addEventListener("input", function(){
 $("sAuthor").addEventListener("blur", function(){ clearTimeout(authTimer); setTimeout(checkAuthorSpelling, 120); });
 $("sTitle").addEventListener("input", function(){
   authorPicked = -1; authorSettled = false;   /* another book, another question */
+  /* the cards sit under this box now, so a pressed one has to let go the
+     moment the title stops being the one it filled in. A list already put
+     away by Confirm stays away: it is not an answer to an edit. */
+  var booksUp = $("sBookPick") && !$("sBookPick").hidden;
   bookPicked = -1; bookSettled = false;
+  if(booksUp) renderBookPick();
   syncSearchLinks();
 });
 $("sPages").addEventListener("input", function(){ fillTheirs("pages"); });
