@@ -1937,6 +1937,14 @@ function endpointTrouble(err){
   if(err === "unconfigured") return "No script address saved yet — add it under Admin → Settings.";
   if(err === "unreachable") return "Couldn't reach the script. In Apps Script, check Deploy → Manage deployments → Edit, and set \u201cWho has access\u201d to \u201cAnyone\u201d.";
   if(err === "unknown kind") return "The deployed script is an older copy. In Apps Script: Deploy → Manage deployments → Edit → Version: \u201cNew version\u201d → Deploy.";
+  /* the AI's own answers back, which the callers used to swallow — every one
+     of these was reaching the page as "something went wrong" */
+  if(err === "no api key") return "Asking the AI isn’t switched on — no key is saved in the script.";
+  if(err === "no title") return "It needs a title before it can answer.";
+  if(err === "empty") return "The AI answered with nothing at all. Try it again.";
+  if(err === "ran out of room") return "The AI ran out of room before it wrote an answer — the script’s token ceiling is too low.";
+  if(err === "refused") return "The AI declined to answer that one.";
+  if(String(err || "").indexOf("api ") === 0) return "The AI service answered with an error (" + err + ").";
   if(err === "crashed") return "The script hit an error. Open it in Apps Script and run setUpTrigger once — it'll ask permission to send email, which sign-in codes need.";
   if(String(err || "").indexOf("http ") === 0) return "The script answered with an error (" + err + "). Re-deploy it and try again.";
   return "";
@@ -6133,12 +6141,15 @@ async function ageAskAI(){
         '<p class="askai__foot">Reading level is yours to set \u2014 this changes nothing.</p>';
       return;
     }
+    /* Say which failure it was. The generic line cost a morning: the specific
+       reason was sitting in j.error the whole time, and endpointTrouble
+       already knew how to say it. The code goes in the footnote too, so a
+       failure nobody has written a sentence for is still readable. */
+    var err = (j && j.error) || "no answer";
     out.innerHTML = '<p class="askai__lab">Ask AI</p><p>' +
-      esc(j && j.error === "no api key"
-        ? "Asking the AI isn\u2019t switched on \u2014 try Check online instead."
-        : j && j.error === "unknown kind"
-        ? "The club\u2019s script is an older copy that can\u2019t answer this yet."
-        : "Couldn\u2019t get an answer just now \u2014 try Check online instead.") + "</p>";
+      esc(endpointTrouble(err) ||
+        "Couldn\u2019t get an answer just now \u2014 try Check online instead.") + "</p>" +
+      '<p class="askai__foot">' + esc(err) + "</p>";
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = "Ask AI"; }
   }

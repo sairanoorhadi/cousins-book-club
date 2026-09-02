@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-01a';
+var SCRIPT_VERSION = '2026-09-02a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -1046,9 +1046,17 @@ function ageNote(payload) {
     headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
     muteHttpExceptions: true,
     payload: JSON.stringify({
-      model: 'claude-opus-5',
-      max_tokens: 800,
-      output_config: { effort: 'low' },
+      /* Sonnet rather than Opus: this is a two-sentence reading, not a hard
+         problem, and it is a form button people press more than once.
+         Thinking is on by default on both, and its tokens come out of
+         max_tokens — at 800 a run of thinking could eat the whole budget
+         before a single sentence of answer was written, which is what
+         "empty" was. Effort is named rather than left to the default, and
+         the ceiling is high enough that thinking cannot crowd the answer
+         out. It is a cap, not a spend: only what is generated is billed. */
+      model: 'claude-sonnet-5',
+      max_tokens: 8000,
+      output_config: { effort: 'medium' },
       system: 'You advise a family book club on what age a book suits. Answer in two or ' +
               'three plain sentences: the age or school-year range you would put on it, and ' +
               'what in the book decides that \u2014 reading difficulty, and any content a ' +
@@ -1074,7 +1082,10 @@ function ageNote(payload) {
     .join('\n')
     .trim();
 
-  return text ? { ok: true, note: text } : { ok: false, error: 'empty' };
+  if (text) return { ok: true, note: text };
+  /* The two ways to come back with nothing are not the same fault, and the
+     one that was happening looked like the other. */
+  return { ok: false, error: body.stop_reason === 'max_tokens' ? 'ran out of room' : 'empty' };
 }
 
 /* ------------------------------------------------------- book details (AI)
