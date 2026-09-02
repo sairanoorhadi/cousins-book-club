@@ -314,7 +314,15 @@ img{max-width:100%;display:block}
    field is added. The column it sits over is still reserved by the grid. */
 .suggestform > .lookaside__track{position:absolute;top:0;bottom:0;right:var(--pad);width:var(--aside-col)}
 .formgrid--rest #sLookupOut{grid-column:1/-1}
-.lookaside{position:sticky;top:calc(var(--topbar-h) + 18px);display:flex;flex-direction:column;gap:8px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:16px}
+/* Two cards that travel as one. The answer used to be drawn inside the links
+   card because a plain sibling of a sticky card gets painted over by it on the
+   first scroll — but that made it read as part of the links rather than as an
+   answer. Sticking the stack instead keeps them together and lets each be its
+   own box. The stack is capped to the window, and the answer takes what room is
+   left under the links: short answers stay short, long ones scroll inside
+   themselves rather than running off the bottom of the screen. */
+.asidestack{position:sticky;top:calc(var(--topbar-h) + 18px);display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - var(--topbar-h) - 36px)}
+.lookaside{display:flex;flex-direction:column;gap:8px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:16px}
 .lookaside__cap{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 .lookaside .btn{width:100%}
 
@@ -462,7 +470,7 @@ img{max-width:100%;display:block}
 /* inside the Look it up card it is one more thing in the same box, so it drops
    its own border for a rule, and is capped: a sticky card taller than the
    window has a bottom nobody can reach. */
-.askai--aside{margin-top:4px;border:0;border-top:2px solid var(--hairline);border-radius:0;background:none;padding:12px 0 0;max-height:min(46vh,420px);overflow-y:auto;font-size:14px}
+.askai--aside{margin-top:0;background:var(--surface);box-shadow:var(--shadow);padding:14px;font-size:14px;flex:0 1 auto;min-height:0;overflow-y:auto}
 .askai__age{font-family:var(--f-display);font-weight:800;font-size:19px;margin-top:3px}
 .askai__note{font-size:13.5px;color:var(--muted);margin-top:5px}
 .authrow__web:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
@@ -602,6 +610,12 @@ img{max-width:100%;display:block}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ratingrow__warn{color:var(--zest)}}
 :root[data-theme="dark"] .ratingrow__warn{color:var(--zest)}
 .ratingrow__warn[hidden]{display:none}
+/* The label and its two buttons on one line, as they were when the buttons
+   were inside the label — but as siblings, so each answers for itself. The
+   slider and its note take the full width below. Spacing is the buttons' own
+   margins, so the row is nil-gap and nothing has moved. */
+.field--age{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 0}
+.field--age > #sAgeSlider,.field--age > .hint{flex-basis:100%}
 .agecheck{margin-left:10px;text-transform:none;letter-spacing:0;vertical-align:middle;padding:4px 11px;font-size:12px;box-shadow:1px 1px 0 var(--stamp)}
 /* said in the space beside those buttons when a lookup came back with no age
    at all. The house pink is only 4.3:1 on white, so this takes the deeper red
@@ -692,9 +706,10 @@ img{max-width:100%;display:block}
   .suggestform{display:flex;flex-direction:column;align-items:stretch;gap:18px;max-width:760px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
   .suggestform::before{display:none}
   .suggestform > .lookaside__track{position:static;width:auto}
-  .lookaside{position:static;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px}
-  /* the links sit in a row here, so the answer takes its own full line */
-  .askai--aside{flex-basis:100%;max-height:none}
+  .asidestack{position:static;max-height:none}
+  .lookaside{flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px}
+  /* nothing to scroll inside when it can simply be as tall as its answer */
+  .askai--aside{max-height:none;overflow:visible}
   .lookaside .btn{width:auto}
   .lookaside__cap{width:100%;margin-bottom:0}
 }
@@ -1130,7 +1145,7 @@ img{max-width:100%;display:block}
               <div class="authpick" id="sAuthorPick" hidden></div></div>
             <div class="field field--action"><span class="field__cap" aria-hidden="true"></span>
               <button class="btn btn--grape lookupgo" type="button" id="sAskAI">Look up book</button>
-              <p class="hint">A title on its own is enough &mdash; no author needed.</p></div>
+              <p class="hint">A title or author on its own is enough &mdash; either works.</p></div>
           </div>
           <div class="formgrid formgrid--rest">
             <div class="field"><label for="sPages">Page count</label><input class="input" id="sPages" name="pages" type="number" min="1" max="20000" inputmode="numeric"></div>
@@ -1138,20 +1153,27 @@ img{max-width:100%;display:block}
             <div id="sLookupOut"></div>
           </div>
           <div class="lookaside__track">
-            <aside class="lookaside" id="sLookAside">
-              <p class="lookaside__cap">Look it up</p>
-              <a class="btn btn--sm btn--ghost" id="sGoodreads" href="https://www.goodreads.com" target="_blank" rel="noopener noreferrer">Open on Goodreads</a>
-              <a class="btn btn--sm btn--ghost" id="sGoogle" href="https://www.google.com" target="_blank" rel="noopener noreferrer">Google it</a>
-              <!-- Ask AI's answer, under the links and inside the same sticky
-                   card so the two travel together. As a sibling of the card it
-                   was painted over by it the moment the page scrolled. -->
+            <div class="asidestack">
+              <aside class="lookaside" id="sLookAside">
+                <p class="lookaside__cap">Look it up</p>
+                <a class="btn btn--sm btn--ghost" id="sGoodreads" href="https://www.goodreads.com" target="_blank" rel="noopener noreferrer">Open on Goodreads</a>
+                <a class="btn btn--sm btn--ghost" id="sGoogle" href="https://www.google.com" target="_blank" rel="noopener noreferrer">Google it</a>
+              </aside>
+              <!-- The answer is a card of its own under the links, not part of
+                   them. The stack is what sticks, so the two travel together:
+                   as a plain sibling of a sticky card it was painted over by
+                   that card the moment the page scrolled. -->
               <div class="askai askai--aside" id="sAgeAIOut" hidden></div>
-            </aside>
+            </div>
           </div>
-          <div class="field"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span>
+          <!-- The buttons are siblings of the label, not children of it. A label
+               with no "for" belongs to the first form control inside it, which
+               made Check online the labelled control of a label that also
+               contained Ask AI. -->
+          <div class="field field--age"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span></label>
               <button class="btn btn--sm btn--sky agecheck" type="button" id="sAgeCheck">Check online</button>
               <button class="btn btn--sm btn--grape agecheck" type="button" id="sAgeAI">Ask AI</button>
-              <strong class="agemiss" id="sAgeMiss" hidden>Reading level not available.</strong></label>
+              <strong class="agemiss" id="sAgeMiss" hidden>Reading level not available.</strong>
             <div id="sAgeSlider"></div>
             <p class="hint" id="sAgeNote" hidden></p></div>
           <div class="field"><label for="sGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label><input class="input" id="sGenres" name="genres" placeholder="Young Adult, Fantasy" maxlength="300"></div>
