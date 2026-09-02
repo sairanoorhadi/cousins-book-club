@@ -5645,6 +5645,73 @@ function takeCandidate(a){
   fillTheirs("author");        /* they chose it, so it is not ours to change */
 }
 
+/* ---- the author-first lookup ----
+   Pressing Look up book with only an author used to put the cursor in the
+   title box and stop, which is not an answer to what was asked: the reader
+   has named someone and wants to know what they wrote.
+
+   It runs the same way round as the title-first flow, with the two questions
+   swapped. The name is settled first \u2014 corrected if the catalogue spells it
+   differently \u2014 and then the books under it are offered as cards, one of
+   which is picked and then confirmed. Nothing is filled in before that
+   Confirm, a lone book included: one card is still a card.
+
+   Both flows draw into #sAuthorPick, which sits under the Author box. That is
+   where this one's Confirm belongs anyway, since the author is the settled
+   half here and the title is the half still being chosen. pickMode keeps the
+   two from painting over each other. */
+var pickMode = "";              /* "", "author" or "book" */
+var bookHits = [];
+var bookPicked = -1;
+var bookSettled = false;
+var authorNameFixes = [];
+
+/* Distinct titles under one name. Deduped on the title itself, since a work
+   with several editions comes back several times and they are all the same
+   choice to a reader. */
+function bookCandidates(hits, author){
+  var want = String(author || "").toLowerCase();
+  var seen = {}, outList = [];
+  hits.forEach(function(h){
+    if(!h.title) return;
+    var key = h.title.toLowerCase();
+    if(seen[key]){ seen[key].count++; return; }
+    seen[key] = { title: h.title, name: h.author || author, year: h.year || "", count: 1,
+      /* their own books first when a search drags in anthologies and others */
+      mine: String(h.author || "").toLowerCase().indexOf(want) !== -1 ? 0 : 1 };
+    outList.push(seen[key]);
+  });
+  outList.sort(function(a, b){ return (a.mine - b.mine) || (b.count - a.count); });
+  return outList.slice(0, 6);
+}
+
+function bookPickWorth(){ return bookHits.length > 0; }
+
+function renderBookPick(){
+  var host = $("sAuthorPick");
+  if(!host) return;
+  if(!bookPickWorth() || bookSettled){ host.hidden = true; host.innerHTML = ""; return; }
+  var author = $("sAuthor").value.trim();
+  host.hidden = false;
+  host.innerHTML = '<span class="authpick__lab">' +
+      (bookHits.length > 1
+        ? "Which book? Pick one, then confirm to fill the rest in"
+        : "Found this one \u2014 pick it, then confirm to fill the rest in") + "</span>" +
+    bookHits.map(function(bk, i){
+      var on = i === bookPicked;
+      return '<span class="authrow">' +
+        '<button class="authrow__pick" type="button" data-bookpick="' + i + '" aria-pressed="' + on + '">' +
+          esc(bk.title) +
+          "<small>" + esc(bk.name) + (bk.year ? " \u00b7 " + esc(bk.year) : "") + "</small></button>" +
+        '<a class="authrow__web" href="' + esc(googlePair(bk.title, author || bk.name)) + '" target="_blank" ' +
+          'rel="noopener noreferrer" title="Google &ldquo;' + esc(bk.title) + '&rdquo; &ldquo;' + esc(author || bk.name) + '&rdquo;" ' +
+          'aria-label="Search the web for ' + esc(bk.title) + '">&#127760;</a>' +
+        '<button class="btn btn--sm btn--surf authrow__ok" type="button" data-bookok="' + i + '"' + (on ? "" : " hidden") +
+          ' aria-label="Confirm ' + esc(bk.title) + ' and fill in the rest">Confirm</button>' +
+      "</span>";
+    }).join("");
+}
+
 /* Every candidate is a choice, including a lone one. A single name used to be
    waved through on the grounds that a novel usually has one author — but that
    made the one common case the one case nobody was asked about, and the
@@ -5656,6 +5723,8 @@ function authorPickWorth(){
 function renderAuthorPick(){
   var host = $("sAuthorPick");
   if(!host) return;
+  /* the other flow owns this box at the moment */
+  if(pickMode === "book") return;
   var title = $("sTitle").value.trim();
   /* settled by Confirm: the question is answered, so stop asking it */
   if(!authorPickWorth() || authorSettled){ host.hidden = true; host.innerHTML = ""; return; }
@@ -6009,11 +6078,61 @@ function lookupEnd(){ lookupBusy = false; busyOff("sLookBar", $("sAskAI"), "Look
 var sumBusy = false;
 function sumLabel(){ return sugMode === "ai" ? "Write it" : "Search the web"; }
 
+/* Settle the name, then offer what is under it. Correcting the spelling is
+   the same move the title box already makes: only when what was typed is not
+   a name the catalogue holds, and never a confirmation of a name that was
+   right to begin with. */
+async function lookupFromAuthor(author, out){
+  pickMode = "book";
+  bookSettled = false;
+  /* the fielded search first, since it answers with that person's work rather
+     than every book that mentions them */
+  var hits = await searchBooks('author:"' + author + '"');
+  if(!hits.length) hits = await searchBooks(author);
+
+  if(!hits.length){
+    $("sAuthorPick").hidden = true; $("sAuthorPick").innerHTML = "";
+    out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn\u2019t find an author by that name. ' +
+      'Check the spelling, or put a title in as well.</p>';
+    return;
+  }
+
+  var names = [];
+  hits.forEach(function(h){ if(h.author && names.indexOf(h.author) === -1) names.push(h.author); });
+  var low = author.toLowerCase();
+  var onRecord = names.some(function(n){ return n.toLowerCase().indexOf(low) !== -1; });
+  if(!onRecord){
+    authorNameFixes = names.filter(function(n){ return titleCloseness(author, n) < 2; }).slice(0, 3);
+    if(authorNameFixes.length){
+      fixBand($("sAuthorPick"), "Did you mean\u2026", authorNameFixes.map(function(n){
+        return { text: n, href: googleSearch(n, "") };
+      }), "data-authorname");
+      out.innerHTML = '<p class="hint" style="margin-top:10px">Pick the name to search under ' +
+        '\u2014 nothing has been filled in.</p>';
+      return;
+    }
+  }
+
+  bookHits = bookCandidates(hits, author);
+  bookPicked = -1;
+  renderBookPick();
+  out.innerHTML = '<p class="hint" style="margin-top:10px">' +
+    'Books by <strong>' + esc(author) + '</strong>. Pick one and press <strong>Confirm</strong> ' +
+    'to fill the rest in \u2014 nothing has been touched yet.</p>';
+}
+
 async function askAIForDetails(){
   var title = $("sTitle").value.trim(), author = $("sAuthor").value.trim();
   var out = $("sLookupOut");
-  if(!title){ $("sTitle").focus(); return; }
   if(lookupBusy) return;            /* already asking; a second press is the same question */
+  /* an author on their own is a question worth answering, not a missing title */
+  if(!title && author){
+    lookupStart();
+    try{ return await lookupFromAuthor(author, out); }
+    finally{ lookupEnd(); }
+  }
+  if(!title){ $("sTitle").focus(); return; }
+  pickMode = "author";
 
   lookupStart();
   try{
@@ -6241,6 +6360,53 @@ document.addEventListener("click", async function(e){
   }
   if(e.target.closest && e.target.closest("#sAgeCheck")){ ageOnline(); return; }
   if(e.target.closest && e.target.closest("#sAgeAI")){ await ageAskAI(); return; }
+  /* the spelling of the name, settled before anything is searched under it */
+  var an = e.target.closest && e.target.closest("[data-authorname]");
+  if(an){
+    var pickN = authorNameFixes[Number(an.getAttribute("data-authorname"))];
+    if(pickN){
+      $("sAuthor").value = pickN;
+      fillTheirs("author");      /* they chose it, so the lookup leaves it be */
+      syncSearchLinks();
+      await askAIForDetails();   /* now go and find what is under that name */
+    }
+    return;
+  }
+  /* a book under that author: take the title, show Confirm, fill nothing.
+     Same bargain as the author cards \u2014 select first, confirm second. */
+  var bp = e.target.closest && e.target.closest("[data-bookpick]");
+  if(bp){
+    var whichBk = Number(bp.getAttribute("data-bookpick"));
+    var bk = bookHits[whichBk];
+    if(bk){
+      bookPicked = whichBk;
+      $("sTitle").value = bk.title;
+      lastTitleChecked = bk.title.trim();   /* picked from a card, so not a typo */
+      hideTitleFix();
+      renderBookPick();
+      syncSearchLinks();
+    }
+    return;
+  }
+  /* Confirm: the title is settled, so fill in from it exactly as the
+     title-first flow does. The author was settled before the cards were
+     drawn, so that question is not asked again on the way through. */
+  var bok = e.target.closest && e.target.closest("[data-bookok]");
+  if(bok){
+    var okBk = bookHits[Number(bok.getAttribute("data-bookok"))];
+    if(okBk){
+      $("sTitle").value = okBk.title;
+      lastTitleChecked = okBk.title.trim();
+      hideTitleFix();
+      bookSettled = true;
+      authorSettled = true;      /* settled first in this flow; do not re-ask */
+      pickMode = "author";
+      renderBookPick();
+      syncSearchLinks();
+      await askAIForDetails();
+    }
+    return;
+  }
   /* a name on its own: take the name, show Confirm, change nothing else.
      The other names stay up, so a wrong pick costs one more click. */
   var ap = e.target.closest && e.target.closest("[data-authpick]");
@@ -6287,6 +6453,10 @@ $("sAuthor").addEventListener("input", function(){
   /* typing over it is a choice of its own, so the cards may speak again */
   fillTheirs("author");
   authorPicked = -1; authorSettled = false;
+  /* a different name means different books, so that list is no longer an
+     answer to anything and neither is the pick inside it */
+  bookHits = []; bookPicked = -1; bookSettled = false;
+  if(pickMode === "book"){ pickMode = ""; if($("sAuthorPick")) $("sAuthorPick").innerHTML = ""; }
   syncSearchLinks();
   clearTimeout(authTimer);
   if($("sAuthorPick") && !authorHits.length){ $("sAuthorPick").hidden = true; }
@@ -6295,6 +6465,7 @@ $("sAuthor").addEventListener("input", function(){
 $("sAuthor").addEventListener("blur", function(){ clearTimeout(authTimer); setTimeout(checkAuthorSpelling, 120); });
 $("sTitle").addEventListener("input", function(){
   authorPicked = -1; authorSettled = false;   /* another book, another question */
+  bookPicked = -1; bookSettled = false;
   syncSearchLinks();
 });
 $("sPages").addEventListener("input", function(){ fillTheirs("pages"); });
