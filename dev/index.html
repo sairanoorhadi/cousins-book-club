@@ -6116,6 +6116,20 @@ function missingRest(){
   if(!sumToSend().text.trim()) out.push("the summary");
   return out;
 }
+/* Enter in a one-line box submits a form by default, and that is what was
+   painting boxes red mid-lookup: a title typed, Enter pressed to run the
+   lookup, and the form instead ran its checks and marked the two fields
+   nobody had reached yet. Sending is a deliberate press of Send, so the
+   whole implicit route is closed. Buttons and links keep their Enter — that
+   is how Send is reached from the keyboard — and the summary keeps its
+   newlines. */
+$("suggestForm").addEventListener("keydown", function(e){
+  if(e.key !== "Enter" || e.shiftKey) return;
+  var t = e.target, tag = t.tagName;
+  if(tag === "TEXTAREA" || tag === "BUTTON" || tag === "A") return;
+  e.preventDefault();
+});
+
 /* typing into a box the form was waiting on answers it */
 $("suggestForm").addEventListener("input", function(e){
   var fld = e.target.closest && e.target.closest(".field--missing");
