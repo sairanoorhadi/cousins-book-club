@@ -491,11 +491,12 @@ img{max-width:100%;display:block}
    little more air than the 9px the other bands use keeps the top card, and
    the Confirm level with it, clear of the field beside them. */
 #sBookPick{margin-top:14px}
-/* The arrows sit under the cards, in the globe's column and the same shape as
-   it, so the row reads as part of the list rather than as a control bar bolted
-   under it. Back keeps its place on the first page — invisible, still there —
-   so Forward does not move between pages. */
-.bookpage{display:flex;align-items:center;gap:8px;margin-top:2px}
+/* The arrows sit between the label and the first card, in the globe's column
+   and the same shape as it, so the row reads as part of the list rather than
+   as a control bar bolted on. Above the cards is what keeps them still: a last
+   page of three moved arrows placed underneath, and every press then had to be
+   re-aimed. */
+.bookpage{display:flex;align-items:center;gap:8px;margin-bottom:2px}
 .bookpage__go{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:15px;line-height:1}
 .bookpage__go:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
 .bookpage__go--off{visibility:hidden;pointer-events:none}
@@ -5835,11 +5836,31 @@ function renderBookPick(){
   if(bookPage < 0) bookPage = 0;
   var from = bookPage * BOOK_PAGE;
   var shown = bookHits.slice(from, from + BOOK_PAGE);
+
+  /* Above the cards, not below them. The last page of a shelf is rarely a full
+     five, so arrows under the list moved up and down as it was paged and had
+     to be re-aimed at every press. Nothing above the first card changes height,
+     so up here they are in the same place on every page. Back keeps its slot on
+     the first page — invisible, still there — so Forward does not slide
+     sideways either. */
+  var nav = pages < 2 ? "" :
+    '<span class="bookpage">' +
+      '<button class="bookpage__go' + (bookPage === 0 ? " bookpage__go--off" : "") + '" type="button" ' +
+        'data-bookpage="prev"' + (bookPage === 0 ? ' tabindex="-1" aria-hidden="true"' : "") +
+        ' aria-label="The books before these">&#8592;</button>' +
+      '<button class="bookpage__go' + (bookPage >= pages - 1 ? " bookpage__go--off" : "") + '" type="button" ' +
+        'data-bookpage="next"' + (bookPage >= pages - 1 ? ' tabindex="-1" aria-hidden="true"' : "") +
+        ' aria-label="More books by this author">&#8594;</button>' +
+      '<span class="bookpage__of">' + (from + 1) + "\u2013" + (from + shown.length) +
+        " of " + bookHits.length + "</span>" +
+    "</span>";
+
   host.hidden = false;
   host.innerHTML = '<span class="authpick__lab">' +
       (bookHits.length > 1
         ? "Which book? Pick one, then confirm to fill the rest in"
         : "Found this one \u2014 pick it, then confirm to fill the rest in") + "</span>" +
+    nav +
     shown.map(function(bk, n){
       /* the index into the whole shelf, not into this page: a pick made on
          page four has to still be that book when page one is drawn again */
@@ -5855,21 +5876,7 @@ function renderBookPick(){
         '<button class="btn btn--sm btn--surf authrow__ok" type="button" data-bookok="' + i + '"' + (on ? "" : " hidden") +
           ' aria-label="Confirm ' + esc(bk.title) + ' and fill in the rest">Confirm</button>' +
       "</span>";
-    }).join("") +
-    /* Back keeps its place on the first page rather than being taken away, so
-       Forward does not move under the finger between pages. */
-    (pages > 1
-      ? '<span class="bookpage">' +
-          '<button class="bookpage__go' + (bookPage === 0 ? " bookpage__go--off" : "") + '" type="button" ' +
-            'data-bookpage="prev"' + (bookPage === 0 ? ' tabindex="-1" aria-hidden="true"' : "") +
-            ' aria-label="The books before these">&#8592;</button>' +
-          '<button class="bookpage__go' + (bookPage >= pages - 1 ? " bookpage__go--off" : "") + '" type="button" ' +
-            'data-bookpage="next"' + (bookPage >= pages - 1 ? ' tabindex="-1" aria-hidden="true"' : "") +
-            ' aria-label="More books by this author">&#8594;</button>' +
-          '<span class="bookpage__of">' + (from + 1) + "\u2013" + (from + shown.length) +
-            " of " + bookHits.length + "</span>" +
-        "</span>"
-      : "");
+    }).join("");
 }
 
 /* Every candidate is a choice, including a lone one. A single name used to be
