@@ -481,7 +481,10 @@ img{max-width:100%;display:block}
    author cell plus the grid's gap. Nothing about the cards themselves changes
    when one is picked — they are the size and shape they always were. */
 .authrow{position:relative}
-.authrow__ok{position:absolute;left:calc(100% + 16px);top:0;width:max-content}
+/* Centred on the card, not pinned to its first line. A name that wraps to
+   three lines used to leave Confirm level with the top of the card while the
+   globe — a flex item, so centred by the row — sat halfway down. */
+.authrow__ok{position:absolute;left:calc(100% + 16px);top:50%;transform:translateY(-50%);width:max-content}
 /* The book cards sit a column further left than the author cards, so their
    Confirm lands under the Author box rather than under Look up book — which
    is where it belongs, the author being the settled half of this flow. A
@@ -493,7 +496,7 @@ img{max-width:100%;display:block}
    button rejoins the row on a line of its own rather than squeezing the name. */
 @media (max-width:765px){
   .authrow{flex-wrap:wrap}
-  .authrow__ok{position:static;width:auto;margin-left:auto}
+  .authrow__ok{position:static;transform:none;width:auto;margin-left:auto}
 }
 
 .lookupfix{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;border:2px dashed var(--edge);border-radius:var(--r);background:var(--sunk);padding:10px 14px;font-size:15px}
@@ -620,6 +623,14 @@ img{max-width:100%;display:block}
 /* said in the space beside those buttons when a lookup came back with no age
    at all. The house pink is only 4.3:1 on white, so this takes the deeper red
    the "Not for me" chip uses, with the light tone for dark mode. */
+/* A box the form is waiting on. Marked rather than merely named, so a missing
+   field is findable without reading the sentence and counting. The label
+   borrows the same two reds "Reading level not available" uses — the house
+   --flare is 4.30:1 on white, which is under AA at label size. */
+.field--missing .input,.field--missing .textarea{border-color:var(--flare);box-shadow:0 0 0 3px color-mix(in srgb,var(--flare) 24%,transparent)}
+.field--missing > label{color:#C81748}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .field--missing > label{color:#FF8FA3}}
+:root[data-theme="dark"] .field--missing > label{color:#FF8FA3}
 .agemiss{margin-left:14px;vertical-align:middle;text-transform:none;letter-spacing:0;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:#C81748}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .agemiss{color:#FF8FA3}}
 :root[data-theme="dark"] .agemiss{color:#FF8FA3}
@@ -1127,7 +1138,7 @@ img{max-width:100%;display:block}
         <div class="recgrid" id="shortGrid"></div>
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-suggest" aria-labelledby="tab-suggest" hidden>
-        <form class="suggestform" id="suggestForm">
+        <form class="suggestform" id="suggestForm" novalidate>
           <div>
             <h3 style="font-size:22px">Put a book forward</h3>
             <p class="hint" style="margin-top:8px">Type the title, then press <strong>Look up book</strong> &mdash; the author, page count, genres and rating fill themselves in. Everything stays editable. The organiser reads submissions and publishes the ones the club wants.</p>
@@ -1197,6 +1208,7 @@ img{max-width:100%;display:block}
           </div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
             <button class="btn btn--surf" type="submit" id="suggestSubmit">Send it to the organiser</button>
+            <button class="btn btn--ghost" type="button" id="suggestClear">Clear all fields</button>
             <span class="hint" id="suggestNote"></span>
           </div>
         </form>
@@ -6036,6 +6048,80 @@ function initSuggestForm(){
   renderRatingRows();
   syncSearchLinks();
 }
+/* ---- starting over, and what counts as filled in ----
+   A lookup that went wrong leaves more behind than the two boxes at the top:
+   a settled name, a picked card, a cover, a summary nobody chose. Starting
+   over has to put all of it back. */
+function clearSuggestForm(){
+  $("suggestForm").reset();
+  sugCover = "";
+  /* the pickers, and everything that decides what they are asking */
+  pickMode = "";
+  authorHits = []; authorPicked = -1; authorSettled = false;
+  bookHits = []; bookPicked = -1; bookSettled = false;
+  namePicks = []; namePicked = -1; nameTypo = false; nameSettled = "";
+  titleFixes = []; authorFixes = [];
+  clearNamePick();
+  renderBookPick();
+  renderAuthorPick();
+  var ai = $("sAgeAIOut");
+  if(ai){ ai.hidden = true; ai.innerHTML = ""; }
+  clearMissing();
+  $("suggestNote").textContent = "";
+  initSuggestForm();          /* slider, ratings, cover, summary, the links */
+  $("sTitle").focus();
+}
+
+/* Three boxes the organiser cannot do without. The rest are worth a question
+   on the way out, but not a refusal — a book nobody has rated is still a book
+   worth putting forward. */
+var SUGGEST_MUST = [
+  { id: "sTitle",  name: "Book title" },
+  { id: "sAuthor", name: "Author" },
+  { id: "sBy",     name: "Your name" }
+];
+function clearMissing(){
+  var f = $("suggestForm");
+  if(!f) return;
+  [].forEach.call(f.querySelectorAll(".field--missing"), function(el){
+    el.classList.remove("field--missing");
+  });
+}
+function markMissing(ids){
+  clearMissing();
+  ids.forEach(function(id){
+    var box = $(id), fld = box && box.closest(".field");
+    if(fld) fld.classList.add("field--missing");
+  });
+}
+/* "x, y and z": the list is read as a sentence, not printed as a table */
+function andList(names){
+  if(names.length <= 1) return names[0] || "";
+  return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+}
+function missingMust(){
+  return SUGGEST_MUST.filter(function(m){ return !$(m.id).value.trim(); });
+}
+/* The rest, judged by what the submission would actually carry rather than by
+   what the box looks like: a slider still at its full span has said nothing,
+   and a summary nobody picked is not a summary. */
+function missingRest(){
+  var age = dualValue("sAge");
+  var out = [];
+  if(!$("sPages").value.trim()) out.push("page count");
+  if(!normaliseGenres($("sGenres").value).length) out.push("genres");
+  if(age.lo === 12 && age.hi === AGE_TOP) out.push("reading level");
+  if(!ratingsForSubmit().length) out.push("readers’ ratings");
+  if(!sugCover) out.push("a cover");
+  if(!sumToSend().text.trim()) out.push("the summary");
+  return out;
+}
+/* typing into a box the form was waiting on answers it */
+$("suggestForm").addEventListener("input", function(e){
+  var fld = e.target.closest && e.target.closest(".field--missing");
+  if(fld && String(e.target.value || "").trim()) fld.classList.remove("field--missing");
+});
+
 /* keep the two "go and look" links pointed at whatever's typed */
 function syncSearchLinks(){
   var t = $("sTitle").value.trim(), a = $("sAuthor").value.trim();
@@ -6468,6 +6554,7 @@ document.addEventListener("click", async function(e){
     }
     return;
   }
+  if(e.target.closest && e.target.closest("#suggestClear")){ clearSuggestForm(); return; }
   if(e.target.closest && e.target.closest("#sAgeCheck")){ ageOnline(); return; }
   if(e.target.closest && e.target.closest("#sAgeAI")){ await ageAskAI(); return; }
   /* the name: taken here, and nothing more than taken. Selecting it puts it
@@ -6621,16 +6708,36 @@ $("sRatings").addEventListener("input", function(e){
 $("suggestForm").addEventListener("submit", async function(e){
   e.preventDefault();
   var el = e.target.elements;
+  var note = $("suggestNote");
+  /* The three that cannot be guessed at. Named together and marked together —
+     the browser's own check names one box at a time and had nothing to say
+     about the ones that are merely empty, which is why the form does its own. */
+  var short = missingMust();
+  if(short.length){
+    markMissing(short.map(function(m){ return m.id; }));
+    note.textContent = "Still needed: " +
+      andList(short.map(function(m){ return m.name; })) + ".";
+    $(short[0].id).focus();
+    return;
+  }
+  clearMissing();
   var title = el.title.value.trim(), author = el.author.value.trim(), by = el.by.value.trim();
-  if(!title || !author || !by) return;
   var age = dualValue("sAge");
   var genres = normaliseGenres(el.genres.value);
   var chosen = sumToSend();
   var blurb = chosen.text;
-  var note = $("suggestNote");
   if(chosen.unchosen){
     note.textContent = "There\u2019s more than one summary \u2014 pick which one to send.";
     if($("sSumWhich")) $("sSumWhich").focus();
+    return;
+  }
+
+  /* Everything else is a question, not a bar. The organiser would rather have
+     the book with gaps than not have it. */
+  var gaps = missingRest();
+  if(gaps.length && !confirm("You haven’t filled in " + andList(gaps) +
+      " — are you sure you want to submit?")){
+    note.textContent = "Nothing sent — fill in what you’d like to add.";
     return;
   }
 
@@ -6643,10 +6750,8 @@ $("suggestForm").addEventListener("submit", async function(e){
       ratings: ratingsForSubmit()
     });
     if(!res.ok){ note.textContent = submitFailMsg(res); return; }
+    clearSuggestForm();
     note.textContent = "Sent. The organiser will take a look.";
-    e.target.reset();
-    sugCover = "";
-    initSuggestForm();
     return;
   }
 
