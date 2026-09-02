@@ -314,7 +314,15 @@ img{max-width:100%;display:block}
    field is added. The column it sits over is still reserved by the grid. */
 .suggestform > .lookaside__track{position:absolute;top:0;bottom:0;right:var(--pad);width:var(--aside-col)}
 .formgrid--rest #sLookupOut{grid-column:1/-1}
-.lookaside{position:sticky;top:calc(var(--topbar-h) + 18px);display:flex;flex-direction:column;gap:8px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:16px}
+/* Two cards that travel as one. The answer used to be drawn inside the links
+   card because a plain sibling of a sticky card gets painted over by it on the
+   first scroll — but that made it read as part of the links rather than as an
+   answer. Sticking the stack instead keeps them together and lets each be its
+   own box. The stack is capped to the window, and the answer takes what room is
+   left under the links: short answers stay short, long ones scroll inside
+   themselves rather than running off the bottom of the screen. */
+.asidestack{position:sticky;top:calc(var(--topbar-h) + 18px);display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - var(--topbar-h) - 36px)}
+.lookaside{display:flex;flex-direction:column;gap:8px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:16px}
 .lookaside__cap{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 .lookaside .btn{width:100%}
 
@@ -462,7 +470,7 @@ img{max-width:100%;display:block}
 /* inside the Look it up card it is one more thing in the same box, so it drops
    its own border for a rule, and is capped: a sticky card taller than the
    window has a bottom nobody can reach. */
-.askai--aside{margin-top:4px;border:0;border-top:2px solid var(--hairline);border-radius:0;background:none;padding:12px 0 0;max-height:min(46vh,420px);overflow-y:auto;font-size:14px}
+.askai--aside{margin-top:0;background:var(--surface);box-shadow:var(--shadow);padding:14px;font-size:14px;flex:0 1 auto;min-height:0;overflow-y:auto}
 .askai__age{font-family:var(--f-display);font-weight:800;font-size:19px;margin-top:3px}
 .askai__note{font-size:13.5px;color:var(--muted);margin-top:5px}
 .authrow__web:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
@@ -473,13 +481,22 @@ img{max-width:100%;display:block}
    author cell plus the grid's gap. Nothing about the cards themselves changes
    when one is picked — they are the size and shape they always were. */
 .authrow{position:relative}
-.authrow__ok{position:absolute;left:calc(100% + 16px);top:0;width:max-content}
+/* Centred on the card, not pinned to its first line. A name that wraps to
+   three lines used to leave Confirm level with the top of the card while the
+   globe — a flex item, so centred by the row — sat halfway down. */
+.authrow__ok{position:absolute;left:calc(100% + 16px);top:50%;transform:translateY(-50%);width:max-content}
+/* The book cards sit a column further left than the author cards, so their
+   Confirm lands under the Author box rather than under Look up book — which
+   is where it belongs, the author being the settled half of this flow. A
+   little more air than the 9px the other bands use keeps the top card, and
+   the Confirm level with it, clear of the field beside them. */
+#sBookPick{margin-top:14px}
 /* Measured, not guessed: below 766px the field row drops from three columns to
    two, so there is no Look up book column beside the author to sit under. The
    button rejoins the row on a line of its own rather than squeezing the name. */
 @media (max-width:765px){
   .authrow{flex-wrap:wrap}
-  .authrow__ok{position:static;width:auto;margin-left:auto}
+  .authrow__ok{position:static;transform:none;width:auto;margin-left:auto}
 }
 
 .lookupfix{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;border:2px dashed var(--edge);border-radius:var(--r);background:var(--sunk);padding:10px 14px;font-size:15px}
@@ -596,10 +613,24 @@ img{max-width:100%;display:block}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ratingrow__warn{color:var(--zest)}}
 :root[data-theme="dark"] .ratingrow__warn{color:var(--zest)}
 .ratingrow__warn[hidden]{display:none}
+/* The label and its two buttons on one line, as they were when the buttons
+   were inside the label — but as siblings, so each answers for itself. The
+   slider and its note take the full width below. Spacing is the buttons' own
+   margins, so the row is nil-gap and nothing has moved. */
+.field--age{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 0}
+.field--age > #sAgeSlider,.field--age > .hint{flex-basis:100%}
 .agecheck{margin-left:10px;text-transform:none;letter-spacing:0;vertical-align:middle;padding:4px 11px;font-size:12px;box-shadow:1px 1px 0 var(--stamp)}
 /* said in the space beside those buttons when a lookup came back with no age
    at all. The house pink is only 4.3:1 on white, so this takes the deeper red
    the "Not for me" chip uses, with the light tone for dark mode. */
+/* A box the form is waiting on. Marked rather than merely named, so a missing
+   field is findable without reading the sentence and counting. The label
+   borrows the same two reds "Reading level not available" uses — the house
+   --flare is 4.30:1 on white, which is under AA at label size. */
+.field--missing .input,.field--missing .textarea{border-color:var(--flare);box-shadow:0 0 0 3px color-mix(in srgb,var(--flare) 24%,transparent)}
+.field--missing > label{color:#C81748}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .field--missing > label{color:#FF8FA3}}
+:root[data-theme="dark"] .field--missing > label{color:#FF8FA3}
 .agemiss{margin-left:14px;vertical-align:middle;text-transform:none;letter-spacing:0;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:#C81748}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .agemiss{color:#FF8FA3}}
 :root[data-theme="dark"] .agemiss{color:#FF8FA3}
@@ -686,9 +717,10 @@ img{max-width:100%;display:block}
   .suggestform{display:flex;flex-direction:column;align-items:stretch;gap:18px;max-width:760px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
   .suggestform::before{display:none}
   .suggestform > .lookaside__track{position:static;width:auto}
-  .lookaside{position:static;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px}
-  /* the links sit in a row here, so the answer takes its own full line */
-  .askai--aside{flex-basis:100%;max-height:none}
+  .asidestack{position:static;max-height:none}
+  .lookaside{flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px}
+  /* nothing to scroll inside when it can simply be as tall as its answer */
+  .askai--aside{max-height:none;overflow:visible}
   .lookaside .btn{width:auto}
   .lookaside__cap{width:100%;margin-bottom:0}
 }
@@ -1106,7 +1138,7 @@ img{max-width:100%;display:block}
         <div class="recgrid" id="shortGrid"></div>
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-suggest" aria-labelledby="tab-suggest" hidden>
-        <form class="suggestform" id="suggestForm">
+        <form class="suggestform" id="suggestForm" novalidate>
           <div>
             <h3 style="font-size:22px">Put a book forward</h3>
             <p class="hint" style="margin-top:8px">Type the title, then press <strong>Look up book</strong> &mdash; the author, page count, genres and rating fill themselves in. Everything stays editable. The organiser reads submissions and publishes the ones the club wants.</p>
@@ -1115,12 +1147,16 @@ img{max-width:100%;display:block}
           <div class="formgrid">
             <div class="field"><label for="sTitle">Book title</label>
               <input class="input" id="sTitle" name="title" required maxlength="140" autocomplete="off">
-              <div class="authpick" id="sTitleFix" hidden></div></div>
+              <div class="authpick" id="sTitleFix" hidden></div>
+              <!-- books by the named author. Under the title box because the
+                   title is what picking one fills in; the author above is
+                   already settled by the time these appear. -->
+              <div class="authpick" id="sBookPick" hidden></div></div>
             <div class="field"><label for="sAuthor">Author</label><input class="input" id="sAuthor" name="author" required maxlength="140">
               <div class="authpick" id="sAuthorPick" hidden></div></div>
             <div class="field field--action"><span class="field__cap" aria-hidden="true"></span>
               <button class="btn btn--grape lookupgo" type="button" id="sAskAI">Look up book</button>
-              <p class="hint">A title on its own is enough &mdash; no author needed.</p></div>
+              <p class="hint">A title or author on its own is enough &mdash; either works.</p></div>
           </div>
           <div class="formgrid formgrid--rest">
             <div class="field"><label for="sPages">Page count</label><input class="input" id="sPages" name="pages" type="number" min="1" max="20000" inputmode="numeric"></div>
@@ -1128,20 +1164,27 @@ img{max-width:100%;display:block}
             <div id="sLookupOut"></div>
           </div>
           <div class="lookaside__track">
-            <aside class="lookaside" id="sLookAside">
-              <p class="lookaside__cap">Look it up</p>
-              <a class="btn btn--sm btn--ghost" id="sGoodreads" href="https://www.goodreads.com" target="_blank" rel="noopener noreferrer">Open on Goodreads</a>
-              <a class="btn btn--sm btn--ghost" id="sGoogle" href="https://www.google.com" target="_blank" rel="noopener noreferrer">Google it</a>
-              <!-- Ask AI's answer, under the links and inside the same sticky
-                   card so the two travel together. As a sibling of the card it
-                   was painted over by it the moment the page scrolled. -->
+            <div class="asidestack">
+              <aside class="lookaside" id="sLookAside">
+                <p class="lookaside__cap">Look it up</p>
+                <a class="btn btn--sm btn--ghost" id="sGoodreads" href="https://www.goodreads.com" target="_blank" rel="noopener noreferrer">Open on Goodreads</a>
+                <a class="btn btn--sm btn--ghost" id="sGoogle" href="https://www.google.com" target="_blank" rel="noopener noreferrer">Google it</a>
+              </aside>
+              <!-- The answer is a card of its own under the links, not part of
+                   them. The stack is what sticks, so the two travel together:
+                   as a plain sibling of a sticky card it was painted over by
+                   that card the moment the page scrolled. -->
               <div class="askai askai--aside" id="sAgeAIOut" hidden></div>
-            </aside>
+            </div>
           </div>
-          <div class="field"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span>
+          <!-- The buttons are siblings of the label, not children of it. A label
+               with no "for" belongs to the first form control inside it, which
+               made Check online the labelled control of a label that also
+               contained Ask AI. -->
+          <div class="field field--age"><label>Reading level <span style="text-transform:none;letter-spacing:0">&mdash; drag both handles</span></label>
               <button class="btn btn--sm btn--sky agecheck" type="button" id="sAgeCheck">Check online</button>
               <button class="btn btn--sm btn--grape agecheck" type="button" id="sAgeAI">Ask AI</button>
-              <strong class="agemiss" id="sAgeMiss" hidden>Reading level not available.</strong></label>
+              <strong class="agemiss" id="sAgeMiss" hidden>Reading level not available.</strong>
             <div id="sAgeSlider"></div>
             <p class="hint" id="sAgeNote" hidden></p></div>
           <div class="field"><label for="sGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label><input class="input" id="sGenres" name="genres" placeholder="Young Adult, Fantasy" maxlength="300"></div>
@@ -1165,6 +1208,7 @@ img{max-width:100%;display:block}
           </div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
             <button class="btn btn--surf" type="submit" id="suggestSubmit">Send it to the organiser</button>
+            <button class="btn btn--ghost" type="button" id="suggestClear">Clear all fields</button>
             <span class="hint" id="suggestNote"></span>
           </div>
         </form>
@@ -1904,6 +1948,14 @@ function endpointTrouble(err){
   if(err === "unconfigured") return "No script address saved yet — add it under Admin → Settings.";
   if(err === "unreachable") return "Couldn't reach the script. In Apps Script, check Deploy → Manage deployments → Edit, and set \u201cWho has access\u201d to \u201cAnyone\u201d.";
   if(err === "unknown kind") return "The deployed script is an older copy. In Apps Script: Deploy → Manage deployments → Edit → Version: \u201cNew version\u201d → Deploy.";
+  /* the AI's own answers back, which the callers used to swallow — every one
+     of these was reaching the page as "something went wrong" */
+  if(err === "no api key") return "Asking the AI isn’t switched on — no key is saved in the script.";
+  if(err === "no title") return "It needs a title before it can answer.";
+  if(err === "empty") return "The AI answered with nothing at all. Try it again.";
+  if(err === "ran out of room") return "The AI ran out of room before it wrote an answer — the script’s token ceiling is too low.";
+  if(err === "refused") return "The AI declined to answer that one.";
+  if(String(err || "").indexOf("api ") === 0) return "The AI service answered with an error (" + err + ").";
   if(err === "crashed") return "The script hit an error. Open it in Apps Script and run setUpTrigger once — it'll ask permission to send email, which sign-in codes need.";
   if(String(err || "").indexOf("http ") === 0) return "The script answered with an error (" + err + "). Re-deploy it and try again.";
   return "";
@@ -5644,6 +5696,138 @@ function takeCandidate(a){
   fillTheirs("author");        /* they chose it, so it is not ours to change */
 }
 
+/* ---- the author-first lookup ----
+   Pressing Look up book with only an author used to put the cursor in the
+   title box and stop, which is not an answer to what was asked: the reader
+   has named someone and wants to know what they wrote.
+
+   It runs the same way round as the title-first flow, with the two questions
+   swapped. The name is settled first, and then the books under it are offered
+   as cards, one of which is picked and then confirmed. Both questions are
+   asked the same way \u2014 pick, then Confirm \u2014 and neither is waved through for
+   having only one answer. Nothing is filled in before the second Confirm.
+
+   The two flows draw into boxes of their own, each under the field it is
+   asking about: author cards under Author, book cards under Book Title, since
+   picking a book is what fills the title in. This flow\u2019s name band shares
+   #sAuthorPick with the author cards, and pickMode keeps those two from
+   painting over each other. */
+var pickMode = "";              /* "", "author" or "book" */
+var bookHits = [];
+var bookPicked = -1;
+var bookSettled = false;
+
+/* ---- the name, asked properly ----
+   The name used to be offered only when the catalogue spelt it differently,
+   and one it recognised went straight through to the books. That made the
+   commonest case the one case nobody was asked about — the same shortcut the
+   cards themselves gave up long ago. It is asked every time now, and picking
+   a name is not the same as settling on it: the Confirm beside it is what
+   settles it, one candidate or five.
+
+   nameSettled holds the name that was confirmed, so re-entering the lookup
+   under that name goes straight to the books while any other name reopens
+   the question. */
+var namePicks = [];
+var namePicked = -1;
+var nameTypo = false;           /* the catalogue spells it otherwise */
+var nameSettled = "";           /* "" while the question still stands */
+
+function sameName(a, b){
+  return String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+}
+
+/* What to offer under the typed name: the names on record that contain it,
+   or failing that the near spellings, or failing both the names the search
+   came back with. While there are hits at all there is something to confirm,
+   so the question is never skipped for want of a candidate. */
+function nameCandidates(names, typed){
+  var low = String(typed || "").trim().toLowerCase();
+  var held = names.filter(function(n){ return n.toLowerCase().indexOf(low) !== -1; });
+  if(held.length) return { list: held.slice(0, 3), typo: false };
+  var near = names.filter(function(n){ return titleCloseness(typed, n) < 2; });
+  if(near.length) return { list: near.slice(0, 3), typo: true };
+  return { list: names.slice(0, 3), typo: true };
+}
+
+/* Answered questions come off the page. The band lived in the column the book
+   cards’ Confirm reaches into, so leaving it up did not merely look untidy —
+   it sat under that button. */
+function clearNamePick(){
+  namePicks = []; namePicked = -1;
+  var host = $("sAuthorPick");
+  if(host){ host.hidden = true; host.innerHTML = ""; }
+}
+
+function renderNamePick(){
+  var host = $("sAuthorPick");
+  if(!host) return;
+  if(!namePicks.length){ host.hidden = true; host.innerHTML = ""; return; }
+  host.hidden = false;
+  host.innerHTML = '<span class="authpick__lab">' +
+      (nameTypo ? "Did you mean\u2026"
+        : namePicks.length > 1
+          ? "Which author? Pick one, then confirm to see their books"
+          : "Found this author \u2014 pick it, then confirm to see their books") + "</span>" +
+    namePicks.map(function(n, i){
+      var on = i === namePicked;
+      return '<span class="authrow">' +
+        '<button class="authrow__pick" type="button" data-namepick="' + i + '" aria-pressed="' + on + '">' +
+          esc(n) + "</button>" +
+        '<a class="authrow__web" href="' + esc(googleSearch(n, "")) + '" target="_blank" ' +
+          'rel="noopener noreferrer" aria-label="Search the web for ' + esc(n) + '">&#127760;</a>' +
+        '<button class="btn btn--sm btn--surf authrow__ok" type="button" data-nameok="' + i + '"' + (on ? "" : " hidden") +
+          ' aria-label="Confirm ' + esc(n) + ' and see their books">Confirm</button>' +
+      "</span>";
+    }).join("");
+}
+
+/* Distinct titles under one name. Deduped on the title itself, since a work
+   with several editions comes back several times and they are all the same
+   choice to a reader. */
+function bookCandidates(hits, author){
+  var want = String(author || "").toLowerCase();
+  var seen = {}, outList = [];
+  hits.forEach(function(h){
+    if(!h.title) return;
+    var key = h.title.toLowerCase();
+    if(seen[key]){ seen[key].count++; return; }
+    seen[key] = { title: h.title, name: h.author || author, year: h.year || "", count: 1,
+      /* their own books first when a search drags in anthologies and others */
+      mine: String(h.author || "").toLowerCase().indexOf(want) !== -1 ? 0 : 1 };
+    outList.push(seen[key]);
+  });
+  outList.sort(function(a, b){ return (a.mine - b.mine) || (b.count - a.count); });
+  return outList.slice(0, 6);
+}
+
+function bookPickWorth(){ return bookHits.length > 0; }
+
+function renderBookPick(){
+  var host = $("sBookPick");
+  if(!host) return;
+  if(!bookPickWorth() || bookSettled){ host.hidden = true; host.innerHTML = ""; return; }
+  var author = $("sAuthor").value.trim();
+  host.hidden = false;
+  host.innerHTML = '<span class="authpick__lab">' +
+      (bookHits.length > 1
+        ? "Which book? Pick one, then confirm to fill the rest in"
+        : "Found this one \u2014 pick it, then confirm to fill the rest in") + "</span>" +
+    bookHits.map(function(bk, i){
+      var on = i === bookPicked;
+      return '<span class="authrow">' +
+        '<button class="authrow__pick" type="button" data-bookpick="' + i + '" aria-pressed="' + on + '">' +
+          esc(bk.title) +
+          "<small>" + esc(bk.name) + (bk.year ? " \u00b7 " + esc(bk.year) : "") + "</small></button>" +
+        '<a class="authrow__web" href="' + esc(googlePair(bk.title, author || bk.name)) + '" target="_blank" ' +
+          'rel="noopener noreferrer" title="Google &ldquo;' + esc(bk.title) + '&rdquo; &ldquo;' + esc(author || bk.name) + '&rdquo;" ' +
+          'aria-label="Search the web for ' + esc(bk.title) + '">&#127760;</a>' +
+        '<button class="btn btn--sm btn--surf authrow__ok" type="button" data-bookok="' + i + '"' + (on ? "" : " hidden") +
+          ' aria-label="Confirm ' + esc(bk.title) + ' and fill in the rest">Confirm</button>' +
+      "</span>";
+    }).join("");
+}
+
 /* Every candidate is a choice, including a lone one. A single name used to be
    waved through on the grounds that a novel usually has one author — but that
    made the one common case the one case nobody was asked about, and the
@@ -5655,6 +5839,8 @@ function authorPickWorth(){
 function renderAuthorPick(){
   var host = $("sAuthorPick");
   if(!host) return;
+  /* the other flow owns this box at the moment */
+  if(pickMode === "book") return;
   var title = $("sTitle").value.trim();
   /* settled by Confirm: the question is answered, so stop asking it */
   if(!authorPickWorth() || authorSettled){ host.hidden = true; host.innerHTML = ""; return; }
@@ -5720,7 +5906,7 @@ async function checkAuthorSpelling(){
      one press of "Fill in the details" switched the spell-check off for the
      rest of the session, including when the picker had decided it had
      nothing worth showing. */
-  var showing = host && !host.hidden && host.querySelector("[data-authpick]");
+  var showing = host && !host.hidden && host.querySelector("[data-authpick],[data-namepick]");
   if(!title || !typed || showing){ return; }
   var hits = (await lookupBook(title)).hits;
   var names = [];
@@ -5861,6 +6047,94 @@ function initSuggestForm(){
   renderRatingRows();
   syncSearchLinks();
 }
+/* ---- starting over, and what counts as filled in ----
+   A lookup that went wrong leaves more behind than the two boxes at the top:
+   a settled name, a picked card, a cover, a summary nobody chose. Starting
+   over has to put all of it back. */
+function clearSuggestForm(){
+  $("suggestForm").reset();
+  sugCover = "";
+  /* the pickers, and everything that decides what they are asking */
+  pickMode = "";
+  authorHits = []; authorPicked = -1; authorSettled = false;
+  bookHits = []; bookPicked = -1; bookSettled = false;
+  namePicks = []; namePicked = -1; nameTypo = false; nameSettled = "";
+  titleFixes = []; authorFixes = [];
+  clearNamePick();
+  renderBookPick();
+  renderAuthorPick();
+  var ai = $("sAgeAIOut");
+  if(ai){ ai.hidden = true; ai.innerHTML = ""; }
+  clearMissing();
+  $("suggestNote").textContent = "";
+  initSuggestForm();          /* slider, ratings, cover, summary, the links */
+  $("sTitle").focus();
+}
+
+/* Three boxes the organiser cannot do without. The rest are worth a question
+   on the way out, but not a refusal — a book nobody has rated is still a book
+   worth putting forward. */
+var SUGGEST_MUST = [
+  { id: "sTitle",  name: "Book title" },
+  { id: "sAuthor", name: "Author" },
+  { id: "sBy",     name: "Your name" }
+];
+function clearMissing(){
+  var f = $("suggestForm");
+  if(!f) return;
+  [].forEach.call(f.querySelectorAll(".field--missing"), function(el){
+    el.classList.remove("field--missing");
+  });
+}
+function markMissing(ids){
+  clearMissing();
+  ids.forEach(function(id){
+    var box = $(id), fld = box && box.closest(".field");
+    if(fld) fld.classList.add("field--missing");
+  });
+}
+/* "x, y and z": the list is read as a sentence, not printed as a table */
+function andList(names){
+  if(names.length <= 1) return names[0] || "";
+  return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+}
+function missingMust(){
+  return SUGGEST_MUST.filter(function(m){ return !$(m.id).value.trim(); });
+}
+/* The rest, judged by what the submission would actually carry rather than by
+   what the box looks like: a slider still at its full span has said nothing,
+   and a summary nobody picked is not a summary. */
+function missingRest(){
+  var age = dualValue("sAge");
+  var out = [];
+  if(!$("sPages").value.trim()) out.push("page count");
+  if(!normaliseGenres($("sGenres").value).length) out.push("genres");
+  if(age.lo === 12 && age.hi === AGE_TOP) out.push("reading level");
+  if(!ratingsForSubmit().length) out.push("readers’ ratings");
+  if(!sugCover) out.push("a cover");
+  if(!sumToSend().text.trim()) out.push("the summary");
+  return out;
+}
+/* Enter in a one-line box submits a form by default, and that is what was
+   painting boxes red mid-lookup: a title typed, Enter pressed to run the
+   lookup, and the form instead ran its checks and marked the two fields
+   nobody had reached yet. Sending is a deliberate press of Send, so the
+   whole implicit route is closed. Buttons and links keep their Enter — that
+   is how Send is reached from the keyboard — and the summary keeps its
+   newlines. */
+$("suggestForm").addEventListener("keydown", function(e){
+  if(e.key !== "Enter" || e.shiftKey) return;
+  var t = e.target, tag = t.tagName;
+  if(tag === "TEXTAREA" || tag === "BUTTON" || tag === "A") return;
+  e.preventDefault();
+});
+
+/* typing into a box the form was waiting on answers it */
+$("suggestForm").addEventListener("input", function(e){
+  var fld = e.target.closest && e.target.closest(".field--missing");
+  if(fld && String(e.target.value || "").trim()) fld.classList.remove("field--missing");
+});
+
 /* keep the two "go and look" links pointed at whatever's typed */
 function syncSearchLinks(){
   var t = $("sTitle").value.trim(), a = $("sAuthor").value.trim();
@@ -5966,12 +6240,15 @@ async function ageAskAI(){
         '<p class="askai__foot">Reading level is yours to set \u2014 this changes nothing.</p>';
       return;
     }
+    /* Say which failure it was. The generic line cost a morning: the specific
+       reason was sitting in j.error the whole time, and endpointTrouble
+       already knew how to say it. The code goes in the footnote too, so a
+       failure nobody has written a sentence for is still readable. */
+    var err = (j && j.error) || "no answer";
     out.innerHTML = '<p class="askai__lab">Ask AI</p><p>' +
-      esc(j && j.error === "no api key"
-        ? "Asking the AI isn\u2019t switched on \u2014 try Check online instead."
-        : j && j.error === "unknown kind"
-        ? "The club\u2019s script is an older copy that can\u2019t answer this yet."
-        : "Couldn\u2019t get an answer just now \u2014 try Check online instead.") + "</p>";
+      esc(endpointTrouble(err) ||
+        "Couldn\u2019t get an answer just now \u2014 try Check online instead.") + "</p>" +
+      '<p class="askai__foot">' + esc(err) + "</p>";
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = "Ask AI"; }
   }
@@ -6008,11 +6285,63 @@ function lookupEnd(){ lookupBusy = false; busyOff("sLookBar", $("sAskAI"), "Look
 var sumBusy = false;
 function sumLabel(){ return sugMode === "ai" ? "Write it" : "Search the web"; }
 
+/* Settle the name, then offer what is under it. Correcting the spelling is
+   the same move the title box already makes: only when what was typed is not
+   a name the catalogue holds, and never a confirmation of a name that was
+   right to begin with. */
+async function lookupFromAuthor(author, out){
+  pickMode = "book";
+  bookSettled = false;
+  hideTitleFix();      /* the title box is empty here; an old correction is stale */
+  /* the fielded search first, since it answers with that person's work rather
+     than every book that mentions them */
+  var hits = await searchBooks('author:"' + author + '"');
+  if(!hits.length) hits = await searchBooks(author);
+
+  if(!hits.length){
+    clearNamePick();
+    bookHits = []; bookPicked = -1; renderBookPick();
+    out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn\u2019t find an author by that name. ' +
+      'Check the spelling, or put a title in as well.</p>';
+    return;
+  }
+
+  var names = [];
+  hits.forEach(function(h){ if(h.author && names.indexOf(h.author) === -1) names.push(h.author); });
+
+  /* The name first, every time. Only the name Confirm was pressed on gets
+     past this — type a different one and it is asked again. */
+  if(!sameName(nameSettled, author)){
+    var cand = nameCandidates(names, author);
+    namePicks = cand.list; nameTypo = cand.typo; namePicked = -1;
+    renderNamePick();
+    bookHits = []; bookPicked = -1; renderBookPick();
+    out.innerHTML = '<p class="hint" style="margin-top:10px">Pick the author and press ' +
+      '<strong>Confirm</strong> to see their books \u2014 nothing has been filled in.</p>';
+    return;
+  }
+
+  clearNamePick();     /* answered, so it comes off the page before the books */
+  bookHits = bookCandidates(hits, author);
+  bookPicked = -1;
+  renderBookPick();
+  out.innerHTML = '<p class="hint" style="margin-top:10px">' +
+    'Books by <strong>' + esc(author) + '</strong>. Pick one and press <strong>Confirm</strong> ' +
+    'to fill the rest in \u2014 nothing has been touched yet.</p>';
+}
+
 async function askAIForDetails(){
   var title = $("sTitle").value.trim(), author = $("sAuthor").value.trim();
   var out = $("sLookupOut");
-  if(!title){ $("sTitle").focus(); return; }
   if(lookupBusy) return;            /* already asking; a second press is the same question */
+  /* an author on their own is a question worth answering, not a missing title */
+  if(!title && author){
+    lookupStart();
+    try{ return await lookupFromAuthor(author, out); }
+    finally{ lookupEnd(); }
+  }
+  if(!title){ $("sTitle").focus(); return; }
+  pickMode = "author";
 
   lookupStart();
   try{
@@ -6238,8 +6567,75 @@ document.addEventListener("click", async function(e){
     }
     return;
   }
+  if(e.target.closest && e.target.closest("#suggestClear")){ clearSuggestForm(); return; }
   if(e.target.closest && e.target.closest("#sAgeCheck")){ ageOnline(); return; }
   if(e.target.closest && e.target.closest("#sAgeAI")){ await ageAskAI(); return; }
+  /* the name: taken here, and nothing more than taken. Selecting it puts it
+     in the box so it can be read and searched from; the books stay unasked
+     for until the Confirm beside it is pressed. */
+  var np = e.target.closest && e.target.closest("[data-namepick]");
+  if(np){
+    var whichN = Number(np.getAttribute("data-namepick"));
+    if(namePicks[whichN]){
+      namePicked = whichN;
+      $("sAuthor").value = namePicks[whichN];
+      fillTheirs("author");      /* they chose it, so the lookup leaves it be */
+      renderNamePick();
+      syncSearchLinks();
+    }
+    return;
+  }
+  /* Confirm: the name is settled, the band comes down, and the books under
+     it are fetched. Clearing it here as well as in the lookup means it is
+     gone the moment it is answered rather than when the answer comes back. */
+  var nok = e.target.closest && e.target.closest("[data-nameok]");
+  if(nok){
+    var okN = namePicks[Number(nok.getAttribute("data-nameok"))];
+    if(okN){
+      $("sAuthor").value = okN;
+      fillTheirs("author");
+      nameSettled = okN;
+      clearNamePick();
+      syncSearchLinks();
+      await askAIForDetails();   /* now go and find what is under that name */
+    }
+    return;
+  }
+  /* a book under that author: take the title, show Confirm, fill nothing.
+     Same bargain as the author cards \u2014 select first, confirm second. */
+  var bp = e.target.closest && e.target.closest("[data-bookpick]");
+  if(bp){
+    var whichBk = Number(bp.getAttribute("data-bookpick"));
+    var bk = bookHits[whichBk];
+    if(bk){
+      bookPicked = whichBk;
+      $("sTitle").value = bk.title;
+      lastTitleChecked = bk.title.trim();   /* picked from a card, so not a typo */
+      hideTitleFix();
+      renderBookPick();
+      syncSearchLinks();
+    }
+    return;
+  }
+  /* Confirm: the title is settled, so fill in from it exactly as the
+     title-first flow does. The author was settled before the cards were
+     drawn, so that question is not asked again on the way through. */
+  var bok = e.target.closest && e.target.closest("[data-bookok]");
+  if(bok){
+    var okBk = bookHits[Number(bok.getAttribute("data-bookok"))];
+    if(okBk){
+      $("sTitle").value = okBk.title;
+      lastTitleChecked = okBk.title.trim();
+      hideTitleFix();
+      bookSettled = true;
+      authorSettled = true;      /* settled first in this flow; do not re-ask */
+      pickMode = "author";
+      renderBookPick();
+      syncSearchLinks();
+      await askAIForDetails();
+    }
+    return;
+  }
   /* a name on its own: take the name, show Confirm, change nothing else.
      The other names stay up, so a wrong pick costs one more click. */
   var ap = e.target.closest && e.target.closest("[data-authpick]");
@@ -6286,6 +6682,13 @@ $("sAuthor").addEventListener("input", function(){
   /* typing over it is a choice of its own, so the cards may speak again */
   fillTheirs("author");
   authorPicked = -1; authorSettled = false;
+  /* a different name means different books, so that list is no longer an
+     answer to anything and neither is the pick inside it */
+  bookHits = []; bookPicked = -1; bookSettled = false;
+  renderBookPick();
+  /* and the name is a question again, so the answer to the old one goes */
+  nameSettled = "";
+  if(pickMode === "book"){ pickMode = ""; clearNamePick(); }
   syncSearchLinks();
   clearTimeout(authTimer);
   if($("sAuthorPick") && !authorHits.length){ $("sAuthorPick").hidden = true; }
@@ -6294,6 +6697,12 @@ $("sAuthor").addEventListener("input", function(){
 $("sAuthor").addEventListener("blur", function(){ clearTimeout(authTimer); setTimeout(checkAuthorSpelling, 120); });
 $("sTitle").addEventListener("input", function(){
   authorPicked = -1; authorSettled = false;   /* another book, another question */
+  /* the cards sit under this box now, so a pressed one has to let go the
+     moment the title stops being the one it filled in. A list already put
+     away by Confirm stays away: it is not an answer to an edit. */
+  var booksUp = $("sBookPick") && !$("sBookPick").hidden;
+  bookPicked = -1; bookSettled = false;
+  if(booksUp) renderBookPick();
   syncSearchLinks();
 });
 $("sPages").addEventListener("input", function(){ fillTheirs("pages"); });
@@ -6312,16 +6721,36 @@ $("sRatings").addEventListener("input", function(e){
 $("suggestForm").addEventListener("submit", async function(e){
   e.preventDefault();
   var el = e.target.elements;
+  var note = $("suggestNote");
+  /* The three that cannot be guessed at. Named together and marked together —
+     the browser's own check names one box at a time and had nothing to say
+     about the ones that are merely empty, which is why the form does its own. */
+  var short = missingMust();
+  if(short.length){
+    markMissing(short.map(function(m){ return m.id; }));
+    note.textContent = "Still needed: " +
+      andList(short.map(function(m){ return m.name; })) + ".";
+    $(short[0].id).focus();
+    return;
+  }
+  clearMissing();
   var title = el.title.value.trim(), author = el.author.value.trim(), by = el.by.value.trim();
-  if(!title || !author || !by) return;
   var age = dualValue("sAge");
   var genres = normaliseGenres(el.genres.value);
   var chosen = sumToSend();
   var blurb = chosen.text;
-  var note = $("suggestNote");
   if(chosen.unchosen){
     note.textContent = "There\u2019s more than one summary \u2014 pick which one to send.";
     if($("sSumWhich")) $("sSumWhich").focus();
+    return;
+  }
+
+  /* Everything else is a question, not a bar. The organiser would rather have
+     the book with gaps than not have it. */
+  var gaps = missingRest();
+  if(gaps.length && !confirm("You haven’t filled in " + andList(gaps) +
+      " — are you sure you want to submit?")){
+    note.textContent = "Nothing sent — fill in what you’d like to add.";
     return;
   }
 
@@ -6334,10 +6763,8 @@ $("suggestForm").addEventListener("submit", async function(e){
       ratings: ratingsForSubmit()
     });
     if(!res.ok){ note.textContent = submitFailMsg(res); return; }
+    clearSuggestForm();
     note.textContent = "Sent. The organiser will take a look.";
-    e.target.reset();
-    sugCover = "";
-    initSuggestForm();
     return;
   }
 
