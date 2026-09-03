@@ -100,11 +100,17 @@ img{max-width:100%;display:block}
 .menu__burger[aria-expanded="true"] span{background:var(--on-grape)}
 .menu__panel{position:absolute;top:calc(100% + 8px);right:0;z-index:60;min-width:200px;display:flex;flex-direction:column;gap:2px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:8px}
 .menu__panel[hidden]{display:none}
-.menu__item{font-family:var(--f-display);font-weight:700;font-size:14px;text-align:left;text-decoration:none;padding:8px 12px;border:2px solid transparent;border-radius:6px;background:none;color:var(--ink);cursor:pointer;width:100%}
-.menu__item:hover{background:var(--sunk)}
-/* the one that ends something, kept apart from the ones that go somewhere */
-.menu__item--out{margin-top:6px;border-top:2px solid var(--hairline);border-radius:0 0 6px 6px;padding-top:12px;color:var(--muted)}
-.menu__item--out:hover{color:var(--ink)}
+/* Named through the panel so it beats ".navlinks a", which was colouring the
+   four links muted while Admin — a button, so out of that selector's reach —
+   stayed full strength and read as the highlighted one. Six items, one look. */
+.menu__panel .menu__item{font-family:var(--f-display);font-weight:700;font-size:14px;text-align:left;text-decoration:none;padding:8px 12px;border:2px solid transparent;border-radius:6px;background:none;color:var(--ink);cursor:pointer;width:100%}
+.menu__panel .menu__item:hover{background:var(--sunk);color:var(--ink)}
+/* the one that ends or begins a session, kept apart from the ones that go
+   somewhere — a rule above it, and nothing else different */
+.menu__panel .menu__item--out{margin-top:6px;border-top:2px solid var(--hairline);border-radius:0 0 6px 6px;padding-top:12px}
+/* The sign-in card's two ways on: a code for an account that exists, and a way
+   to make one. Opposite ends of the row so neither is taken for the other. */
+.loginact{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:18px}
 
 /* ============ covers ============ */
 .cover{position:relative;display:block;aspect-ratio:2/3;border:2px solid var(--edge);border-radius:5px;overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff)}
@@ -1105,7 +1111,7 @@ img{max-width:100%;display:block}
           <a class="menu__item" role="menuitem" href="#recs">Recommendations</a>
           <a class="menu__item" role="menuitem" href="#badges">Badges</a>
           <button class="menu__item" role="menuitem" type="button" id="menuAdmin">Admin</button>
-          <button class="menu__item menu__item--out" role="menuitem" type="button" id="menuSignOut">Sign out</button>
+          <button class="menu__item menu__item--out" role="menuitem" type="button" id="menuSession">Sign in</button>
         </div>
       </div>
     </nav>
@@ -2017,15 +2023,6 @@ function signInTrouble(err){
   if(err === "pending") return "Your account is pending approval from an organiser.";
   return endpointTrouble(err);
 }
-/* The header's Sign up button is hidden behind this modal, so the way out is
-   offered here — in the row with Send me a code, since it is the other thing
-   you might press, not a remark about the address above. */
-function showSignupWay(){
-  var slot = $("loginSignupSlot");
-  if(!slot || $("loginToSignup")) return;
-  slot.innerHTML = '<button class="btn btn--surf" type="button" id="loginToSignup">Sign up</button>';
-}
-
 async function restoreSession(){
   var token = sessionToken();
   if(!token || !endpoint()) return;
@@ -2087,9 +2084,13 @@ function renderLogin(){
            down by the buttons where it read as a comment on the pressing */
         '<span class="hint loginrow__note" id="loginNote"></span>' +
       "</div>" +
-      '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px">' +
+      /* the two ways out of this card, at opposite ends of the row and in
+         different colours: one sends a code to an account that exists, the
+         other is for not having one yet */
+      '<div class="loginact">' +
         '<button class="btn btn--surf" type="button" id="loginSend">Send me a code</button>' +
-        '<span id="loginSignupSlot"></span></div>' +
+        '<button class="btn btn--grape" type="button" id="loginToSignup">Sign up</button>' +
+      "</div>" +
       '<p class="hint" style="margin-top:16px">Your address is kept privately by the organiser and never published on this site.</p>';
   }else{
     body.innerHTML =
@@ -4114,6 +4115,13 @@ function tryUnlock(){
    anywhere on the page, or Escape. Nothing here decides what the choices do —
    Admin still opens the same locked panel and Sign out is the same sign-out
    the account sheet has always used. */
+/* Sign out is a lie when nobody is signed in, and the press that follows it
+   would be a no-op. The word follows the session. */
+function paintMenuSession(){
+  var b = $("menuSession");
+  if(!b) return;
+  b.textContent = me ? "Sign out" : "Sign in";
+}
 function menuShut(){
   var p = $("menuPanel"), b = $("menuOpen");
   if(p) p.hidden = true;
@@ -4813,8 +4821,6 @@ document.addEventListener("click", async function(e){
     var lres = await callEndpoint("login-request", { email: lem });
     if(!lres.ok){
       $("loginNote").textContent = signInTrouble(lres.error) || "Couldn't send a code just now.";
-      /* nothing to sign up for if the organiser already has the request */
-      if(lres.error === "not a member") showSignupWay();
       return;
     }
     loginEmail = lem; loginStep = "code"; renderLogin();
@@ -4829,7 +4835,6 @@ document.addEventListener("click", async function(e){
       $("loginNote").textContent = vres.error === "expired" ? "That code has expired — send a new one."
         : vres.error === "wrong" ? "Not right. " + (vres.left ? vres.left + " tries left." : "Send a new code.")
         : signInTrouble(vres.error) || "Couldn't sign you in.";
-      if(vres.error === "not a member") showSignupWay();
       return;
     }
     setSessionToken(vres.token);
@@ -5166,7 +5171,8 @@ document.addEventListener("click", async function(e){
 
   if(t.closest("#menuOpen")){ menuToggle(); return; }
   if(t.closest("#menuAdmin")){ openAdmin(); return; }
-  if(t.closest("#menuSignOut")){ await signOut(); return; }
+  /* the same button either way round: it ends a session or it starts one */
+  if(t.closest("#menuSession")){ if(me) await signOut(); else openLogin(); return; }
   if(t.closest("#admUnlock")){ tryUnlock(); return; }
   if((el = t.closest("[data-atab]"))){ adminTab = el.getAttribute("data-atab"); renderAdmin(); return; }
   if((el = t.closest("[data-mfilter]"))){ meetBookFilter = el.getAttribute("data-mfilter"); renderAdminPane(); return; }
@@ -6909,6 +6915,9 @@ $("suggestForm").addEventListener("submit", async function(e){
 
 /* ---------- boot ---------- */
 function renderWhoami(){
+  /* before the early return below: the menu has something true to say about
+     the session even where signing in is switched off */
+  paintMenuSession();
   var btn = $("loginOpen");
   if(!btn) return;
   var join = $("signupOpen");
