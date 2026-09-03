@@ -111,6 +111,36 @@ img{max-width:100%;display:block}
 /* The sign-in card's two ways on: a code for an account that exists, and a way
    to make one. Opposite ends of the row so neither is taken for the other. */
 .loginact{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:18px}
+/* ---- members ---- */
+.memgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.memcard{display:flex;gap:14px;align-items:center;text-align:left;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-sm);padding:14px;cursor:pointer;width:100%}
+.memcard:hover{background:var(--sunk)}
+.memcard__pic,.memhead__pic{flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid var(--edge);background:var(--c,var(--sky));color:var(--cf,var(--on-sky));font-family:var(--f-display);font-weight:800;overflow:hidden}
+.memcard__pic{width:46px;height:46px;font-size:15px}
+.memhead__pic{width:74px;height:74px;font-size:24px}
+.memcard__pic img,.memhead__pic img{width:100%;height:100%;object-fit:cover}
+.memcard__body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.memcard__name{font-family:var(--f-display);font-weight:800;font-size:17px;color:var(--ink)}
+.memcard__meta{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.memhead{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:18px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:18px}
+.memhead__who{min-width:0;flex:1 1 240px}
+.memhead__who h3{font-size:26px}
+.memhead__meta{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-top:6px}
+/* how long they have been here, said in the units a person would use */
+.memtag{display:inline-block;margin-left:8px;border:2px solid var(--edge);border-radius:999px;background:var(--zest);color:var(--on-zest);padding:2px 10px;font-size:11px;font-weight:700}
+.memlinks{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.memlinks__none{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.memsub{font-family:var(--f-display);font-size:15px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:24px 0 10px}
+.memread{display:flex;flex-direction:column;gap:8px}
+.memread__row{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.4fr) auto;gap:12px;align-items:center;text-align:left;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-sm);padding:12px 14px;cursor:pointer;width:100%}
+.memread__row:hover{background:var(--sunk)}
+.memread__t{font-family:var(--f-display);font-weight:700;font-size:15.5px;color:var(--ink)}
+.memread__a,.memread__w{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.memread__w{text-align:right}
+@media (max-width:640px){
+  .memread__row{grid-template-columns:minmax(0,1fr);gap:3px}
+  .memread__w{text-align:left}
+}
 
 /* ============ covers ============ */
 .cover{position:relative;display:block;aspect-ratio:2/3;border:2px solid var(--edge);border-radius:5px;overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff)}
@@ -1110,6 +1140,7 @@ img{max-width:100%;display:block}
           <a class="menu__item" role="menuitem" href="#shelf">Previous Books</a>
           <a class="menu__item" role="menuitem" href="#recs">Recommendations</a>
           <a class="menu__item" role="menuitem" href="#badges">Badges</a>
+          <a class="menu__item" role="menuitem" href="#members">Members</a>
           <button class="menu__item" role="menuitem" type="button" id="menuAdmin">Admin</button>
           <button class="menu__item menu__item--out" role="menuitem" type="button" id="menuSession">Sign in</button>
         </div>
@@ -1262,6 +1293,23 @@ img{max-width:100%;display:block}
   </section>
 
   <!-- ===== BADGES ===== -->
+  <!-- Everyone in the club, and what each of them has read with it. The
+       directory and a member's own page share this section rather than opening
+       a modal: the profile leads on to a book, and that book on to its reading
+       sections, which is one level deeper than a modal can go comfortably. -->
+  <section class="section" id="members">
+    <div class="wrap">
+      <div class="section__head">
+        <div>
+          <p class="eyebrow">Who&rsquo;s here</p>
+          <h2>Members</h2>
+          <p>Everyone in the club, how long they&rsquo;ve been in it, and every book they&rsquo;ve read with us.</p>
+        </div>
+      </div>
+      <div id="memberPage"></div>
+    </div>
+  </section>
+
   <section class="section" id="badges">
     <div class="wrap">
       <div class="section__head badgehead">
@@ -3280,6 +3328,114 @@ function andList(names){
   if(names.length < 2) return names[0] || "";
   return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
 }
+/* ---- members ----
+   The directory and one member's page are the same section, swapped: the page
+   leads on to a book and that book to its reading sections, which is a level
+   deeper than a modal goes comfortably. */
+var memberWho = "";              /* "" is the directory */
+
+/* How long someone has been in the club, counted in the units a person would
+   use: months and days until the first anniversary, years and months after it.
+   Whole calendar months rather than a division, so "1 month" starts on the
+   day of the month they joined and not 30 days later. */
+function sinceJoined(iso, now){
+  var from = parseDate(iso);
+  if(!from) return "";
+  var to = now || new Date();
+  if(to < from) return "";
+  var months = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
+  if(to.getDate() < from.getDate()) months--;
+  if(months < 0) months = 0;
+  var plural = function(n, word){ return n + " " + word + (n === 1 ? "" : "s"); };
+  if(months >= 12) {
+    var years = Math.floor(months / 12), left = months % 12;
+    return plural(years, "year") + (left ? ", " + plural(left, "month") : "");
+  }
+  /* The days since the month rolled over, which is where the day-of-month
+     sits. Floored, not rounded: "to" is the moment this is read and "mark" is
+     a midnight, so rounding turned every afternoon into another whole day —
+     joining this morning read as "1 day" before lunch. */
+  var mark = new Date(from.getFullYear(), from.getMonth() + months, from.getDate());
+  var days = Math.max(0, Math.floor((to - mark) / 86400000));
+  return plural(months, "month") + (days ? ", " + plural(days, "day") : "");
+}
+function membersSince(m){ return m ? sinceJoined(m.joined) : ""; }
+
+/* every book this member has read with the club, newest finished first */
+function booksReadBy(id){
+  return state.books.filter(function(b){
+    return (b.members || []).indexOf(id) !== -1;
+  }).sort(function(a, b){
+    return String(b.finished || b.started || "").localeCompare(String(a.finished || a.started || ""));
+  });
+}
+function memberPic(m, cls){
+  return '<span class="' + cls + '" ' + hueStyle(m) + ">" +
+    (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>";
+}
+function renderMembers(){
+  var host = $("memberPage");
+  if(!host) return;
+  var who = memberWho ? memberById(memberWho) : null;
+  if(memberWho && !who) memberWho = "";      /* a member who has since gone */
+  host.innerHTML = who ? memberProfileHTML(who) : memberListHTML();
+}
+function memberListHTML(){
+  if(!state.members.length) return '<p class="focusnote">No members yet.</p>';
+  return '<div class="memgrid">' + state.members.map(function(m){
+    var n = booksReadBy(m.id).length;
+    var since = membersSince(m);
+    return '<button class="memcard" type="button" data-member="' + esc(m.id) + '">' +
+      memberPic(m, "memcard__pic") +
+      '<span class="memcard__body">' +
+        '<span class="memcard__name">' + esc(m.name) + "</span>" +
+        '<span class="memcard__meta">' +
+          (m.joined ? "Joined " + esc(shortDate(m.joined)) : "Join date not set") +
+        "</span>" +
+        '<span class="memcard__meta">' + n + " book" + (n === 1 ? "" : "s") +
+          " with the club" + (since ? " · " + esc(since) : "") + "</span>" +
+      "</span></button>";
+  }).join("") + "</div>";
+}
+function memberProfileHTML(m){
+  var since = membersSince(m);
+  var read = booksReadBy(m.id);
+  return '<button class="btn btn--sm btn--ghost" type="button" data-member="">&#8592; All members</button>' +
+    '<div class="memhead">' +
+      memberPic(m, "memhead__pic") +
+      '<div class="memhead__who">' +
+        "<h3>" + esc(m.name) + "</h3>" +
+        '<p class="memhead__meta">' +
+          (m.joined ? "Joined " + esc(shortDate(m.joined)) : "Join date not set") +
+          (since ? ' <span class="memtag">' + esc(since) + " in the club</span>" : "") +
+        "</p>" +
+      "</div>" +
+      '<div class="memlinks">' + profileLinkHTML(m.goodreads, "Goodreads") +
+        profileLinkHTML(m.fable, "Fable") + "</div>" +
+    "</div>" +
+    '<h4 class="memsub">Read with the club</h4>' +
+    (read.length
+      ? '<div class="memread">' + read.map(function(b){
+          return '<button class="memread__row" type="button" data-memberbook="' + esc(b.id) + '">' +
+            '<span class="memread__t">' + esc(b.title) + "</span>" +
+            '<span class="memread__a">' + esc(b.author || "") + "</span>" +
+            '<span class="memread__w">' +
+              (b.finished ? "Finished " + esc(shortDate(b.finished))
+                : b.started ? "Started " + esc(shortDate(b.started)) : "In progress") + "</span>" +
+          "</button>";
+        }).join("") + "</div>"
+      : '<p class="focusnote">No books with the club yet.</p>');
+}
+/* A link when there is one, and a plain note when there is not — an empty
+   space says nothing about whether they have a profile elsewhere. */
+function profileLinkHTML(url, name){
+  var safe = safeUrl(url);
+  return safe
+    ? '<a class="btn btn--sm btn--ghost" href="' + esc(safe) + '" target="_blank" rel="noopener noreferrer">' +
+      esc(name) + "</a>"
+    : '<span class="memlinks__none">No ' + esc(name) + " profile</span>";
+}
+
 function renderFocus(){
   var bar = $("focusBar");
   if(!state.members.length){ bar.innerHTML = ""; $("focusNote").hidden = true; return; }
@@ -5169,6 +5325,13 @@ document.addEventListener("click", async function(e){
     return;
   }
 
+  /* into a member's page, and back out of it */
+  if((el = t.closest("[data-member]"))){
+    memberWho = el.getAttribute("data-member");
+    renderMembers();
+    if(!memberWho) $("members").scrollIntoView({ block: "start" });
+    return;
+  }
   if(t.closest("#menuOpen")){ menuToggle(); return; }
   if(t.closest("#menuAdmin")){ openAdmin(); return; }
   /* the same button either way round: it ends a session or it starts one */
@@ -6209,11 +6372,6 @@ function markMissing(ids){
     if(fld) fld.classList.add("field--missing");
   });
 }
-/* "x, y and z": the list is read as a sentence, not printed as a table */
-function andList(names){
-  if(names.length <= 1) return names[0] || "";
-  return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
-}
 function missingMust(){
   return SUGGEST_MUST.filter(function(m){ return !$(m.id).value.trim(); });
 }
@@ -6955,7 +7113,8 @@ function renderAll(){
     focusIds = [me.memberId]; focusAuto = true;
   }
   renderWhoami();
-  renderHero(); renderShelf(); renderRecs(); renderFocus(); renderTree(); renderTimeline();
+  renderHero(); renderShelf(); renderRecs(); renderMembers();
+  renderFocus(); renderTree(); renderTimeline();
 }
 
 (async function boot(){
