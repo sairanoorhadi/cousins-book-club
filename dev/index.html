@@ -131,16 +131,13 @@ img{max-width:100%;display:block}
 .memlinks{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .memlinks__none{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
 .memsub{font-family:var(--f-display);font-size:15px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:24px 0 10px}
-.memread{display:flex;flex-direction:column;gap:8px}
-.memread__row{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.4fr) auto;gap:12px;align-items:center;text-align:left;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-sm);padding:12px 14px;cursor:pointer;width:100%}
-.memread__row:hover{background:var(--sunk)}
-.memread__t{font-family:var(--f-display);font-weight:700;font-size:15.5px;color:var(--ink)}
-.memread__a,.memread__w{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
-.memread__w{text-align:right}
-@media (max-width:640px){
-  .memread__row{grid-template-columns:minmax(0,1fr);gap:3px}
-  .memread__w{text-align:left}
-}
+/* An empty place on the shelf: the same size and shape as a cover so the five
+   line up, but dashed and unfilled so it reads as a space rather than a book
+   whose art nobody has found. */
+.reccard--slot{cursor:default}
+.slot{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;aspect-ratio:2/3;border:2px dashed var(--edge);border-radius:5px;background:var(--sunk);opacity:.72}
+.slot__n{font-family:var(--f-display);font-weight:800;font-size:30px;color:var(--muted)}
+.slot__w{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 
 /* ============ covers ============ */
 .cover{position:relative;display:block;aspect-ratio:2/3;border:2px solid var(--edge);border-radius:5px;overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff)}
@@ -3369,6 +3366,44 @@ function booksReadBy(id){
     return String(b.finished || b.started || "").localeCompare(String(a.finished || a.started || ""));
   });
 }
+/* The same card the Recommendations grid draws: the cover is the button, the
+   page count and author sit in the foot, and the reveal slides up on hover.
+   Only the third row of the reveal differs — a club book has a date where a
+   recommendation has its endorsements. Clicking it opens the book, which the
+   page already knows how to do from data-book. */
+function bookTileHTML(b){
+  /* A club book opens; a favourite the club has never read has nothing to open
+     yet, so it is drawn as a tile rather than pretending to be a button. What
+     those open is Stage 4's to settle, with the data that comes with it. */
+  var open = !!(b.id && bookById(b.id));
+  return '<div class="reccard-wrap">' +
+    (open
+      ? '<button class="reccard cover-wrap" type="button" data-book="' + esc(b.id) + '" ' +
+        'aria-label="' + esc(b.title + (b.author ? " by " + b.author : "") + " — open details") + '">'
+      : '<div class="reccard cover-wrap">') +
+      coverHTML(b) +
+      '<span class="reccard__foot"><span>' + esc(b.pages || "?") + " pp</span>" +
+        '<span class="reccard__by">' + (b.author ? esc(b.author) : "&nbsp;") + "</span></span>" +
+      '<span class="reccard__reveal">' +
+        '<span class="k">Genres</span><span class="v">' + esc((b.genres || []).join(" · ") || "Unlisted") + "</span>" +
+        '<span class="k">Level</span><span class="v">' + esc(levelText(b)) + "</span>" +
+        '<span class="k">Read</span><span class="v">' + esc(readWhen(b)) + "</span>" +
+      "</span>" +
+    (open ? "</button>" : "</div>") + "</div>";
+}
+function readWhen(b){
+  if(b.finished) return "Finished " + shortDate(b.finished);
+  if(b.started) return "Started " + shortDate(b.started);
+  return "Not started";
+}
+/* An empty place on the shelf, numbered so five of them read as five slots
+   rather than as five identical gaps. Dashed and unfilled: plainly a space for
+   a book, not a book nobody has drawn a cover for. */
+function tileSlotHTML(n){
+  return '<div class="reccard-wrap">' +
+    '<div class="reccard reccard--slot"><span class="slot"><span class="slot__n">' + n + "</span>" +
+      '<span class="slot__w">Empty</span></span></div></div>';
+}
 function memberPic(m, cls){
   return '<span class="' + cls + '" ' + hueStyle(m) + ">" +
     (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>";
@@ -3413,21 +3448,29 @@ function memberProfileHTML(m){
       '<div class="memlinks">' + profileLinkHTML(m.goodreads, "Goodreads") +
         profileLinkHTML(m.fable, "Fable") + "</div>" +
     "</div>" +
+    '<h4 class="memsub">Their five</h4>' +
+    '<p class="focusnote" style="margin:-4px 0 12px">All-time favourites, chosen by ' + esc(m.name) + ".</p>" +
+    '<div class="recgrid">' + top5HTML(m) + "</div>" +
     '<h4 class="memsub">Read with the club</h4>' +
     (read.length
-      ? '<div class="memread">' + read.map(function(b){
-          return '<button class="memread__row" type="button" data-memberbook="' + esc(b.id) + '">' +
-            '<span class="memread__t">' + esc(b.title) + "</span>" +
-            '<span class="memread__a">' + esc(b.author || "") + "</span>" +
-            '<span class="memread__w">' +
-              (b.finished ? "Finished " + esc(shortDate(b.finished))
-                : b.started ? "Started " + esc(shortDate(b.started)) : "In progress") + "</span>" +
-          "</button>";
-        }).join("") + "</div>"
+      ? '<div class="recgrid">' + read.map(bookTileHTML).join("") + "</div>"
       : '<p class="focusnote">No books with the club yet.</p>');
 }
 /* A link when there is one, and a plain note when there is not — an empty
    space says nothing about whether they have a profile elsewhere. */
+/* Five places, always. What is chosen is drawn as a book; the rest are the
+   numbered spaces waiting for one. */
+function top5HTML(m){
+  var picks = (m.top5 || []).slice(0, 5);
+  var out = picks.map(function(p, i){
+    return bookTileHTML({ id: p.id || "", title: p.title || "", author: p.author || "",
+      cover: p.cover || "", pages: p.pages || "", genres: p.genres || [],
+      ageMin: p.ageMin, ageMax: p.ageMax, level: p.level,
+      finished: "", started: "" });
+  });
+  for(var n = picks.length; n < 5; n++) out.push(tileSlotHTML(n + 1));
+  return out.join("");
+}
 function profileLinkHTML(url, name){
   var safe = safeUrl(url);
   return safe
