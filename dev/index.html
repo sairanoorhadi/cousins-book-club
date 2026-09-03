@@ -112,32 +112,60 @@ img{max-width:100%;display:block}
    to make one. Opposite ends of the row so neither is taken for the other. */
 .loginact{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:18px}
 /* ---- members ---- */
-.memgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-.memcard{display:flex;gap:14px;align-items:center;text-align:left;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-sm);padding:14px;cursor:pointer;width:100%}
-.memcard:hover{background:var(--sunk)}
-.memcard__pic,.memhead__pic{flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid var(--edge);background:var(--c,var(--sky));color:var(--cf,var(--on-sky));font-family:var(--f-display);font-weight:800;overflow:hidden}
-.memcard__pic{width:46px;height:46px;font-size:15px}
-.memhead__pic{width:74px;height:74px;font-size:24px}
-.memcard__pic img,.memhead__pic img{width:100%;height:100%;object-fit:cover}
-.memcard__body{display:flex;flex-direction:column;gap:2px;min-width:0}
-.memcard__name{font-family:var(--f-display);font-weight:800;font-size:17px;color:var(--ink)}
-.memcard__meta{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
-.memhead{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:18px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:18px}
-.memhead__who{min-width:0;flex:1 1 240px}
-.memhead__who h3{font-size:26px}
+/* Everyone stacked down one scroll, each block ruled off from the next. */
+.memblock{padding:26px 0 30px;border-bottom:2px solid var(--hairline)}
+.memblock:first-child{padding-top:8px}
+.memblock:last-child{border-bottom:0}
+.memhead{display:flex;gap:18px;align-items:center;flex-wrap:wrap;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:16px 18px}
+.memhead__pic{flex:none;display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;font-size:21px;border-radius:50%;border:2px solid var(--edge);background:var(--c,var(--sky));color:var(--cf,var(--on-sky));font-family:var(--f-display);font-weight:800;overflow:hidden}
+.memhead__pic img{width:100%;height:100%;object-fit:cover}
+.memhead__who{min-width:0;flex:1 1 220px}
+.memhead__who h3{font-size:24px}
 .memhead__meta{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-top:6px}
-/* how long they have been here, said in the units a person would use */
 .memtag{display:inline-block;margin-left:8px;border:2px solid var(--edge);border-radius:999px;background:var(--zest);color:var(--on-zest);padding:2px 10px;font-size:11px;font-weight:700}
-.memlinks{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.memlinks__none{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
-.memsub{font-family:var(--f-display);font-size:15px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:24px 0 10px}
+.memside{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-left:auto}
+/* three genres someone picks to stand for themselves */
+.memgen{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.memgen__lab{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.memgen__c{border:2px solid var(--edge);border-radius:999px;background:var(--sunk);padding:3px 11px;font-family:var(--f-display);font-weight:700;font-size:12px;color:var(--ink)}
+.memgen__c--none{border-style:dashed;background:none;color:var(--muted);font-weight:400;font-family:var(--f-mono);font-size:10.5px}
+/* the two profiles elsewhere, as marks rather than sentences */
+.memmark{flex:none;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border:2px solid var(--edge);border-radius:50%;box-shadow:2px 2px 0 var(--stamp);text-decoration:none}
+.memmark__l{font-family:var(--f-display);font-weight:800;font-size:19px;line-height:1}
+.memmark--goodreads{background:#F4F1EA;color:#382110}
+.memmark--fable{background:#1E1B4B;color:#FDE68A}
+.memmark:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--stamp)}
+/* nothing behind it: still there, plainly not a link */
+.memmark--off{background:var(--sunk);color:var(--muted);border-style:dashed;box-shadow:none;opacity:.7}
+.memmark--off:hover{transform:none;box-shadow:none}
+.memlinks{display:flex;gap:8px;align-items:center}
+.memsub{font-family:var(--f-display);font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:22px 0 10px}
+/* Fold: the club list is the long half, so it is the half that folds. */
+.memfold{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:0;border-top:2px solid var(--hairline);padding:14px 0 8px;margin-top:20px;cursor:pointer}
+.memfold:hover .memsub{color:var(--ink)}
+.memfold__x{font-size:12px;color:var(--muted)}
+.memfold__n{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--muted);border:2px solid var(--edge);border-radius:999px;padding:1px 9px}
+/* Smaller than the Pile's: these are a glance at a shelf, not the shelf. A
+   fixed track rather than 1fr, because auto-fill stretched three covers across
+   the whole width and made them enormous. */
+.memtiles{display:grid;grid-template-columns:repeat(auto-fill,108px);gap:12px;justify-content:start}
+.memtiles .reccard__foot{padding:5px 7px;font-size:9px}
+/* A book with no cover art draws its own, and at this size a long title ran
+   into the foot below it. Capped to three lines, and the foot's own height
+   kept clear underneath. */
+.memtiles .cover__gen{padding-bottom:26%}
+.memtiles .cover__t{font-size:clamp(9px,11cqw,15px);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.memtiles .cover__a{display:none}
+.memtiles .reccard__reveal{padding:7px 8px;gap:2px 7px}
+.memtiles .reccard__reveal .k{font-size:8px;letter-spacing:.1em}
+.memtiles .reccard__reveal .v{font-size:10.5px}
 /* An empty place on the shelf: the same size and shape as a cover so the five
    line up, but dashed and unfilled so it reads as a space rather than a book
    whose art nobody has found. */
 .reccard--slot{cursor:default}
-.slot{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;aspect-ratio:2/3;border:2px dashed var(--edge);border-radius:5px;background:var(--sunk);opacity:.72}
-.slot__n{font-family:var(--f-display);font-weight:800;font-size:30px;color:var(--muted)}
-.slot__w{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.slot{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;aspect-ratio:2/3;border:2px dashed var(--edge);border-radius:5px;background:var(--sunk);opacity:.72}
+.slot__n{font-family:var(--f-display);font-weight:800;font-size:22px;color:var(--muted)}
+.slot__w{font-family:var(--f-mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 
 /* ============ covers ============ */
 .cover{position:relative;display:block;aspect-ratio:2/3;border:2px solid var(--edge);border-radius:5px;overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff)}
@@ -3329,7 +3357,7 @@ function andList(names){
    The directory and one member's page are the same section, swapped: the page
    leads on to a book and that book to its reading sections, which is a level
    deeper than a modal goes comfortably. */
-var memberWho = "";              /* "" is the directory */
+var memberOpen = {};             /* which club-read lists are unfolded */
 
 /* How long someone has been in the club, counted in the units a person would
    use: months and days until the first anniversary, years and months after it.
@@ -3411,31 +3439,17 @@ function memberPic(m, cls){
 function renderMembers(){
   var host = $("memberPage");
   if(!host) return;
-  var who = memberWho ? memberById(memberWho) : null;
-  if(memberWho && !who) memberWho = "";      /* a member who has since gone */
-  host.innerHTML = who ? memberProfileHTML(who) : memberListHTML();
+  host.innerHTML = state.members.length
+    ? state.members.map(memberProfileHTML).join("")
+    : '<p class="focusnote">No members yet.</p>';
 }
-function memberListHTML(){
-  if(!state.members.length) return '<p class="focusnote">No members yet.</p>';
-  return '<div class="memgrid">' + state.members.map(function(m){
-    var n = booksReadBy(m.id).length;
-    var since = membersSince(m);
-    return '<button class="memcard" type="button" data-member="' + esc(m.id) + '">' +
-      memberPic(m, "memcard__pic") +
-      '<span class="memcard__body">' +
-        '<span class="memcard__name">' + esc(m.name) + "</span>" +
-        '<span class="memcard__meta">' +
-          (m.joined ? "Joined " + esc(shortDate(m.joined)) : "Join date not set") +
-        "</span>" +
-        '<span class="memcard__meta">' + n + " book" + (n === 1 ? "" : "s") +
-          " with the club" + (since ? " · " + esc(since) : "") + "</span>" +
-      "</span></button>";
-  }).join("") + "</div>";
-}
+/* One scroll, everyone on it. A grid of cards to click through put a whole
+   page between you and the next person; stacked, reading down is reading on. */
 function memberProfileHTML(m){
   var since = membersSince(m);
   var read = booksReadBy(m.id);
-  return '<button class="btn btn--sm btn--ghost" type="button" data-member="">&#8592; All members</button>' +
+  var open = !!memberOpen[m.id];
+  return '<article class="memblock">' +
     '<div class="memhead">' +
       memberPic(m, "memhead__pic") +
       '<div class="memhead__who">' +
@@ -3445,16 +3459,38 @@ function memberProfileHTML(m){
           (since ? ' <span class="memtag">' + esc(since) + " in the club</span>" : "") +
         "</p>" +
       "</div>" +
-      '<div class="memlinks">' + profileLinkHTML(m.goodreads, "Goodreads") +
-        profileLinkHTML(m.fable, "Fable") + "</div>" +
+      '<div class="memside">' + topGenresHTML(m) +
+        '<div class="memlinks">' +
+          profileLinkHTML(m.goodreads, "Goodreads", "g") +
+          profileLinkHTML(m.fable, "Fable", "F") +
+        "</div>" +
+      "</div>" +
     "</div>" +
     '<h4 class="memsub">Their five</h4>' +
-    '<p class="focusnote" style="margin:-4px 0 12px">All-time favourites, chosen by ' + esc(m.name) + ".</p>" +
-    '<div class="recgrid">' + top5HTML(m) + "</div>" +
-    '<h4 class="memsub">Read with the club</h4>' +
-    (read.length
-      ? '<div class="recgrid">' + read.map(bookTileHTML).join("") + "</div>"
-      : '<p class="focusnote">No books with the club yet.</p>');
+    '<div class="memtiles">' + top5HTML(m) + "</div>" +
+    /* The club list is the long one and the five are the point, so this is the
+       half that folds away. */
+    '<button class="memfold" type="button" data-memopen="' + esc(m.id) + '" aria-expanded="' + open + '">' +
+      '<span class="memfold__x" aria-hidden="true">' + (open ? "&#9662;" : "&#9656;") + "</span>" +
+      '<span class="memsub" style="margin:0">Read with the club</span>' +
+      '<span class="memfold__n">' + read.length + "</span></button>" +
+    (open
+      ? (read.length
+          ? '<div class="memtiles">' + read.map(bookTileHTML).join("") + "</div>"
+          : '<p class="focusnote">No books with the club yet.</p>')
+      : "") +
+  "</article>";
+}
+/* Up to three genres someone picks to stand for themselves. The field does not
+   exist yet — choosing them is stage four, with the five and the two links —
+   so until then the places are shown empty, the same way the shelf is. */
+function topGenresHTML(m){
+  var picks = (m.genres || []).slice(0, 3);
+  return '<div class="memgen"><span class="memgen__lab">Top genres</span>' +
+    (picks.length
+      ? picks.map(function(g){ return '<span class="memgen__c">' + esc(g) + "</span>"; }).join("")
+      : '<span class="memgen__c memgen__c--none">Not set yet</span>') +
+  "</div>";
 }
 /* A link when there is one, and a plain note when there is not — an empty
    space says nothing about whether they have a profile elsewhere. */
@@ -3471,12 +3507,18 @@ function top5HTML(m){
   for(var n = picks.length; n < 5; n++) out.push(tileSlotHTML(n + 1));
   return out.join("");
 }
-function profileLinkHTML(url, name){
+function profileLinkHTML(url, name, mark){
   var safe = safeUrl(url);
+  var cls = "memmark memmark--" + name.toLowerCase();
+  /* A lettermark in the service's own colour rather than its logo: the real
+     artwork is theirs, and drawing it from memory would be a bad copy of
+     something that is not ours to copy. Swap in their SVG to use the real one. */
+  var inner = '<span class="memmark__l" aria-hidden="true">' + esc(mark) + "</span>";
   return safe
-    ? '<a class="btn btn--sm btn--ghost" href="' + esc(safe) + '" target="_blank" rel="noopener noreferrer">' +
-      esc(name) + "</a>"
-    : '<span class="memlinks__none">No ' + esc(name) + " profile</span>";
+    ? '<a class="' + cls + '" href="' + esc(safe) + '" target="_blank" rel="noopener noreferrer" ' +
+      'title="' + esc(name) + '" aria-label="' + esc("Their " + name + " profile") + '">' + inner + "</a>"
+    : '<span class="' + cls + ' memmark--off" title="' + esc("No " + name + " profile yet") + '" ' +
+      'aria-label="' + esc("No " + name + " profile yet") + '">' + inner + "</span>";
 }
 
 function renderFocus(){
@@ -5368,11 +5410,11 @@ document.addEventListener("click", async function(e){
     return;
   }
 
-  /* into a member's page, and back out of it */
-  if((el = t.closest("[data-member]"))){
-    memberWho = el.getAttribute("data-member");
+  /* folding one member's club-read list open or shut */
+  if((el = t.closest("[data-memopen]"))){
+    var mo = el.getAttribute("data-memopen");
+    memberOpen[mo] = !memberOpen[mo];
     renderMembers();
-    if(!memberWho) $("members").scrollIntoView({ block: "start" });
     return;
   }
   if(t.closest("#menuOpen")){ menuToggle(); return; }
