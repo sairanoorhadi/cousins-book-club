@@ -87,6 +87,24 @@ img{max-width:100%;display:block}
 .navlinks{display:flex;gap:4px;margin-left:auto;align-items:center;flex-wrap:wrap}
 .navlinks a{font-family:var(--f-display);font-weight:700;font-size:13.5px;text-decoration:none;padding:7px 12px;border-radius:6px;color:var(--muted)}
 .navlinks a:hover{color:var(--ink);background:var(--sunk)}
+/* ---- the menu ----
+   The sections used to sit across the bar and Admin was a button at the end of
+   them. The button is where Admin was, and everything that was in the bar is
+   behind it. The panel hangs off the button's right edge so it cannot run off
+   the side of a narrow window. */
+.menu{position:relative;display:inline-flex}
+.menu__burger{display:inline-flex;flex-direction:column;justify-content:center;gap:4px;width:38px;height:34px;padding:0 8px;border:2px solid var(--edge);border-radius:6px;background:var(--surface);box-shadow:2px 2px 0 var(--stamp);cursor:pointer}
+.menu__burger span{display:block;height:2.5px;border-radius:2px;background:var(--ink)}
+.menu__burger:hover{background:var(--sunk)}
+.menu__burger[aria-expanded="true"]{background:var(--grape);border-color:var(--grape);box-shadow:none}
+.menu__burger[aria-expanded="true"] span{background:var(--on-grape)}
+.menu__panel{position:absolute;top:calc(100% + 8px);right:0;z-index:60;min-width:200px;display:flex;flex-direction:column;gap:2px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:8px}
+.menu__panel[hidden]{display:none}
+.menu__item{font-family:var(--f-display);font-weight:700;font-size:14px;text-align:left;text-decoration:none;padding:8px 12px;border:2px solid transparent;border-radius:6px;background:none;color:var(--ink);cursor:pointer;width:100%}
+.menu__item:hover{background:var(--sunk)}
+/* the one that ends something, kept apart from the ones that go somewhere */
+.menu__item--out{margin-top:6px;border-top:2px solid var(--hairline);border-radius:0 0 6px 6px;padding-top:12px;color:var(--muted)}
+.menu__item--out:hover{color:var(--ink)}
 
 /* ============ covers ============ */
 .cover{position:relative;display:block;aspect-ratio:2/3;border:2px solid var(--edge);border-radius:5px;overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff)}
@@ -1072,13 +1090,24 @@ img{max-width:100%;display:block}
       <div class="brand__name" id="brandName">Book Club</div>
     </div>
     <nav class="navlinks" aria-label="Sections">
-      <a href="#now">Now Reading</a>
-      <a href="#shelf">Previous Books</a>
-      <a href="#recs">Recommendations</a>
-      <a href="#badges">Badges</a>
       <button class="btn btn--sm btn--ghost" id="loginOpen" type="button">Sign in</button>
       <button class="btn btn--sm btn--surf" id="signupOpen" type="button" data-memform="join">Sign up</button>
-      <button class="btn btn--sm btn--grape" id="adminOpen" type="button">Admin</button>
+      <!-- The sections and Admin live in here now. The button stands where
+           Admin stood; Sign in and Sign up are untouched. -->
+      <div class="menu">
+        <button class="menu__burger" id="menuOpen" type="button" aria-haspopup="true"
+                aria-expanded="false" aria-controls="menuPanel" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="menu__panel" id="menuPanel" role="menu" hidden>
+          <a class="menu__item" role="menuitem" href="#now">Now Reading</a>
+          <a class="menu__item" role="menuitem" href="#shelf">Previous Books</a>
+          <a class="menu__item" role="menuitem" href="#recs">Recommendations</a>
+          <a class="menu__item" role="menuitem" href="#badges">Badges</a>
+          <button class="menu__item" role="menuitem" type="button" id="menuAdmin">Admin</button>
+          <button class="menu__item menu__item--out" role="menuitem" type="button" id="menuSignOut">Sign out</button>
+        </div>
+      </div>
     </nav>
   </div>
 </div>
@@ -4080,6 +4109,34 @@ function tryUnlock(){
   /* a re-render, so the wrong word is cleared rather than left to be edited */
   renderAdminLock(true);
 }
+/* ---- the menu ----
+   Opened by its own button, shut by anything else: a choice inside it, a click
+   anywhere on the page, or Escape. Nothing here decides what the choices do —
+   Admin still opens the same locked panel and Sign out is the same sign-out
+   the account sheet has always used. */
+function menuShut(){
+  var p = $("menuPanel"), b = $("menuOpen");
+  if(p) p.hidden = true;
+  if(b) b.setAttribute("aria-expanded", "false");
+}
+function menuToggle(){
+  var p = $("menuPanel"), b = $("menuOpen");
+  if(!p || !b) return;
+  var opening = p.hidden;
+  p.hidden = !opening;
+  b.setAttribute("aria-expanded", opening ? "true" : "false");
+  if(opening){ var first = p.querySelector(".menu__item"); if(first) first.focus(); }
+}
+/* This runs before the handler that acts on the choice, which is what we want:
+   the panel is gone by the time the panel it opens is drawn. */
+document.addEventListener("click", function(e){
+  if(e.target.closest && e.target.closest("#menuOpen")) return;
+  menuShut();
+});
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape") menuShut();
+});
+
 function openAdmin(){
   renderAdmin();
   openScrim("adminScrim");
@@ -5107,7 +5164,9 @@ document.addEventListener("click", async function(e){
     return;
   }
 
-  if(t.closest("#adminOpen")){ openAdmin(); return; }
+  if(t.closest("#menuOpen")){ menuToggle(); return; }
+  if(t.closest("#menuAdmin")){ openAdmin(); return; }
+  if(t.closest("#menuSignOut")){ await signOut(); return; }
   if(t.closest("#admUnlock")){ tryUnlock(); return; }
   if((el = t.closest("[data-atab]"))){ adminTab = el.getAttribute("data-atab"); renderAdmin(); return; }
   if((el = t.closest("[data-mfilter]"))){ meetBookFilter = el.getAttribute("data-mfilter"); renderAdminPane(); return; }
