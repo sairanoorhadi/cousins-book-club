@@ -450,6 +450,35 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-6944d6d5-5f3",
+      "kind": "suggest",
+      "at": "2026-09-05T17:37:14.912Z",
+      "payload": {
+        "title": "A Good Girl's Guide to Murder",
+        "author": "Holly Jackson",
+        "pages": 431,
+        "ageMin": 8,
+        "ageMax": 12,
+        "level": "Ages 8-12",
+        "genres": [
+          "Murder--Fiction.",
+          "Children's",
+          "Murder",
+          "Criminals",
+          "New York Times bestseller",
+          "Crime",
+          "Thriller"
+        ],
+        "blurb": "Five years ago, Andie Bell disappeared from a small English town, and her boyfriend Sal Singh was blamed and found dead soon after. Pip Fitz-Amobi, a sixth-form student with an appetite for research, chooses the case for her senior capstone project, convinced the accepted story has holes in it. She enlists Sal's younger brother Ravi to help her retrace the timeline, and the interviews turn up neighbours and classmates who would rather the questions stopped. The book is structured around Pip's project logs and transcripts alongside the narrative.",
+        "summarySource": "ai",
+        "cover": "https://covers.openlibrary.org/b/id/13156188-L.jpg",
+        "by": "Filza",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
