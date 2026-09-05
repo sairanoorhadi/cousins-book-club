@@ -479,6 +479,30 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-3b3ebcb6-1b1",
+      "kind": "suggest",
+      "at": "2026-09-05T17:44:35.816Z",
+      "payload": {
+        "title": "Everyone in My Family Has Killed Someone",
+        "author": "Benjamin Stevenson",
+        "pages": 384,
+        "ageMin": 13,
+        "ageMax": 100,
+        "level": "Ages 13+",
+        "genres": [
+          "Humour",
+          "Murder"
+        ],
+        "blurb": "Ernest Cunningham narrates his own family's reunion at a snowbound resort in the Australian Alps, and he tells you up front that every member of the family has killed someone — including him. His brother Michael is out of prison, which is awkward, since Ernest is the one who put him there. Then a body turns up in the snow, and the gathering becomes something closer to a locked-room problem. Stevenson has Ernest narrate with constant reference to the old Golden Age rules of detective fiction, promising to play fair with the reader and then testing what fair means.",
+        "summarySource": "ai",
+        "cover": "https://covers.openlibrary.org/b/id/13260574-L.jpg",
+        "by": "Filza",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
