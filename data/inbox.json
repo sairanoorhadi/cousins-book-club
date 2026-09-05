@@ -503,6 +503,36 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-5b4bab6f-ca1",
+      "kind": "suggest",
+      "at": "2026-09-05T18:20:10.216Z",
+      "payload": {
+        "title": "Red Queen",
+        "author": "Victoria Aveyard",
+        "pages": 428,
+        "ageMin": 8,
+        "ageMax": 12,
+        "level": "Ages 8-12",
+        "genres": [
+          "Love & Romance",
+          "Ability",
+          "Resistance to Government",
+          "Ungdomslitteratur",
+          "Cloth or Hardcover",
+          "Fantasy & Magic",
+          "Fantasy",
+          "Blood"
+        ],
+        "blurb": "In Mare Barrow's world, blood color decides everything: Silvers rule with superhuman abilities, and Reds like Mare scrape by as servants and soldiers. A pickpocket with no prospects, she lands a job at the Silver palace and then, in front of the entire court, does something a Red should not be able to do. The king's solution is to hide her in plain sight — passed off as a lost Silver noble and betrothed to a prince — while Mare quietly makes contact with a Red resistance movement. Aveyard writes a fast-moving court intrigue where the question is less what Mare can do than whom she can believe.",
+        "summarySource": "ai",
+        "cover": "https://covers.openlibrary.org/b/id/7434883-L.jpg",
+        "by": "Filza",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
