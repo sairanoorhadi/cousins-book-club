@@ -408,6 +408,27 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-6ccf5deb-801",
+      "kind": "suggest",
+      "at": "2026-09-05T17:33:46.987Z",
+      "payload": {
+        "title": "A Stage Set for Villains",
+        "author": "Shannon J. Spann",
+        "pages": 530,
+        "ageMin": 0,
+        "ageMax": 100,
+        "level": "Ages 0+",
+        "genres": [],
+        "blurb": "",
+        "summarySource": "own",
+        "cover": "https://covers.openlibrary.org/b/id/15167289-L.jpg",
+        "by": "Filza",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
