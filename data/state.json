@@ -1,5 +1,5 @@
 {
-  "rev": 1259,
+  "rev": 1260,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -99,7 +99,13 @@
       ],
       "order": 0,
       "ageMin": 14,
-      "ageMax": 100
+      "ageMax": 100,
+      "review": {
+        "text": "The characters felt very real and all had very distinct personalities. The world building and her descriptions of the environment. ",
+        "rating": 5,
+        "community": 4.6,
+        "by": ""
+      }
     },
     {
       "id": "bk-soc",
