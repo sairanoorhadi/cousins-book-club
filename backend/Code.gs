@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-02a';
+var SCRIPT_VERSION = '2026-09-07a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -431,7 +431,10 @@ function notesAdd(payload) {
   if (!key) return { ok: false, error: 'bad field' };
   var text = String(payload.text || '').trim().slice(0, 400);
   if (!text) return { ok: false, error: 'no text' };
-  var by = String(payload.by || '').trim().slice(0, 60);
+  /* The browser sends member ids now, not a typed name. Which ids are real is
+     decided here against the members list, not there — the same rule as
+     everywhere else in this script. */
+  var wanted = Array.isArray(payload.byIds) ? payload.byIds.slice(0, 12) : [];
 
   if (!propKey('GITHUB_TOKEN', '')) return { ok: false, error: 'no github token' };
 
@@ -450,7 +453,15 @@ function notesAdd(payload) {
       if (meeting.done) return { ok: false, error: 'meeting closed' };
       if (!Array.isArray(meeting[key])) meeting[key] = [];
 
-      var item = { id: payload.field + '-' + Utilities.getUuid().slice(0, 12), text: text, by: by };
+      var known = {};
+      (state.members || []).forEach(function (mem) { if (mem && mem.id) known[mem.id] = true; });
+      var byIds = [];
+      wanted.forEach(function (id) {
+        id = String(id || '');
+        if (known[id] && byIds.indexOf(id) === -1) byIds.push(id);
+      });
+
+      var item = { id: payload.field + '-' + Utilities.getUuid().slice(0, 12), text: text, by: '', byIds: byIds };
       meeting[key].push(item);
       state.rev = Number(state.rev || 0) + 1;
 
