@@ -1,5 +1,5 @@
 {
-  "rev": 1264,
+  "rev": 1265,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -67,6 +67,18 @@
       "fable": "",
       "goodreads": "",
       "hue": "#ff94f0"
+    },
+    {
+      "id": "mb-mtqod125fcqtd",
+      "name": "Summar",
+      "joined": "2026-04-17",
+      "avatar": "",
+      "email": "",
+      "notifyRef": "",
+      "emailHint": "",
+      "notify": [],
+      "fable": "",
+      "goodreads": ""
     }
   ],
   "books": [
