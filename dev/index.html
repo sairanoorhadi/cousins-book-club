@@ -472,6 +472,18 @@ img{max-width:100%;display:block}
 .addrow{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
 .addrow .input{flex:1 1 240px;width:auto}
 .addrow .input--who{flex:0 1 150px}
+.whopick{position:relative;flex:0 1 auto}
+.whopick__btn{white-space:nowrap;max-width:210px;overflow:hidden;text-overflow:ellipsis}
+.whopick__btn[data-empty]{color:var(--muted)}
+.whopick__panel{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:10px;padding:9px 11px;
+  border:1.5px solid var(--hairline);border-radius:6px;background:var(--sunk)}
+.whopick__lab{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.whopick__opt{display:flex;align-items:center;gap:7px;padding:4px 9px;border-radius:99px;cursor:pointer;white-space:nowrap;
+  border:1.5px solid var(--hairline);background:var(--paper)}
+.whopick__opt:hover{border-color:var(--ink)}
+.whopick__opt:has(input:checked){border-color:var(--ink);background:var(--paper);box-shadow:2px 2px 0 var(--ink)}
+.whopick__opt input{accent-color:var(--grape);cursor:pointer}
+@media (max-width:560px){ .whopick{flex:1 1 100%} .whopick__btn{max-width:none;width:100%} }
 
 /* ============ admin ============ */
 .lane{margin-bottom:26px}
@@ -801,6 +813,8 @@ img{max-width:100%;display:block}
 .devbar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;background:repeating-linear-gradient(135deg,#F5A800,#F5A800 14px,#191233 14px,#191233 28px);color:#FFFFFF;padding:0;border-bottom:3px solid var(--edge)}
 .devbar strong,.devbar span,.devbar a{background:#191233;padding:7px 12px}
 .devbar strong{font-family:var(--f-display);font-size:13.5px;letter-spacing:.04em;text-transform:uppercase}
+.devbar__as{background:#191233;padding:5px 12px;display:flex;align-items:center;gap:7px}
+.devbar__as select{font:inherit;font-size:12.5px;padding:2px 5px;border-radius:4px;border:1px solid #FFFFFF;background:#191233;color:#FFFFFF}
 .devbar span{font-family:var(--f-mono);font-size:11.5px;flex:1 1 320px;min-width:0}
 .devbar a{color:#FFC44D;font-family:var(--f-display);font-weight:700;font-size:13px}
 .status--ok{background:var(--surf);color:var(--on-surf)}
@@ -872,6 +886,7 @@ img{max-width:100%;display:block}
   <div class="devbar" id="devBar" hidden>
     <strong>Test site</strong>
     <span>Its own copy of the data &mdash; nothing here reaches the real one. Lookups work; submissions and sign-in are switched off.</span>
+    <label class="devbar__as">Look around as <select id="devAs"><option value="">nobody</option></select></label>
     <a href="../">Go to the real site &rarr;</a>
   </div>
 
@@ -1807,10 +1822,51 @@ function migrate(s){
     if(!Array.isArray(m.photos)) m.photos = [];
     if(!Array.isArray(m.predictions)) m.predictions = [];
     if(!Array.isArray(m.points)) m.points = [];
+    m.predictions.forEach(function(n){ noteAuthors(n, s.members); });
+    m.points.forEach(function(n){ noteAuthors(n, s.members); });
     /* which notification emails have already gone out for this meeting */
     if(!m.sent || typeof m.sent !== "object") m.sent = {};
   });
   return s;
+}
+
+/* ---------------------------------------------------------- who wrote a note
+   A note used to carry whoever typed their name into the box, as free text:
+   "Saira", "Filza, Eliza", "Summar", "Everyone". Now it carries member ids,
+   so a name change follows the note and a note can credit more than one
+   person. The old text is read into ids where the names are members, and
+   whatever is left over stays as text rather than being thrown away —
+   "Everyone" is not a person, and someone can be in the notes before they are
+   on the list. Runs on load, over data that may already have been converted,
+   so it has to be safe to run twice. */
+function noteAuthors(n, members){
+  if(!n || typeof n !== "object") return n;
+  if(!Array.isArray(n.byIds)) n.byIds = [];
+  if(typeof n.by !== "string") n.by = String(n.by || "");
+  if(n.byIds.length || !n.by) return n;
+  var known = {};
+  (members || []).forEach(function(m){ if(m && m.name) known[m.name.trim().toLowerCase()] = m.id; });
+  var ids = [], rest = [];
+  n.by.split(",").forEach(function(part){
+    var name = part.trim(); if(!name) return;
+    var id = known[name.toLowerCase()];
+    if(id){ if(ids.indexOf(id) === -1) ids.push(id); }
+    else rest.push(name);
+  });
+  n.byIds = ids;
+  n.by = rest.join(", ");
+  return n;
+}
+/* The names to show against a note: members by their current name, then
+   anything that never was one. */
+function noteWho(n, members){
+  var by = (members || state.members || []);
+  var names = (n.byIds || []).map(function(id){
+    var m = by.filter(function(x){ return x.id === id; })[0];
+    return m ? m.name : "";
+  }).filter(Boolean);
+  if(n.by) names.push(n.by);
+  return names.join(", ");
 }
 
 async function loadState(){
@@ -1858,6 +1914,7 @@ function refreshWriteMode(){
 /* The two ways a note write is turned away, beyond the ones already covered
    by repoWriteTrouble. */
 function notesTrouble(err){
+  if(err === "dev-blocked") return "This is the test site \u2014 nothing here is written down. Try it on the real site.";
   if(err === "meeting closed") return "This meeting is marked done \u2014 only the organiser can still change its notes.";
   if(err === "not found") return "That one\u2019s already gone \u2014 someone else must have removed it.";
   if(err === "no text") return "Type something first.";
@@ -3777,16 +3834,64 @@ function openMeeting(id){
   var m = meetingById(id); if(!m) return;
   var b = bookById(m.bookId);
   $("meetModalTitle").textContent = (b ? b.title : "Meeting") + " — " + shortDate(m.date);
+  whoPickSeed();
   $("meetModalBody").innerHTML = meetingHTML(m, b);
   openScrim("meetScrim");
   if(m.kind === "party") loadPhotos(m.id);
 }
+/* Who a note is credited to. A plain <select multiple> is miserable in a modal
+   and worse on a phone, so this is a button that says who is picked and a
+   panel of checkboxes under it. Whoever is signed in starts ticked, since
+   they are usually the one writing it down. */
+var notePick = { pred: [], disc: [] };
+function whoPickLabel(kind){
+  var picked = notePick[kind] || [];
+  if(!picked.length) return "Who said it?";
+  var names = picked.map(function(id){ var m = memberById(id); return m ? m.name : ""; }).filter(Boolean);
+  return names.length > 2 ? names.slice(0, 2).join(", ") + " +" + (names.length - 2) : names.join(", ");
+}
+function whoPickHTML(kind){
+  var picked = notePick[kind] || [];
+  return '<div class="whopick" data-whopick="' + kind + '">' +
+    '<button class="btn btn--sm btn--ghost whopick__btn" type="button" data-whotoggle="' + kind + '" ' +
+      'aria-expanded="false"' + (picked.length ? "" : ' data-empty="1"') + ">" +
+      esc(whoPickLabel(kind)) + "</button></div>";
+}
+/* The panel sits under the row rather than floating over it. A note block
+   clips what overflows — it has to, for its rounded head — so a panel hanging
+   off the button was cut off at the block's edge however it was positioned.
+   In the flow it simply makes the block taller, which is what a disclosure
+   should do anyway. */
+function whoPanelHTML(kind){
+  var picked = notePick[kind] || [];
+  return '<div class="whopick__panel" data-whopanel="' + kind + '" hidden>' +
+    (state.members.length
+      ? '<span class="whopick__lab">Who said it?</span>' + state.members.map(function(m){
+          return '<label class="whopick__opt"><input type="checkbox" data-whoid="' + esc(m.id) + '" data-whokind="' + kind + '"' +
+            (picked.indexOf(m.id) !== -1 ? " checked" : "") + "> " + esc(m.name) + "</label>";
+        }).join("")
+      : '<p class="hint" style="margin:0">Nobody on the members list yet.</p>') +
+  "</div>";
+}
+function whoPickShut(){
+  document.querySelectorAll("[data-whopanel]").forEach(function(el){ el.hidden = true; });
+  document.querySelectorAll("[data-whotoggle]").forEach(function(el){ el.setAttribute("aria-expanded", "false"); });
+}
+/* Whoever is signed in, ticked to start with — but only where nothing has been
+   picked yet, so reopening a meeting does not undo a choice. */
+function whoPickSeed(){
+  var mine = myMember();
+  ["pred", "disc"].forEach(function(k){
+    if(!notePick[k].length && mine) notePick[k] = [mine.id];
+  });
+}
+
 function noteList(items, kind, mid, m){
   if(!items || !items.length) return '<p class="empty">' + (kind === "pred" ? "No predictions yet. Call it before you read it." : "No discussion points yet.") + "</p>";
   var can = canEditNotes(m);
   return '<ul class="notelist">' + items.map(function(p, i){
     return "<li><span class=\"n\">" + (i+1) + "</span><span>" + esc(p.text) +
-      (p.by ? '<span class="who">' + esc(p.by) + "</span>" : "") + "</span>" +
+      (function(){ var w = noteWho(p); return w ? '<span class="who">' + esc(w) + "</span>" : ""; })() + "</span>" +
       (can ? '<button class="btn btn--sm btn--ghost" type="button" data-del="' + kind + '" data-mid="' + esc(mid) + '" data-iid="' + esc(p.id) + '">Remove</button>' : "<span></span>") +
     "</li>";
   }).join("") + "</ul>";
@@ -3811,15 +3916,17 @@ function meetingHTML(m, b){
       '<section class="noteblock noteblock--pred"><div class="noteblock__head"><h3>Predictions</h3></div><div class="noteblock__body">' +
         noteList(m.predictions, "pred", m.id, m) +
         (canEditNotes(m) ? '<div class="addrow"><input class="input" type="text" placeholder="What do you think happens?" data-add="pred-text" maxlength="400">' +
-          '<input class="input input--who" type="text" placeholder="Your name" data-add="pred-by" maxlength="60">' +
-          '<button class="btn btn--sm btn--grape" type="button" data-addbtn="pred" data-mid="' + esc(m.id) + '">Add</button></div>'
+          whoPickHTML("pred") +
+          '<button class="btn btn--sm btn--grape" type="button" data-addbtn="pred" data-mid="' + esc(m.id) + '">Add</button></div>' +
+          whoPanelHTML("pred")
           : '<p class="hint" style="margin-top:12px">' + esc(notesLockedReason(m)) + '</p>') +
       "</div></section>" +
       '<section class="noteblock noteblock--disc"><div class="noteblock__head"><h3>Discussion points</h3></div><div class="noteblock__body">' +
         noteList(m.points, "disc", m.id, m) +
         (canEditNotes(m) ? '<div class="addrow"><input class="input" type="text" placeholder="A question worth arguing about" data-add="disc-text" maxlength="400">' +
-          '<input class="input input--who" type="text" placeholder="Added by" data-add="disc-by" maxlength="60">' +
-          '<button class="btn btn--sm btn--surf" type="button" data-addbtn="disc" data-mid="' + esc(m.id) + '">Add</button></div>'
+          whoPickHTML("disc") +
+          '<button class="btn btn--sm btn--surf" type="button" data-addbtn="disc" data-mid="' + esc(m.id) + '">Add</button></div>' +
+          whoPanelHTML("disc")
           : '<p class="hint" style="margin-top:12px">' + esc(notesLockedReason(m)) + '</p>') +
       "</div></section>") +
     (party
@@ -5409,18 +5516,27 @@ document.addEventListener("click", async function(e){
      Admin's own Add/Remove here go through the identical call, which is what
      lets save() elsewhere adopt the fresh copy of both fields without ever
      discarding an edit made through this box. */
+  if((el = t.closest("[data-whotoggle]"))){
+    var wk = el.getAttribute("data-whotoggle"), panel = document.querySelector('[data-whopanel="' + wk + '"]');
+    var wasOpen = panel && !panel.hidden;
+    whoPickShut();
+    if(panel && !wasOpen){ panel.hidden = false; el.setAttribute("aria-expanded", "true"); }
+    return;
+  }
   if((el = t.closest("[data-addbtn]"))){
     var kind = el.getAttribute("data-addbtn"), mid = el.getAttribute("data-mid"), box = $("meetModalBody");
-    var txt = box.querySelector('[data-add="' + kind + '-text"]'), who = box.querySelector('[data-add="' + kind + '-by"]');
+    var txt = box.querySelector('[data-add="' + kind + '-text"]');
     var val = (txt.value || "").trim(); if(!val){ txt.focus(); return; }
     var m = meetingById(mid); if(!m) return;
-    var memo = (who.value || "").trim();
+    var picked = (notePick[kind] || []).slice();
     say("Adding…", "busy", true);
-    var ares = await callEndpoint("notes-add", { token: sessionToken(), meetingId: mid, field: kind, text: val, by: memo });
+    var ares = await callEndpoint("notes-add", { token: sessionToken(), meetingId: mid, field: kind, text: val, byIds: picked });
     if(!ares.ok){ say(notesTrouble(ares.error), "bad"); return; }
-    if(kind === "pred") m.predictions.push(ares.item); else m.points.push(ares.item);
+    if(kind === "pred") m.predictions.push(noteAuthors(ares.item, state.members));
+    else m.points.push(noteAuthors(ares.item, state.members));
+    /* the same people stay picked for the next one, the way the name box used
+       to keep what was typed in it */
     box.innerHTML = meetingHTML(m, bookById(m.bookId));
-    var again = box.querySelector('[data-add="' + kind + '-by"]'); if(again) again.value = memo;
     say("Added.", "ok");
     return;
   }
@@ -5872,6 +5988,17 @@ function adoptRec(rec, status){
 /* the two filter dropdowns */
 document.addEventListener("change", function(e){
   var n = e.target;
+  if(n && n.hasAttribute && n.hasAttribute("data-whoid")){
+    var kind = n.getAttribute("data-whokind"), id = n.getAttribute("data-whoid");
+    var list = notePick[kind] || (notePick[kind] = []);
+    var at = list.indexOf(id);
+    if(n.checked){ if(at === -1) list.push(id); }
+    else if(at !== -1) list.splice(at, 1);
+    var btn = document.querySelector('[data-whotoggle="' + kind + '"]');
+    if(btn){ btn.textContent = whoPickLabel(kind);
+      if(list.length) btn.removeAttribute("data-empty"); else btn.setAttribute("data-empty", "1"); }
+    return;
+  }
   if(!n || !n.id) return;
   if(n.id === "fBy"){ recFilter.by = n.value; renderRecs(); }
   else if(n.id === "fSort"){ recFilter.sort = n.value; renderRecs(); }
@@ -7250,9 +7377,29 @@ function renderAll(){
   renderFocus(); renderTree(); renderTimeline();
 }
 
+/* Signing in is off on the test site, which would otherwise hide every control
+   that only a signed-in member sees — the note pickers among them. This stands
+   in for a session so the page can be looked at as any member would see it. It
+   is a local pretence and nothing more: callEndpoint still refuses to send, so
+   nothing can be written from here whoever is selected. */
+function devAsSetup(){
+  var sel = $("devAs"); if(!sel) return;
+  sel.innerHTML = '<option value="">nobody</option>' + state.members.map(function(m){
+    return '<option value="' + esc(m.id) + '">' + esc(m.name) + "</option>";
+  }).join("");
+  sel.addEventListener("change", function(){
+    var mem = memberById(sel.value);
+    me = mem ? { memberId: mem.id, name: mem.name, emailHint: "test", dev: true } : null;
+    notePick = { pred: [], disc: [] };
+    renderWhoami();
+    renderAll();
+  });
+}
+
 (async function boot(){
   if(DEV) $("devBar").hidden = false;
   await loadState();
+  if(DEV) devAsSetup();
   inbox = await loadInbox();
   var handled = {};
   (state.inbox || []).forEach(function(id){ handled[id] = 1; });
