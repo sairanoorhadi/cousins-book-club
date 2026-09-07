@@ -87,6 +87,116 @@ img{max-width:100%;display:block}
 .navlinks{display:flex;gap:4px;margin-left:auto;align-items:center;flex-wrap:wrap}
 .navlinks a{font-family:var(--f-display);font-weight:700;font-size:13.5px;text-decoration:none;padding:7px 12px;border-radius:6px;color:var(--muted)}
 .navlinks a:hover{color:var(--ink);background:var(--sunk)}
+/* ---- the menu ----
+   The sections used to sit across the bar and Admin was a button at the end of
+   them. The button is where Admin was, and everything that was in the bar is
+   behind it. The panel hangs off the button's right edge so it cannot run off
+   the side of a narrow window. */
+.menu{position:relative;display:inline-flex}
+.menu__burger{display:inline-flex;flex-direction:column;justify-content:center;gap:4px;width:38px;height:34px;padding:0 8px;border:2px solid var(--edge);border-radius:6px;background:var(--surface);box-shadow:2px 2px 0 var(--stamp);cursor:pointer}
+.menu__burger span{display:block;height:2.5px;border-radius:2px;background:var(--ink)}
+.menu__burger:hover{background:var(--sunk)}
+.menu__burger[aria-expanded="true"]{background:var(--grape);border-color:var(--grape);box-shadow:none}
+.menu__burger[aria-expanded="true"] span{background:var(--on-grape)}
+.menu__panel{position:absolute;top:calc(100% + 8px);right:0;z-index:60;min-width:200px;display:flex;flex-direction:column;gap:2px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:8px}
+.menu__panel[hidden]{display:none}
+/* Named through the panel so it beats ".navlinks a", which was colouring the
+   four links muted while Admin — a button, so out of that selector's reach —
+   stayed full strength and read as the highlighted one. Six items, one look. */
+.menu__panel .menu__item{font-family:var(--f-display);font-weight:700;font-size:14px;text-align:left;text-decoration:none;padding:8px 12px;border:2px solid transparent;border-radius:6px;background:none;color:var(--ink);cursor:pointer;width:100%}
+.menu__panel .menu__item:hover{background:var(--sunk);color:var(--ink)}
+/* the one that ends or begins a session, kept apart from the ones that go
+   somewhere — a rule above it, and nothing else different */
+.menu__panel .menu__item--out{margin-top:6px;border-top:2px solid var(--hairline);border-radius:0 0 6px 6px;padding-top:12px}
+/* The sign-in card's two ways on: a code for an account that exists, and a way
+   to make one. Opposite ends of the row so neither is taken for the other. */
+.loginact{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:18px}
+/* ---- members ---- */
+/* Two profiles abreast, the next pair under them. One column below 1000px,
+   where half a screen is not enough for a shelf of five. */
+.memlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 30px}
+/* Two abreast is where the room runs out. The label costs sixty pixels the
+   chips need to be words rather than initials, and beside a name and a
+   duration three chips read as genres without being announced. It comes back
+   at one profile to a row, where there is room to say it. */
+@media (min-width:1000px){ .memgen__lab{display:none} }
+.memblock{min-width:0;padding:22px 0 26px;border-bottom:2px solid var(--hairline)}
+.memblock:nth-last-child(-n+2){border-bottom:0}
+/* name, how long they have been here, and their genres on one line; the two
+   profiles elsewhere stacked at the end of it */
+.memhead{display:flex;gap:11px;align-items:center;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:12px 13px}
+.memhead__pic{flex:none;display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;font-size:17px;border-radius:50%;border:2px solid var(--edge);background:var(--c,var(--sky));color:var(--cf,var(--on-sky));font-family:var(--f-display);font-weight:800;overflow:hidden}
+.memhead__pic img{width:100%;height:100%;object-fit:cover}
+/* One line: the name, how long they have been here, and their genres. Half a
+   page is not much for three things, so everything on it is trimmed to the
+   size that keeps the longest of them — "11 months, 30 days" — beside a name
+   rather than under it. nowrap on the row, and the name gives way first. */
+.memhead__who{flex:1 1 auto;min-width:0;display:flex;flex-wrap:nowrap;align-items:center;gap:8px}
+.memhead__who h3{font-size:18px;line-height:1.1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.memtag{flex:none;border:2px solid var(--edge);border-radius:999px;background:var(--zest);color:var(--on-zest);padding:2px 8px;font-family:var(--f-display);font-size:9.5px;font-weight:700;white-space:nowrap}
+/* three genres someone picks to stand for themselves */
+/* The genres are the part that gives: a name is a name and the duration is
+   the point of the tag, so when three long genres will not fit beside them the
+   chips narrow rather than the row breaking or spilling. */
+.memgen{flex:0 1 auto;display:flex;align-items:center;gap:4px;min-width:0}
+.memgen__lab{font-family:var(--f-mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.memgen__c{flex:0 1 auto;min-width:38px;border:2px solid var(--edge);border-radius:999px;background:var(--sunk);padding:2px 7px;font-family:var(--f-display);font-weight:700;font-size:10px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.memgen__c--none{border-style:dashed;background:none;color:var(--muted);font-weight:400;font-family:var(--f-mono);font-size:8.5px}
+/* the two profiles elsewhere, as marks rather than sentences, one above the other */
+.memlinks{flex:none;display:flex;flex-direction:column;gap:6px;margin-left:auto}
+.memmark{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid var(--edge);border-radius:50%;box-shadow:2px 2px 0 var(--stamp);text-decoration:none}
+.memmark__l{font-family:var(--f-display);font-weight:800;font-size:16px;line-height:1}
+.memmark--goodreads{background:#F4F1EA;color:#382110}
+.memmark--fable{background:#1E1B4B;color:#FDE68A}
+.memmark:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--stamp)}
+/* nothing behind it: still there, plainly not a link */
+.memmark--off{background:var(--sunk);color:var(--muted);border-style:dashed;box-shadow:none;opacity:.7}
+.memmark--off:hover{transform:none;box-shadow:none}
+.memsub{font-family:var(--f-display);font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:18px 0 9px}
+/* Fold: the club list is the long half, so it is the half that folds. */
+.memfold{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;border-top:2px solid var(--hairline);padding:12px 0 6px;margin-top:16px;cursor:pointer}
+.memfold:hover .memsub{color:var(--ink)}
+.memfold__x{font-size:11px;color:var(--muted)}
+.memfold__n{margin-left:auto;font-family:var(--f-mono);font-size:10.5px;color:var(--muted);border:2px solid var(--edge);border-radius:999px;padding:1px 8px}
+/* The club list may wrap; the five may not. Five equal tracks keep them on one
+   line whatever the column is worth, rather than a fixed width that fits until
+   the arithmetic changes under it. */
+.memtiles{display:grid;grid-template-columns:repeat(auto-fill,104px);gap:10px;justify-content:start}
+.memtiles--five{grid-template-columns:repeat(5,minmax(0,1fr));justify-content:stretch}
+/* one line, and the author gives way rather than the foot growing to two */
+.memtiles .reccard__foot{padding:4px 6px;font-size:8.5px;flex-wrap:nowrap;gap:5px}
+.memtiles .reccard__foot > span:first-child{flex:none}
+.memtiles .reccard__reveal{padding:6px 7px;gap:2px 6px}
+.memtiles .reccard__reveal .k{font-size:7.5px;letter-spacing:.08em}
+.memtiles .reccard__reveal .v{font-size:10px}
+/* A book with no cover art draws its own, and at this size a long title ran
+   into the foot below it. Capped, and the foot's height kept clear. */
+/* Named through .reccard as well, because this block sits above the card's own
+   rules in the sheet and the two were tying on specificity — so the card's 18%
+   was winning and the title ran under the foot. */
+.memtiles .reccard .cover__gen{padding-bottom:30%}
+.memtiles .reccard .cover__t{font-size:clamp(8px,10cqw,13px);line-height:1.1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.memtiles .reccard .cover__a{display:none}
+/* One profile to a row on a narrow screen, where the shelf gets the whole
+   width and the five need not be squeezed to share it. */
+@media (max-width:999px){
+  .memlist{grid-template-columns:minmax(0,1fr);gap:0}
+  .memblock:nth-last-child(-n+2){border-bottom:2px solid var(--hairline)}
+  .memblock:last-child{border-bottom:0}
+  /* five equal tracks here too: at one profile to a row the column is the
+     whole screen, so the five come out larger than they are two-abreast —
+     which is the point — and they still never break to a second line. */
+}
+.memtiles .reccard__reveal{padding:7px 8px;gap:2px 7px}
+.memtiles .reccard__reveal .k{font-size:8px;letter-spacing:.1em}
+.memtiles .reccard__reveal .v{font-size:10.5px}
+/* An empty place on the shelf: the same size and shape as a cover so the five
+   line up, but dashed and unfilled so it reads as a space rather than a book
+   whose art nobody has found. */
+.reccard--slot{cursor:default}
+.slot{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;aspect-ratio:2/3;border:2px dashed var(--edge);border-radius:5px;background:var(--sunk);opacity:.72}
+.slot__n{font-family:var(--f-display);font-weight:800;font-size:22px;color:var(--muted)}
+.slot__w{font-family:var(--f-mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 
 /* ============ covers ============ */
 .cover{position:relative;display:block;aspect-ratio:2/3;border:2px solid var(--edge);border-radius:5px;overflow:hidden;background:var(--c,var(--grape));color:var(--cf,#fff)}
@@ -491,6 +601,16 @@ img{max-width:100%;display:block}
    little more air than the 9px the other bands use keeps the top card, and
    the Confirm level with it, clear of the field beside them. */
 #sBookPick{margin-top:14px}
+/* The arrows sit between the label and the first card, in the globe's column
+   and the same shape as it, so the row reads as part of the list rather than
+   as a control bar bolted on. Above the cards is what keeps them still: a last
+   page of three moved arrows placed underneath, and every press then had to be
+   re-aimed. */
+.bookpage{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.bookpage__go{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:15px;line-height:1}
+.bookpage__go:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
+.bookpage__go--off{visibility:hidden;pointer-events:none}
+.bookpage__of{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)}
 /* Measured, not guessed: below 766px the field row drops from three columns to
    two, so there is no Look up book column beside the author to sit under. The
    button rejoins the row on a line of its own rather than squeezing the name. */
@@ -1062,13 +1182,25 @@ img{max-width:100%;display:block}
       <div class="brand__name" id="brandName">Book Club</div>
     </div>
     <nav class="navlinks" aria-label="Sections">
-      <a href="#now">Now Reading</a>
-      <a href="#shelf">Previous Books</a>
-      <a href="#recs">Recommendations</a>
-      <a href="#badges">Badges</a>
       <button class="btn btn--sm btn--ghost" id="loginOpen" type="button">Sign in</button>
       <button class="btn btn--sm btn--surf" id="signupOpen" type="button" data-memform="join">Sign up</button>
-      <button class="btn btn--sm btn--grape" id="adminOpen" type="button">Admin</button>
+      <!-- The sections and Admin live in here now. The button stands where
+           Admin stood; Sign in and Sign up are untouched. -->
+      <div class="menu">
+        <button class="menu__burger" id="menuOpen" type="button" aria-haspopup="true"
+                aria-expanded="false" aria-controls="menuPanel" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="menu__panel" id="menuPanel" role="menu" hidden>
+          <a class="menu__item" role="menuitem" href="#now">Now Reading</a>
+          <a class="menu__item" role="menuitem" href="#shelf">Previous Books</a>
+          <a class="menu__item" role="menuitem" href="#recs">Recommendations</a>
+          <a class="menu__item" role="menuitem" href="#badges">Badges</a>
+          <a class="menu__item" role="menuitem" href="#members">Members</a>
+          <button class="menu__item" role="menuitem" type="button" id="menuAdmin">Admin</button>
+          <button class="menu__item menu__item--out" role="menuitem" type="button" id="menuSession">Sign in</button>
+        </div>
+      </div>
     </nav>
   </div>
 </div>
@@ -1217,6 +1349,23 @@ img{max-width:100%;display:block}
   </section>
 
   <!-- ===== BADGES ===== -->
+  <!-- Everyone in the club, and what each of them has read with it. The
+       directory and a member's own page share this section rather than opening
+       a modal: the profile leads on to a book, and that book on to its reading
+       sections, which is one level deeper than a modal can go comfortably. -->
+  <section class="section" id="members">
+    <div class="wrap">
+      <div class="section__head">
+        <div>
+          <p class="eyebrow">Who&rsquo;s here</p>
+          <h2>Members</h2>
+          <p>Everyone in the club, how long they&rsquo;ve been in it, and every book they&rsquo;ve read with us.</p>
+        </div>
+      </div>
+      <div id="memberPage"></div>
+    </div>
+  </section>
+
   <section class="section" id="badges">
     <div class="wrap">
       <div class="section__head badgehead">
@@ -1977,15 +2126,6 @@ function signInTrouble(err){
   if(err === "pending") return "Your account is pending approval from an organiser.";
   return endpointTrouble(err);
 }
-/* The header's Sign up button is hidden behind this modal, so the way out is
-   offered here — in the row with Send me a code, since it is the other thing
-   you might press, not a remark about the address above. */
-function showSignupWay(){
-  var slot = $("loginSignupSlot");
-  if(!slot || $("loginToSignup")) return;
-  slot.innerHTML = '<button class="btn btn--surf" type="button" id="loginToSignup">Sign up</button>';
-}
-
 async function restoreSession(){
   var token = sessionToken();
   if(!token || !endpoint()) return;
@@ -2047,9 +2187,13 @@ function renderLogin(){
            down by the buttons where it read as a comment on the pressing */
         '<span class="hint loginrow__note" id="loginNote"></span>' +
       "</div>" +
-      '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px">' +
+      /* the two ways out of this card, at opposite ends of the row and in
+         different colours: one sends a code to an account that exists, the
+         other is for not having one yet */
+      '<div class="loginact">' +
         '<button class="btn btn--surf" type="button" id="loginSend">Send me a code</button>' +
-        '<span id="loginSignupSlot"></span></div>' +
+        '<button class="btn btn--grape" type="button" id="loginToSignup">Sign up</button>' +
+      "</div>" +
       '<p class="hint" style="margin-top:16px">Your address is kept privately by the organiser and never published on this site.</p>';
   }else{
     body.innerHTML =
@@ -2156,8 +2300,8 @@ function wildcardQuery(q){
   }).join(" ");
 }
 
-async function olSearch(q){
-  var url = "https://openlibrary.org/search.json?limit=8&fields=" + OL_FIELDS +
+async function olSearch(q, limit){
+  var url = "https://openlibrary.org/search.json?limit=" + (limit || 8) + "&fields=" + OL_FIELDS +
     "&q=" + encodeURIComponent(q);
   if(LOOKUP_DEBUG) console.log("Open Library \u2192", url);
   var res = await fetchSoon(url, { cache: "no-store" });
@@ -2168,18 +2312,21 @@ async function olSearch(q){
   return ((await res.json()).docs || []).map(olHit).filter(function(x){ return x.title; });
 }
 
-async function searchBooks(q){
+/* Eight is right for a title: the answer is one book and the rest are there to
+   correct a typo. Asking for someone's whole shelf is a different question, so
+   that caller says how many it wants. */
+async function searchBooks(q, limit){
   q = String(q || "").trim();
   if(q.length < 3) return [];
   try{
-    var hits = await olSearch(q);
+    var hits = await olSearch(q, limit);
     /* only when the plain question got no answer at all — a second request on
        failure, never on success */
     if(!hits.length){
       var loose = wildcardQuery(q);
       if(loose !== q){
         if(LOOKUP_DEBUG) console.log("nothing found; trying the looser form");
-        hits = await olSearch(loose);
+        hits = await olSearch(loose, limit);
       }
     }
     return hits;
@@ -3236,6 +3383,176 @@ function andList(names){
   if(names.length < 2) return names[0] || "";
   return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
 }
+/* ---- members ----
+   The directory and one member's page are the same section, swapped: the page
+   leads on to a book and that book to its reading sections, which is a level
+   deeper than a modal goes comfortably. */
+var memberOpen = {};             /* which club-read lists are unfolded */
+
+/* How long someone has been in the club, counted in the units a person would
+   use: months and days until the first anniversary, years and months after it.
+   Whole calendar months rather than a division, so "1 month" starts on the
+   day of the month they joined and not 30 days later. */
+function sinceJoined(iso, now){
+  var from = parseDate(iso);
+  if(!from) return "";
+  var to = now || new Date();
+  if(to < from) return "";
+  var months = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
+  if(to.getDate() < from.getDate()) months--;
+  if(months < 0) months = 0;
+  var plural = function(n, word){ return n + " " + word + (n === 1 ? "" : "s"); };
+  if(months >= 12) {
+    var years = Math.floor(months / 12), left = months % 12;
+    return plural(years, "year") + (left ? ", " + plural(left, "month") : "");
+  }
+  /* The days since the month rolled over, which is where the day-of-month
+     sits. Floored, not rounded: "to" is the moment this is read and "mark" is
+     a midnight, so rounding turned every afternoon into another whole day —
+     joining this morning read as "1 day" before lunch. */
+  var mark = new Date(from.getFullYear(), from.getMonth() + months, from.getDate());
+  var days = Math.max(0, Math.floor((to - mark) / 86400000));
+  return plural(months, "month") + (days ? ", " + plural(days, "day") : "");
+}
+function membersSince(m){ return m ? sinceJoined(m.joined) : ""; }
+
+/* every book this member has read with the club, newest finished first */
+function booksReadBy(id){
+  return state.books.filter(function(b){
+    return (b.members || []).indexOf(id) !== -1;
+  }).sort(function(a, b){
+    return String(b.finished || b.started || "").localeCompare(String(a.finished || a.started || ""));
+  });
+}
+/* The same card the Recommendations grid draws: the cover is the button, the
+   page count and author sit in the foot, and the reveal slides up on hover.
+   Only the third row of the reveal differs — a club book has a date where a
+   recommendation has its endorsements. Clicking it opens the book, which the
+   page already knows how to do from data-book. */
+function bookTileHTML(b){
+  /* A club book opens; a favourite the club has never read has nothing to open
+     yet, so it is drawn as a tile rather than pretending to be a button. What
+     those open is Stage 4's to settle, with the data that comes with it. */
+  var open = !!(b.id && bookById(b.id));
+  return '<div class="reccard-wrap">' +
+    (open
+      ? '<button class="reccard cover-wrap" type="button" data-book="' + esc(b.id) + '" ' +
+        'aria-label="' + esc(b.title + (b.author ? " by " + b.author : "") + " — open details") + '">'
+      : '<div class="reccard cover-wrap">') +
+      coverHTML(b) +
+      '<span class="reccard__foot"><span>' + esc(b.pages || "?") + " pp</span>" +
+        '<span class="reccard__by">' + (b.author ? esc(b.author) : "&nbsp;") + "</span></span>" +
+      '<span class="reccard__reveal">' +
+        '<span class="k">Genres</span><span class="v">' + esc((b.genres || []).join(" · ") || "Unlisted") + "</span>" +
+        '<span class="k">Level</span><span class="v">' + esc(levelText(b)) + "</span>" +
+        '<span class="k">Read</span><span class="v">' + esc(readWhen(b)) + "</span>" +
+      "</span>" +
+    (open ? "</button>" : "</div>") + "</div>";
+}
+function readWhen(b){
+  if(b.finished) return "Finished " + shortDate(b.finished);
+  if(b.started) return "Started " + shortDate(b.started);
+  return "Not started";
+}
+/* An empty place on the shelf, numbered so five of them read as five slots
+   rather than as five identical gaps. Dashed and unfilled: plainly a space for
+   a book, not a book nobody has drawn a cover for. */
+function tileSlotHTML(n){
+  return '<div class="reccard-wrap">' +
+    '<div class="reccard reccard--slot"><span class="slot"><span class="slot__n">' + n + "</span>" +
+      '<span class="slot__w">Empty</span></span></div></div>';
+}
+function memberPic(m, cls){
+  return '<span class="' + cls + '" ' + hueStyle(m) + ">" +
+    (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>";
+}
+function renderMembers(){
+  var host = $("memberPage");
+  if(!host) return;
+  host.innerHTML = state.members.length
+    ? '<div class="memlist">' + state.members.map(memberProfileHTML).join("") + "</div>"
+    : '<p class="focusnote">No members yet.</p>';
+}
+/* One scroll, everyone on it. A grid of cards to click through put a whole
+   page between you and the next person; stacked, reading down is reading on. */
+function memberProfileHTML(m){
+  var since = membersSince(m);
+  var read = booksReadBy(m.id);
+  var open = !!memberOpen[m.id];
+  return '<article class="memblock">' +
+    /* The join date is not shown — it is only what the duration is counted
+       from, and the tag says the part anybody reads. */
+    '<div class="memhead">' +
+      memberPic(m, "memhead__pic") +
+      '<div class="memhead__who">' +
+        "<h3>" + esc(m.name) + "</h3>" +
+        /* "in the club" is what the section is; on someone's own header the
+           tag reads as their tenure without it, and those three words were
+           sixty pixels the name and the genres both needed. */
+        (since ? '<span class="memtag" title="' + esc(since + " in the club") + '">' +
+          esc(since) + "</span>" : "") +
+        topGenresHTML(m) +
+      "</div>" +
+      '<div class="memlinks">' +
+        profileLinkHTML(m.goodreads, "Goodreads", "g") +
+        profileLinkHTML(m.fable, "Fable", "F") +
+      "</div>" +
+    "</div>" +
+    '<h4 class="memsub">Their five</h4>' +
+    '<div class="memtiles memtiles--five">' + top5HTML(m) + "</div>" +
+    /* The club list is the long one and the five are the point, so this is the
+       half that folds away. */
+    '<button class="memfold" type="button" data-memopen="' + esc(m.id) + '" aria-expanded="' + open + '">' +
+      '<span class="memfold__x" aria-hidden="true">' + (open ? "&#9662;" : "&#9656;") + "</span>" +
+      '<span class="memsub" style="margin:0">Read with the club</span>' +
+      '<span class="memfold__n">' + read.length + "</span></button>" +
+    (open
+      ? (read.length
+          ? '<div class="memtiles">' + read.map(bookTileHTML).join("") + "</div>"
+          : '<p class="focusnote">No books with the club yet.</p>')
+      : "") +
+  "</article>";
+}
+/* Up to three genres someone picks to stand for themselves. The field does not
+   exist yet — choosing them is stage four, with the five and the two links —
+   so until then the places are shown empty, the same way the shelf is. */
+function topGenresHTML(m){
+  var picks = (m.genres || []).slice(0, 3);
+  return '<div class="memgen"><span class="memgen__lab">Top genres</span>' +
+    (picks.length
+      ? picks.map(function(g){ return '<span class="memgen__c">' + esc(g) + "</span>"; }).join("")
+      : '<span class="memgen__c memgen__c--none">Not set yet</span>') +
+  "</div>";
+}
+/* A link when there is one, and a plain note when there is not — an empty
+   space says nothing about whether they have a profile elsewhere. */
+/* Five places, always. What is chosen is drawn as a book; the rest are the
+   numbered spaces waiting for one. */
+function top5HTML(m){
+  var picks = (m.top5 || []).slice(0, 5);
+  var out = picks.map(function(p, i){
+    return bookTileHTML({ id: p.id || "", title: p.title || "", author: p.author || "",
+      cover: p.cover || "", pages: p.pages || "", genres: p.genres || [],
+      ageMin: p.ageMin, ageMax: p.ageMax, level: p.level,
+      finished: "", started: "" });
+  });
+  for(var n = picks.length; n < 5; n++) out.push(tileSlotHTML(n + 1));
+  return out.join("");
+}
+function profileLinkHTML(url, name, mark){
+  var safe = safeUrl(url);
+  var cls = "memmark memmark--" + name.toLowerCase();
+  /* A lettermark in the service's own colour rather than its logo: the real
+     artwork is theirs, and drawing it from memory would be a bad copy of
+     something that is not ours to copy. Swap in their SVG to use the real one. */
+  var inner = '<span class="memmark__l" aria-hidden="true">' + esc(mark) + "</span>";
+  return safe
+    ? '<a class="' + cls + '" href="' + esc(safe) + '" target="_blank" rel="noopener noreferrer" ' +
+      'title="' + esc(name) + '" aria-label="' + esc("Their " + name + " profile") + '">' + inner + "</a>"
+    : '<span class="' + cls + ' memmark--off" title="' + esc("No " + name + " profile yet") + '" ' +
+      'aria-label="' + esc("No " + name + " profile yet") + '">' + inner + "</span>";
+}
+
 function renderFocus(){
   var bar = $("focusBar");
   if(!state.members.length){ bar.innerHTML = ""; $("focusNote").hidden = true; return; }
@@ -4066,6 +4383,41 @@ function tryUnlock(){
   /* a re-render, so the wrong word is cleared rather than left to be edited */
   renderAdminLock(true);
 }
+/* ---- the menu ----
+   Opened by its own button, shut by anything else: a choice inside it, a click
+   anywhere on the page, or Escape. Nothing here decides what the choices do —
+   Admin still opens the same locked panel and Sign out is the same sign-out
+   the account sheet has always used. */
+/* Sign out is a lie when nobody is signed in, and the press that follows it
+   would be a no-op. The word follows the session. */
+function paintMenuSession(){
+  var b = $("menuSession");
+  if(!b) return;
+  b.textContent = me ? "Sign out" : "Sign in";
+}
+function menuShut(){
+  var p = $("menuPanel"), b = $("menuOpen");
+  if(p) p.hidden = true;
+  if(b) b.setAttribute("aria-expanded", "false");
+}
+function menuToggle(){
+  var p = $("menuPanel"), b = $("menuOpen");
+  if(!p || !b) return;
+  var opening = p.hidden;
+  p.hidden = !opening;
+  b.setAttribute("aria-expanded", opening ? "true" : "false");
+  if(opening){ var first = p.querySelector(".menu__item"); if(first) first.focus(); }
+}
+/* This runs before the handler that acts on the choice, which is what we want:
+   the panel is gone by the time the panel it opens is drawn. */
+document.addEventListener("click", function(e){
+  if(e.target.closest && e.target.closest("#menuOpen")) return;
+  menuShut();
+});
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape") menuShut();
+});
+
 function openAdmin(){
   renderAdmin();
   openScrim("adminScrim");
@@ -4742,8 +5094,6 @@ document.addEventListener("click", async function(e){
     var lres = await callEndpoint("login-request", { email: lem });
     if(!lres.ok){
       $("loginNote").textContent = signInTrouble(lres.error) || "Couldn't send a code just now.";
-      /* nothing to sign up for if the organiser already has the request */
-      if(lres.error === "not a member") showSignupWay();
       return;
     }
     loginEmail = lem; loginStep = "code"; renderLogin();
@@ -4758,7 +5108,6 @@ document.addEventListener("click", async function(e){
       $("loginNote").textContent = vres.error === "expired" ? "That code has expired — send a new one."
         : vres.error === "wrong" ? "Not right. " + (vres.left ? vres.left + " tries left." : "Send a new code.")
         : signInTrouble(vres.error) || "Couldn't sign you in.";
-      if(vres.error === "not a member") showSignupWay();
       return;
     }
     setSessionToken(vres.token);
@@ -5093,7 +5442,17 @@ document.addEventListener("click", async function(e){
     return;
   }
 
-  if(t.closest("#adminOpen")){ openAdmin(); return; }
+  /* folding one member's club-read list open or shut */
+  if((el = t.closest("[data-memopen]"))){
+    var mo = el.getAttribute("data-memopen");
+    memberOpen[mo] = !memberOpen[mo];
+    renderMembers();
+    return;
+  }
+  if(t.closest("#menuOpen")){ menuToggle(); return; }
+  if(t.closest("#menuAdmin")){ openAdmin(); return; }
+  /* the same button either way round: it ends a session or it starts one */
+  if(t.closest("#menuSession")){ if(me) await signOut(); else openLogin(); return; }
   if(t.closest("#admUnlock")){ tryUnlock(); return; }
   if((el = t.closest("[data-atab]"))){ adminTab = el.getAttribute("data-atab"); renderAdmin(); return; }
   if((el = t.closest("[data-mfilter]"))){ meetBookFilter = el.getAttribute("data-mfilter"); renderAdminPane(); return; }
@@ -5460,7 +5819,22 @@ function acceptSubmission(item, opts){
   }else if(item.kind === "join"){
     var nm = String(p.name || "").trim();
     if(!nm) return;
-    if(state.members.some(function(m){ return m.name.toLowerCase() === nm.toLowerCase(); })) return;
+    /* Someone the organiser added by hand is already on the list, but with no
+       address behind them — approving their request is the thing that attaches
+       one. Fill that row in rather than dropping the request, which used to
+       leave them told they were approved and unable to sign in. A row that
+       already has a reference is a different person of the same name, or a
+       second request from the same one; leave it alone either way. */
+    var seat = state.members.filter(function(m){ return m.name.toLowerCase() === nm.toLowerCase(); })[0];
+    if(seat){
+      if(seat.notifyRef) return;
+      seat.notifyRef = String(p.emailRef || "");
+      seat.emailHint = String(p.emailHint || "");
+      if(!seat.joined) seat.joined = todayISO();
+      if(!seat.fable) seat.fable = safeUrl(p.fable);
+      if(!seat.goodreads) seat.goodreads = safeUrl(p.goodreads);
+      return;
+    }
     /* only the reference and the masked hint — never the address itself */
     state.members.push({ id: uid("mb"), name: nm.slice(0, 60), joined: todayISO(), avatar: "",
       email: "", notifyRef: String(p.emailRef || ""), emailHint: String(p.emailHint || ""), notify: [],
@@ -5716,6 +6090,14 @@ var pickMode = "";              /* "", "author" or "book" */
 var bookHits = [];
 var bookPicked = -1;
 var bookSettled = false;
+/* Someone with a shelf has more than fits under the box, and six was all that
+   was ever kept — of eight that were ever asked for. The lookup asks for the
+   shelf now and the cards are paged through five at a time. One request, not
+   one per page: what pages is a list already in hand, so an arrow is instant
+   and a pick made on page four is the same pick as one made on page one. */
+var AUTHOR_SHELF = 60;          /* how many of an author's books to fetch */
+var BOOK_PAGE = 5;              /* how many cards to show at once */
+var bookPage = 0;
 
 /* ---- the name, asked properly ----
    The name used to be offered only when the catalogue spelt it differently,
@@ -5798,8 +6180,9 @@ function bookCandidates(hits, author){
     outList.push(seen[key]);
   });
   outList.sort(function(a, b){ return (a.mine - b.mine) || (b.count - a.count); });
-  return outList.slice(0, 6);
+  return outList.slice(0, AUTHOR_SHELF);
 }
+function bookPageCount(){ return Math.ceil(bookHits.length / BOOK_PAGE) || 1; }
 
 function bookPickWorth(){ return bookHits.length > 0; }
 
@@ -5808,12 +6191,40 @@ function renderBookPick(){
   if(!host) return;
   if(!bookPickWorth() || bookSettled){ host.hidden = true; host.innerHTML = ""; return; }
   var author = $("sAuthor").value.trim();
+  var pages = bookPageCount();
+  if(bookPage > pages - 1) bookPage = pages - 1;
+  if(bookPage < 0) bookPage = 0;
+  var from = bookPage * BOOK_PAGE;
+  var shown = bookHits.slice(from, from + BOOK_PAGE);
+
+  /* Above the cards, not below them. The last page of a shelf is rarely a full
+     five, so arrows under the list moved up and down as it was paged and had
+     to be re-aimed at every press. Nothing above the first card changes height,
+     so up here they are in the same place on every page. Back keeps its slot on
+     the first page — invisible, still there — so Forward does not slide
+     sideways either. */
+  var nav = pages < 2 ? "" :
+    '<span class="bookpage">' +
+      '<button class="bookpage__go' + (bookPage === 0 ? " bookpage__go--off" : "") + '" type="button" ' +
+        'data-bookpage="prev"' + (bookPage === 0 ? ' tabindex="-1" aria-hidden="true"' : "") +
+        ' aria-label="The books before these">&#8592;</button>' +
+      '<button class="bookpage__go' + (bookPage >= pages - 1 ? " bookpage__go--off" : "") + '" type="button" ' +
+        'data-bookpage="next"' + (bookPage >= pages - 1 ? ' tabindex="-1" aria-hidden="true"' : "") +
+        ' aria-label="More books by this author">&#8594;</button>' +
+      '<span class="bookpage__of">' + (from + 1) + "\u2013" + (from + shown.length) +
+        " of " + bookHits.length + "</span>" +
+    "</span>";
+
   host.hidden = false;
   host.innerHTML = '<span class="authpick__lab">' +
       (bookHits.length > 1
         ? "Which book? Pick one, then confirm to fill the rest in"
         : "Found this one \u2014 pick it, then confirm to fill the rest in") + "</span>" +
-    bookHits.map(function(bk, i){
+    nav +
+    shown.map(function(bk, n){
+      /* the index into the whole shelf, not into this page: a pick made on
+         page four has to still be that book when page one is drawn again */
+      var i = from + n;
       var on = i === bookPicked;
       return '<span class="authrow">' +
         '<button class="authrow__pick" type="button" data-bookpick="' + i + '" aria-pressed="' + on + '">' +
@@ -6057,7 +6468,7 @@ function clearSuggestForm(){
   /* the pickers, and everything that decides what they are asking */
   pickMode = "";
   authorHits = []; authorPicked = -1; authorSettled = false;
-  bookHits = []; bookPicked = -1; bookSettled = false;
+  bookHits = []; bookPicked = -1; bookPage = 0; bookSettled = false;
   namePicks = []; namePicked = -1; nameTypo = false; nameSettled = "";
   titleFixes = []; authorFixes = [];
   clearNamePick();
@@ -6092,11 +6503,6 @@ function markMissing(ids){
     var box = $(id), fld = box && box.closest(".field");
     if(fld) fld.classList.add("field--missing");
   });
-}
-/* "x, y and z": the list is read as a sentence, not printed as a table */
-function andList(names){
-  if(names.length <= 1) return names[0] || "";
-  return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
 }
 function missingMust(){
   return SUGGEST_MUST.filter(function(m){ return !$(m.id).value.trim(); });
@@ -6295,12 +6701,12 @@ async function lookupFromAuthor(author, out){
   hideTitleFix();      /* the title box is empty here; an old correction is stale */
   /* the fielded search first, since it answers with that person's work rather
      than every book that mentions them */
-  var hits = await searchBooks('author:"' + author + '"');
-  if(!hits.length) hits = await searchBooks(author);
+  var hits = await searchBooks('author:"' + author + '"', AUTHOR_SHELF);
+  if(!hits.length) hits = await searchBooks(author, AUTHOR_SHELF);
 
   if(!hits.length){
     clearNamePick();
-    bookHits = []; bookPicked = -1; renderBookPick();
+    bookHits = []; bookPicked = -1; bookPage = 0; renderBookPick();
     out.innerHTML = '<p class="hint" style="margin-top:10px">Couldn\u2019t find an author by that name. ' +
       'Check the spelling, or put a title in as well.</p>';
     return;
@@ -6323,7 +6729,7 @@ async function lookupFromAuthor(author, out){
 
   clearNamePick();     /* answered, so it comes off the page before the books */
   bookHits = bookCandidates(hits, author);
-  bookPicked = -1;
+  bookPicked = -1; bookPage = 0;      /* a new author starts at their first shelf */
   renderBookPick();
   out.innerHTML = '<p class="hint" style="margin-top:10px">' +
     'Books by <strong>' + esc(author) + '</strong>. Pick one and press <strong>Confirm</strong> ' +
@@ -6601,6 +7007,14 @@ document.addEventListener("click", async function(e){
     }
     return;
   }
+  /* forward and back through the shelf. Nothing is fetched and nothing is
+     unpicked — the same list, five at a time. */
+  var bpg = e.target.closest && e.target.closest("[data-bookpage]");
+  if(bpg){
+    bookPage += bpg.getAttribute("data-bookpage") === "next" ? 1 : -1;
+    renderBookPick();
+    return;
+  }
   /* a book under that author: take the title, show Confirm, fill nothing.
      Same bargain as the author cards \u2014 select first, confirm second. */
   var bp = e.target.closest && e.target.closest("[data-bookpick]");
@@ -6684,7 +7098,7 @@ $("sAuthor").addEventListener("input", function(){
   authorPicked = -1; authorSettled = false;
   /* a different name means different books, so that list is no longer an
      answer to anything and neither is the pick inside it */
-  bookHits = []; bookPicked = -1; bookSettled = false;
+  bookHits = []; bookPicked = -1; bookPage = 0; bookSettled = false;
   renderBookPick();
   /* and the name is a question again, so the answer to the old one goes */
   nameSettled = "";
@@ -6791,6 +7205,9 @@ $("suggestForm").addEventListener("submit", async function(e){
 
 /* ---------- boot ---------- */
 function renderWhoami(){
+  /* before the early return below: the menu has something true to say about
+     the session even where signing in is switched off */
+  paintMenuSession();
   var btn = $("loginOpen");
   if(!btn) return;
   var join = $("signupOpen");
@@ -6828,7 +7245,8 @@ function renderAll(){
     focusIds = [me.memberId]; focusAuto = true;
   }
   renderWhoami();
-  renderHero(); renderShelf(); renderRecs(); renderFocus(); renderTree(); renderTimeline();
+  renderHero(); renderShelf(); renderRecs(); renderMembers();
+  renderFocus(); renderTree(); renderTimeline();
 }
 
 (async function boot(){
