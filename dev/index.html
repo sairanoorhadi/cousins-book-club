@@ -473,8 +473,12 @@ img{max-width:100%;display:block}
 .addrow .input{flex:1 1 240px;width:auto}
 .addrow .input--who{flex:0 1 150px}
 .whopick{position:relative;flex:0 1 auto}
-.whopick__btn{white-space:nowrap;max-width:210px;overflow:hidden;text-overflow:ellipsis}
+.whopick__btn{display:inline-flex;align-items:center;gap:7px;max-width:210px}
 .whopick__btn[data-empty]{color:var(--muted)}
+.whopick__name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.whopick__arw{flex:none;transition:transform .15s ease}
+.whopick__btn[aria-expanded="true"] .whopick__arw{transform:rotate(180deg)}
+@media (prefers-reduced-motion:reduce){ .whopick__arw{transition:none} }
 .whopick__panel{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:10px;padding:9px 11px;
   border:1.5px solid var(--hairline);border-radius:6px;background:var(--sunk)}
 .whopick__lab{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:4px}
@@ -3844,6 +3848,10 @@ function openMeeting(id){
    panel of checkboxes under it. Whoever is signed in starts ticked, since
    they are usually the one writing it down. */
 var notePick = { pred: [], disc: [] };
+/* A name on its own reads as a label rather than a control, so the button
+   carries the arrow every dropdown has. It turns over when the panel opens. */
+var CHEVRON = '<svg class="whopick__arw" viewBox="0 0 10 6" width="10" height="6" aria-hidden="true" focusable="false">' +
+  '<path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function whoPickLabel(kind){
   var picked = notePick[kind] || [];
   if(!picked.length) return "Who said it?";
@@ -3855,7 +3863,7 @@ function whoPickHTML(kind){
   return '<div class="whopick" data-whopick="' + kind + '">' +
     '<button class="btn btn--sm btn--ghost whopick__btn" type="button" data-whotoggle="' + kind + '" ' +
       'aria-expanded="false"' + (picked.length ? "" : ' data-empty="1"') + ">" +
-      esc(whoPickLabel(kind)) + "</button></div>";
+      '<span class="whopick__name">' + esc(whoPickLabel(kind)) + "</span>" + CHEVRON + "</button></div>";
 }
 /* The panel sits under the row rather than floating over it. A note block
    clips what overflows — it has to, for its rounded head — so a panel hanging
@@ -5995,7 +6003,7 @@ document.addEventListener("change", function(e){
     if(n.checked){ if(at === -1) list.push(id); }
     else if(at !== -1) list.splice(at, 1);
     var btn = document.querySelector('[data-whotoggle="' + kind + '"]');
-    if(btn){ btn.textContent = whoPickLabel(kind);
+    if(btn){ var lab = btn.querySelector(".whopick__name"); if(lab) lab.textContent = whoPickLabel(kind);
       if(list.length) btn.removeAttribute("data-empty"); else btn.setAttribute("data-empty", "1"); }
     return;
   }
