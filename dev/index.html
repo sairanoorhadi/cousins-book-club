@@ -5820,7 +5820,22 @@ function acceptSubmission(item, opts){
   }else if(item.kind === "join"){
     var nm = String(p.name || "").trim();
     if(!nm) return;
-    if(state.members.some(function(m){ return m.name.toLowerCase() === nm.toLowerCase(); })) return;
+    /* Someone the organiser added by hand is already on the list, but with no
+       address behind them — approving their request is the thing that attaches
+       one. Fill that row in rather than dropping the request, which used to
+       leave them told they were approved and unable to sign in. A row that
+       already has a reference is a different person of the same name, or a
+       second request from the same one; leave it alone either way. */
+    var seat = state.members.filter(function(m){ return m.name.toLowerCase() === nm.toLowerCase(); })[0];
+    if(seat){
+      if(seat.notifyRef) return;
+      seat.notifyRef = String(p.emailRef || "");
+      seat.emailHint = String(p.emailHint || "");
+      if(!seat.joined) seat.joined = todayISO();
+      if(!seat.fable) seat.fable = safeUrl(p.fable);
+      if(!seat.goodreads) seat.goodreads = safeUrl(p.goodreads);
+      return;
+    }
     /* only the reference and the masked hint — never the address itself */
     state.members.push({ id: uid("mb"), name: nm.slice(0, 60), joined: todayISO(), avatar: "",
       email: "", notifyRef: String(p.emailRef || ""), emailHint: String(p.emailHint || ""), notify: [],
