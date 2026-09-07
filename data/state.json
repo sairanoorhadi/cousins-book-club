@@ -1,5 +1,5 @@
 {
-  "rev": 1265,
+  "rev": 1266,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -78,7 +78,8 @@
       "emailHint": "",
       "notify": [],
       "fable": "",
-      "goodreads": ""
+      "goodreads": "",
+      "hue": ""
     }
   ],
   "books": [
@@ -292,7 +293,7 @@
       "place": "Ferdinand",
       "chapters": "Section 6: Chapters 32-45",
       "pages": "104",
-      "done": false,
+      "done": true,
       "summary": "",
       "predictions": [],
       "points": [
