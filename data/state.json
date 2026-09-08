@@ -1,5 +1,5 @@
 {
-  "rev": 1289,
+  "rev": 1290,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1160,6 +1160,31 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 13+"
+    },
+    {
+      "id": "suggest-91746858-bc0",
+      "title": "Mixing it",
+      "author": "Rosemary Hayes",
+      "pages": 192,
+      "ageMin": 10,
+      "ageMax": 13,
+      "genres": [
+        "Young Adult",
+        "Drama",
+        "Muslim"
+      ],
+      "by": "Ms. Wendy",
+      "status": "approved",
+      "at": "2026-09-08",
+      "cover": "https://covers.openlibrary.org/b/id/2032470-L.jpg",
+      "blurb": "Fatimah is a devout Muslim. Steve has never given much thought to matters of faith. The two of them happen to be walking down the same street when a terrorist bomb explodes. Steve is badly injured, and when the emergency services arrive they find Fatimah cradling his head in her lap, talking to him, willing him to stay alive. But the media is there too, and the next day their picture appears in every newspaper. “Romeo and Juliet!” and “Love Across the Divide!” scream the headlines. Then the threats and anonymous phone calls start. Can the two young people rise above the hatred and learn to understand one another? And what about the terrorists, who surely aren't doing nothing as Steve and Fatimah try to break down barriers? Author Rosemary Hayes researched Islam's background and Muslim attitudes with a group of devout Muslim teenage girls in Cambridge, England, to give this story a sense of authenticity and reality missing from so much of the discourse on this heated topic.",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 10-13"
     }
   ],
   "inbox": [
@@ -1231,6 +1256,7 @@
     "suggest-6944d6d5-5f3",
     "suggest-3b3ebcb6-1b1",
     "suggest-5b4bab6f-ca1",
-    "suggest-9502fb3c-cb7"
+    "suggest-9502fb3c-cb7",
+    "suggest-91746858-bc0"
   ]
 }
