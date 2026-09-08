@@ -1,5 +1,5 @@
 {
-  "rev": 1278,
+  "rev": 1279,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -918,7 +918,12 @@
           "at": "2026-08-25T15:52:10.000Z"
         }
       ],
-      "ratings": []
+      "ratings": [
+        {
+          "score": 4.1,
+          "source": "Goodreads"
+        }
+      ]
     },
     {
       "id": "suggest-2603dba6-457",
