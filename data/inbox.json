@@ -750,6 +750,31 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-f70a1c8e-a89",
+      "kind": "suggest",
+      "at": "2026-09-08T04:18:01.864Z",
+      "payload": {
+        "title": "The First Stone",
+        "author": "Don Aker",
+        "pages": 304,
+        "ageMin": 12,
+        "ageMax": 18,
+        "level": "Ages 12-18",
+        "genres": [
+          "Children's",
+          "Friendship"
+        ],
+        "blurb": "REEF IS AN EMBITTERED YOUNG OFFENDER, hardly able to contain his anger at the world over the death of his grandmother, the only person who had shown him any love. Seventeen-year-old Leeza is mourning the death of her older sister. A stone hurled in rage shatters both their lives and throws them together in the most unexpected way―and offers them a chance at healing.",
+        "summarySource": "fetched",
+        "cover": "https://covers.openlibrary.org/b/id/7016872-L.jpg",
+        "by": "Ms. Wendy",
+        "ratings": [
+          "[object Object]",
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
