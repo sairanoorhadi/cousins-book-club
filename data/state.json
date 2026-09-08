@@ -1,5 +1,5 @@
 {
-  "rev": 1287,
+  "rev": 1288,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -752,7 +752,12 @@
       "ageMin": 13,
       "ageMax": 100,
       "dislikes": [],
-      "ratings": []
+      "ratings": [
+        {
+          "score": 4.3,
+          "source": "Goodreads"
+        }
+      ]
     },
     {
       "id": "rc-elevator",
