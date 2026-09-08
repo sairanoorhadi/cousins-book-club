@@ -6,11 +6,16 @@
  *   node tools/migrate-note-authors.js data/state.json --write  # do it
  *
  * A note used to carry whoever typed their name into the box: "Saira",
- * "Filza, Eliza", "Summar", "Everyone". Each comma-separated name that matches
- * a member becomes that member's id in byIds. Anything left over stays in `by`
- * exactly as it was written, because not every name is a member — "Everyone"
- * is not a person at all, and someone can be in the notes before they are on
- * the list. Nothing is guessed and nothing is discarded.
+ * "Filza, Eliza", "Everyone". Each comma-separated name that matches a member
+ * becomes that member's id in byIds.
+ *
+ * "Everyone" is not a name but it is not vague either: it means the people who
+ * read that book, which the book itself records. So it resolves to that book's
+ * readers rather than to every member of the club today — the note belongs to
+ * one meeting about one book, and the club has grown since.
+ *
+ * Anything still unmatched stays in `by` exactly as written. Nothing is
+ * guessed and nothing is discarded.
  *
  * Safe to run twice: a note that already has ids is left alone.
  */
@@ -23,6 +28,15 @@ if (!file) { console.error('usage: migrate-note-authors.js <state.json> [--write
 const state = JSON.parse(fs.readFileSync(file, 'utf8'));
 const known = new Map();
 (state.members || []).forEach(m => { if (m && m.name) known.set(m.name.trim().toLowerCase(), m.id); });
+
+const byId = new Map((state.books || []).map(b => [b.id, b]));
+
+/* Who read the book this note's meeting was about. */
+function readersOf(meeting) {
+  const book = byId.get(meeting.bookId);
+  const ids = (book && book.members) || [];
+  return ids.filter(id => (state.members || []).some(m => m.id === id));
+}
 
 const rows = [];
 let touched = 0, already = 0, blank = 0, nomatch = 0;
@@ -40,8 +54,15 @@ let touched = 0, already = 0, blank = 0, nomatch = 0;
         const name = part.trim();
         if (!name) return;
         const id = known.get(name.toLowerCase());
-        if (id) { if (!ids.includes(id)) ids.push(id); }
-        else rest.push(name);
+        if (id) { if (!ids.includes(id)) ids.push(id); return; }
+        if (name.toLowerCase() === 'everyone') {
+          /* the people who read that book, from the book itself */
+          const readers = readersOf(meeting);
+          if (readers.length) { readers.forEach(r => { if (!ids.includes(r)) ids.push(r); }); return; }
+          /* nobody recorded as having read it — keep the word rather than
+             turning a real attribution into an empty one */
+        }
+        rest.push(name);
       });
       note.byIds = ids;
       note.by = rest.join(', ');
