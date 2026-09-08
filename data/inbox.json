@@ -585,6 +585,34 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-714168e4-c04",
+      "kind": "suggest",
+      "at": "2026-09-08T04:02:16.484Z",
+      "payload": {
+        "title": "The Alchemist Graphic Novel",
+        "author": "Paulo Coelho",
+        "pages": 208,
+        "ageMin": 0,
+        "ageMax": 100,
+        "level": "Ages 0+",
+        "genres": [
+          "Fables",
+          "Graphic Novel",
+          "Historical Fiction",
+          "Fantasy",
+          "Adventure"
+        ],
+        "blurb": "Paulo Coelho’s masterpiece tells the magical story of Santiago, an Andalusian shepherd boy who yearns to travel in search of a worldly treasure as extravagant as any ever found.\n\nThe story of the treasures Santiago finds along the way teaches us, as only a few stories can, about the essential wisdom of listening to our hearts, learning to read the omens strewn along life’s path, and, above all, following our dreams.\n\nAcclaimed illustrator Daniel Sampere brings Paulo Coelho's classic to new life in this gorgeously illustrated graphic novel adaptation.",
+        "summarySource": "fetched",
+        "cover": "https://covers.openlibrary.org/b/id/11556106-L.jpg",
+        "by": "Ms. Wendy",
+        "ratings": [
+          "[object Object]",
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
