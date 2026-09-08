@@ -1,5 +1,5 @@
 {
-  "rev": 1297,
+  "rev": 1298,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1433,6 +1433,30 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 16+"
+    },
+    {
+      "id": "suggest-f70a1c8e-a89",
+      "title": "The First Stone",
+      "author": "Don Aker",
+      "pages": 304,
+      "ageMin": 12,
+      "ageMax": 18,
+      "genres": [
+        "Children's",
+        "Friendship"
+      ],
+      "by": "Ms. Wendy",
+      "status": "approved",
+      "at": "2026-09-08",
+      "cover": "https://covers.openlibrary.org/b/id/7016872-L.jpg",
+      "blurb": "REEF IS AN EMBITTERED YOUNG OFFENDER, hardly able to contain his anger at the world over the death of his grandmother, the only person who had shown him any love. Seventeen-year-old Leeza is mourning the death of her older sister. A stone hurled in rage shatters both their lives and throws them together in the most unexpected way―and offers them a chance at healing.",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 12-18"
     }
   ],
   "inbox": [
@@ -1511,6 +1535,7 @@
     "suggest-09244f59-518",
     "suggest-d7325660-22d",
     "suggest-b2f54907-410",
-    "suggest-2b14f01f-7c5"
+    "suggest-2b14f01f-7c5",
+    "suggest-f70a1c8e-a89"
   ]
 }
