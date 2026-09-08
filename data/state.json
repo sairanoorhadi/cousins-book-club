@@ -1,5 +1,5 @@
 {
-  "rev": 1267,
+  "rev": 1268,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -996,6 +996,34 @@
         }
       ],
       "level": "Ages 16+"
+    },
+    {
+      "id": "suggest-6944d6d5-5f3",
+      "title": "A Good Girl's Guide to Murder",
+      "author": "Holly Jackson",
+      "pages": 431,
+      "ageMin": 8,
+      "ageMax": 12,
+      "genres": [
+        "Fiction.",
+        "Children's",
+        "Murder",
+        "Criminals",
+        "Crime",
+        "Thriller"
+      ],
+      "by": "Filza",
+      "status": "approved",
+      "at": "2026-09-05",
+      "cover": "https://covers.openlibrary.org/b/id/13156188-L.jpg",
+      "blurb": "Five years ago, Andie Bell disappeared from a small English town, and her boyfriend Sal Singh was blamed and found dead soon after. Pip Fitz-Amobi, a sixth-form student with an appetite for research, chooses the case for her senior capstone project, convinced the accepted story has holes in it. She enlists Sal's younger brother Ravi to help her retrace the timeline, and the interviews turn up neighbours and classmates who would rather the questions stopped. The book is structured around Pip's project logs and transcripts alongside the narrative.",
+      "summarySource": "ai",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 8-12"
     }
   ],
   "inbox": [
@@ -1063,6 +1091,7 @@
     "suggest-a68f18ee-188",
     "suggest-6ccf5deb-801",
     "suggest-e2b3a13c-e21",
-    "suggest-e2b3a13c-e21"
+    "suggest-e2b3a13c-e21",
+    "suggest-6944d6d5-5f3"
   ]
 }
