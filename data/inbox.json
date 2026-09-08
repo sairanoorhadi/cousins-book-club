@@ -982,6 +982,31 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-9430b520-ce4",
+      "kind": "suggest",
+      "at": "2026-09-08T04:40:25.005Z",
+      "payload": {
+        "title": "Heaven",
+        "author": "Mieko Kawakami",
+        "pages": 192,
+        "ageMin": 16,
+        "ageMax": 100,
+        "level": "Ages 16+",
+        "genres": [
+          "Japanese",
+          "Literary Fiction",
+          "Coming-of-Age"
+        ],
+        "blurb": "Hailed as a bold foray into new literary territory, Kawakami’s novel is told in the voice of a 14-year-old student who subjected to relentless torment for having a lazy eye. Instead of resisting, the boy chooses to suffer in complete resignation. The only person who understands what he is going through is a female classmate who suffers similar treatment at the hands of her tormentors.\n\nThese raw and realistic portrayals of bullying are counterbalanced by textured exposition of the philosophical and religious debates concerning violence to which the weak are subjected.\n\nKawakami's simple yet profound new work stands as a dazzling testament to her literary talent. There can be little doubt that it has cemented her reputation as one of the most important young authors working to expand the boundaries of contemporary Japanese literature.",
+        "summarySource": "own",
+        "cover": "https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1615916179l/53223710.jpg",
+        "by": "Ms. Wendy",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
