@@ -1,5 +1,5 @@
 {
-  "rev": 1309,
+  "rev": 1310,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1295,7 +1295,7 @@
       "cover": "https://covers.openlibrary.org/b/id/11556106-L.jpg",
       "blurb": "Paulo Coelho’s masterpiece tells the magical story of Santiago, an Andalusian shepherd boy who yearns to travel in search of a worldly treasure as extravagant as any ever found.\n\nThe story of the treasures Santiago finds along the way teaches us, as only a few stories can, about the essential wisdom of listening to our hearts, learning to read the omens strewn along life’s path, and, above all, following our dreams.\n\nAcclaimed illustrator Daniel Sampere brings Paulo Coelho's classic to new life in this gorgeously illustrated graphic novel adaptation.",
       "summarySource": "fetched",
-      "shortlist": false,
+      "shortlist": true,
       "reviews": [],
       "endorsements": [],
       "dislikes": [],
