@@ -669,6 +669,30 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-d7325660-22d",
+      "kind": "suggest",
+      "at": "2026-09-08T04:09:15.293Z",
+      "payload": {
+        "title": "Once",
+        "author": "Morris Gleitzman",
+        "pages": 160,
+        "ageMin": 10,
+        "ageMax": 13,
+        "level": "Ages 10-13",
+        "genres": [
+          "Historical Fiction",
+          "WWII"
+        ],
+        "blurb": "Once by Morris Gleitzman is the story of a young Jewish boy who is determined to escape the orphanage he lives in to save his Jewish parents from the Nazis in the occupied Poland of the Second World War.",
+        "summarySource": "fetched",
+        "cover": "https://covers.openlibrary.org/b/id/10768232-L.jpg",
+        "by": "Ms. Wendy",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
