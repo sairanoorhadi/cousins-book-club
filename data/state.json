@@ -1,5 +1,5 @@
 {
-  "rev": 1279,
+  "rev": 1280,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -862,7 +862,12 @@
       "ageMin": 8,
       "ageMax": 12,
       "dislikes": [],
-      "ratings": []
+      "ratings": [
+        {
+          "score": 4.9,
+          "source": "Amazon"
+        }
+      ]
     },
     {
       "id": "rc-pandas",
