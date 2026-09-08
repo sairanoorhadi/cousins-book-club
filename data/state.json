@@ -1,5 +1,5 @@
 {
-  "rev": 1303,
+  "rev": 1304,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1560,6 +1560,33 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 8-12"
+    },
+    {
+      "id": "suggest-941ddf1d-79d",
+      "title": "Refugee",
+      "author": "Alan Gratz",
+      "pages": 352,
+      "ageMin": 8,
+      "ageMax": 12,
+      "genres": [
+        "Historical Fiction",
+        "Immigration",
+        "Refugees",
+        "Survival",
+        "Social Issues"
+      ],
+      "by": "Ms. Wendy",
+      "status": "approved",
+      "at": "2026-09-08",
+      "cover": "https://covers.openlibrary.org/b/id/9122402-L.jpg",
+      "blurb": "OSEF is a Jewish boy living in 1930s Nazi Germany. With the threat of concentration camps looming, he and his family board a ship bound for the other side of the world...\n\nISABEL is a Cuban girl in 1994. With riots and unrest plaguing her country, she and her family set out on a raft, hoping to find safety in America...\n\nMAHMOUD is a Syrian boy in 2015. With his homeland torn apart by violence and destruction, he and his family begin a long trek toward Europe...\n\nAll three kids go on harrowing journeys in search of refuge. All will face unimaginable dangers -- from drownings to bombings to betrayals. But there is always the hope of tomorrow. And although Josef, Isabel, and Mahmoud are separated by continents and decades, shocking connections will tie their stories together in the end.\n\nAs powerful and poignant as it is action-packed and page-turning, this highly acclaimed novel has been on the New York Times bestseller list for more than four years and continues to change readers' lives with its meaningful takes on survival, courage, and the quest for home.",
+      "summarySource": "own",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 8-12"
     }
   ],
   "inbox": [
@@ -1643,6 +1670,7 @@
     "suggest-d75be64d-de7",
     "suggest-d10cfbab-9f0",
     "suggest-795c1639-13d",
-    "suggest-98664ae7-609"
+    "suggest-98664ae7-609",
+    "suggest-941ddf1d-79d"
   ]
 }
