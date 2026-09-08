@@ -1,5 +1,5 @@
 {
-  "rev": 1269,
+  "rev": 1270,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1021,7 +1021,12 @@
       "reviews": [],
       "endorsements": [],
       "dislikes": [],
-      "ratings": [],
+      "ratings": [
+        {
+          "score": 4.3,
+          "source": "Goodreads"
+        }
+      ],
       "level": "Ages 8-12"
     }
   ],
