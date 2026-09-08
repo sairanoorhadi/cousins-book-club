@@ -1034,6 +1034,17 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "endorse-63278b94-09e",
+      "kind": "endorse",
+      "at": "2026-09-08T14:49:36.242Z",
+      "payload": {
+        "recId": "rc-elevator",
+        "title": "The Elevator Ghost",
+        "name": "Saira",
+        "vote": "none"
+      }
     }
   ]
 }
