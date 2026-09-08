@@ -1,5 +1,5 @@
 {
-  "rev": 1301,
+  "rev": 1302,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1508,6 +1508,31 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 10+"
+    },
+    {
+      "id": "suggest-795c1639-13d",
+      "title": "Picture of Hollis Wood",
+      "author": "Patricia Reilly Giff",
+      "pages": 171,
+      "ageMin": 8,
+      "ageMax": 12,
+      "genres": [
+        "Realistic",
+        "Orphans",
+        "Family"
+      ],
+      "by": "Ms. Wendy",
+      "status": "approved",
+      "at": "2026-09-08",
+      "cover": "https://covers.openlibrary.org/b/id/6390749-L.jpg",
+      "blurb": "Hollis Woods\n\nis the place where a baby was abandoned\n\nis the baby's name\n\nis an artist\n\nis now a twelve-year-old girl\n\nwho's been in so many foster homes she can hardly remember them all. When Hollis is sent to Josie, an elderly artist who is quirky and affectionate, she wants to stay. But Josie is growing more forgetful every day. If Social Services finds out, they'll take Hollis away and move Josie into a home. Well, Hollis Woods won't let anyone separate them. She's escaped the system before; this time, she's taking Josie with her. Still, even as she plans her future with Josie, Hollis dreams of the past summer with the Regans, fixing each special moment of her days with them in pictures she'll never forget. Patricia Reilly Giff captures the yearning for a place to belong in this warmhearted story, which stresses the importance of artistic vision, creativity, and above all, family.",
+      "summarySource": "own",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 8-12"
     }
   ],
   "inbox": [
@@ -1589,6 +1614,7 @@
     "suggest-2b14f01f-7c5",
     "suggest-f70a1c8e-a89",
     "suggest-d75be64d-de7",
-    "suggest-d10cfbab-9f0"
+    "suggest-d10cfbab-9f0",
+    "suggest-795c1639-13d"
   ]
 }
