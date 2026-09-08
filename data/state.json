@@ -1,5 +1,5 @@
 {
-  "rev": 1298,
+  "rev": 1299,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1457,6 +1457,32 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 12-18"
+    },
+    {
+      "id": "suggest-d75be64d-de7",
+      "title": "Paper Towns",
+      "author": "John Green",
+      "pages": 367,
+      "ageMin": 8,
+      "ageMax": 12,
+      "genres": [
+        "Coming-of-Age",
+        "Missing persons",
+        "Revenge",
+        "Neighbors"
+      ],
+      "by": "Ms. Wendy",
+      "status": "approved",
+      "at": "2026-09-08",
+      "cover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQBghuwgwXCxyu2ONRut7Kex7NO0IbaO61Rweyf6yxHifLlkD62qHiQDvU&s=10",
+      "blurb": "Quentin Jacobsen has spent a lifetime loving the magnificently adventurous Margo Roth Spiegelman from afar. So when she cracks open a window and climbs into his life—dressed like a ninja and summoning him for an ingenious campaign of revenge—he follows. After their all-nighter ends, and a new day breaks, Q arrives at school to discover that Margo, always an enigma, has now become a mystery. But Q soon learns that there are clues—and they're for him. Urged down a disconnected path, the closer he gets, the less Q sees the girl he thought he knew...",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 8-12"
     }
   ],
   "inbox": [
@@ -1536,6 +1562,7 @@
     "suggest-d7325660-22d",
     "suggest-b2f54907-410",
     "suggest-2b14f01f-7c5",
-    "suggest-f70a1c8e-a89"
+    "suggest-f70a1c8e-a89",
+    "suggest-d75be64d-de7"
   ]
 }
