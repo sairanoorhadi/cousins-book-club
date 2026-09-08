@@ -1,5 +1,5 @@
 {
-  "rev": 1300,
+  "rev": 1301,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1489,7 +1489,7 @@
       "title": "Gathering Blue",
       "author": "Lois Lowry",
       "pages": 219,
-      "ageMin": 0,
+      "ageMin": 10,
       "ageMax": 100,
       "genres": [
         "Dystopian",
@@ -1507,7 +1507,7 @@
       "endorsements": [],
       "dislikes": [],
       "ratings": [],
-      "level": "Ages 0+"
+      "level": "Ages 10+"
     }
   ],
   "inbox": [
