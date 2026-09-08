@@ -1,5 +1,5 @@
 {
-  "rev": 1286,
+  "rev": 1287,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -986,7 +986,7 @@
       "ageMax": 100,
       "genres": [
         "Coming-of-age story",
-        "Domestic Fiction"
+        "Domestic"
       ],
       "by": "Saira",
       "status": "approved",
