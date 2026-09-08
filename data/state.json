@@ -1,5 +1,5 @@
 {
-  "rev": 1302,
+  "rev": 1303,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1533,6 +1533,33 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 8-12"
+    },
+    {
+      "id": "suggest-98664ae7-609",
+      "title": "Ungifted",
+      "author": "Gordon Korman",
+      "pages": 284,
+      "ageMin": 8,
+      "ageMax": 12,
+      "genres": [
+        "Humour",
+        "Robots",
+        "Gifted children",
+        "Human behavior",
+        "Reaalistic"
+      ],
+      "by": "Ms. Wendy",
+      "status": "approved",
+      "at": "2026-09-08",
+      "cover": "https://covers.openlibrary.org/b/id/7263528-L.jpg",
+      "blurb": "The word gifted has never been applied to a kid like Donovan Curtis. It's usually more like Don't try this at home. So when the troublemaker pulls a major prank at his middle school, he thinks he's finally gone too far. But thanks to a mix-up by one of the administrators, instead of getting in trouble, Donovan is sent to the Academy of Scholastic Distinction (ASD), a special program for gifted and talented students.\n\nIt wasn't exactly what Donovan had intended, but there couldn't be a more perfect hideout for someone like him. That is, if he can manage to fool people whose IQs are above genius level. And that becomes harder and harder as the students and teachers of ASD grow to realize that Donovan may not be good at math or science (or just about anything). But after an ongoing experiment with a live human (sister), an unforgettably dramatic middle-school dance, and the most astonishing come-from-behind robot victory ever, Donovan shows that his gifts might be exactly what the ASD students never knew they needed.",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 8-12"
     }
   ],
   "inbox": [
@@ -1615,6 +1642,7 @@
     "suggest-f70a1c8e-a89",
     "suggest-d75be64d-de7",
     "suggest-d10cfbab-9f0",
-    "suggest-795c1639-13d"
+    "suggest-795c1639-13d",
+    "suggest-98664ae7-609"
   ]
 }
