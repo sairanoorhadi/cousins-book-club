@@ -1,5 +1,5 @@
 {
-  "rev": 1295,
+  "rev": 1296,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1380,6 +1380,32 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 10-13"
+    },
+    {
+      "id": "suggest-b2f54907-410",
+      "title": "Flowers for Algernon",
+      "author": "Daniel Keyes",
+      "pages": 274,
+      "ageMin": 13,
+      "ageMax": 100,
+      "genres": [
+        "Science Fiction",
+        "Psychology",
+        "Classic",
+        "Literary Fiction"
+      ],
+      "by": "Ms. Wendy",
+      "status": "approved",
+      "at": "2026-09-08",
+      "cover": "https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1689071681i/18373.jpg",
+      "blurb": "Charlie Gordon is about to embark upon an unprecedented journey. Born with an unusually low IQ, he has been chosen as the perfect subject for an experimental surgery that researchers hope will increase his intelligence – a procedure that has already been highly successful when tested on a lab mouse named Algernon.\n\nAs the treatment takes effect, Charlie's intelligence expands until it surpasses that of the doctors who engineered his metamorphosis. The experiment appears to be a scientific breakthrough of paramount importance, until Algernon suddenly deteriorates. Will the same happen to Charlie?",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 13+"
     }
   ],
   "inbox": [
@@ -1456,6 +1482,7 @@
     "suggest-714168e4-c04",
     "suggest-2b3d7a12-9c3",
     "suggest-09244f59-518",
-    "suggest-d7325660-22d"
+    "suggest-d7325660-22d",
+    "suggest-b2f54907-410"
   ]
 }
