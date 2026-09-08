@@ -1,5 +1,5 @@
 {
-  "rev": 1291,
+  "rev": 1292,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1212,6 +1212,33 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 0+"
+    },
+    {
+      "id": "suggest-2b3d7a12-9c3",
+      "title": "The Outsiders",
+      "author": "S. E. Hinton",
+      "pages": 192,
+      "ageMin": 8,
+      "ageMax": 12,
+      "genres": [
+        "violence",
+        "Classic",
+        "Gangs",
+        "Family",
+        "Young Adult"
+      ],
+      "by": "Ms. Wendy",
+      "status": "approved",
+      "at": "2026-09-08",
+      "cover": "https://covers.openlibrary.org/b/id/7263662-L.jpg",
+      "blurb": "No one ever said life was easy. But Ponyboy is pretty sure that he's got things figured out. He knows that he can count on his brothers, Darry and Sodapop. And he knows that he can count on his friends - true friends who would do anything for him, like Johnny and Two-Bit. And when it comes to the beating up on \"greasers\" like him and his friends - he knows that he can count on them for trouble. But one night someone takes things too far, and Ponyboy's world is turned upside down...",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 8-12"
     }
   ],
   "inbox": [
@@ -1285,6 +1312,7 @@
     "suggest-5b4bab6f-ca1",
     "suggest-9502fb3c-cb7",
     "suggest-91746858-bc0",
-    "suggest-714168e4-c04"
+    "suggest-714168e4-c04",
+    "suggest-2b3d7a12-9c3"
   ]
 }
