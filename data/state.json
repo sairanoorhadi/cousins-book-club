@@ -1,5 +1,5 @@
 {
-  "rev": 1288,
+  "rev": 1289,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1134,6 +1134,32 @@
         }
       ],
       "level": "Ages 8-12"
+    },
+    {
+      "id": "suggest-9502fb3c-cb7",
+      "title": "The Secret Life of Bees",
+      "author": "Sue Monk Kidd",
+      "pages": 303,
+      "ageMin": 13,
+      "ageMax": 100,
+      "genres": [
+        "African American",
+        "Race relations",
+        "Literary Fiction",
+        "Maternal deprivation"
+      ],
+      "by": "Ms. Wendy",
+      "status": "approved",
+      "at": "2026-09-08",
+      "cover": "https://covers.openlibrary.org/b/id/402759-L.jpg",
+      "blurb": "Sue Monk Kidd's ravishing debut novel has stolen the hearts of reviewers and readers alike with its strong, assured voice. Set in South Carolina in 1964, The Secret Life of Bees tells the story of Lily Owens, whose life has been shaped around the blurred memory of the afternoon her mother was killed. When Lily's fierce-hearted \"stand-in mother,\" Rosaleen, insults three of the town's fiercest racists, Lily decides they should both escape to Tiburon, South Carolina—a town that holds the secret to her mother's past. There they are taken in by an eccentric trio of black beekeeping sisters who introduce Lily to a mesmerizing world of bees, honey, and the Black Madonna who presides over their household. This is a remarkable story about divine female power and the transforming power of love—a story that women will share and pass on to their daughters for years to come.",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 13+"
     }
   ],
   "inbox": [
@@ -1204,6 +1230,7 @@
     "suggest-e2b3a13c-e21",
     "suggest-6944d6d5-5f3",
     "suggest-3b3ebcb6-1b1",
-    "suggest-5b4bab6f-ca1"
+    "suggest-5b4bab6f-ca1",
+    "suggest-9502fb3c-cb7"
   ]
 }
