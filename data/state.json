@@ -1,5 +1,5 @@
 {
-  "rev": 1293,
+  "rev": 1294,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1188,10 +1188,10 @@
     },
     {
       "id": "suggest-714168e4-c04",
-      "title": "The Alchemist Graphic Novel",
+      "title": "The Alchemist",
       "author": "Paulo Coelho",
       "pages": 208,
-      "ageMin": 0,
+      "ageMin": 10,
       "ageMax": 100,
       "genres": [
         "Fables",
@@ -1211,7 +1211,7 @@
       "endorsements": [],
       "dislikes": [],
       "ratings": [],
-      "level": "Ages 0+"
+      "level": "Ages 10+"
     },
     {
       "id": "suggest-2b3d7a12-9c3",
