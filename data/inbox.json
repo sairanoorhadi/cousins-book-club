@@ -613,6 +613,34 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-2b3d7a12-9c3",
+      "kind": "suggest",
+      "at": "2026-09-08T04:04:15.229Z",
+      "payload": {
+        "title": "The Outsiders",
+        "author": "S. E. Hinton",
+        "pages": 192,
+        "ageMin": 8,
+        "ageMax": 12,
+        "level": "Ages 8-12",
+        "genres": [
+          "violence",
+          "Classic",
+          "Gangs",
+          "Family",
+          "Young Adult"
+        ],
+        "blurb": "No one ever said life was easy. But Ponyboy is pretty sure that he's got things figured out. He knows that he can count on his brothers, Darry and Sodapop. And he knows that he can count on his friends - true friends who would do anything for him, like Johnny and Two-Bit. And when it comes to the beating up on \"greasers\" like him and his friends - he knows that he can count on them for trouble. But one night someone takes things too far, and Ponyboy's world is turned upside down...",
+        "summarySource": "fetched",
+        "cover": "https://covers.openlibrary.org/b/id/7263662-L.jpg",
+        "by": "Ms. Wendy",
+        "ratings": [
+          "[object Object]",
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
