@@ -472,6 +472,51 @@ img{max-width:100%;display:block}
 .addrow{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
 .addrow .input{flex:1 1 240px;width:auto}
 .addrow .input--who{flex:0 1 150px}
+.whopick{position:relative;flex:0 1 auto}
+.whopick__btn{display:inline-flex;align-items:center;gap:7px;max-width:210px}
+.whopick__btn[data-empty]{color:var(--muted)}
+.whopick__name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.whopick__arw{flex:none;transition:transform .15s ease}
+.whopick__btn[aria-expanded="true"] .whopick__arw{transform:rotate(180deg)}
+@media (prefers-reduced-motion:reduce){ .whopick__arw{transition:none} }
+.prof__head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.prof__acts{display:flex;gap:8px;margin-left:auto}
+.prof__genres{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.prof__row{display:flex;align-items:center;gap:12px}
+.prof__save{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.prof__five{position:relative}
+.prof__slot{position:relative}
+.prof__num{position:absolute;top:-7px;left:-7px;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--paper);
+  font-family:var(--f-mono);font-size:11px;display:flex;align-items:center;justify-content:center;z-index:2}
+.prof__five--drag .prof__slot{cursor:grab}
+.prof__five--drag .prof__slot:active{cursor:grabbing}
+.prof__slot--lift{opacity:.4}
+.prof__slot--over{outline:2.5px dashed var(--grape);outline-offset:3px;border-radius:6px}
+.prof__ask{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.prof__formhead{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.prof__formhead button{margin-left:auto}
+.proflist{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
+.proflist li{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1.5px solid var(--hairline);border-radius:6px;background:var(--sunk)}
+.proflist li>span:first-child{flex:1 1 auto;min-width:0}
+.proflist__a{display:block;font-size:12.5px;color:var(--muted);font-style:italic;margin-top:2px}
+.switch{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-weight:600}
+.switch input{position:absolute;opacity:0;width:0;height:0}
+.switch span{flex:none;width:42px;height:24px;border-radius:99px;border:2px solid var(--ink);background:var(--sunk);position:relative;transition:background .15s ease}
+.switch span::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--ink);transition:transform .15s ease}
+.switch input:checked+span{background:var(--surf)}
+.switch input:checked+span::after{transform:translateX(18px)}
+.switch input:focus-visible+span{outline:2px solid var(--grape);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){ .switch span,.switch span::after{transition:none} }
+@media (max-width:560px){ .prof__genres{grid-template-columns:minmax(0,1fr)} .prof__acts{margin-left:0} }
+.whopick__panel{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:10px;padding:9px 11px;
+  border:1.5px solid var(--hairline);border-radius:6px;background:var(--sunk)}
+.whopick__lab{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.whopick__opt{display:flex;align-items:center;gap:7px;padding:4px 9px;border-radius:99px;cursor:pointer;white-space:nowrap;
+  border:1.5px solid var(--hairline);background:var(--paper)}
+.whopick__opt:hover{border-color:var(--ink)}
+.whopick__opt:has(input:checked){border-color:var(--ink);background:var(--paper);box-shadow:2px 2px 0 var(--ink)}
+.whopick__opt input{accent-color:var(--grape);cursor:pointer}
+@media (max-width:560px){ .whopick{flex:1 1 100%} .whopick__btn{max-width:none;width:100%} }
 
 /* ============ admin ============ */
 .lane{margin-bottom:26px}
@@ -762,6 +807,9 @@ img{max-width:100%;display:block}
 .huechip--custom span{background:var(--c);background-image:linear-gradient(135deg,#E8285A,#F5A800,#0A9E88,#3257E0,#7C31D8)}
 .huechip--custom[aria-pressed="true"] span{background-image:none}
 .huecustom{margin-top:14px;border:2px dashed var(--edge);border-radius:var(--r);padding:14px;background:var(--sunk);display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+/* The dashed edge belonged to this when it was an optional extra behind a
+   Custom… chip. Here it is the colour control itself, so it gets a real one. */
+.huecustom--open{display:flex!important;gap:16px;align-items:flex-end;border-style:solid;border-color:var(--hairline);margin-top:0}
 .huecustom input[type="color"]{width:130px;height:96px;padding:0;border:2px solid var(--edge);border-radius:var(--r);background:none;cursor:pointer}
 .huecustom__side{display:flex;flex-direction:column;gap:6px}
 .huecustom__lab{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
@@ -801,6 +849,8 @@ img{max-width:100%;display:block}
 .devbar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;background:repeating-linear-gradient(135deg,#F5A800,#F5A800 14px,#191233 14px,#191233 28px);color:#FFFFFF;padding:0;border-bottom:3px solid var(--edge)}
 .devbar strong,.devbar span,.devbar a{background:#191233;padding:7px 12px}
 .devbar strong{font-family:var(--f-display);font-size:13.5px;letter-spacing:.04em;text-transform:uppercase}
+.devbar__as{background:#191233;padding:5px 12px;display:flex;align-items:center;gap:7px}
+.devbar__as select{font:inherit;font-size:12.5px;padding:2px 5px;border-radius:4px;border:1px solid #FFFFFF;background:#191233;color:#FFFFFF}
 .devbar span{font-family:var(--f-mono);font-size:11.5px;flex:1 1 320px;min-width:0}
 .devbar a{color:#FFC44D;font-family:var(--f-display);font-weight:700;font-size:13px}
 .status--ok{background:var(--surf);color:var(--on-surf)}
@@ -872,6 +922,7 @@ img{max-width:100%;display:block}
   <div class="devbar" id="devBar" hidden>
     <strong>Test site</strong>
     <span>Its own copy of the data &mdash; nothing here reaches the real one. Lookups work; submissions and sign-in are switched off.</span>
+    <label class="devbar__as">Look around as <select id="devAs"><option value="">nobody</option></select></label>
     <a href="../">Go to the real site &rarr;</a>
   </div>
 
@@ -1197,6 +1248,7 @@ img{max-width:100%;display:block}
           <a class="menu__item" role="menuitem" href="#recs">Recommendations</a>
           <a class="menu__item" role="menuitem" href="#badges">Badges</a>
           <a class="menu__item" role="menuitem" href="#members">Members</a>
+          <button class="menu__item" role="menuitem" type="button" id="menuProfile" hidden>Edit profile</button>
           <button class="menu__item" role="menuitem" type="button" id="menuAdmin">Admin</button>
           <button class="menu__item menu__item--out" role="menuitem" type="button" id="menuSession">Sign in</button>
         </div>
@@ -1806,10 +1858,51 @@ function migrate(s){
     if(!Array.isArray(m.photos)) m.photos = [];
     if(!Array.isArray(m.predictions)) m.predictions = [];
     if(!Array.isArray(m.points)) m.points = [];
+    m.predictions.forEach(function(n){ noteAuthors(n, s.members); });
+    m.points.forEach(function(n){ noteAuthors(n, s.members); });
     /* which notification emails have already gone out for this meeting */
     if(!m.sent || typeof m.sent !== "object") m.sent = {};
   });
   return s;
+}
+
+/* ---------------------------------------------------------- who wrote a note
+   A note used to carry whoever typed their name into the box, as free text:
+   "Saira", "Filza, Eliza", "Summar", "Everyone". Now it carries member ids,
+   so a name change follows the note and a note can credit more than one
+   person. The old text is read into ids where the names are members, and
+   whatever is left over stays as text rather than being thrown away —
+   "Everyone" is not a person, and someone can be in the notes before they are
+   on the list. Runs on load, over data that may already have been converted,
+   so it has to be safe to run twice. */
+function noteAuthors(n, members){
+  if(!n || typeof n !== "object") return n;
+  if(!Array.isArray(n.byIds)) n.byIds = [];
+  if(typeof n.by !== "string") n.by = String(n.by || "");
+  if(n.byIds.length || !n.by) return n;
+  var known = {};
+  (members || []).forEach(function(m){ if(m && m.name) known[m.name.trim().toLowerCase()] = m.id; });
+  var ids = [], rest = [];
+  n.by.split(",").forEach(function(part){
+    var name = part.trim(); if(!name) return;
+    var id = known[name.toLowerCase()];
+    if(id){ if(ids.indexOf(id) === -1) ids.push(id); }
+    else rest.push(name);
+  });
+  n.byIds = ids;
+  n.by = rest.join(", ");
+  return n;
+}
+/* The names to show against a note: members by their current name, then
+   anything that never was one. */
+function noteWho(n, members){
+  var by = (members || state.members || []);
+  var names = (n.byIds || []).map(function(id){
+    var m = by.filter(function(x){ return x.id === id; })[0];
+    return m ? m.name : "";
+  }).filter(Boolean);
+  if(n.by) names.push(n.by);
+  return names.join(", ");
 }
 
 async function loadState(){
@@ -1857,6 +1950,7 @@ function refreshWriteMode(){
 /* The two ways a note write is turned away, beyond the ones already covered
    by repoWriteTrouble. */
 function notesTrouble(err){
+  if(err === "dev-blocked") return "This is the test site \u2014 nothing here is written down. Try it on the real site.";
   if(err === "meeting closed") return "This meeting is marked done \u2014 only the organiser can still change its notes.";
   if(err === "not found") return "That one\u2019s already gone \u2014 someone else must have removed it.";
   if(err === "no text") return "Type something first.";
@@ -3776,16 +3870,68 @@ function openMeeting(id){
   var m = meetingById(id); if(!m) return;
   var b = bookById(m.bookId);
   $("meetModalTitle").textContent = (b ? b.title : "Meeting") + " — " + shortDate(m.date);
+  whoPickSeed();
   $("meetModalBody").innerHTML = meetingHTML(m, b);
   openScrim("meetScrim");
   if(m.kind === "party") loadPhotos(m.id);
 }
+/* Who a note is credited to. A plain <select multiple> is miserable in a modal
+   and worse on a phone, so this is a button that says who is picked and a
+   panel of checkboxes under it. Whoever is signed in starts ticked, since
+   they are usually the one writing it down. */
+var notePick = { pred: [], disc: [] };
+/* A name on its own reads as a label rather than a control, so the button
+   carries the arrow every dropdown has. It turns over when the panel opens. */
+var CHEVRON = '<svg class="whopick__arw" viewBox="0 0 10 6" width="10" height="6" aria-hidden="true" focusable="false">' +
+  '<path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function whoPickLabel(kind){
+  var picked = notePick[kind] || [];
+  if(!picked.length) return "Who said it?";
+  var names = picked.map(function(id){ var m = memberById(id); return m ? m.name : ""; }).filter(Boolean);
+  return names.length > 2 ? names.slice(0, 2).join(", ") + " +" + (names.length - 2) : names.join(", ");
+}
+function whoPickHTML(kind){
+  var picked = notePick[kind] || [];
+  return '<div class="whopick" data-whopick="' + kind + '">' +
+    '<button class="btn btn--sm btn--ghost whopick__btn" type="button" data-whotoggle="' + kind + '" ' +
+      'aria-expanded="false"' + (picked.length ? "" : ' data-empty="1"') + ">" +
+      '<span class="whopick__name">' + esc(whoPickLabel(kind)) + "</span>" + CHEVRON + "</button></div>";
+}
+/* The panel sits under the row rather than floating over it. A note block
+   clips what overflows — it has to, for its rounded head — so a panel hanging
+   off the button was cut off at the block's edge however it was positioned.
+   In the flow it simply makes the block taller, which is what a disclosure
+   should do anyway. */
+function whoPanelHTML(kind){
+  var picked = notePick[kind] || [];
+  return '<div class="whopick__panel" data-whopanel="' + kind + '" hidden>' +
+    (state.members.length
+      ? '<span class="whopick__lab">Who said it?</span>' + state.members.map(function(m){
+          return '<label class="whopick__opt"><input type="checkbox" data-whoid="' + esc(m.id) + '" data-whokind="' + kind + '"' +
+            (picked.indexOf(m.id) !== -1 ? " checked" : "") + "> " + esc(m.name) + "</label>";
+        }).join("")
+      : '<p class="hint" style="margin:0">Nobody on the members list yet.</p>') +
+  "</div>";
+}
+function whoPickShut(){
+  document.querySelectorAll("[data-whopanel]").forEach(function(el){ el.hidden = true; });
+  document.querySelectorAll("[data-whotoggle]").forEach(function(el){ el.setAttribute("aria-expanded", "false"); });
+}
+/* Whoever is signed in, ticked to start with — but only where nothing has been
+   picked yet, so reopening a meeting does not undo a choice. */
+function whoPickSeed(){
+  var mine = myMember();
+  ["pred", "disc"].forEach(function(k){
+    if(!notePick[k].length && mine) notePick[k] = [mine.id];
+  });
+}
+
 function noteList(items, kind, mid, m){
   if(!items || !items.length) return '<p class="empty">' + (kind === "pred" ? "No predictions yet. Call it before you read it." : "No discussion points yet.") + "</p>";
   var can = canEditNotes(m);
   return '<ul class="notelist">' + items.map(function(p, i){
     return "<li><span class=\"n\">" + (i+1) + "</span><span>" + esc(p.text) +
-      (p.by ? '<span class="who">' + esc(p.by) + "</span>" : "") + "</span>" +
+      (function(){ var w = noteWho(p); return w ? '<span class="who">' + esc(w) + "</span>" : ""; })() + "</span>" +
       (can ? '<button class="btn btn--sm btn--ghost" type="button" data-del="' + kind + '" data-mid="' + esc(mid) + '" data-iid="' + esc(p.id) + '">Remove</button>' : "<span></span>") +
     "</li>";
   }).join("") + "</ul>";
@@ -3810,15 +3956,17 @@ function meetingHTML(m, b){
       '<section class="noteblock noteblock--pred"><div class="noteblock__head"><h3>Predictions</h3></div><div class="noteblock__body">' +
         noteList(m.predictions, "pred", m.id, m) +
         (canEditNotes(m) ? '<div class="addrow"><input class="input" type="text" placeholder="What do you think happens?" data-add="pred-text" maxlength="400">' +
-          '<input class="input input--who" type="text" placeholder="Your name" data-add="pred-by" maxlength="60">' +
-          '<button class="btn btn--sm btn--grape" type="button" data-addbtn="pred" data-mid="' + esc(m.id) + '">Add</button></div>'
+          whoPickHTML("pred") +
+          '<button class="btn btn--sm btn--grape" type="button" data-addbtn="pred" data-mid="' + esc(m.id) + '">Add</button></div>' +
+          whoPanelHTML("pred")
           : '<p class="hint" style="margin-top:12px">' + esc(notesLockedReason(m)) + '</p>') +
       "</div></section>" +
       '<section class="noteblock noteblock--disc"><div class="noteblock__head"><h3>Discussion points</h3></div><div class="noteblock__body">' +
         noteList(m.points, "disc", m.id, m) +
         (canEditNotes(m) ? '<div class="addrow"><input class="input" type="text" placeholder="A question worth arguing about" data-add="disc-text" maxlength="400">' +
-          '<input class="input input--who" type="text" placeholder="Added by" data-add="disc-by" maxlength="60">' +
-          '<button class="btn btn--sm btn--surf" type="button" data-addbtn="disc" data-mid="' + esc(m.id) + '">Add</button></div>'
+          whoPickHTML("disc") +
+          '<button class="btn btn--sm btn--surf" type="button" data-addbtn="disc" data-mid="' + esc(m.id) + '">Add</button></div>' +
+          whoPanelHTML("disc")
           : '<p class="hint" style="margin-top:12px">' + esc(notesLockedReason(m)) + '</p>') +
       "</div></section>") +
     (party
@@ -4191,104 +4339,348 @@ var HUE_HEX = { flare: "#E8285A", zest: "#F5A800", surf: "#0A9E88", sky: "#3257E
 function hexOfHue(name){ return HUE_HEX[name] || "#3257E0"; }
 var myNotify = [];
 
+/* Everything this member put forward. A submission made while signed in
+   carries their member id; older ones carry only the name that was typed, so
+   the name is still matched as a fallback. Two of the names already in the
+   recommendations belong to nobody on the members list, which is exactly why
+   the id is worth having. */
 function myRecs(){
+  var mem = myMember();
   var name = myName().toLowerCase();
-  if(!name) return [];
-  return state.recs.filter(function(r){ return String(r.by || "").toLowerCase() === name; });
+  if(!mem && !name) return [];
+  return state.recs.filter(function(r){
+    if(r.byId) return mem && r.byId === mem.id;
+    return name && String(r.by || "").toLowerCase() === name;
+  });
 }
 async function openMe(){
   if(!me){ openLogin(); return; }
   var res = await callEndpoint("notify-get", { token: sessionToken() });
-  myNotify = (res && res.ok && res.books) || [];
+  /* The test site can't ask the script what someone is subscribed to, which
+     would leave this whole section looking switched off there. The list the
+     organiser keeps in the repo is a true answer to the same question, so it
+     stands in — on the real site the script's answer is the only one used. */
+  myNotify = (res && res.ok && res.books) || (DEV ? ((myMember() || {}).notify || []).slice() : []);
   renderMe();
   openScrim("meScrim");
 }
+/* What a member keeps about themselves, in one place. Everything here saves
+   through profileSet, which decides for itself what is allowed — this only
+   decides what is worth showing. */
+var profSlot = null;      /* which of the five is being edited, if any */
+var profDrag = -1;        /* which is being dragged */
+var profEdits = null;     /* unsaved five, so a reorder survives a redraw */
+var profDraft = null;     /* the rest of it, for the same reason */
+
+/* Everything typed but not yet saved. Going to look at your recommendations
+   and coming back redraws this page, and a redraw reading only from the saved
+   member would quietly undo whatever was half-typed. */
+function profCapture(){
+  if(!$("profHueHex")) return;
+  profDraft = {
+    hue: ($("profHueHex").value || "").trim(),
+    goodreads: ($("profGoodreads") && $("profGoodreads").value) || "",
+    fable: ($("profFable") && $("profFable").value) || "",
+    genres: [0,1,2].map(function(i){
+      var el = document.querySelector('[data-profgen="' + i + '"]');
+      return el ? el.value : "";
+    }),
+    notifyRecs: !!($("profRecsNotify") && $("profRecsNotify").checked)
+  };
+}
+
+function myFive(){
+  if(profEdits) return profEdits;
+  var mem = myMember();
+  return ((mem && mem.top5) || []).slice(0, 5);
+}
+
 function renderMe(){
   var mem = myMember();
-  var mine = myRecs();
-  var live = mine.filter(function(r){ return r.status === "approved"; });
-  var short = mine.filter(function(r){ return r.shortlist; });
-  /* recommendations of theirs the club went on to read */
-  var read = state.books.filter(function(b){
-    return mine.some(function(r){ return r.id === b.id; }) ||
-      (myName() && String(b.recBy || "").toLowerCase() === myName().toLowerCase());
-  });
-  var total = mine.length + read.length;
-  var pct = total ? Math.round((live.length + read.length) / total * 100) : 0;
+  if(!mem){
+    $("meModalTitle").textContent = myName() || "Your account";
+    $("meModalBody").innerHTML =
+      '<p class="eyebrow">Signed in as</p>' +
+      '<h3 style="font-size:24px;margin:8px 0 4px">' + esc(myName() || me.emailHint) + "</h3>" +
+      '<p class="empty" style="margin-top:14px">Once the organiser adds you to the members list, your profile is editable here.</p>' +
+      '<hr class="divider"><div style="display:flex;gap:10px;flex-wrap:wrap">' +
+        '<button class="btn btn--ghost" type="button" id="loginOut">Sign out</button></div>';
+    return;
+  }
 
-  /* everything the club could email about */
+  var five = myFive();
+  var d = profDraft;
+  var genres = d ? d.genres : (mem.genres || []).slice(0, 3);
+  var showHue = d && isHex(d.hue) ? d.hue.toLowerCase() : profHexNow(mem);
+  var showGr = d ? d.goodreads : (mem.goodreads || "");
+  var showFa = d ? d.fable : (mem.fable || "");
+  var showRecs = d ? d.notifyRecs : !!mem.notifyRecs;
   var books = currentBooks().concat(nextBooks());
   var all = myNotify.indexOf("*") !== -1;
+  var remindersOn = myNotify.length > 0;
 
-  $("meModalTitle").textContent = myName() || "Your account";
+  $("meModalTitle").textContent = "Edit profile";
   $("meModalBody").innerHTML =
     '<p class="eyebrow">Signed in as</p>' +
     '<h3 style="font-size:24px;margin:8px 0 4px">' + esc(myName() || me.emailHint) + "</h3>" +
     '<p class="hint">' + esc(me.emailHint) + "</p>" +
 
-    '<hr class="divider"><p class="eyebrow">Meeting emails</p>' +
-    '<p class="hint" style="margin:6px 0 14px">One when a meeting is scheduled, one five days before, one thirty minutes before.</p>' +
-    '<div class="checkgrid">' +
-      '<label><input type="checkbox" data-mynotify="*"' + (all ? " checked" : "") + ">Every meeting, including books we haven&rsquo;t started</label>" +
-      books.map(function(b){
-        return '<label><input type="checkbox" data-mynotify="' + esc(b.id) + '"' +
-          ((all || myNotify.indexOf(b.id) !== -1) ? " checked" : "") + (all ? " disabled" : "") + ">" + esc(b.title) + "</label>";
+    /* ---- their five */
+    '<hr class="divider"><div class="prof__head"><p class="eyebrow" style="margin:0">Their five</p>' +
+      '<div class="prof__acts">' +
+        '<button class="btn btn--sm btn--ghost" type="button" id="profReorder" aria-pressed="' + (profReordering ? "true" : "false") + '">' +
+          (profReordering ? "Done reordering" : "Reorder") + "</button>" +
+        '<button class="btn btn--sm btn--ghost" type="button" id="profEdit">Edit</button>' +
+      "</div></div>" +
+    '<p class="hint" style="margin:6px 0 14px">' +
+      (profReordering ? "Drag the covers into the order you want." : "The five books you would hand to anyone. Edit picks a place and opens the book form.") + "</p>" +
+    '<div class="memtiles memtiles--five prof__five' + (profReordering ? " prof__five--drag" : "") + '" id="profFive">' +
+      profFiveHTML(five) + "</div>" +
+    '<p class="hint" id="profFiveNote" style="margin-top:10px"></p>' +
+
+    /* ---- top genres */
+    '<hr class="divider"><p class="eyebrow">Top genres</p>' +
+    '<p class="hint" style="margin:6px 0 12px">Up to three. These are what show beside your name on the Members page.</p>' +
+    '<div class="prof__genres">' +
+      [0,1,2].map(function(i){
+        return '<input class="input" type="text" data-profgen="' + i + '" maxlength="40" spellcheck="false" ' +
+          'placeholder="' + ["Fantasy","Historical","Crime"][i] + '" value="' + esc(genres[i] || "") + '">';
       }).join("") +
     "</div>" +
-    (books.length ? "" : '<p class="empty" style="margin-top:10px">No books on the go to subscribe to yet.</p>') +
-    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px">' +
-      '<button class="btn btn--sm btn--zest" type="button" id="meNotifySave">Save my reminders</button>' +
-      '<button class="btn btn--sm btn--ghost" type="button" id="meNotifyNone">Turn them all off</button>' +
-      '<span class="hint" id="meNotifyNote"></span>' +
+
+    /* ---- profiles elsewhere */
+    '<hr class="divider"><p class="eyebrow">Your profiles elsewhere</p>' +
+    '<div class="formgrid" style="margin-top:12px">' +
+      '<div class="field"><label for="profGoodreads">Goodreads</label>' +
+        '<input class="input" id="profGoodreads" type="url" maxlength="300" spellcheck="false" ' +
+        'placeholder="https://www.goodreads.com/user/show/..." value="' + esc(showGr) + '"></div>' +
+      '<div class="field"><label for="profFable">Fable</label>' +
+        '<input class="input" id="profFable" type="url" maxlength="300" spellcheck="false" ' +
+        'placeholder="https://fable.co/..." value="' + esc(showFa) + '"></div>' +
     "</div>" +
 
+    /* ---- badge colour */
     '<hr class="divider"><p class="eyebrow">Your badge colour</p>' +
-    (mem
-      ? '<p class="hint" style="margin:6px 0 12px">This is the colour beside your name on the badge tree.</p>' +
-        '<div class="huepick">' +
-          Object.keys(HUE_NAMES).map(function(h){
-            return '<button class="huechip" type="button" data-myhue="' + h + '" aria-pressed="' +
-              ((mem.hue || hueFor(mem.id)) === h) + '" style="--c:var(--' + h + ');--cf:var(--on-' + h + ')" ' +
-              'title="' + esc(HUE_NAMES[h]) + '"><span></span>' + esc(HUE_NAMES[h]) + "</button>";
-          }).join("") +
-          /* the presets are the quick answer; this opens the whole spectrum */
-          '<button class="huechip huechip--custom" type="button" id="meHueCustom" aria-pressed="' +
-            isHex(mem.hue) + '" style="--c:' + (isHex(mem.hue) ? esc(mem.hue) : "var(--sunk)") + '">' +
-            "<span></span>" + (isHex(mem.hue) ? esc(mem.hue.toUpperCase()) : "Custom\u2026") + "</button>" +
-        "</div>" +
-        '<div class="huecustom" id="meHuePanel" hidden>' +
-          '<input type="color" id="meHueWheel" value="' + esc(isHex(mem.hue) ? mem.hue : hexOfHue(memberHue(mem))) + '" aria-label="Pick a colour">' +
-          '<div class="huecustom__side">' +
-            '<label class="huecustom__lab" for="meHueHex">Hex</label>' +
-            '<input class="input mono" type="text" id="meHueHex" maxlength="7" spellcheck="false" ' +
-              'value="' + esc(isHex(mem.hue) ? mem.hue.toUpperCase() : hexOfHue(memberHue(mem)).toUpperCase()) + '">' +
-            '<span class="huecustom__prev" id="meHuePrev">Aa</span>' +
-          "</div>" +
-          '<div class="huecustom__acts">' +
-            '<button class="btn btn--sm btn--zest" type="button" id="meHueApply">Use this colour</button>' +
-            '<button class="btn btn--sm btn--ghost" type="button" id="meHueCancel">Cancel</button>' +
-          "</div>" +
-        "</div>" +
-        '<div style="margin-top:12px"><span class="hint" id="meHueNote"></span></div>'
-      : '<p class="empty" style="margin:6px 0">Once the organiser adds you to the members list you can pick a colour here.</p>') +
+    '<p class="hint" style="margin:6px 0 12px">The colour beside your name on the badge tree and your profile.</p>' +
+    '<div class="huecustom huecustom--open">' +
+      '<input type="color" id="profHueWheel" value="' + esc(showHue) + '" aria-label="Pick a colour">' +
+      '<div class="huecustom__side">' +
+        '<label class="huecustom__lab" for="profHueHex">Hex</label>' +
+        '<input class="input mono" type="text" id="profHueHex" maxlength="7" spellcheck="false" value="' + esc(showHue.toUpperCase()) + '">' +
+        '<span class="huecustom__prev" id="profHuePrev" style="background:' + esc(showHue) + ';color:' + esc(onHex(showHue)) + '">Aa</span>' +
+      "</div>" +
+    "</div>" +
 
-    '<hr class="divider"><p class="eyebrow">Your recommendations</p>' +
-    (total
-      ? '<div class="progress" style="margin-top:12px;max-width:none"><div class="progress__bar">' +
-          '<div class="progress__fill" style="width:' + pct + '%"></div></div>' +
-        '<div class="progress__label"><span>' + live.length + " live · " + short.length + " shortlisted · " + read.length + " read by the club</span>" +
-        "<span>" + pct + "%</span></div></div>" +
-        '<div class="tagbank" style="margin-top:14px">' +
-          mine.slice(0, 12).map(function(r){
-            var n = recScore(r);
-            return '<span class="tag' + (r.shortlist ? " tag--flare" : r.status === "approved" ? " tag--surf" : "") + '">' +
-              esc(r.title) + (n ? " " + esc(scoreLabel(r)) : "") + "</span>";
-          }).join("") +
-        "</div>"
-      : '<p class="empty" style="margin-top:8px">Nothing put forward yet. The Suggest a Book tab is where to start &mdash; your name goes in automatically now.</p>') +
+    /* ---- notifications */
+    '<hr class="divider"><p class="eyebrow">Notifications</p>' +
+    '<div class="prof__row" style="margin-top:12px">' +
+      '<label class="switch"><input type="checkbox" id="profRemind"' + (remindersOn ? " checked" : "") + '><span></span>' +
+        "Meeting reminders</label>" +
+    "</div>" +
+    '<p class="hint" style="margin:6px 0 10px">One when a meeting is scheduled, one five days before, one thirty minutes before.</p>' +
+    '<div id="profRemindHow"' + (remindersOn ? "" : " hidden") + ">" +
+      '<select class="select" id="profRemindScope" style="max-width:280px">' +
+        '<option value="all"' + (all ? " selected" : "") + '>All new books</option>' +
+        '<option value="pick"' + (all ? "" : " selected") + ">Pick books individually</option>" +
+      "</select>" +
+      '<p class="hint" style="margin:8px 0 0">' +
+        (all ? "Every book the club takes on, from today forward." : "Only the books you tick.") + "</p>" +
+      '<div class="checkgrid" id="profRemindBooks" style="margin-top:10px"' + (all ? " hidden" : "") + ">" +
+        (books.length
+          ? books.map(function(b){
+              return '<label><input type="checkbox" data-mynotify="' + esc(b.id) + '"' +
+                (myNotify.indexOf(b.id) !== -1 ? " checked" : "") + ">" + esc(b.title) + "</label>";
+            }).join("")
+          : '<p class="empty" style="margin:0">No books on the go to pick from yet.</p>') +
+      "</div>" +
+    "</div>" +
+    '<div class="prof__row" style="margin-top:16px">' +
+      '<label class="switch"><input type="checkbox" id="profRecsNotify"' + (mem.notifyRecs ? " checked" : "") + '><span></span>' +
+        "New recommendations</label>" +
+    "</div>" +
+    '<p class="hint" style="margin:6px 0 0">When someone puts a new book forward.</p>' +
 
-    '<hr class="divider"><div style="display:flex;gap:10px;flex-wrap:wrap">' +
-      '<button class="btn btn--ghost" type="button" id="loginOut">Sign out</button></div>';
+    /* ---- their own submissions */
+    '<hr class="divider"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">' +
+      '<button class="btn btn--sm btn--surf" type="button" id="profMyRecs">See status of my recommendations</button>' +
+      '<span class="hint">' + myRecs().length + (myRecs().length === 1 ? " put forward" : " put forward") + "</span>" +
+    "</div>" +
+
+    '<hr class="divider"><div class="prof__save">' +
+      '<button class="btn btn--zest" type="button" id="profSave">Save profile</button>' +
+      '<span class="hint" id="profNote"></span>' +
+      '<button class="btn btn--ghost" type="button" id="loginOut" style="margin-left:auto">Sign out</button></div>';
+}
+
+/* The five as they stand, each one droppable while reordering. An empty place
+   is still a place — it can be dragged and it can be filled. */
+function profFiveHTML(five){
+  var out = [];
+  for(var i = 0; i < 5; i++){
+    var b = five[i];
+    var inner = b
+      ? bookTileHTML({ id: b.id || "", title: b.title || "", author: b.author || "", cover: b.cover || "",
+                       pages: b.pages || "", genres: b.genres || [], ageMin: b.ageMin, ageMax: b.ageMax,
+                       level: b.level, finished: "", started: "" })
+      : tileSlotHTML(i + 1);
+    out.push('<div class="prof__slot" data-profslot="' + i + '"' +
+      (profReordering ? ' draggable="true"' : "") + ">" + inner +
+      '<span class="prof__num">' + (i + 1) + "</span></div>");
+  }
+  return out.join("");
+}
+var profReordering = false;
+
+/* The colour to show in the wheel: their own hex if they picked one, else the
+   hex behind whichever house colour they are on. */
+function profHexNow(mem){
+  return isHex(mem.hue) ? mem.hue : hexOfHue(memberHue(mem));
+}
+
+/* ------------------------------------------------------------ editing a five
+   "Edit" asks which of the five, then hands over the real Suggest a Book form
+   — the actual node, moved into this modal, not a copy of it. Everything it
+   already does (the lookup, the candidates, Ask AI, the cover picker) keeps
+   working because it is the same element with the same handlers; only what
+   happens on submit changes. It goes back where it came from afterwards. */
+var profFormHome = null;
+
+function profAskSlot(){
+  var five = myFive();
+  var note = $("profFiveNote");
+  if(!note) return;
+  note.innerHTML = '<span class="prof__ask">Which place? ' +
+    [0,1,2,3,4].map(function(i){
+      return '<button class="btn btn--sm btn--ghost" type="button" data-profpick="' + i + '">' +
+        (i + 1) + (five[i] ? " · " + esc(String(five[i].title).slice(0, 18)) : " · empty") + "</button>";
+    }).join("") + "</span>";
+}
+
+function profOpenForm(slot){
+  var form = $("suggestForm"), host = $("meModalBody");
+  if(!form || !host) return;
+  if(!profFormHome) profFormHome = form.parentNode;
+  profSlot = slot;
+  var five = myFive(), b = five[slot];
+
+  var wrap = document.createElement("div");
+  wrap.className = "prof__form";
+  wrap.id = "profFormWrap";
+  wrap.innerHTML = '<div class="prof__formhead"><p class="eyebrow" style="margin:0">Place ' + (slot + 1) + '</p>' +
+    '<button class="btn btn--sm btn--ghost" type="button" id="profFormBack">Back to profile</button></div>';
+  host.innerHTML = "";
+  host.appendChild(wrap);
+  wrap.appendChild(form);
+  $("meModalTitle").textContent = "Their five — place " + (slot + 1);
+
+  /* what is already in that place, so editing is editing rather than retyping */
+  clearSuggestForm();
+  if(b){
+    if($("sTitle")) $("sTitle").value = b.title || "";
+    if($("sAuthor")) $("sAuthor").value = b.author || "";
+    if($("sPages")) $("sPages").value = b.pages || "";
+    if($("sGenres")) $("sGenres").value = (b.genres || []).join(", ");
+    if(b.cover){ sugCover = b.cover; renderSugCover(); }
+    if(b.ageMin && b.ageMax){ dualState.sAge = { lo: Number(b.ageMin), hi: Number(b.ageMax) }; syncDual("sAge"); }
+  }
+  profPaintFormFor();
+}
+
+/* The "Your name" box belongs to a submission, not to a place on a shelf. */
+function profHideBy(on){
+  var by = $("sBy");
+  var field = by && by.closest ? by.closest(".field") : null;
+  if(field) field.hidden = !!on;
+}
+
+/* The form's own Send button says the wrong thing here, so it is relabelled
+   while it is on loan and put back when it leaves. */
+function profPaintFormFor(){
+  var send = $("suggestForm") && $("suggestForm").querySelector('[type="submit"], #sSend');
+  if(send){ send.dataset.was = send.dataset.was || send.textContent; send.textContent = "Save to place " + (profSlot + 1); }
+  profHideBy(true);
+}
+function profCloseForm(){
+  var form = $("suggestForm");
+  var send = form && form.querySelector('[type="submit"], #sSend');
+  if(send && send.dataset.was){ send.textContent = send.dataset.was; delete send.dataset.was; }
+  profHideBy(false);
+  if(form && profFormHome) profFormHome.appendChild(form);
+  profSlot = null;
+  clearSuggestForm();
+  renderMe();
+}
+
+/* What the form has in it, shaped as one of the five. */
+function profFormAsBook(){
+  var age = dualValue("sAge");
+  var title = ($("sTitle") && $("sTitle").value || "").trim();
+  if(!title) return null;
+  return { id: "", title: title,
+    author: ($("sAuthor") && $("sAuthor").value || "").trim(),
+    pages: Number($("sPages") && $("sPages").value) || "",
+    genres: normaliseGenres($("sGenres") && $("sGenres").value || ""),
+    cover: sugCover || "",
+    ageMin: age.lo, ageMax: age.hi,
+    level: levelText({ ageMin: age.lo, ageMax: age.hi }) };
+}
+
+/* ---- saving the whole profile */
+async function profSave(extra){
+  var mem = myMember(); if(!mem) return false;
+  var note = $("profNote");
+  var hex = ($("profHueHex") && $("profHueHex").value || "").trim();
+  var payload = {
+    token: sessionToken(),
+    hue: isHex(hex) ? hex.toLowerCase() : (mem.hue || ""),
+    goodreads: ($("profGoodreads") && $("profGoodreads").value || "").trim(),
+    fable: ($("profFable") && $("profFable").value || "").trim(),
+    genres: [0,1,2].map(function(i){
+      var el = document.querySelector('[data-profgen="' + i + '"]');
+      return el ? el.value.trim() : "";
+    }).filter(Boolean),
+    top5: myFive(),
+    notifyRecs: !!($("profRecsNotify") && $("profRecsNotify").checked)
+  };
+  Object.keys(extra || {}).forEach(function(k){ payload[k] = extra[k]; });
+
+  if(note) note.textContent = "Saving\u2026";
+  var res = await callEndpoint("profile-set", payload);
+  if(!res.ok){
+    if(note) note.textContent = profTrouble(res.error);
+    return { ok: false, error: res.error };
+  }
+  /* the answer is what was actually stored, so the page shows that rather
+     than what it hoped for */
+  mem.hue = res.hue; mem.goodreads = res.goodreads; mem.fable = res.fable;
+  mem.genres = res.genres; mem.top5 = res.top5; mem.notifyRecs = res.notifyRecs;
+  profEdits = null;
+  profDraft = null;
+  renderAll();
+  return { ok: true };
+}
+function profTrouble(err){
+  if(err === "bad colour") return "That isn\u2019t a colour it will take \u2014 use a six-digit hex like #F993FB.";
+  if(err === "not a member yet") return "You aren\u2019t on the members list yet.";
+  if(err === "no profile") return "This account has no profile to change yet.";
+  if(err === "dev-blocked") return "This is the test site \u2014 nothing here is written down. Try it on the real site.";
+  return repoWriteTrouble(err);
+}
+
+/* ---- the member's own submissions, and where each one stands */
+function profRecsHTML(){
+  var mine = myRecs();
+  var label = { approved: "Approved", pending: "Waiting", rejected: "Turned down" };
+  var tone  = { approved: "tag--surf", pending: "tag--zest", rejected: "" };
+  return '<div class="prof__formhead"><p class="eyebrow" style="margin:0">Your recommendations</p>' +
+    '<button class="btn btn--sm btn--ghost" type="button" id="profRecsBack">Back to profile</button></div>' +
+    (mine.length
+      ? '<ul class="proflist">' + mine.map(function(r){
+          return "<li><span><strong>" + esc(r.title) + "</strong>" +
+            (r.author ? '<span class="proflist__a">' + esc(r.author) + "</span>" : "") + "</span>" +
+            '<span class="tag ' + (tone[r.status] || "") + '">' + esc(label[r.status] || r.status) + "</span></li>";
+        }).join("") + "</ul>"
+      : '<p class="empty" style="margin-top:14px">Nothing put forward yet. The Suggest a Book tab is where to start.</p>');
 }
 
 /* ---------- member requests ---------- */
@@ -4390,6 +4782,10 @@ function tryUnlock(){
    the account sheet has always used. */
 /* Sign out is a lie when nobody is signed in, and the press that follows it
    would be a no-op. The word follows the session. */
+function paintMenuProfile(){
+  var b = $("menuProfile"); if(!b) return;
+  b.hidden = !(me && myMember());
+}
 function paintMenuSession(){
   var b = $("menuSession");
   if(!b) return;
@@ -5408,18 +5804,53 @@ document.addEventListener("click", async function(e){
      Admin's own Add/Remove here go through the identical call, which is what
      lets save() elsewhere adopt the fresh copy of both fields without ever
      discarding an edit made through this box. */
+  /* ---- edit profile */
+  if(t.closest("#menuProfile")){ menuShut(); await openMe(); return; }
+  if(t.closest("#profReorder")){ profCapture(); profReordering = !profReordering; renderMe(); return; }
+  if(t.closest("#profEdit")){ profCapture(); profAskSlot(); return; }
+  if((el = t.closest("[data-profpick]"))){ profOpenForm(Number(el.getAttribute("data-profpick"))); return; }
+  if(t.closest("#profFormBack")){ profCloseForm(); return; }
+  if(t.closest("#profMyRecs")){ profCapture(); $("meModalBody").innerHTML = profRecsHTML(); return; }
+  if(t.closest("#profRecsBack")){ renderMe(); return; }
+  if(t.closest("#profSave")){
+    var books = [];
+    if($("profRemind") && $("profRemind").checked){
+      books = $("profRemindScope") && $("profRemindScope").value === "all"
+        ? ["*"]
+        : Array.prototype.slice.call(document.querySelectorAll("[data-mynotify]:checked"))
+            .map(function(x){ return x.getAttribute("data-mynotify"); });
+    }
+    var nres = await callEndpoint("notify-set", { token: sessionToken(), books: books });
+    if(nres.ok) myNotify = books;
+    var sres = await profSave();
+    if(sres.ok){
+      var n = $("profNote");
+      if(n) n.textContent = nres.ok ? "Saved." : "Profile saved, but the reminders didn\u2019t: " + notesTrouble(nres.error);
+    }
+    return;
+  }
+
+  if((el = t.closest("[data-whotoggle]"))){
+    var wk = el.getAttribute("data-whotoggle"), panel = document.querySelector('[data-whopanel="' + wk + '"]');
+    var wasOpen = panel && !panel.hidden;
+    whoPickShut();
+    if(panel && !wasOpen){ panel.hidden = false; el.setAttribute("aria-expanded", "true"); }
+    return;
+  }
   if((el = t.closest("[data-addbtn]"))){
     var kind = el.getAttribute("data-addbtn"), mid = el.getAttribute("data-mid"), box = $("meetModalBody");
-    var txt = box.querySelector('[data-add="' + kind + '-text"]'), who = box.querySelector('[data-add="' + kind + '-by"]');
+    var txt = box.querySelector('[data-add="' + kind + '-text"]');
     var val = (txt.value || "").trim(); if(!val){ txt.focus(); return; }
     var m = meetingById(mid); if(!m) return;
-    var memo = (who.value || "").trim();
+    var picked = (notePick[kind] || []).slice();
     say("Adding…", "busy", true);
-    var ares = await callEndpoint("notes-add", { token: sessionToken(), meetingId: mid, field: kind, text: val, by: memo });
+    var ares = await callEndpoint("notes-add", { token: sessionToken(), meetingId: mid, field: kind, text: val, byIds: picked });
     if(!ares.ok){ say(notesTrouble(ares.error), "bad"); return; }
-    if(kind === "pred") m.predictions.push(ares.item); else m.points.push(ares.item);
+    if(kind === "pred") m.predictions.push(noteAuthors(ares.item, state.members));
+    else m.points.push(noteAuthors(ares.item, state.members));
+    /* the same people stay picked for the next one, the way the name box used
+       to keep what was typed in it */
     box.innerHTML = meetingHTML(m, bookById(m.bookId));
-    var again = box.querySelector('[data-add="' + kind + '-by"]'); if(again) again.value = memo;
     say("Added.", "ok");
     return;
   }
@@ -5808,6 +6239,10 @@ function acceptSubmission(item, opts){
       pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
       genres: normaliseGenres(p.genres),
       by: String(p.by || "").slice(0, 60),
+      /* who sent it, when they were signed in — a name alone cannot be
+         followed back to a person, and two of the names already here belong
+         to nobody on the members list */
+      byId: memberById(String(p.byId || "")) ? String(p.byId) : "",
       /* approved on the spot when the organiser pressed Approve on the
          Recommendations tab; anything else waits there */
       status: opts.approve ? "approved" : "pending", at: String(item.at || "").slice(0, 10),
@@ -5871,6 +6306,25 @@ function adoptRec(rec, status){
 /* the two filter dropdowns */
 document.addEventListener("change", function(e){
   var n = e.target;
+  if(n && n.id === "profRemind"){
+    var how = $("profRemindHow"); if(how) how.hidden = !n.checked;
+    return;
+  }
+  if(n && n.id === "profRemindScope"){
+    var picks = $("profRemindBooks"); if(picks) picks.hidden = n.value === "all";
+    return;
+  }
+  if(n && n.hasAttribute && n.hasAttribute("data-whoid")){
+    var kind = n.getAttribute("data-whokind"), id = n.getAttribute("data-whoid");
+    var list = notePick[kind] || (notePick[kind] = []);
+    var at = list.indexOf(id);
+    if(n.checked){ if(at === -1) list.push(id); }
+    else if(at !== -1) list.splice(at, 1);
+    var btn = document.querySelector('[data-whotoggle="' + kind + '"]');
+    if(btn){ var lab = btn.querySelector(".whopick__name"); if(lab) lab.textContent = whoPickLabel(kind);
+      if(list.length) btn.removeAttribute("data-empty"); else btn.setAttribute("data-empty", "1"); }
+    return;
+  }
   if(!n || !n.id) return;
   if(n.id === "fBy"){ recFilter.by = n.value; renderRecs(); }
   else if(n.id === "fSort"){ recFilter.sort = n.value; renderRecs(); }
@@ -6505,7 +6959,12 @@ function markMissing(ids){
   });
 }
 function missingMust(){
-  return SUGGEST_MUST.filter(function(m){ return !$(m.id).value.trim(); });
+  /* On loan to a profile there is nobody to name: the book is going into that
+     member's own five, not being put forward by someone. */
+  return SUGGEST_MUST.filter(function(m){
+    if(profSlot !== null && m.id === "sBy") return false;
+    return !$(m.id).value.trim();
+  });
 }
 /* The rest, judged by what the submission would actually carry rather than by
    what the box looks like: a slider still at its full span has said nothing,
@@ -7148,6 +7607,34 @@ $("suggestForm").addEventListener("submit", async function(e){
     return;
   }
   clearMissing();
+
+  /* The same form, on loan to a profile. It fills one of that member's five
+     rather than putting a book forward to the club, so it stops here. */
+  if(profSlot !== null){
+    var pick = profFormAsBook();
+    if(!pick){ note.textContent = "A title at least."; return; }
+    var five = myFive().slice();
+    while(five.length <= profSlot) five.push(null);
+    five[profSlot] = pick;
+    while(five.length && five[five.length - 1] == null) five.pop();
+    profEdits = five;
+    note.textContent = "Saving\u2026";
+    var slotWas = profSlot;
+    var pres = await profSave();
+    if(pres.ok){
+      profCloseForm();
+      var pn = $("profFiveNote");
+      if(pn) pn.textContent = "Place " + (slotWas + 1) + " is now " + pick.title + ".";
+    }else{
+      /* stay on the form with the reason in front of them, rather than
+         emptying the note and putting it in a toast they are not looking at */
+      note.textContent = profTrouble(pres.error);
+      profSlot = slotWas;
+      profEdits = null;
+    }
+    return;
+  }
+
   var title = el.title.value.trim(), author = el.author.value.trim(), by = el.by.value.trim();
   var age = dualValue("sAge");
   var genres = normaliseGenres(el.genres.value);
@@ -7174,6 +7661,7 @@ $("suggestForm").addEventListener("submit", async function(e){
       title: title, author: author, pages: Number(el.pages.value) || null,
       ageMin: age.lo, ageMax: age.hi, level: levelText({ ageMin: age.lo, ageMax: age.hi }),
       genres: genres, blurb: blurb, summarySource: chosen.from, cover: sugCover, by: by,
+      byId: (myMember() || {}).id || "",
       ratings: ratingsForSubmit()
     });
     if(!res.ok){ note.textContent = submitFailMsg(res); return; }
@@ -7208,11 +7696,15 @@ function renderWhoami(){
   /* before the early return below: the menu has something true to say about
      the session even where signing in is switched off */
   paintMenuSession();
+  paintMenuProfile();
   var btn = $("loginOpen");
   if(!btn) return;
   var join = $("signupOpen");
-  /* signing in writes to the real members list, so it stays off here */
-  if(!endpoint() || DEV){
+  /* Signing in writes to the real members list, so the way in stays off here.
+     Someone the test site is standing in for still gets their badge, though —
+     it is a way into their own profile, and hiding it would leave half of
+     this page unreachable there. */
+  if(!endpoint() || (DEV && !me)){
     btn.hidden = true;
     if(join) join.hidden = true;
     return;
@@ -7249,9 +7741,29 @@ function renderAll(){
   renderFocus(); renderTree(); renderTimeline();
 }
 
+/* Signing in is off on the test site, which would otherwise hide every control
+   that only a signed-in member sees — the note pickers among them. This stands
+   in for a session so the page can be looked at as any member would see it. It
+   is a local pretence and nothing more: callEndpoint still refuses to send, so
+   nothing can be written from here whoever is selected. */
+function devAsSetup(){
+  var sel = $("devAs"); if(!sel) return;
+  sel.innerHTML = '<option value="">nobody</option>' + state.members.map(function(m){
+    return '<option value="' + esc(m.id) + '">' + esc(m.name) + "</option>";
+  }).join("");
+  sel.addEventListener("change", function(){
+    var mem = memberById(sel.value);
+    me = mem ? { memberId: mem.id, name: mem.name, emailHint: "test", dev: true } : null;
+    notePick = { pred: [], disc: [] };
+    renderWhoami();
+    renderAll();
+  });
+}
+
 (async function boot(){
   if(DEV) $("devBar").hidden = false;
   await loadState();
+  if(DEV) devAsSetup();
   inbox = await loadInbox();
   var handled = {};
   (state.inbox || []).forEach(function(id){ handled[id] = 1; });
@@ -7264,7 +7776,77 @@ function renderAll(){
   window.addEventListener("resize", function(){ renderTree(); });
 })();
 
+
+/* The wheel and the box are two ways at the same colour, so each follows the
+   other, and the little square shows where it has landed. */
+document.addEventListener("input", function(e){
+  var n = e.target; if(!n || !n.id) return;
+  if(n.id === "profHueWheel"){
+    var box = $("profHueHex"); if(box) box.value = String(n.value).toUpperCase();
+    profPaintHue(n.value);
+  }else if(n.id === "profHueHex"){
+    var v = n.value.trim();
+    if(v && v.charAt(0) !== "#"){ v = "#" + v; n.value = v; }
+    if(isHex(v)){
+      var wheel = $("profHueWheel"); if(wheel) wheel.value = v.toLowerCase();
+      profPaintHue(v);
+    }
+  }
+});
+function profPaintHue(hex){
+  var prev = $("profHuePrev"); if(!prev) return;
+  prev.style.background = hex;
+  prev.style.color = onHex(hex);
+}
+
+/* ---- dragging the five into a new order */
+document.addEventListener("dragstart", function(e){
+  var slot = e.target && e.target.closest && e.target.closest("[data-profslot]");
+  if(!slot || !profReordering) return;
+  profDrag = Number(slot.getAttribute("data-profslot"));
+  slot.classList.add("prof__slot--lift");
+  if(e.dataTransfer){ e.dataTransfer.effectAllowed = "move"; try{ e.dataTransfer.setData("text/plain", String(profDrag)); }catch(err){} }
+});
+document.addEventListener("dragover", function(e){
+  var slot = e.target && e.target.closest && e.target.closest("[data-profslot]");
+  if(!slot || profDrag < 0) return;
+  e.preventDefault();
+  if(e.dataTransfer) e.dataTransfer.dropEffect = "move";
+  var over = document.querySelector(".prof__slot--over");
+  if(over && over !== slot) over.classList.remove("prof__slot--over");
+  slot.classList.add("prof__slot--over");
+});
+document.addEventListener("drop", function(e){
+  var slot = e.target && e.target.closest && e.target.closest("[data-profslot]");
+  if(!slot || profDrag < 0) return;
+  e.preventDefault();
+  profMoveFive(profDrag, Number(slot.getAttribute("data-profslot")));
+  profDrag = -1;
+});
+document.addEventListener("dragend", function(){
+  profDrag = -1;
+  document.querySelectorAll(".prof__slot--lift,.prof__slot--over").forEach(function(el){
+    el.classList.remove("prof__slot--lift"); el.classList.remove("prof__slot--over"); });
+});
+
+/* Lifted out and put back in, so the ones in between shuffle along rather
+   than swapping with whatever was dropped on. Empty places are places too, so
+   the list is padded first and trimmed after. */
+function profMoveFive(from, to){
+  if(from === to) return;
+  var five = myFive().slice();
+  while(five.length < 5) five.push(null);
+  var moved = five.splice(from, 1)[0];
+  five.splice(to, 0, moved);
+  while(five.length && five[five.length - 1] == null) five.pop();
+  profEdits = five;
+  renderMe();
+  var note = $("profFiveNote");
+  if(note) note.textContent = "Moved. Press Save profile to keep it.";
+}
+
 })();
+
 </script>
 </body>
 </html>
