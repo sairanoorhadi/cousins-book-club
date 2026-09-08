@@ -827,6 +827,31 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-795c1639-13d",
+      "kind": "suggest",
+      "at": "2026-09-08T04:29:29.024Z",
+      "payload": {
+        "title": "Picture of Hollis Wood",
+        "author": "Patricia Reilly Giff",
+        "pages": 171,
+        "ageMin": 8,
+        "ageMax": 12,
+        "level": "Ages 8-12",
+        "genres": [
+          "Realistic",
+          "Orphans",
+          "Family"
+        ],
+        "blurb": "Hollis Woods\n\nis the place where a baby was abandoned\n\nis the baby's name\n\nis an artist\n\nis now a twelve-year-old girl\n\nwho's been in so many foster homes she can hardly remember them all. When Hollis is sent to Josie, an elderly artist who is quirky and affectionate, she wants to stay. But Josie is growing more forgetful every day. If Social Services finds out, they'll take Hollis away and move Josie into a home. Well, Hollis Woods won't let anyone separate them. She's escaped the system before; this time, she's taking Josie with her. Still, even as she plans her future with Josie, Hollis dreams of the past summer with the Regans, fixing each special moment of her days with them in pictures she'll never forget. Patricia Reilly Giff captures the yearning for a place to belong in this warmhearted story, which stresses the importance of artistic vision, creativity, and above all, family.",
+        "summarySource": "own",
+        "cover": "https://covers.openlibrary.org/b/id/6390749-L.jpg",
+        "by": "Ms. Wendy",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
