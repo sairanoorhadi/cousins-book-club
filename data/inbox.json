@@ -908,6 +908,31 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-373be845-e1b",
+      "kind": "suggest",
+      "at": "2026-09-08T04:34:50.853Z",
+      "payload": {
+        "title": "Mr. Terupt falls again",
+        "author": "Rob Buyea",
+        "pages": 364,
+        "ageMin": 8,
+        "ageMax": 12,
+        "level": "Ages 8-12",
+        "genres": [
+          "School",
+          "Realistic"
+        ],
+        "blurb": "Fifth-grade was full of unforgettable events for Mr. Terupt and his class at Snow Hill School. Seven students were particularly affected by Mr. Terupt. Now those seven students are back, and they've been granted the rare opportunity to send one more year with their beloved teacher before they graduate from elementary school. Peter's parents expect him to attend private school after sixth-grade, but Peter has plans to stay right where he is. Eager to grow up, Alexia gets in over her head with some older kids. Danielle suspects that her family is keeping a secret from her, and she's determined to find out what it is. Jeffrey makes a life-changing discovery. Curious about her teacher's past, Jessica uncovers startling details about Mr. Terupt. Anna finally decides she's ready for the truth about her absent dad. And Luke's keen observations lead to questions with unexpected answers.",
+        "summarySource": "fetched",
+        "cover": "https://covers.openlibrary.org/b/id/11981853-L.jpg",
+        "by": "Ms. Wendy",
+        "ratings": [
+          "[object Object]",
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
