@@ -802,6 +802,31 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-d10cfbab-9f0",
+      "kind": "suggest",
+      "at": "2026-09-08T04:27:56.444Z",
+      "payload": {
+        "title": "Gathering Blue",
+        "author": "Lois Lowry",
+        "pages": 219,
+        "ageMin": 0,
+        "ageMax": 100,
+        "level": "Ages 0+",
+        "genres": [
+          "Dystopian",
+          "Fantasy",
+          "Science Fiction"
+        ],
+        "blurb": "Lois Lowry once again creates a mysterious but plausible future world. It is a society ruled by savagery and deceit that shuns and discards the weak. Left orphaned and physically flawed, young Kira faces a frightening, uncertain future. Blessed with an almost magical talent that keeps her alive, she struggles with ever broadening responsibilities in her quest for truth, discovering things that will change her life forever.\n\nAs she did in The Giver, Lowry challenges readers to imagine what our world could become, and what will be considered valuable. Every reader will be taken by Kira's plight and will long ponder her haunting world and the hope for the future.",
+        "summarySource": "fetched",
+        "cover": "https://m.media-amazon.com/images/I/81jh4SKQD4L.jpg",
+        "by": "Ms. Wendy",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
