@@ -1,5 +1,5 @@
 {
-  "rev": 1299,
+  "rev": 1300,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1483,6 +1483,31 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 8-12"
+    },
+    {
+      "id": "suggest-d10cfbab-9f0",
+      "title": "Gathering Blue",
+      "author": "Lois Lowry",
+      "pages": 219,
+      "ageMin": 0,
+      "ageMax": 100,
+      "genres": [
+        "Dystopian",
+        "Fantasy",
+        "Science Fiction"
+      ],
+      "by": "Ms. Wendy",
+      "status": "approved",
+      "at": "2026-09-08",
+      "cover": "https://m.media-amazon.com/images/I/81jh4SKQD4L.jpg",
+      "blurb": "Lois Lowry once again creates a mysterious but plausible future world. It is a society ruled by savagery and deceit that shuns and discards the weak. Left orphaned and physically flawed, young Kira faces a frightening, uncertain future. Blessed with an almost magical talent that keeps her alive, she struggles with ever broadening responsibilities in her quest for truth, discovering things that will change her life forever.\n\nAs she did in The Giver, Lowry challenges readers to imagine what our world could become, and what will be considered valuable. Every reader will be taken by Kira's plight and will long ponder her haunting world and the hope for the future.",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 0+"
     }
   ],
   "inbox": [
@@ -1563,6 +1588,7 @@
     "suggest-b2f54907-410",
     "suggest-2b14f01f-7c5",
     "suggest-f70a1c8e-a89",
-    "suggest-d75be64d-de7"
+    "suggest-d75be64d-de7",
+    "suggest-d10cfbab-9f0"
   ]
 }
