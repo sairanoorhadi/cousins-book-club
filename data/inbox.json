@@ -641,6 +641,34 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-09244f59-518",
+      "kind": "suggest",
+      "at": "2026-09-08T04:06:40.157Z",
+      "payload": {
+        "title": "That was then, this is now",
+        "author": "S. E. Hinton",
+        "pages": 159,
+        "ageMin": 8,
+        "ageMax": 12,
+        "level": "Ages 8-12",
+        "genres": [
+          "Drugs",
+          "Social problems",
+          "Children's",
+          "Stepfamilies",
+          "Friendship",
+          "Young Adult"
+        ],
+        "blurb": "Continue celebrating 50 years of The Outsiders by reading this companion novel. That Was Then, This is Now is S. E. Hinton's moving portrait of the bond between best friends Bryon and Mark and the tensions that develop between them as they begin to grow up and grow apart.",
+        "summarySource": "fetched",
+        "cover": "https://covers.openlibrary.org/b/id/14419013-L.jpg",
+        "by": "Ms. Wendy",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
