@@ -1,5 +1,5 @@
 {
-  "rev": 1290,
+  "rev": 1291,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1185,6 +1185,33 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 10-13"
+    },
+    {
+      "id": "suggest-714168e4-c04",
+      "title": "The Alchemist Graphic Novel",
+      "author": "Paulo Coelho",
+      "pages": 208,
+      "ageMin": 0,
+      "ageMax": 100,
+      "genres": [
+        "Fables",
+        "Graphic Novel",
+        "Historical Fiction",
+        "Fantasy",
+        "Adventure"
+      ],
+      "by": "Ms. Wendy",
+      "status": "approved",
+      "at": "2026-09-08",
+      "cover": "https://covers.openlibrary.org/b/id/11556106-L.jpg",
+      "blurb": "Paulo Coelho’s masterpiece tells the magical story of Santiago, an Andalusian shepherd boy who yearns to travel in search of a worldly treasure as extravagant as any ever found.\n\nThe story of the treasures Santiago finds along the way teaches us, as only a few stories can, about the essential wisdom of listening to our hearts, learning to read the omens strewn along life’s path, and, above all, following our dreams.\n\nAcclaimed illustrator Daniel Sampere brings Paulo Coelho's classic to new life in this gorgeously illustrated graphic novel adaptation.",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 0+"
     }
   ],
   "inbox": [
@@ -1257,6 +1284,7 @@
     "suggest-3b3ebcb6-1b1",
     "suggest-5b4bab6f-ca1",
     "suggest-9502fb3c-cb7",
-    "suggest-91746858-bc0"
+    "suggest-91746858-bc0",
+    "suggest-714168e4-c04"
   ]
 }
