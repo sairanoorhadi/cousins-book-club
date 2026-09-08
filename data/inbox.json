@@ -933,6 +933,30 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-661067d6-b72",
+      "kind": "suggest",
+      "at": "2026-09-08T04:36:42.372Z",
+      "payload": {
+        "title": "Stars",
+        "author": "Eric Walters",
+        "pages": 315,
+        "ageMin": 10,
+        "ageMax": 15,
+        "level": "Ages 10-15",
+        "genres": [
+          "Adventure",
+          "Young Adult"
+        ],
+        "blurb": "Joseph had never known that the sky could be so big, but somehow out in the wilderness everything was clearer. Maybe he had just been too busy stealing and running and hiding from the cops to look up. Or maybe being stuck with a stupid bunch of losers and social workers was beginning to get to him. Whatever it was, the sky was huge, and filled with stars. And the stars were what Joseph liked best.",
+        "summarySource": "fetched",
+        "cover": "https://covers.openlibrary.org/b/id/1457967-L.jpg",
+        "by": "Ms. Wendy",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
