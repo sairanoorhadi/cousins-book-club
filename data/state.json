@@ -1,5 +1,5 @@
 {
-  "rev": 1280,
+  "rev": 1281,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -892,7 +892,12 @@
       "ageMin": 9,
       "ageMax": 12,
       "dislikes": [],
-      "ratings": []
+      "ratings": [
+        {
+          "score": 4,
+          "source": "Goodreads"
+        }
+      ]
     },
     {
       "id": "rc-heartless",
