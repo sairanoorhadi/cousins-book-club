@@ -1,5 +1,5 @@
 {
-  "rev": 1271,
+  "rev": 1272,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -676,7 +676,7 @@
       "pages": 368,
       "genres": [
         "Dystopian",
-        "Political Fiction",
+        "Political",
         "Classic"
       ],
       "level": "Ages 15+",
