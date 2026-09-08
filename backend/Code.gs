@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-07a';
+var SCRIPT_VERSION = '2026-09-07b';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -563,6 +563,23 @@ function profileSet(payload) {
   }
   if (wantHue.charAt(0) === '#') wantHue = wantHue.toLowerCase();
 
+  /* The rest of what a member keeps about themselves. Each is only touched
+     when the browser actually sends it, so a page that knows about fewer
+     fields than this script cannot wipe the ones it never showed. */
+  var sets = {};
+  if (payload.goodreads !== undefined) sets.goodreads = safeProfileUrl(payload.goodreads);
+  if (payload.fable !== undefined) sets.fable = safeProfileUrl(payload.fable);
+  if (payload.genres !== undefined) {
+    sets.genres = (Array.isArray(payload.genres) ? payload.genres : [])
+      .map(function (g) { return String(g || '').trim().slice(0, 40); })
+      .filter(function (g) { return g; }).slice(0, 3);
+  }
+  if (payload.top5 !== undefined) {
+    if (!Array.isArray(payload.top5)) return { ok: false, error: 'bad five' };
+    sets.top5 = payload.top5.slice(0, 5).map(cleanTop5).filter(function (b) { return b; });
+  }
+  if (payload.notifyRecs !== undefined) sets.notifyRecs = !!payload.notifyRecs;
+
   if (!propKey('GITHUB_TOKEN', '')) return { ok: false, error: 'no github token' };
 
   var lock = LockService.getScriptLock();
@@ -582,6 +599,7 @@ function profileSet(payload) {
 
       if (wantName) member.name = wantName;
       member.hue = wantHue;
+      Object.keys(sets).forEach(function (k) { member[k] = sets[k]; });
       state.rev = Number(state.rev || 0) + 1;
 
       try {
@@ -590,7 +608,10 @@ function profileSet(payload) {
           var dir = directory();
           if (dir[email]) { dir[email].name = wantName; dir[email].memberId = member.id; saveDirectory(dir); }
         }
-        return { ok: true, name: member.name, hue: member.hue };
+        return { ok: true, name: member.name, hue: member.hue,
+                 goodreads: member.goodreads || '', fable: member.fable || '',
+                 genres: member.genres || [], top5: member.top5 || [],
+                 notifyRecs: !!member.notifyRecs };
       } catch (err) {
         if (attempt === 1) return { ok: false, error: 'busy, try again' };
       }
@@ -599,6 +620,36 @@ function profileSet(payload) {
     lock.releaseLock();
   }
   return { ok: false, error: 'busy' };
+}
+
+/* A profile link has to be a plain web address and nothing cleverer — this is
+   written into a public page, so javascript: and data: never get through. */
+function safeProfileUrl(v) {
+  var url = String(v || '').trim().slice(0, 300);
+  if (!url) return '';
+  return /^https?:\/\//i.test(url) ? url : '';
+}
+
+/* One of a member's five. Only the fields the page draws a cover from, each
+   trimmed, so a book on a profile can never carry more than it should. */
+function cleanTop5(b) {
+  if (!b || typeof b !== 'object') return null;
+  var title = String(b.title || '').trim().slice(0, 200);
+  if (!title) return null;
+  var out = {
+    id: String(b.id || '').slice(0, 40),
+    title: title,
+    author: String(b.author || '').trim().slice(0, 120),
+    cover: safeProfileUrl(b.cover),
+    pages: Number(b.pages) > 0 ? Math.min(20000, Math.round(Number(b.pages))) : '',
+    genres: (Array.isArray(b.genres) ? b.genres : [])
+      .map(function (g) { return String(g || '').trim().slice(0, 40); })
+      .filter(function (g) { return g; }).slice(0, 8),
+    level: String(b.level || '').trim().slice(0, 40)
+  };
+  if (Number(b.ageMin) > 0) out.ageMin = Math.round(Number(b.ageMin));
+  if (Number(b.ageMax) > 0) out.ageMax = Math.round(Number(b.ageMax));
+  return out;
 }
 
 /* ------------------------------------------------- telling someone they're in
