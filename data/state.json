@@ -1,5 +1,5 @@
 {
-  "rev": 1308,
+  "rev": 1309,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1635,31 +1635,6 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 10-15"
-    },
-    {
-      "id": "suggest-833eef22-0ed",
-      "title": "Heaven",
-      "author": "Meiko Kawalkami",
-      "pages": 192,
-      "ageMin": 12,
-      "ageMax": 100,
-      "genres": [
-        "Japanese",
-        "Comming of Age",
-        "Literary Fiction"
-      ],
-      "by": "Ms. Wendy",
-      "status": "approved",
-      "at": "2026-09-08",
-      "cover": "",
-      "blurb": "Hailed as a bold foray into new literary territory, Kawakami’s novel is told in the voice of a 14-year-old student who subjected to relentless torment for having a lazy eye. Instead of resisting, the boy chooses to suffer in complete resignation. The only person who understands what he is going through is a female classmate who suffers similar treatment at the hands of her tormentors.\n\nThese raw and realistic portrayals of bullying are counterbalanced by textured exposition of the philosophical and religious debates concerning violence to which the weak are subjected.\n\nKawakami's simple yet profound new work stands as a dazzling testament to her literary talent. There can be little doubt that it has cemented her reputation as one of the most important young authors working to expand the boundaries of contemporary Japanese literature.",
-      "summarySource": "fetched",
-      "shortlist": false,
-      "reviews": [],
-      "endorsements": [],
-      "dislikes": [],
-      "ratings": [],
-      "level": "Ages 12+"
     },
     {
       "id": "suggest-9430b520-ce4",
