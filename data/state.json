@@ -1,5 +1,5 @@
 {
-  "rev": 1305,
+  "rev": 1306,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1611,6 +1611,30 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 8-12"
+    },
+    {
+      "id": "suggest-661067d6-b72",
+      "title": "Stars",
+      "author": "Eric Walters",
+      "pages": 315,
+      "ageMin": 10,
+      "ageMax": 15,
+      "genres": [
+        "Adventure",
+        "Young Adult"
+      ],
+      "by": "Ms. Wendy",
+      "status": "approved",
+      "at": "2026-09-08",
+      "cover": "https://covers.openlibrary.org/b/id/1457967-L.jpg",
+      "blurb": "Joseph had never known that the sky could be so big, but somehow out in the wilderness everything was clearer. Maybe he had just been too busy stealing and running and hiding from the cops to look up. Or maybe being stuck with a stupid bunch of losers and social workers was beginning to get to him. Whatever it was, the sky was huge, and filled with stars. And the stars were what Joseph liked best.",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 10-15"
     }
   ],
   "inbox": [
@@ -1696,6 +1720,7 @@
     "suggest-795c1639-13d",
     "suggest-98664ae7-609",
     "suggest-941ddf1d-79d",
-    "suggest-373be845-e1b"
+    "suggest-373be845-e1b",
+    "suggest-661067d6-b72"
   ]
 }
