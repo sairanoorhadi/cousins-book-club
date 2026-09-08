@@ -200,69 +200,111 @@
         {
           "id": "pred-mtc9njjc7xj2t",
           "text": "Wylan kept an important piece of the plan secret from Pekk",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mtc9otnp7dusf",
           "text": "Kaz is going to confront Pekka",
-          "by": "Filza, Eliza"
+          "by": "",
+          "byIds": [
+            "mb-mt3zx2lgcj3x8",
+            "mb-mtaiuu788is5a"
+          ]
         },
         {
           "id": "pred-mtc9p9dn9dl77",
           "text": "Pekka kills Kaz",
-          "by": "Summar"
+          "by": "",
+          "byIds": [
+            "mb-mtqod125fcqtd"
+          ]
         },
         {
           "id": "pred-mtc9qln4zthu0",
           "text": "Someone from the crows is going to die",
-          "by": "Filza, Zainab, Eliza"
+          "by": "",
+          "byIds": [
+            "mb-mt3zx2lgcj3x8",
+            "mb-mtcdg54c8cyyc",
+            "mb-mtaiuu788is5a"
+          ]
         },
         {
           "id": "pred-mtc9s392x4c1x",
           "text": "Jesper, Nina or Mattias die",
-          "by": "Zainab, Filza, Eliza"
+          "by": "",
+          "byIds": [
+            "mb-mtcdg54c8cyyc",
+            "mb-mt3zx2lgcj3x8",
+            "mb-mtaiuu788is5a"
+          ]
         },
         {
           "id": "pred-mtc9ti9dgzu9q",
           "text": "A minor but emotionally significant character is going to dad",
-          "by": "Saira, Zainab"
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mtcdg54c8cyyc"
+          ]
         },
         {
           "id": "pred-mtc9wxnajgyfd",
           "text": "Kaz is going to get a very significant moment with Van Eck",
-          "by": "Saira, Filza, Eliza"
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mt3zx2lgcj3x8",
+            "mb-mtaiuu788is5a"
+          ]
         },
         {
           "id": "pred-mtc9yamw7nn15",
           "text": "Wylan is going to get himself out and he is gonna be the saving grace for this plan",
-          "by": "Saira, Eliza, Filza, Zainab"
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mtaiuu788is5a",
+            "mb-mt3zx2lgcj3x8",
+            "mb-mtcdg54c8cyyc"
+          ]
         },
         {
           "id": "pred-mtca0jcpfs507",
           "text": "Book is going to end at Pekka funeral",
-          "by": "Summar"
+          "by": "",
+          "byIds": [
+            "mb-mtqod125fcqtd"
+          ]
         }
       ],
       "points": [
         {
           "id": "d2",
           "text": "Six narrators, six agendas — whose chapters do you trust least, and why?",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "d3",
           "text": "Ketterdam runs on debt: money, favours, revenge. Is anyone in the crew actually free?",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "d4",
           "text": "Bardugo drops a backstory chapter into the middle of the heist. Does that break the tension or build it?",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "disc-mt7pdiy6qyty7",
           "text": "Why did Kuwei lie about being Wylan",
-          "by": "Saira"
+          "by": "",
+          "byIds": [
+            "mb-saira"
+          ]
         }
       ],
       "sent": {},
@@ -300,7 +342,10 @@
         {
           "id": "disc-f0969aa0-0c2",
           "text": "What do you think it meant when Mattias called the merchant council Ravens",
-          "by": "Saira"
+          "by": "",
+          "byIds": [
+            "mb-saira"
+          ]
         }
       ],
       "sent": {},
@@ -321,14 +366,19 @@
         {
           "id": "pred-mt7qdek6ao23k",
           "text": "The girl is going to beat Jess in the race",
-          "by": "Everyone"
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mtaiuu788is5a"
+          ]
         }
       ],
       "points": [
         {
           "id": "disc-mt7qdsl2lzhni",
           "text": "Why did the girls get away with so much",
-          "by": ""
+          "by": "",
+          "byIds": []
         }
       ],
       "sent": {},
@@ -366,12 +416,14 @@
         {
           "id": "disc-mt7qim9iwveq7",
           "text": "Who is this Dunyasha girl and why is she as good as Inej",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "disc-mt7qj71tgagq6",
           "text": "Jesper and Kuwei actually listened to Matthias",
-          "by": ""
+          "by": "",
+          "byIds": []
         }
       ],
       "sent": {},
@@ -410,27 +462,32 @@
         {
           "id": "pred-mt9dofhjb5xh8",
           "text": "Jesper was faking ADHD and betrays everyone",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9doy1imupzk",
           "text": "Inej might betray. There is something off with her",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9dpcksxx4nt",
           "text": "Fjerdns maybe like Grisha",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9dqdnq5t4h2",
           "text": "Nina slows down Bo Yul-Bayars heartbeat so that everyone thinks he is dead at the ice court",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9ds63j5ft3l",
           "text": "Pekka Rollins is gonna be at the Ice Court",
-          "by": ""
+          "by": "",
+          "byIds": []
         }
       ],
       "points": [],
@@ -452,54 +509,72 @@
         {
           "id": "pred-mt9dxj2j4ujil",
           "text": "Kaz is going to destroy Pekka (Embaress)",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9dyhe7wipth",
           "text": "Inej is going to \"Kill\" Kaz. Intense moment and reveal something about past or reveal that they like each other",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9dzkb436z31",
           "text": "Bo Yul-Bayer does not exist or they just do not find him",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9e029ib1tpp",
           "text": "Wylan is not a traitor",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9e0nlc3flkb",
           "text": "Once the job is over Inej is going to search for her parents",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9e1dl9xe60r",
           "text": "Joost comes back",
-          "by": "Summar"
+          "by": "",
+          "byIds": [
+            "mb-mtqod125fcqtd"
+          ]
         },
         {
           "id": "pred-mt9e1r3iylts7",
           "text": "Inej turns into a Grish",
-          "by": "Summar"
+          "by": "",
+          "byIds": [
+            "mb-mtqod125fcqtd"
+          ]
         },
         {
           "id": "pred-mt9e22j67vnbm",
           "text": "Pekka Rollins is a Grisha",
-          "by": "Summar"
+          "by": "",
+          "byIds": [
+            "mb-mtqod125fcqtd"
+          ]
         },
         {
           "id": "pred-mt9e2uea4lg7p",
           "text": "Nina betrays & kills everyone incl. Inej",
-          "by": "Summar"
+          "by": "",
+          "byIds": [
+            "mb-mtqod125fcqtd"
+          ]
         }
       ],
       "points": [
         {
           "id": "disc-mt9e12ncq5koz",
           "text": "Why don't Grisha fight?",
-          "by": ""
+          "by": "",
+          "byIds": []
         }
       ],
       "sent": {}
@@ -520,27 +595,32 @@
         {
           "id": "pred-mt9eas7il9evb",
           "text": "Merchants Vs. Kaz with the payout",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9ebae475yoi",
           "text": "Wylan and Kuwei have history",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9ebnbgr61l5",
           "text": "We get a Kaz and Inej moment",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9ec8o6d4toh",
           "text": "We get a reveal about what Kaz did to Pekka in the Ice Court",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9eddyf7ugw7",
           "text": "Kaz, Mattias, Jesper, Nina + Kuwei are going to use the slow down heart method Nina used when she was capsized with Mattis to stay alive in the river",
-          "by": ""
+          "by": "",
+          "byIds": []
         }
       ],
       "points": [],
@@ -578,22 +658,26 @@
         {
           "id": "pred-mt9emk883xe8m",
           "text": "Bijaan get caught in the cross fire",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9emzm80rzou",
           "text": "Jesper's dad gets used",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9eni7omi848",
           "text": "The Shu are catching Grisha for experimentation purposed",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9eoh1b4vl4y",
           "text": "Boat guy for Kaz's crew is an inside man for Van Eck",
-          "by": ""
+          "by": "",
+          "byIds": []
         }
       ],
       "points": [],
@@ -615,29 +699,34 @@
         {
           "id": "pred-mt9esjiwhfbfi",
           "text": "Bijaan gets caught in the cross fire",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9et0a6cpsbv",
           "text": "Jesper's dad is going the get used",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "pred-mt9etcev4b2pg",
           "text": "Net is going to be their downfall",
-          "by": ""
+          "by": "",
+          "byIds": []
         }
       ],
       "points": [
         {
           "id": "disc-mt9eua0ze0s73",
           "text": "Why did they hide that Zoya was one of their refugees",
-          "by": ""
+          "by": "",
+          "byIds": []
         },
         {
           "id": "disc-mt9euvkl3lhph",
           "text": "Jesper's not sick from not using Grisha powers but it manifests as his gambling addiction",
-          "by": ""
+          "by": "",
+          "byIds": []
         }
       ],
       "sent": {}
