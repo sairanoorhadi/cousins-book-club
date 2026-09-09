@@ -1128,6 +1128,26 @@
         "name": "Zainab",
         "vote": "down"
       }
+    },
+    {
+      "id": "suggest-92e3c707-5c9",
+      "kind": "suggest",
+      "at": "2026-09-09T00:11:51.198Z",
+      "payload": {
+        "title": "Lost Daughter",
+        "author": "Gill Paul",
+        "pages": 384,
+        "ageMin": 16,
+        "ageMax": 100,
+        "level": "Ages 16+",
+        "genres": [],
+        "blurb": "Gill Paul's *The Lost Daughter* opens in Ekaterinburg in 1918, on the night the Romanov family is taken to the cellar, and follows Grand Duchess Maria into a life she was never raised for, sheltered by a Bolshevik guard whose loyalties are not simple. A second strand, set decades later and half a world away, belongs to a woman piecing together a family history she was never told. The novel moves between the two, letting the reader see connections before the characters do. Good for groups interested in how history gets buried inside ordinary households, and in what survival costs.",
+        "summarySource": "ai",
+        "cover": "https://covers.openlibrary.org/b/id/10615258-L.jpg",
+        "by": "Zainab",
+        "byId": "mb-mtcdg54c8cyyc",
+        "ratings": []
+      }
     }
   ]
 }
