@@ -1168,6 +1168,33 @@
         "byId": "mb-mtcdg54c8cyyc",
         "ratings": []
       }
+    },
+    {
+      "id": "suggest-eecb55d3-924",
+      "kind": "suggest",
+      "at": "2026-09-09T00:24:08.876Z",
+      "payload": {
+        "title": "Without Merit",
+        "author": "Colleen Hoover, Candace Thaxton",
+        "pages": 359,
+        "ageMin": 15,
+        "ageMax": 100,
+        "level": "Ages 15+",
+        "genres": [
+          "Family",
+          "psychological",
+          "women"
+        ],
+        "blurb": "Merit Voss lives in a converted church in small-town Texas with a family that requires a diagram to explain: a father, a stepmother who used to be her mother's nurse, a mother who has retreated to the basement, a twin sister, and a brother. Merit collects secondhand trophies for things she never accomplished, and she is quietly collecting her family's secrets too. Then she kisses a stranger at an antique store, and he turns out to be someone she will be seeing again at home. Hoover keeps the tone wry until the secrets start coming due.",
+        "summarySource": "ai",
+        "cover": "https://covers.openlibrary.org/b/id/10213439-L.jpg",
+        "by": "Zainab",
+        "byId": "mb-mtcdg54c8cyyc",
+        "ratings": [
+          "[object Object]",
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
