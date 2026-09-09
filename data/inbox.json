@@ -1195,6 +1195,31 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-51b7b8cf-8dd",
+      "kind": "suggest",
+      "at": "2026-09-09T01:13:16.241Z",
+      "payload": {
+        "title": "Iron Wolf",
+        "author": "Siri Pettersen, Tara Chace",
+        "pages": 478,
+        "ageMin": 14,
+        "ageMax": 100,
+        "level": "Ages 14+",
+        "genres": [
+          "Dark Fantasy",
+          "Young Adult",
+          "Mythology",
+          "Scandinavian Literature genres"
+        ],
+        "blurb": "Siri Pettersen follows Juva, a 19-year-old bloodreader who rejects her family's fortune-telling traditions. After her mother is killed by an immortal Vardari, Juva is forced to investigate her family's dark secrets and a dangerous wolf-sickness sweeping the city.",
+        "summarySource": "ai",
+        "cover": "https://covers.openlibrary.org/b/id/13260332-L.jpg",
+        "by": "Zainab",
+        "byId": "mb-mtcdg54c8cyyc",
+        "ratings": []
+      }
     }
   ]
 }
