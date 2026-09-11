@@ -1,5 +1,5 @@
 {
-  "rev": 1317,
+  "rev": 1318,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1697,6 +1697,33 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 14+"
+    },
+    {
+      "id": "suggest-39222c93-e0b",
+      "title": "The Lion, the Witch and the Wardrobe",
+      "author": "C. S. Lewis",
+      "pages": 186,
+      "ageMin": 8,
+      "ageMax": 12,
+      "genres": [
+        "Fantasy",
+        "Magic",
+        "Adventure",
+        "Classic"
+      ],
+      "by": "Saira",
+      "byId": "",
+      "status": "approved",
+      "at": "2026-09-08",
+      "cover": "https://covers.openlibrary.org/b/id/10626869-L.jpg",
+      "blurb": "Four siblings are sent out of wartime London to a rambling country house belonging to an elderly professor. Exploring on a rainy day, the youngest, Lucy, climbs into a wardrobe full of fur coats and finds herself standing in a snowy wood beside a lamp-post. The land she stumbles into is held in a hundred-year winter, and her brothers and sister do not believe a word of it. What follows is a children's fantasy that moves quickly and carries more weight than its length suggests.",
+      "summarySource": "ai",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [],
+      "level": "Ages 8-12"
     }
   ],
   "inbox": [
@@ -1786,6 +1813,7 @@
     "suggest-661067d6-b72",
     "suggest-833eef22-0ed",
     "suggest-9430b520-ce4",
-    "suggest-14388178-a4e"
+    "suggest-14388178-a4e",
+    "suggest-39222c93-e0b"
   ]
 }
