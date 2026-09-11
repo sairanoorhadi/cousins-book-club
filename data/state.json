@@ -1,5 +1,5 @@
 {
-  "rev": 1321,
+  "rev": 1322,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1786,6 +1786,40 @@
         }
       ],
       "level": "Ages 15+"
+    },
+    {
+      "id": "suggest-51b7b8cf-8dd",
+      "title": "Iron Wolf",
+      "author": "Siri Pettersen, Translated by: Tara Chace",
+      "pages": 478,
+      "ageMin": 14,
+      "ageMax": 100,
+      "genres": [
+        "Dark Fantasy",
+        "Young Adult",
+        "Mythology",
+        "Scandinavian",
+        "Fantasy",
+        "High Fantasy"
+      ],
+      "by": "Zainab",
+      "byId": "mb-mtcdg54c8cyyc",
+      "status": "approved",
+      "at": "2026-09-09",
+      "cover": "https://covers.openlibrary.org/b/id/13260332-L.jpg",
+      "blurb": "Siri Pettersen follows Juva, a 19-year-old bloodreader who rejects her family's fortune-telling traditions. After her mother is killed by an immortal Vardari, Juva is forced to investigate her family's dark secrets and a dangerous wolf-sickness sweeping the city.",
+      "summarySource": "ai",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [
+        {
+          "score": 4.18,
+          "source": "Goodreads"
+        }
+      ],
+      "level": "Ages 14+"
     }
   ],
   "inbox": [
@@ -1879,6 +1913,7 @@
     "suggest-39222c93-e0b",
     "suggest-92e3c707-5c9",
     "suggest-eecb55d3-924",
-    "suggest-f9788e5c-c03"
+    "suggest-f9788e5c-c03",
+    "suggest-51b7b8cf-8dd"
   ]
 }
