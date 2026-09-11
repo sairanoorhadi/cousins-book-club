@@ -1790,7 +1790,7 @@
     {
       "id": "suggest-51b7b8cf-8dd",
       "title": "Iron Wolf",
-      "author": "Siri Pettersen, Translated by: Tara Chace",
+      "author": "Siri Pettersen, Tara Chace",
       "pages": 478,
       "ageMin": 14,
       "ageMax": 100,
@@ -1798,9 +1798,7 @@
         "Dark Fantasy",
         "Young Adult",
         "Mythology",
-        "Scandinavian",
-        "Fantasy",
-        "High Fantasy"
+        "Scandinavian Literature genres"
       ],
       "by": "Zainab",
       "byId": "mb-mtcdg54c8cyyc",
@@ -1813,12 +1811,7 @@
       "reviews": [],
       "endorsements": [],
       "dislikes": [],
-      "ratings": [
-        {
-          "score": 4.18,
-          "source": "Goodreads"
-        }
-      ],
+      "ratings": [],
       "level": "Ages 14+"
     }
   ],
