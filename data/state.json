@@ -1,5 +1,5 @@
 {
-  "rev": 1319,
+  "rev": 1320,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1755,6 +1755,37 @@
         }
       ],
       "level": "Ages 16+"
+    },
+    {
+      "id": "suggest-eecb55d3-924",
+      "title": "Without Merit",
+      "author": "Colleen Hoover,",
+      "pages": 359,
+      "ageMin": 15,
+      "ageMax": 100,
+      "genres": [
+        "Family",
+        "psychological",
+        "women"
+      ],
+      "by": "Zainab",
+      "byId": "mb-mtcdg54c8cyyc",
+      "status": "approved",
+      "at": "2026-09-09",
+      "cover": "https://covers.openlibrary.org/b/id/10213439-L.jpg",
+      "blurb": "Merit Voss lives in a converted church in small-town Texas with a family that requires a diagram to explain: a father, a stepmother who used to be her mother's nurse, a mother who has retreated to the basement, a twin sister, and a brother. Merit collects secondhand trophies for things she never accomplished, and she is quietly collecting her family's secrets too. Then she kisses a stranger at an antique store, and he turns out to be someone she will be seeing again at home. Hoover keeps the tone wry until the secrets start coming due.",
+      "summarySource": "ai",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [
+        {
+          "score": 3.65,
+          "source": "Goodreads"
+        }
+      ],
+      "level": "Ages 15+"
     }
   ],
   "inbox": [
@@ -1846,6 +1877,7 @@
     "suggest-9430b520-ce4",
     "suggest-14388178-a4e",
     "suggest-39222c93-e0b",
-    "suggest-92e3c707-5c9"
+    "suggest-92e3c707-5c9",
+    "suggest-eecb55d3-924"
   ]
 }
