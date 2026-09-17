@@ -1220,6 +1220,34 @@
         "byId": "mb-mtcdg54c8cyyc",
         "ratings": []
       }
+    },
+    {
+      "id": "suggest-7bc66727-47a",
+      "kind": "suggest",
+      "at": "2026-09-17T01:38:41.646Z",
+      "payload": {
+        "title": "A Good Girl's Guide to Murder",
+        "author": "Holly Jackson",
+        "pages": 433,
+        "ageMin": 14,
+        "ageMax": 100,
+        "level": "Ages 14+",
+        "genres": [
+          "Mystery",
+          "Thriller",
+          "Young Adult",
+          "Mystery Thriller",
+          "Crime"
+        ],
+        "blurb": "Everyone is talking about A Good Girl's Guide to Murder! With shades of Serial and Making a Murderer this is the story about an investigation turned obsession, full of twists and turns and with an ending you'll never expect. Everyone in Fairview knows the story. Pretty and popular high school senior Andie Bell was murdered by her boyfriend, Sal Singh, who then killed himself. It was all anyone could talk about. And five years later, Pip sees how the tragedy still haunts her town. But she can't shake the feeling that there was more to what happened that day. She knew Sal when she was a child, and he was always so kind to her. How could he possibly have been a killer? Now a senior herself, Pip decides to reexamine the closed case for her final project, at first just to cast doubt on the original investigation. But soon she discovers a trail of dark secrets that might actually prove Sal innocent . . . and the line between past and present begins to blur. Someone in Fairview doesn't want Pip digging around for answers, and now her own life might be in danger.",
+        "summarySource": "fetched",
+        "cover": "https://covers.openlibrary.org/b/id/13156188-L.jpg",
+        "by": "Eliza",
+        "byId": "mb-mtaiuu788is5a",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
