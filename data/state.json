@@ -1,5 +1,5 @@
 {
-  "rev": 1325,
+  "rev": 1326,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -23,10 +23,25 @@
         "bk-mt7pvx697h34g"
       ],
       "hue": "#f993fb",
-      "genres": [
-        "Fantasy"
+      "genres": [],
+      "top5": [
+        {
+          "id": "",
+          "title": "The City of Brass",
+          "author": "Shannon A. Chakraborty",
+          "cover": "https://i.harperapps.com/hcuk/covers/9780008239428.JPG",
+          "pages": 544,
+          "genres": [
+            "Middle Eastern",
+            "Historical Fiction",
+            "Fantasy",
+            "Epic"
+          ],
+          "level": "Ages 15+",
+          "ageMin": 15,
+          "ageMax": 100
+        }
       ],
-      "top5": [],
       "notifyRecs": false
     },
     {
