@@ -1,5 +1,5 @@
 {
-  "rev": 1323,
+  "rev": 1324,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -22,7 +22,10 @@
         "bk-ck",
         "bk-mt7pvx697h34g"
       ],
-      "hue": "#f993fb"
+      "hue": "#f993fb",
+      "genres": [],
+      "top5": [],
+      "notifyRecs": false
     },
     {
       "id": "mb-mt3zx2lgcj3x8",
