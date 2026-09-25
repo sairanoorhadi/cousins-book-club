@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-25b';
+var SCRIPT_VERSION = '2026-09-25c';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -687,7 +687,15 @@ function cleanTop5(b) {
     /* What they wrote about it. This was missing from the list, so a summary
        could be typed into the form, saved, and stripped here without anyone
        being told — the one field most people open that screen to fill in. */
-    blurb: String(b.blurb || '').trim().slice(0, 4000)
+    blurb: String(b.blurb || '').trim().slice(0, 4000),
+    /* The score and where it came from. Same omission as the summary: the
+       page can send it all it likes if this list does not name it. */
+    ratings: (Array.isArray(b.ratings) ? b.ratings : []).slice(0, 12).map(function (r) {
+      var n = Number(r && r.score);
+      if (isNaN(n)) n = 0;
+      return { score: Math.max(0, Math.min(5, Math.round(n * 100) / 100)),
+               source: String((r && r.source) || '').trim().slice(0, 40) };
+    }).filter(function (r) { return r.score > 0; })
   };
   if (Number(b.ageMin) > 0) out.ageMin = Math.round(Number(b.ageMin));
   if (Number(b.ageMax) > 0) out.ageMax = Math.round(Number(b.ageMax));
