@@ -1,5 +1,5 @@
 {
-  "rev": 1350,
+  "rev": 1351,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1232,8 +1232,7 @@
         "Romance",
         "Resistance",
         "Magic",
-        "Fantasy",
-        "Blood"
+        "Fantasy"
       ],
       "by": "Filza",
       "status": "approved",
