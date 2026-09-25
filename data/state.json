@@ -1,5 +1,5 @@
 {
-  "rev": 1359,
+  "rev": 1360,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -884,8 +884,8 @@
       "pages": 128,
       "genres": [
         "Middle Grade",
-        "Ghost Stories",
-        "Humour"
+        "Humour",
+        "Horror"
       ],
       "level": "Ages 8-11",
       "by": "Pareesa",
