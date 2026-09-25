@@ -1,5 +1,5 @@
 {
-  "rev": 1368,
+  "rev": 1369,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1072,7 +1072,6 @@
       "ageMax": 100,
       "genres": [
         "Fairies",
-        "Orphans",
         "Fantasy",
         "Princes"
       ],
