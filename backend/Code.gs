@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-07b';
+var SCRIPT_VERSION = '2026-09-25a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -623,11 +623,18 @@ function profileSet(payload) {
 }
 
 /* A profile link has to be a plain web address and nothing cleverer — this is
-   written into a public page, so javascript: and data: never get through. */
+   written into a public page, so javascript: and data: never get through.
+   A web address typed without its https:// is still a web address, though,
+   and dropping it silently is worse than useless: the save then reports
+   success having stored nothing. So the scheme is added when it is missing
+   and the address is otherwise a plain domain. Anything that is not one is
+   still refused. */
 function safeProfileUrl(v) {
   var url = String(v || '').trim().slice(0, 300);
   if (!url) return '';
-  return /^https?:\/\//i.test(url) ? url : '';
+  if (/^https?:\/\//i.test(url)) return url;
+  if (/^[\w.-]+\.[a-z]{2,}(?:[\/?#]|$)/i.test(url)) return 'https://' + url;
+  return '';
 }
 
 /* One of a member's five. Only the fields the page draws a cover from, each
@@ -645,7 +652,11 @@ function cleanTop5(b) {
     genres: (Array.isArray(b.genres) ? b.genres : [])
       .map(function (g) { return String(g || '').trim().slice(0, 40); })
       .filter(function (g) { return g; }).slice(0, 8),
-    level: String(b.level || '').trim().slice(0, 40)
+    level: String(b.level || '').trim().slice(0, 40),
+    /* What they wrote about it. This was missing from the list, so a summary
+       could be typed into the form, saved, and stripped here without anyone
+       being told — the one field most people open that screen to fill in. */
+    blurb: String(b.blurb || '').trim().slice(0, 4000)
   };
   if (Number(b.ageMin) > 0) out.ageMin = Math.round(Number(b.ageMin));
   if (Number(b.ageMax) > 0) out.ageMax = Math.round(Number(b.ageMax));
