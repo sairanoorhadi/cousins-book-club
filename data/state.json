@@ -1,5 +1,5 @@
 {
-  "rev": 1340,
+  "rev": 1341,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -13,7 +13,7 @@
       "name": "Saira",
       "joined": "2026-04-17",
       "avatar": "",
-      "fable": "https://fable.co/fabler/saira-hadi-415274071136?referralID=X3JeA03hAJ",
+      "fable": "",
       "goodreads": "",
       "email": "",
       "notifyRef": "sub-84e7607a-09e",
@@ -23,9 +23,7 @@
         "bk-mt7pvx697h34g"
       ],
       "hue": "#f993fb",
-      "genres": [
-        "Fantasy"
-      ],
+      "genres": [],
       "top5": [
         {
           "id": "",
