@@ -1,5 +1,5 @@
 {
-  "rev": 1337,
+  "rev": 1338,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -14,7 +14,7 @@
       "joined": "2026-04-17",
       "avatar": "",
       "fable": "",
-      "goodreads": "https://www.goodreads.com/user/show/179481168-saira-hadi",
+      "goodreads": "",
       "email": "",
       "notifyRef": "sub-84e7607a-09e",
       "emailHint": "s••••@gmail.com",
@@ -23,9 +23,7 @@
         "bk-mt7pvx697h34g"
       ],
       "hue": "#f993fb",
-      "genres": [
-        "Fantasy"
-      ],
+      "genres": [],
       "top5": [
         {
           "id": "",
