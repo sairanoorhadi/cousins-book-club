@@ -1,5 +1,5 @@
 {
-  "rev": 1356,
+  "rev": 1357,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1816,10 +1816,10 @@
       "ageMin": 14,
       "ageMax": 100,
       "genres": [
-        "Dark Fantasy",
-        "Young Adult",
+        "Dark",
+        "Fantasy",
         "Mythology",
-        "Scandinavian Literature genres"
+        "Scandinavian"
       ],
       "by": "Zainab",
       "byId": "mb-mtcdg54c8cyyc",
