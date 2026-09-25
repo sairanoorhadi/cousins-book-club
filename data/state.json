@@ -1,5 +1,5 @@
 {
-  "rev": 1403,
+  "rev": 1404,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -74,6 +74,20 @@
           "myScore": 4.75,
           "myReview": "This was a really really good book. The whole premise and political commentary were very very cool and very well done. I loved the magic system in this book. It was really easy to grasp onto and figure out how it works. There is only a very very small amount of this book that I really didn't like and it was enough to make it go from a 5-star to a 4.75 unfortunately",
           "ageMin": 16,
+          "ageMax": 100
+        },
+        {
+          "id": "",
+          "title": "Cupid's Guide To self-love",
+          "author": "Taykor Williams",
+          "cover": "https://covers.openlibrary.org/b/id/11457125-L.jpg",
+          "pages": 116,
+          "genres": [],
+          "level": "Ages 0+",
+          "blurb": "",
+          "ratings": [],
+          "myScore": 0,
+          "myReview": "",
           "ageMax": 100
         }
       ],
