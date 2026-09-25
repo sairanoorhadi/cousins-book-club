@@ -1,5 +1,5 @@
 {
-  "rev": 1370,
+  "rev": 1371,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1598,9 +1598,8 @@
       "genres": [
         "Historical Fiction",
         "Immigration",
-        "Refugees",
         "Survival",
-        "Social Issues"
+        "Social Problems"
       ],
       "by": "Ms. Wendy",
       "status": "approved",
