@@ -488,6 +488,10 @@ img{max-width:100%;display:block}
 .whopick__arw{flex:none;transition:transform .15s ease}
 .whopick__btn[aria-expanded="true"] .whopick__arw{transform:rotate(180deg)}
 @media (prefers-reduced-motion:reduce){ .whopick__arw{transition:none} }
+/* the score, up with the title */
+.ratepair--head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:12px}
+.ratepair--head .ratebox{display:flex;align-items:center;gap:9px}
+.ratepair--head .ratebox__k{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .prof__head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .prof__acts{display:flex;gap:8px;margin-left:auto}
 .prof__genres{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
@@ -2227,7 +2231,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-09-25b";
+var SCRIPT_WANT = "2026-09-25c";
 
 async function callEndpoint(kind, payload, urlOverride){
   if(DEV && DEV_SAFE.indexOf(kind) === -1) return { ok: false, error: "dev-blocked" };
@@ -4108,19 +4112,21 @@ function openBookDetail(o, kind, focus){
         '<p class="eyebrow">' + (kind === "rec" ? "Recommendation" : "Book") + "</p>" +
         '<h3 style="font-size:27px;margin-top:8px">' + esc(o.title) + "</h3>" +
         '<p style="color:var(--muted);font-style:italic;margin-top:6px">by ' + esc(o.author) + "</p>" +
+        /* The score sits with the book's name rather than below its tags: it
+           is one of the first things anyone wants from this panel. */
+        ((o.ratings || []).length
+          ? '<div class="ratepair ratepair--head">' +
+            o.ratings.map(function(rt){
+              return '<span class="ratebox"><span class="review__stars">' + stars(rt.score) + "</span>" +
+                (rt.source ? '<span class="ratebox__k">' + esc(rt.source) + "</span>" : "") + "</span>";
+            }).join("") + "</div>"
+          : "") +
         '<div class="tagbank" style="margin-top:16px">' +
           '<span class="tag tag--zest mono">' + esc(o.pages || "?") + " pages</span>" +
           '<span class="tag tag--surf">' + esc(levelText(o)) + "</span>" +
           (o.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
         "</div>" +
         (o.by ? '<p class="review__by" style="margin-top:14px">Recommended by ' + esc(o.by) + "</p>" : "") +
-        ((o.ratings || []).length
-          ? '<div class="ratepair" style="margin-top:12px">' +
-            o.ratings.map(function(rt){
-              return '<span class="ratebox"><span class="ratebox__k">' + esc(rt.source || "Readers") + "</span>" +
-                '<span class="review__stars">' + stars(rt.score, true) + "</span></span>";
-            }).join("") + "</div>"
-          : "") +
         (ups.length
           ? '<p class="review__by" style="margin-top:10px">Endorsed by</p><div class="seconds">' +
             ups.map(function(e){ return '<span class="secondchip">' + esc(e.name) + "</span>"; }).join("") + "</div>"
@@ -4764,6 +4770,7 @@ function profFormSnapshot(){
     pages: (($("sPages") || {}).value || "").trim(),
     genres: (($("sGenres") || {}).value || "").trim(),
     blurb: (($("sBlurb") || {}).value || "").trim(),
+    ratings: JSON.stringify(ratingsForSubmit()),
     cover: sugCover || "",
     age: dualValue("sAge")
   });
@@ -4809,6 +4816,10 @@ function profOpenForm(slot){
     if($("sPages")) $("sPages").value = b.pages || "";
     if($("sGenres")) $("sGenres").value = (b.genres || []).join(", ");
     if($("sBlurb")) $("sBlurb").value = b.blurb || "";
+    sugRatings = (b.ratings || []).length
+      ? b.ratings.map(function(r){ return { score: String(r.score || ""), source: String(r.source || "") }; })
+      : [{ score: "", source: "" }];
+    renderRatingRows();
     if(b.cover){ sugCover = b.cover; renderSugCover(); }
     if(b.ageMin && b.ageMax){ dualState.sAge = { lo: Number(b.ageMin), hi: Number(b.ageMax) }; syncDual("sAge"); }
   }
@@ -4864,6 +4875,10 @@ function profFormAsBook(){
        screen. It was not being read, so it was typed, saved, and quietly
        dropped — the save succeeded, and what it saved had never contained it. */
     blurb: ($("sBlurb") && $("sBlurb").value || "").trim(),
+    /* The score and where it came from. Read the same way the submission form
+       reads them, and left off this list in exactly the way the summary was:
+       typed in, saved, and never in the request. */
+    ratings: ratingsForSubmit(),
     ageMin: age.lo, ageMax: age.hi,
     level: levelText({ ageMin: age.lo, ageMax: age.hi }) };
 }
