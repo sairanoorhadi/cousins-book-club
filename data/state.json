@@ -1,5 +1,5 @@
 {
-  "rev": 1398,
+  "rev": 1399,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -48,6 +48,31 @@
           "myScore": 5,
           "myReview": "Loved it. Chakraborty really know how to build a world and have dynamic characters",
           "ageMin": 15,
+          "ageMax": 100
+        },
+        {
+          "id": "",
+          "title": "Blood Over Bright Haven",
+          "author": "M.L. Wang",
+          "cover": "https://covers.openlibrary.org/b/id/15090335-L.jpg",
+          "pages": 429,
+          "genres": [
+            "Magic",
+            "Social Problems",
+            "Fantasy",
+            "Academia",
+            "Dark"
+          ],
+          "level": "Ages 0+",
+          "blurb": "",
+          "ratings": [
+            {
+              "score": 4.3,
+              "source": "Goodreads"
+            }
+          ],
+          "myScore": 4.75,
+          "myReview": "This was a really really good book. The whole premise and political commentary were very very cool and very well done. I loved the magic system in this book. It was really easy to grasp onto and figure out how it works. There is only a very very small amount of this book that I really didn't like and it was enough to make it go from a 5-star to a 4.75 unfortunately",
           "ageMax": 100
         }
       ],
