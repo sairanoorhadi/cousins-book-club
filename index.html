@@ -2287,13 +2287,27 @@ function signInTrouble(err){
   if(err === "pending") return "Your account is pending approval from an organiser.";
   return endpointTrouble(err);
 }
+/* Only the script can say a session is over. Anything else — a call that
+   timed out, a script too cold to answer inside twelve seconds, a 500, an
+   error page where JSON was expected — means we could not ask, not that the
+   answer was no. This used to throw the token away for all of them, so one
+   slow first load of the day signed a member out for good: the credential was
+   already gone by the time the script woke up. */
+function sessionIsOver(err){
+  return err === "signed out" || err === "no profile" || err === "not a member";
+}
 async function restoreSession(){
   var token = sessionToken();
   if(!token || !endpoint()) return;
   var res = await callEndpoint("session", { token: token });
-  if(res && res.ok) me = res.profile;
-  else setSessionToken("");
+  if(res && res.ok){ me = res.profile; return; }
+  if(res && sessionIsOver(res.error)){ setSessionToken(""); return; }
+  /* keep the token and try again next load */
+  sessionUnsure = true;
 }
+/* The one case worth mentioning: signed in as far as this browser knows, but
+   the script could not be reached to confirm it. */
+var sessionUnsure = false;
 async function signOut(){
   var token = sessionToken();
   setSessionToken("");
@@ -6041,9 +6055,13 @@ document.addEventListener("click", async function(e){
     var sres = await profSave();
     profSaving = false;
     busyOff("profBar", $("profSave"), "Save profile");
+    var n = $("profNote");
     if(sres.ok){
-      var n = $("profNote");
       if(n) n.textContent = nres.ok ? "Saved." : "Profile saved, but the reminders didn\u2019t: " + notesTrouble(nres.error);
+    }else{
+      /* a failed save keeps everything on screen, and says so out loud */
+      if(n) n.textContent = profTrouble(sres.error) + " Nothing was lost \u2014 what you typed is still here.";
+      say(profTrouble(sres.error), "bad");
     }
     return;
   }
@@ -7861,11 +7879,14 @@ $("suggestForm").addEventListener("submit", async function(e){
       var pn = $("profFiveNote");
       if(pn) pn.textContent = "Place " + (slotWas + 1) + " is now " + pick.title + ".";
     }else{
-      /* stay on the form with the reason in front of them, rather than
-         emptying the note and putting it in a toast they are not looking at */
-      note.textContent = profTrouble(pres.error);
+      /* Stay on the form, keep what was typed, and say why. Throwing the edit
+         away on a failure is how a save that did not happen looked exactly
+         like a save that happened and reverted: the form closed back to the
+         stored value and the only clue was a note nobody was looking at. The
+         change is still here and Save can be pressed again. */
+      note.textContent = profTrouble(pres.error) + " Nothing was lost \u2014 your change is still in the form.";
+      say(profTrouble(pres.error), "bad");
       profSlot = slotWas;
-      profEdits = null;
     }
     return;
   }
