@@ -1,5 +1,5 @@
 {
-  "rev": 1358,
+  "rev": 1359,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1335,11 +1335,10 @@
       "ageMin": 8,
       "ageMax": 12,
       "genres": [
-        "violence",
+        "Violence",
+        "Crime",
         "Classic",
-        "Gangs",
-        "Family",
-        "Young Adult"
+        "Family"
       ],
       "by": "Ms. Wendy",
       "status": "approved",
