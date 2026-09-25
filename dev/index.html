@@ -1992,6 +1992,25 @@ function refreshWriteMode(){
 
 /* The two ways a note write is turned away, beyond the ones already covered
    by repoWriteTrouble. */
+/* Whether the deployed copy is the one this page needs, and how to say so. */
+function scriptCurrent(v){ return String(v || "") === SCRIPT_WANT; }
+function scriptVersionNote(v){
+  if(scriptCurrent(v)) return "The endpoint answered and it\u2019s running " + SCRIPT_WANT + " \u2014 the copy this page needs.";
+  return "The endpoint answered, but it\u2019s running " +
+    (v ? v : "a copy too old to say which") + " and this page needs " + SCRIPT_WANT +
+    ". Saves will look like they worked and quietly lose whatever that copy doesn\u2019t know about. " +
+    "Paste the current Code.gs, Save, then Deploy \u2192 Manage deployments \u2192 pencil \u2192 New version \u2192 Deploy.";
+}
+/* Checked once when an organiser opens Admin, and only spoken about when it is
+   wrong. A mismatch is silent by nature: the saves succeed. */
+var scriptChecked = false;
+async function scriptVersionWatch(){
+  if(scriptChecked || DEV || !endpoint()) return;
+  scriptChecked = true;
+  var probe = await callEndpoint("ping", {});
+  if(probe && probe.ok && !scriptCurrent(probe.version)) say(scriptVersionNote(probe.version), "bad");
+}
+
 function notesTrouble(err){
   if(err === "dev-blocked") return "This is the test site \u2014 nothing here is written down. Try it on the real site.";
   if(err === "meeting closed") return "This meeting is marked done \u2014 only the organiser can still change its notes.";
@@ -2203,6 +2222,12 @@ function setSessionToken(v){
    — submissions, sign-in, claiming a name, photos, subscriptions — either
    writes to the real repo or reaches real members, and stays blocked. */
 var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
+
+/* The version of backend/Code.gs this page was built against. A deployed copy
+   older than this will take a save, answer that it worked, and quietly drop
+   whatever that version had not been taught about — which is exactly how a
+   summary could be typed, saved and lost with a success message over it. */
+var SCRIPT_WANT = "2026-09-25a";
 
 async function callEndpoint(kind, payload, urlOverride){
   if(DEV && DEV_SAFE.indexOf(kind) === -1) return { ok: false, error: "dev-blocked" };
@@ -4997,6 +5022,8 @@ function openAdmin(){
 }
 function renderAdmin(){
   if(!adminUnlocked){ renderAdminLock(false); return; }
+  /* once an organiser is actually in, and only if it is wrong */
+  scriptVersionWatch();
   var pend = pendingRecs().length + inboxSuggestions().length;
   /* book suggestions are counted on the Recommendations tab, not here */
   var waiting = inbox.filter(function(i){ return i && !i.handled && i.kind !== "suggest"; }).length;
@@ -6367,14 +6394,15 @@ document.addEventListener("click", async function(e){
     var tv = safeUrl($("setEndpoint").value.trim() || state.club.formEndpoint);
     if(!tv){ say("Paste the endpoint address first.", "bad"); return; }
     say("Testing…", "busy", true);
-    /* "session" with a junk token is harmless — no email, nothing saved — but
-       only a script with the sign-in code in it recognises the word, so the
-       answer tells us whether the DEPLOYED copy is current. A plain ping
-       can't: every version has ever answered that. */
-    var probe = await callEndpoint("session", { token: "probe" }, tv);
+    /* Ping reports the deployed version, so ask it that rather than inferring
+       from whether some word is recognised. The old test asked whether the
+       script knew "session", which every copy since sign-in was built does —
+       so it called a months-old script current, and said so confidently while
+       that script was dropping a field on every save. */
+    var probe = await callEndpoint("ping", {}, tv);
     var trouble = endpointTrouble(probe.error);
-    if(trouble) say(trouble, "bad");
-    else say("The endpoint answered and it's the current script — sign-in and submissions will work.", "ok");
+    if(trouble){ say(trouble, "bad"); return; }
+    say(scriptVersionNote(probe.version), scriptCurrent(probe.version) ? "ok" : "bad");
     return;
   }
 
