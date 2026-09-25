@@ -454,6 +454,7 @@ img{max-width:100%;display:block}
 #bookScrim{z-index:130}
 #memberScrim,#meScrim{z-index:140}
 #loginScrim{z-index:150}
+#dropScrim{z-index:160}
 .modal{width:100%;max-width:820px;background:var(--paper);border:2px solid var(--edge);border-radius:12px;box-shadow:8px 8px 0 var(--stamp);overflow:hidden;
   display:flex;flex-direction:column;max-height:calc(100vh - 64px)}
 /* A summary and a review together can run past the bottom of the screen. The
@@ -524,6 +525,21 @@ img{max-width:100%;display:block}
   border:1.5px solid var(--ink);border-radius:5px;background:var(--paper);color:var(--ink);cursor:pointer;padding:0;box-shadow:1.5px 1.5px 0 var(--ink)}
 .prof__pen:hover{background:var(--zest)}
 .prof__pen:focus-visible{outline:2px solid var(--grape);outline-offset:2px}
+/* Under the pencil, same size and same shape, so the two read as one pair of
+   controls on the tile rather than two unrelated things. */
+.prof__bin{position:absolute;top:34px;right:5px;z-index:3;width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+  border:1.5px solid var(--ink);border-radius:5px;background:var(--paper);color:var(--ink);cursor:pointer;padding:0;box-shadow:1.5px 1.5px 0 var(--ink)}
+.prof__bin:hover{background:var(--flare);color:var(--on-flare)}
+.prof__bin:focus-visible{outline:2px solid var(--grape);outline-offset:2px}
+/* the question, which wants to be small and read rather than large and
+   clicked through */
+.modal--ask{max-width:420px}
+/* Never wrapped. On a narrow phone these two used to stack, which put Remove
+   Book on top — the first thing a thumb reaches, and the exact opposite of
+   what putting it on the left is for. They share the width instead and let
+   their own words wrap, so left stays left however small the screen is. */
+.askrow{display:flex;gap:10px;flex-wrap:nowrap;margin-top:18px}
+.askrow .btn{flex:1 1 0;min-width:0;padding-left:10px;padding-right:10px;text-align:center}
 .reccard--add{cursor:pointer}
 .reccard--add .slot{opacity:1;transition:border-color .14s ease,background .14s ease}
 .reccard--add:hover .slot{border-color:var(--grape);background:var(--paper)}
@@ -1558,6 +1574,25 @@ img{max-width:100%;display:block}
     <div class="modal__bar"><h2 id="meModalTitle">Your account</h2>
       <button class="xbtn" type="button" data-close="meScrim" aria-label="Close">&times;</button></div>
     <div class="modal__body" id="meModalBody"></div>
+  </div>
+</div>
+<!-- Taking a book off a shelf is the one thing on a profile that cannot be
+     undone, so it is asked properly rather than through the browser's own
+     confirm box. The two answers are deliberately the wrong way round:
+     Remove first, Cancel second. A reflexive click goes where a reflexive
+     click always goes, and lands on Cancel; removing a book has to be read
+     for and meant. Do not "fix" this ordering. -->
+<div class="scrim" id="dropScrim" hidden>
+  <div class="modal modal--ask" role="alertdialog" aria-modal="true" aria-labelledby="dropTitle" aria-describedby="dropWhat">
+    <div class="modal__bar"><h2 id="dropTitle">Remove this book?</h2>
+      <button class="xbtn" type="button" data-close="dropScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body">
+      <p id="dropWhat">Confirm you are removing this book from your top 5 books.</p>
+      <div class="askrow">
+        <button class="btn btn--flare" type="button" id="dropYes">Remove Book</button>
+        <button class="btn" type="button" id="dropNo">Cancel</button>
+      </div>
+    </div>
   </div>
 </div>
 <div class="scrim" id="prevScrim" hidden>
@@ -3970,7 +4005,7 @@ function openScrim(id){
   document.body.style.overflow = "hidden";
   var f = $(id).querySelector(".xbtn"); if(f) f.focus();
 }
-var SCRIMS = ["lightbox","loginScrim","meScrim","memberScrim","bookScrim","meetScrim","prevScrim","badgeScrim","adminScrim"];
+var SCRIMS = ["dropScrim","lightbox","loginScrim","meScrim","memberScrim","bookScrim","meetScrim","prevScrim","badgeScrim","adminScrim"];
 function closeScrim(id){
   $(id).hidden = true;
   /* The book form is on loan to the profile while a place is being edited, and
@@ -3981,6 +4016,10 @@ function closeScrim(id){
      it when it was next rendered. Every way out comes through here, so the
      form is handed back here rather than only from "Back to profile". */
   if(id === "meScrim" && profSlot !== null) profCloseForm();
+  /* Whichever way the question was dismissed — Cancel, the cross, the
+     backdrop, Escape — it was not answered, so the place it was about is
+     forgotten here rather than at each of them. */
+  if(id === "dropScrim") profDropSlot = null;
   if(SCRIMS.every(function(s){ return $(s).hidden; })) document.body.style.overflow = "";
   if(lastFocus && lastFocus.focus) lastFocus.focus();
 }
@@ -4741,7 +4780,9 @@ function profFiveHTML(five){
          changing a field edits this one. Which of those a member meant is
          decided by what they type, not by which icon they guessed at. */
       (profEditing && b ? '<button class="prof__pen" type="button" data-profpick="' + i + '" ' +
-        'title="Change this one" aria-label="Change book ' + (i + 1) + '">' + PENCIL + "</button>" : "") +
+        'title="Change this one" aria-label="Change book ' + (i + 1) + '">' + PENCIL + "</button>" +
+        '<button class="prof__bin" type="button" data-profdrop="' + i + '" ' +
+        'title="Take this one off" aria-label="Remove book ' + (i + 1) + '">' + BIN + "</button>" : "") +
       "</div>");
   }
   return out.join("");
@@ -4760,6 +4801,9 @@ var profEditing = false;
 var PENCIL = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">' +
   '<path d="M11.2 1.8a1.4 1.4 0 0 1 2 2L5.6 11.4l-2.7.7.7-2.7z" fill="none" stroke="currentColor" ' +
   'stroke-width="1.6" stroke-linejoin="round"/></svg>';
+var BIN = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">' +
+  '<path d="M2.6 4.2h10.8M6.2 4.2V2.6h3.6v1.6M4.2 4.2l.55 8.3a.9.9 0 0 0 .9.9h4.7a.9.9 0 0 0 .9-.9l.55-8.3" ' +
+  'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 /* The colour to show in the wheel: their own hex if they picked one, else the
    hex behind whichever house colour they are on. */
@@ -6137,6 +6181,9 @@ document.addEventListener("click", async function(e){
   if(t.closest("#menuProfile")){ menuShut(); await openMe(); return; }
   if(t.closest("#profEdit")){ profCapture(); profEditing = !profEditing; renderMe(); return; }
   if((el = t.closest("[data-profpick]"))){ profOpenForm(Number(el.getAttribute("data-profpick"))); return; }
+  if((el = t.closest("[data-profdrop]"))){ profAskDrop(Number(el.getAttribute("data-profdrop"))); return; }
+  if(t.closest("#dropNo")){ closeScrim("dropScrim"); return; }
+  if(t.closest("#dropYes")){ await profDropDo(); return; }
   if(t.closest("#profFormBack")){
     if(!profLeaveOk("You haven\u2019t saved this book yet. Go back without saving it?")) return;
     profCloseForm();
@@ -8200,6 +8247,64 @@ document.addEventListener("dragend", function(){
   document.querySelectorAll(".prof__slot--lift,.prof__slot--over").forEach(function(el){
     el.classList.remove("prof__slot--lift"); el.classList.remove("prof__slot--over"); });
 });
+
+/* ------------------------------------------------------- taking one off
+   Which place the question is about, while it is being asked. Cleared in
+   closeScrim, so every way out of the dialog forgets it. */
+var profDropSlot = null;
+var profDropping = false;   /* one removal at a time, and it says so */
+
+function profAskDrop(i){
+  var b = myFive()[i];
+  if(!b) return;
+  profDropSlot = i;
+  /* which book, so the question can be answered without counting tiles */
+  var t = $("dropTitle");
+  if(t) t.textContent = b.title ? "Remove " + b.title + "?" : "Remove this book?";
+  openScrim("dropScrim");
+  /* Cancel takes the focus, not Remove: a reflexive Enter should do nothing,
+     for the same reason Cancel is the button on the right. */
+  var no = $("dropNo"); if(no) no.focus();
+}
+
+/* The shelf is stored as a list, and the script drops anything without a
+   title, so a gap in the middle cannot survive a save — the ones below move
+   up instead. Doing that here as well means what is on the screen is what is
+   in the file, rather than a hole that quietly closes on the next reload. */
+async function profDropDo(){
+  if(profDropping) return;
+  var i = profDropSlot;
+  closeScrim("dropScrim");
+  if(i === null) return;
+  var five = myFive().slice();
+  var gone = five[i];
+  if(!gone) return;
+  five.splice(i, 1);
+
+  profDropping = true;
+  busyOn("profBar", null, "");
+  var note = $("profFiveNote");
+  if(note) note.textContent = "Taking " + gone.title + " off…";
+  /* Sent as the whole five, the same shape every other change to it uses, so
+     the answer that comes back is the stored truth and not a guess. */
+  var res = await profSave({ top5: five });
+  profDropping = false;
+  busyOff("profBar", null, "");
+  /* profSave redraws the page behind the modal, but not the modal itself —
+     the places are drawn by renderMe. Without this the tile stayed showing a
+     book that was already out of the file, which is the same thing as a save
+     that looks like it did not happen. */
+  if(res.ok && !$("meScrim").hidden) renderMe();
+  note = $("profFiveNote");
+  if(note){
+    note.textContent = res.ok
+      ? gone.title + " is off your five. " + SAVED_LAG
+      /* nothing was removed, so say so rather than leave a gap on the screen
+         that the file knows nothing about */
+      : profTrouble(res.error) + " It is still on your five.";
+  }
+  if(!res.ok) say(profTrouble(res.error), "bad");
+}
 
 /* Lifted out and put back in, so the ones in between shuffle along rather
    than swapping with whatever was dropped on. Empty places are places too, so
