@@ -620,12 +620,20 @@ img{max-width:100%;display:block}
 /* the candidate authors a lookup turned up, under the author box */
 .authpick{margin-top:9px;display:flex;flex-direction:column;gap:6px}
 .authpick[hidden]{display:none}
+/* the label and the band's one Confirm, on a line above the cards */
+.authpick__head{display:flex;align-items:flex-start;gap:12px;margin-bottom:6px}
+.authpick__head .authpick__lab{flex:1 1 auto;min-width:0}
+.authpick__head .authrow__ok{flex:none;margin-left:auto}
 .authpick__lab{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 /* Items line up at the top, not the middle. A name that wraps makes the card
    taller; anything centred in it then sits at a different height than it does
    beside a one-line name. Top is the one edge that does not move. */
-.authrow{display:flex;align-items:flex-start;gap:8px}
-.authrow__pick{flex:1 1 auto;text-align:left;border:2px solid var(--edge);border-radius:999px;background:var(--surface);cursor:pointer;padding:5px 13px;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--ink)}
+/* One line: card, globe, Confirm. The card takes what is left rather than
+   pushing the button onto a line of its own — wrapped, the button would sit
+   under the card and its position would track the card's height again, which
+   is the thing being fixed. */
+.authrow{display:flex;align-items:flex-start;gap:8px;flex-wrap:nowrap}
+.authrow__pick{flex:1 1 auto;min-width:0;text-align:left;border:2px solid var(--edge);border-radius:999px;background:var(--surface);cursor:pointer;padding:5px 13px;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--ink)}
 .authrow__pick:hover{background:var(--sunk)}
 .authrow__pick[aria-pressed="true"]{background:var(--surf);color:var(--on-surf);border-color:var(--surf)}
 .authrow__pick small{display:block;font-family:var(--f-mono);font-weight:400;font-size:10.5px;color:var(--muted);margin-top:1px}
@@ -649,21 +657,23 @@ img{max-width:100%;display:block}
 .askai__age{font-family:var(--f-display);font-weight:800;font-size:19px;margin-top:3px}
 .askai__note{font-size:13.5px;color:var(--muted);margin-top:5px}
 .authrow__web:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
-/* Only on the card that has been picked, and standing outside the card
-   entirely: Confirm sits in the Look up book column, under that button, level
-   with the top of its own row. The row is the anchor, so it always names the
-   right author; the column is a step to the right, which is the width of the
-   author cell plus the grid's gap. Nothing about the cards themselves changes
-   when one is picked — they are the size and shape they always were. */
-.authrow{position:relative}
-/* Pinned to the top of its card, and pinned there through everything.
-   Centring it on the card meant its height decided where it sat, so a name
-   that wrapped to three lines put it somewhere else than a short one did.
-   Worse, the centring was held in a transform, and .btn:hover sets transform
-   too — and wins on specificity — so the button dropped 16px at the moment
-   the pointer arrived, out from under the click that was coming. It now has
-   no transform to lose, at rest or otherwise. */
-.authrow__ok{position:absolute;left:calc(100% + 16px);top:0;width:max-content}
+/* Confirm sits in the row, after the globe — not pinned outside the card.
+   It used to be absolutely positioned a column to the right, which worked on
+   the Recommendations page and failed inside the profile: that form is the
+   same element moved into a modal, and a modal is narrower than the window
+   and clips what leaves it. The fallback for "no room" was keyed to the
+   window's width, which is the wrong thing to measure once the form is in a
+   box of its own — so at some widths the button was pushed past the modal's
+   edge and cut off, while the same markup on the page merely stuck out
+   harmlessly. In the flow there is nothing to escape from and nothing to
+   measure: it is where it is, in both places, at every width. */
+.authrow__ok{width:max-content}
+/* Every row keeps a Confirm, and the ones not picked are merely invisible.
+   Taking them out of the layout would make the picked row narrower than the
+   rest, squeezing the very card being read; worse, picking would reflow the
+   list under the pointer. The space is there from the start, so choosing a
+   card changes nothing but colour. */
+.authrow__ok--wait{visibility:hidden;pointer-events:none}
 /* Its only feedback is colour: a shade under the hand, a deeper one under the
    press. No lift, no shadow shift, no growing or shrinking — nothing that
    changes where it is or how big the target is. These come after .btn's own
@@ -675,6 +685,7 @@ img{max-width:100%;display:block}
 .authrow__ok:active{background:var(--ok-press)}
 .authrow__ok:focus-visible{outline:2px solid var(--grape);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){ .authrow__ok{transition:none} }
+
 /* The book cards sit a column further left than the author cards, so their
    Confirm lands under the Author box rather than under Look up book — which
    is where it belongs, the author being the settled half of this flow. A
@@ -691,13 +702,9 @@ img{max-width:100%;display:block}
 .bookpage__go:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
 .bookpage__go--off{visibility:hidden;pointer-events:none}
 .bookpage__of{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)}
-/* Measured, not guessed: below 766px the field row drops from three columns to
-   two, so there is no Look up book column beside the author to sit under. The
-   button rejoins the row on a line of its own rather than squeezing the name. */
-@media (max-width:765px){
-  .authrow{flex-wrap:wrap}
-  .authrow__ok{position:static;width:auto;margin-left:auto}
-}
+/* No width rule for the button any more: in the flow it wraps to its own line
+   when the row runs out of room, wherever that happens to be, without anything
+   having to know how wide the window is. */
 
 .lookupfix{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;border:2px dashed var(--edge);border-radius:var(--r);background:var(--sunk);padding:10px 14px;font-size:15px}
 
@@ -6757,11 +6764,12 @@ function renderNamePick(){
   if(!host) return;
   if(!namePicks.length){ host.hidden = true; host.innerHTML = ""; return; }
   host.hidden = false;
-  host.innerHTML = '<span class="authpick__lab">' +
+  host.innerHTML = pickHeadHTML(
       (nameTypo ? "Did you mean\u2026"
         : namePicks.length > 1
           ? "Which author? Pick one, then confirm to see their books"
-          : "Found this author \u2014 pick it, then confirm to see their books") + "</span>" +
+          : "Found this author \u2014 pick it, then confirm to see their books"),
+      "nameok", namePicked, "Confirm the author you picked and see their books") +
     namePicks.map(function(n, i){
       var on = i === namePicked;
       return '<span class="authrow">' +
@@ -6769,10 +6777,27 @@ function renderNamePick(){
           esc(n) + "</button>" +
         '<a class="authrow__web" href="' + esc(googleSearch(n, "")) + '" target="_blank" ' +
           'rel="noopener noreferrer" aria-label="Search the web for ' + esc(n) + '">&#127760;</a>' +
-        '<button class="btn btn--sm btn--surf authrow__ok" type="button" data-nameok="' + i + '"' + (on ? "" : " hidden") +
-          ' aria-label="Confirm ' + esc(n) + ' and see their books">Confirm</button>' +
       "</span>";
     }).join("");
+}
+
+/* One Confirm per band, in its header — not one per card.
+   It was drawn beside the picked card, which put it somewhere different for
+   every card, since the cards are different heights; and to give it room it
+   was positioned outside the cell the band lives in, which is how it came to
+   be clipped inside the profile modal but not on the page. Here it has one
+   place, the same place, whichever card is picked and whatever that card's
+   height — the way the shelf's paging arrows sit above their list rather than
+   under it. Until something is picked it is invisible but still holds its
+   space, so nothing shifts at the moment of choosing. */
+function pickHeadHTML(label, tag, picked, what){
+  var on = picked >= 0;
+  return '<span class="authpick__head">' +
+    '<span class="authpick__lab">' + label + "</span>" +
+    '<button class="btn btn--sm authrow__ok' + (on ? "" : " authrow__ok--wait") + '" type="button" ' +
+      'data-' + tag + '="' + (on ? picked : 0) + '"' + (on ? "" : ' tabindex="-1" aria-hidden="true"') +
+      ' aria-label="' + esc(what) + '">Confirm</button>' +
+  "</span>";
 }
 
 /* Distinct titles under one name. Deduped on the title itself, since a work
@@ -6827,10 +6852,11 @@ function renderBookPick(){
     "</span>";
 
   host.hidden = false;
-  host.innerHTML = '<span class="authpick__lab">' +
+  host.innerHTML = pickHeadHTML(
       (bookHits.length > 1
         ? "Which book? Pick one, then confirm to fill the rest in"
-        : "Found this one \u2014 pick it, then confirm to fill the rest in") + "</span>" +
+        : "Found this one \u2014 pick it, then confirm to fill the rest in"),
+      "bookok", bookPicked, "Confirm the book you picked and fill the rest in") +
     nav +
     shown.map(function(bk, n){
       /* the index into the whole shelf, not into this page: a pick made on
@@ -6844,8 +6870,6 @@ function renderBookPick(){
         '<a class="authrow__web" href="' + esc(googlePair(bk.title, author || bk.name)) + '" target="_blank" ' +
           'rel="noopener noreferrer" title="Google &ldquo;' + esc(bk.title) + '&rdquo; &ldquo;' + esc(author || bk.name) + '&rdquo;" ' +
           'aria-label="Search the web for ' + esc(bk.title) + '">&#127760;</a>' +
-        '<button class="btn btn--sm btn--surf authrow__ok" type="button" data-bookok="' + i + '"' + (on ? "" : " hidden") +
-          ' aria-label="Confirm ' + esc(bk.title) + ' and fill in the rest">Confirm</button>' +
       "</span>";
     }).join("");
 }
@@ -6867,10 +6891,11 @@ function renderAuthorPick(){
   /* settled by Confirm: the question is answered, so stop asking it */
   if(!authorPickWorth() || authorSettled){ host.hidden = true; host.innerHTML = ""; return; }
   host.hidden = false;
-  host.innerHTML = '<span class="authpick__lab">' +
+  host.innerHTML = pickHeadHTML(
       (authorHits.length > 1
         ? "Which author? Pick one, then confirm to fill the rest in"
-        : "Found this author \u2014 pick it, then confirm to fill the rest in") + "</span>" +
+        : "Found this author \u2014 pick it, then confirm to fill the rest in"),
+      "authok", authorPicked, "Confirm the author you picked and fill the rest in") +
     authorHits.map(function(a, i){
       var on = i === authorPicked;
       return '<span class="authrow">' +
@@ -6880,8 +6905,6 @@ function renderAuthorPick(){
         '<a class="authrow__web" href="' + esc(googlePair(title || a.title, a.name)) + '" target="_blank" ' +
           'rel="noopener noreferrer" title="Google &ldquo;' + esc(title || a.title) + '&rdquo; &ldquo;' + esc(a.name) + '&rdquo;" ' +
           'aria-label="Search the web for ' + esc(a.name) + '">&#127760;</a>' +
-        '<button class="btn btn--sm btn--surf authrow__ok" type="button" data-authok="' + i + '"' + (on ? "" : " hidden") +
-          ' aria-label="Confirm ' + esc(a.name) + ' and fill in the rest">Confirm</button>' +
       "</span>";
     }).join("");
 }
