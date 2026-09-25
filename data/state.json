@@ -1,5 +1,5 @@
 {
-  "rev": 1374,
+  "rev": 1375,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1777,8 +1777,7 @@
       "ageMax": 100,
       "genres": [
         "Family",
-        "psychological",
-        "women"
+        "psychological"
       ],
       "by": "Zainab",
       "byId": "mb-mtcdg54c8cyyc",
