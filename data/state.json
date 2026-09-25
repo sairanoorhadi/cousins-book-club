@@ -1,5 +1,5 @@
 {
-  "rev": 1365,
+  "rev": 1366,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1258,9 +1258,8 @@
       "ageMax": 100,
       "genres": [
         "African American",
-        "Race relations",
-        "Literary Fiction",
-        "Maternal deprivation"
+        "Social Problems",
+        "Literary Fiction"
       ],
       "by": "Ms. Wendy",
       "status": "approved",
