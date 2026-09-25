@@ -4437,6 +4437,20 @@ async function openMe(){
    through profileSet, which decides for itself what is allowed — this only
    decides what is worth showing. */
 var profSlot = null;      /* which of the five is being edited, if any */
+var profSaving = false;   /* one save at a time, and it says so */
+
+/* Somebody typing where they were asked for a link means a web address, even
+   without the https:// in front. Requiring the scheme and quietly storing
+   nothing when it was missing is how a link could be typed, saved, confirmed
+   saved, and then be gone. Anything that is not a plain web address — a
+   javascript: or data: url — is still refused rather than guessed at. */
+function webAddress(v){
+  var t = String(v || "").trim();
+  if(!t) return "";
+  if(/^https?:\/\//i.test(t)) return t;
+  if(/^[\w.-]+\.[a-z]{2,}(?:[\/?#]|$)/i.test(t)) return "https://" + t;
+  return "";
+}
 var profDrag = -1;        /* which is being dragged */
 var profEdits = null;     /* unsaved five, so a reorder survives a redraw */
 var profDraft = null;     /* the rest of it, for the same reason */
@@ -4576,7 +4590,9 @@ function renderMe(){
       '<span class="hint">' + myRecs().length + (myRecs().length === 1 ? " put forward" : " put forward") + "</span>" +
     "</div>" +
 
-    '<hr class="divider"><div class="prof__save">' +
+    '<hr class="divider">' +
+    '<div class="lookbar" id="profBar" role="status" aria-label="Saving your profile" hidden><span></span></div>' +
+    '<div class="prof__save">' +
       '<button class="btn btn--zest" type="button" id="profSave">Save profile</button>' +
       '<span class="hint" id="profNote"></span>' +
       '<button class="btn btn--ghost" type="button" id="loginOut" style="margin-left:auto">Sign out</button></div>';
@@ -4679,6 +4695,7 @@ function profFormSnapshot(){
     author: (($("sAuthor") || {}).value || "").trim(),
     pages: (($("sPages") || {}).value || "").trim(),
     genres: (($("sGenres") || {}).value || "").trim(),
+    blurb: (($("sBlurb") || {}).value || "").trim(),
     cover: sugCover || "",
     age: dualValue("sAge")
   });
@@ -4722,6 +4739,7 @@ function profOpenForm(slot){
     if($("sAuthor")) $("sAuthor").value = b.author || "";
     if($("sPages")) $("sPages").value = b.pages || "";
     if($("sGenres")) $("sGenres").value = (b.genres || []).join(", ");
+    if($("sBlurb")) $("sBlurb").value = b.blurb || "";
     if(b.cover){ sugCover = b.cover; renderSugCover(); }
     if(b.ageMin && b.ageMax){ dualState.sAge = { lo: Number(b.ageMin), hi: Number(b.ageMax) }; syncDual("sAge"); }
   }
@@ -4773,6 +4791,10 @@ function profFormAsBook(){
     pages: Number($("sPages") && $("sPages").value) || "",
     genres: normaliseGenres($("sGenres") && $("sGenres").value || ""),
     cover: sugCover || "",
+    /* The form has a Summary box and it is the reason most people open this
+       screen. It was not being read, so it was typed, saved, and quietly
+       dropped — the save succeeded, and what it saved had never contained it. */
+    blurb: ($("sBlurb") && $("sBlurb").value || "").trim(),
     ageMin: age.lo, ageMax: age.hi,
     level: levelText({ ageMin: age.lo, ageMax: age.hi }) };
 }
@@ -4785,8 +4807,8 @@ async function profSave(extra){
   var payload = {
     token: sessionToken(),
     hue: isHex(hex) ? hex.toLowerCase() : (mem.hue || ""),
-    goodreads: ($("profGoodreads") && $("profGoodreads").value || "").trim(),
-    fable: ($("profFable") && $("profFable").value || "").trim(),
+      goodreads: webAddress($("profGoodreads") && $("profGoodreads").value),
+    fable: webAddress($("profFable") && $("profFable").value),
     genres: [0,1,2].map(function(i){
       var el = document.querySelector('[data-profgen="' + i + '"]');
       return el ? el.value.trim() : "";
@@ -5977,6 +5999,9 @@ document.addEventListener("click", async function(e){
   if(t.closest("#profMyRecs")){ profCapture(); $("meModalBody").innerHTML = profRecsHTML(); return; }
   if(t.closest("#profRecsBack")){ renderMe(); return; }
   if(t.closest("#profSave")){
+    if(profSaving) return;
+    profSaving = true;
+    busyOn("profBar", $("profSave"), "Saving\u2026");
     var books = [];
     if($("profRemind") && $("profRemind").checked){
       books = $("profRemindScope") && $("profRemindScope").value === "all"
@@ -5987,6 +6012,8 @@ document.addEventListener("click", async function(e){
     var nres = await callEndpoint("notify-set", { token: sessionToken(), books: books });
     if(nres.ok) myNotify = books;
     var sres = await profSave();
+    profSaving = false;
+    busyOff("profBar", $("profSave"), "Save profile");
     if(sres.ok){
       var n = $("profNote");
       if(n) n.textContent = nres.ok ? "Saved." : "Profile saved, but the reminders didn\u2019t: " + notesTrouble(nres.error);
