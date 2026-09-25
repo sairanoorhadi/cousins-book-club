@@ -1,5 +1,5 @@
 {
-  "rev": 1351,
+  "rev": 1352,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -28,7 +28,7 @@
         {
           "id": "",
           "title": "The City of Brass",
-          "author": "S A. Chakraborty o",
+          "author": "S A. Chakraborty",
           "cover": "https://i.harperapps.com/hcuk/covers/9780008239428.JPG",
           "pages": 544,
           "genres": [
