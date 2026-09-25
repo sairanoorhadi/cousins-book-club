@@ -1,5 +1,5 @@
 {
-  "rev": 1357,
+  "rev": 1358,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1162,7 +1162,6 @@
       "ageMin": 8,
       "ageMax": 12,
       "genres": [
-        "Fiction.",
         "Children's",
         "Crime",
         "Thriller"
