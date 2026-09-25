@@ -1,5 +1,5 @@
 {
-  "rev": 1355,
+  "rev": 1356,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1134,7 +1134,7 @@
       "genres": [
         "Fantasy",
         "Romance",
-        "Dark Fantasy"
+        "Dark"
       ],
       "by": "Filza",
       "status": "approved",
