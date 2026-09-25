@@ -20,6 +20,9 @@ html{-webkit-text-size-adjust:100%}
   --ink:#191233; --muted:#6E6689; --edge:#191233; --stamp:#191233; --hairline:#DED5F5;
   --flare:#E8285A; --zest:#F5A800; --surf:#0A9E88; --sky:#3257E0; --grape:#7C31D8;
   --on-flare:#FFFFFF; --on-zest:#191233; --on-surf:#FFFFFF; --on-sky:#FFFFFF; --on-grape:#FFFFFF;
+  /* Confirm, resting, under the hand, and under the press. It has no other
+     states: the colour is the whole of its feedback, so it never moves. */
+  --ok:#0A9E88; --ok-hover:#0B8C79; --ok-press:#046A5B; --on-ok:#FFFFFF;
   --f-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
   --f-body:"Newsreader",Georgia,"Times New Roman",serif;
   --f-mono:"DM Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
@@ -31,6 +34,7 @@ html{-webkit-text-size-adjust:100%}
     --ink:#F2EDFF; --muted:#A79FC9; --edge:#4E40A0; --stamp:#080615; --hairline:#372C74;
     --flare:#FF5C7C; --zest:#FFC44D; --surf:#2FD6B8; --sky:#7C9BFF; --grape:#B47CFF;
     --on-flare:#2A0710; --on-zest:#2A1E00; --on-surf:#04241E; --on-sky:#0A1440; --on-grape:#1E0736;
+    --ok:#2FD6B8; --ok-hover:#45DFC2; --ok-press:#6BF0D8; --on-ok:#04241E;
   }
 }
 :root[data-theme="dark"]{
@@ -617,7 +621,10 @@ img{max-width:100%;display:block}
 .authpick{margin-top:9px;display:flex;flex-direction:column;gap:6px}
 .authpick[hidden]{display:none}
 .authpick__lab{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.authrow{display:flex;align-items:center;gap:8px}
+/* Items line up at the top, not the middle. A name that wraps makes the card
+   taller; anything centred in it then sits at a different height than it does
+   beside a one-line name. Top is the one edge that does not move. */
+.authrow{display:flex;align-items:flex-start;gap:8px}
 .authrow__pick{flex:1 1 auto;text-align:left;border:2px solid var(--edge);border-radius:999px;background:var(--surface);cursor:pointer;padding:5px 13px;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--ink)}
 .authrow__pick:hover{background:var(--sunk)}
 .authrow__pick[aria-pressed="true"]{background:var(--surf);color:var(--on-surf);border-color:var(--surf)}
@@ -649,10 +656,25 @@ img{max-width:100%;display:block}
    author cell plus the grid's gap. Nothing about the cards themselves changes
    when one is picked — they are the size and shape they always were. */
 .authrow{position:relative}
-/* Centred on the card, not pinned to its first line. A name that wraps to
-   three lines used to leave Confirm level with the top of the card while the
-   globe — a flex item, so centred by the row — sat halfway down. */
-.authrow__ok{position:absolute;left:calc(100% + 16px);top:50%;transform:translateY(-50%);width:max-content}
+/* Pinned to the top of its card, and pinned there through everything.
+   Centring it on the card meant its height decided where it sat, so a name
+   that wrapped to three lines put it somewhere else than a short one did.
+   Worse, the centring was held in a transform, and .btn:hover sets transform
+   too — and wins on specificity — so the button dropped 16px at the moment
+   the pointer arrived, out from under the click that was coming. It now has
+   no transform to lose, at rest or otherwise. */
+.authrow__ok{position:absolute;left:calc(100% + 16px);top:0;width:max-content}
+/* Its only feedback is colour: a shade under the hand, a deeper one under the
+   press. No lift, no shadow shift, no growing or shrinking — nothing that
+   changes where it is or how big the target is. These come after .btn's own
+   hover and active rules, which is what lets them win the tie. */
+.authrow__ok,.authrow__ok:hover,.authrow__ok:active,.authrow__ok:focus-visible{
+  transform:none;background:var(--ok);color:var(--on-ok);border-color:var(--edge);
+  box-shadow:var(--shadow-sm);transition:background .12s ease}
+.authrow__ok:hover{background:var(--ok-hover)}
+.authrow__ok:active{background:var(--ok-press)}
+.authrow__ok:focus-visible{outline:2px solid var(--grape);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){ .authrow__ok{transition:none} }
 /* The book cards sit a column further left than the author cards, so their
    Confirm lands under the Author box rather than under Look up book — which
    is where it belongs, the author being the settled half of this flow. A
@@ -674,7 +696,7 @@ img{max-width:100%;display:block}
    button rejoins the row on a line of its own rather than squeezing the name. */
 @media (max-width:765px){
   .authrow{flex-wrap:wrap}
-  .authrow__ok{position:static;transform:none;width:auto;margin-left:auto}
+  .authrow__ok{position:static;width:auto;margin-left:auto}
 }
 
 .lookupfix{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;border:2px dashed var(--edge);border-radius:var(--r);background:var(--sunk);padding:10px 14px;font-size:15px}
