@@ -1,5 +1,5 @@
 {
-  "rev": 1344,
+  "rev": 1345,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -13,7 +13,7 @@
       "name": "Saira",
       "joined": "2026-04-17",
       "avatar": "",
-      "fable": "https://fable.co/fabler/saira-hadi-415274071136?referralID=X3JeA03hAJ",
+      "fable": "",
       "goodreads": "",
       "email": "",
       "notifyRef": "sub-84e7607a-09e",
@@ -23,14 +23,12 @@
         "bk-mt7pvx697h34g"
       ],
       "hue": "#f993fb",
-      "genres": [
-        "Fantasy"
-      ],
+      "genres": [],
       "top5": [
         {
           "id": "",
           "title": "The City of Brass",
-          "author": "Shannon A. Chakraborty",
+          "author": "S A. Chakraborty",
           "cover": "https://i.harperapps.com/hcuk/covers/9780008239428.JPG",
           "pages": 544,
           "genres": [
@@ -40,6 +38,7 @@
             "Epic"
           ],
           "level": "Ages 15+",
+          "blurb": "Nahri has never believed in magic. Certainly, she has power; on the streets of 18th century Cairo, she’s a con woman of unsurpassed talent. But she knows better than anyone that the trade she uses to get by—palm readings, zars, healings—are all tricks, sleights of hand, learned skills; a means to the delightful end of swindling Ottoman nobles.\n\nBut when Nahri accidentally summons an equally sly, darkly mysterious djinn warrior to her side during one of her cons, she’s forced to accept that the magical world she thought only existed in childhood stories is real. For the warrior tells her a new tale: across hot, windswept sands teeming with creatures of fire, and rivers where the mythical marid sleep; past ruins of once-magnificent human metropolises, and mountains where the circling hawks are not what they seem, lies Daevabad, the legendary city of brass, a city to which Nahri is irrevocably bound.\n\nIn that city, behind gilded brass walls laced with enchantments, behind the six gates of the six djinn tribes, old resentments are simmering. And when Nahri decides to enter this world, she learns that true power is fierce and brutal. That magic cannot shield her from the dangerous web of court politics. That even the cleverest of schemes can have deadly consequences.\n\nAfter all, there is a reason they say be careful what you wish for...",
           "ageMin": 15,
           "ageMax": 100
         }
