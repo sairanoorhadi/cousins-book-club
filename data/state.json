@@ -1,5 +1,5 @@
 {
-  "rev": 1364,
+  "rev": 1365,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1574,8 +1574,7 @@
         "Humour",
         "Robots",
         "Literary Fiction",
-        "Social Problems",
-        "Issues"
+        "Social Problems"
       ],
       "by": "Ms. Wendy",
       "status": "approved",
