@@ -1,5 +1,5 @@
 {
-  "rev": 1377,
+  "rev": 1378,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1462,7 +1462,6 @@
       "ageMin": 12,
       "ageMax": 18,
       "genres": [
-        "Children's",
         "Friendship"
       ],
       "by": "Ms. Wendy",
