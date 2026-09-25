@@ -1,5 +1,5 @@
 {
-  "rev": 1367,
+  "rev": 1368,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1198,7 +1198,8 @@
       "ageMax": 100,
       "genres": [
         "Humour",
-        "Murder"
+        "Thriller",
+        "Crime"
       ],
       "by": "Filza",
       "status": "approved",
