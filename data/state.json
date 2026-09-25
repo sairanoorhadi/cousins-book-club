@@ -1,5 +1,5 @@
 {
-  "rev": 1375,
+  "rev": 1376,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1281,9 +1281,9 @@
       "ageMin": 10,
       "ageMax": 13,
       "genres": [
-        "Young Adult",
         "Drama",
-        "Muslim"
+        "Muslim",
+        "Literary Fiction"
       ],
       "by": "Ms. Wendy",
       "status": "approved",
