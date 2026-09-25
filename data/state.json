@@ -1,5 +1,5 @@
 {
-  "rev": 1371,
+  "rev": 1372,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1033,9 +1033,7 @@
       "author": "Marissa Meyer",
       "pages": 453,
       "genres": [
-        "Young Adult",
         "Fantasy",
-        "Retelling",
         "Romance"
       ],
       "level": "Ages 12+",
