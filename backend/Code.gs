@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-25a';
+var SCRIPT_VERSION = '2026-09-25b';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -79,6 +79,7 @@ function doPost(e) {
   if (kind === 'notify-get') return json(notifyGet(payload));
   if (kind === 'notify-set') return json(notifySet(payload));
   if (kind === 'profile-set') return json(profileSet(payload));
+  if (kind === 'profile-get') return json(profileGet(payload));
   if (kind === 'approve-notify') return json(approveNotify(payload));
   if (kind === 'notes-add') return json(notesAdd(payload));
   if (kind === 'notes-del') return json(notesDel(payload));
@@ -545,6 +546,36 @@ function notesDel(payload) {
     lock.releaseLock();
   }
   return { ok: false, error: 'busy' };
+}
+
+/* A member's own row, read straight from the repo through the API.
+   The site normally learns the club's state from data/state.json as GitHub
+   Pages serves it, and Pages has to rebuild before a write shows up there —
+   a minute or so during which that file is genuinely out of date. Editing a
+   profile from a page that loaded inside that window meant filling the form
+   with stale values and then writing them back, so a field saved a moment
+   earlier was undone by the next save. This answer never goes through Pages,
+   so it is current the instant the write lands. */
+function profileGet(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var entry = directory()[email];
+  if (!entry) return { ok: false, error: 'no profile' };
+
+  var state;
+  try { state = JSON.parse(ghGetFile(STATE_PATH).content || '{}'); }
+  catch (err) { return { ok: false, error: 'unreadable state' }; }
+
+  var member = (state.members || []).filter(function (m) {
+    return (entry.memberId && m.id === entry.memberId) || (entry.ref && m.notifyRef === entry.ref);
+  })[0];
+  if (!member) return { ok: false, error: 'not a member yet' };
+
+  return { ok: true, rev: Number(state.rev || 0),
+           name: member.name, hue: member.hue || '',
+           goodreads: member.goodreads || '', fable: member.fable || '',
+           genres: member.genres || [], top5: member.top5 || [],
+           notifyRecs: !!member.notifyRecs };
 }
 
 function profileSet(payload) {

@@ -2227,7 +2227,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-09-25a";
+var SCRIPT_WANT = "2026-09-25b";
 
 async function callEndpoint(kind, payload, urlOverride){
   if(DEV && DEV_SAFE.indexOf(kind) === -1) return { ok: false, error: "dev-blocked" };
@@ -4462,8 +4462,29 @@ function myRecs(){
     return name && String(r.by || "").toLowerCase() === name;
   });
 }
+/* Before showing anyone their own profile, ask the script what it currently
+   holds. The club's state normally comes from data/state.json as GitHub Pages
+   serves it, and Pages rebuilds after a write — for a minute or so that file
+   is genuinely behind. A form filled from it writes those old values straight
+   back, which is how a page count saved a moment earlier came undone by the
+   next save. This reads through the script, which sees the repo directly. */
+async function profileRefresh(){
+  if(!me || !sessionToken() || DEV) return;
+  var res = await callEndpoint("profile-get", { token: sessionToken() });
+  /* Only take an answer that actually carries a profile. An older deployed
+     script says "unknown kind" and is handled by the ok check, but anything
+     that answers ok without the fields would otherwise blank the lot — an
+     empty reply must never be mistaken for an empty profile. */
+  if(!res || !res.ok || !Array.isArray(res.top5) || !Array.isArray(res.genres)) return;
+  var mem = myMember(); if(!mem) return;
+  mem.hue = res.hue; mem.goodreads = res.goodreads; mem.fable = res.fable;
+  mem.genres = res.genres; mem.top5 = res.top5; mem.notifyRecs = res.notifyRecs;
+  if(res.name) mem.name = res.name;
+  profEdits = null; profDraft = null;
+}
 async function openMe(){
   if(!me){ openLogin(); return; }
+  await profileRefresh();
   var res = await callEndpoint("notify-get", { token: sessionToken() });
   /* The test site can't ask the script what someone is subscribed to, which
      would leave this whole section looking switched off there. The list the
@@ -4478,6 +4499,13 @@ async function openMe(){
    decides what is worth showing. */
 var profSlot = null;      /* which of the five is being edited, if any */
 var profSaving = false;   /* one save at a time, and it says so */
+var profSlotSaving = false;
+/* Saved means written to the club's files. The site is served from those files
+   by GitHub Pages, which rebuilds afterwards, so a refresh in the next minute
+   can still show the old copy. Saying so is kinder than letting someone
+   refresh twice wondering whether it took — this page already shows the new
+   version, because it has the answer the script gave it. */
+var SAVED_LAG = "It\u2019s written down \u2014 a refresh in the next minute may still show the old copy while the site rebuilds.";
 
 /* Somebody typing where they were asked for a link means a web address, even
    without the https:// in front. Requiring the scheme and quietly storing
@@ -4765,7 +4793,8 @@ function profOpenForm(slot){
   wrap.className = "prof__form";
   wrap.id = "profFormWrap";
   wrap.innerHTML = '<div class="prof__formhead"><p class="eyebrow" style="margin:0">Place ' + (slot + 1) + '</p>' +
-    '<button class="btn btn--sm btn--ghost" type="button" id="profFormBack">Back to profile</button></div>';
+    '<button class="btn btn--sm btn--ghost" type="button" id="profFormBack">Back to profile</button></div>' +
+    '<div class="lookbar" id="profSlotBar" role="status" aria-label="Saving this place" hidden><span></span></div>';
   host.innerHTML = "";
   host.appendChild(wrap);
   wrap.appendChild(form);
@@ -6058,7 +6087,8 @@ document.addEventListener("click", async function(e){
     busyOff("profBar", $("profSave"), "Save profile");
     var n = $("profNote");
     if(sres.ok){
-      if(n) n.textContent = nres.ok ? "Saved." : "Profile saved, but the reminders didn\u2019t: " + notesTrouble(nres.error);
+      if(n) n.textContent = (nres.ok ? "Saved." : "Profile saved, but the reminders didn\u2019t: " + notesTrouble(nres.error)) +
+        " " + SAVED_LAG;
     }else{
       /* a failed save keeps everything on screen, and says so out loud */
       if(n) n.textContent = profTrouble(sres.error) + " Nothing was lost \u2014 what you typed is still here.";
@@ -7872,13 +7902,23 @@ $("suggestForm").addEventListener("submit", async function(e){
     five[profSlot] = pick;
     while(five.length && five[five.length - 1] == null) five.pop();
     profEdits = five;
-    note.textContent = "Saving\u2026";
+    /* This save had a note saying "Saving…" and nothing else: no bar, and a
+       button that could be pressed again while the first press was still in
+       the air. The profile's own Save had all of that; this one, which is
+       where a book's fields are actually edited, had been missed. */
+    if(profSlotSaving) return;
+    profSlotSaving = true;
     var slotWas = profSlot;
+    var sendBtn = $("suggestForm") && $("suggestForm").querySelector('[type="submit"], #sSend');
+    busyOn("profSlotBar", sendBtn, "Saving\u2026");
+    note.textContent = "Saving\u2026";
     var pres = await profSave();
+    profSlotSaving = false;
+    busyOff("profSlotBar", sendBtn, "Save to place " + (slotWas + 1));
     if(pres.ok){
       profCloseForm();
       var pn = $("profFiveNote");
-      if(pn) pn.textContent = "Place " + (slotWas + 1) + " is now " + pick.title + ".";
+      if(pn) pn.textContent = "Place " + (slotWas + 1) + " is now " + pick.title + ". " + SAVED_LAG;
     }else{
       /* Stay on the form, keep what was typed, and say why. Throwing the edit
          away on a failure is how a save that did not happen looked exactly
