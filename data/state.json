@@ -1,5 +1,5 @@
 {
-  "rev": 1366,
+  "rev": 1367,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1490,9 +1490,8 @@
       "ageMax": 12,
       "genres": [
         "Coming-of-Age",
-        "Missing persons",
         "Revenge",
-        "Neighbors"
+        "Literary Fiction"
       ],
       "by": "Ms. Wendy",
       "status": "approved",
