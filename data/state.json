@@ -1,5 +1,5 @@
 {
-  "rev": 1353,
+  "rev": 1354,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1074,8 +1074,7 @@
         "Fairies",
         "Orphans",
         "Fantasy",
-        "Princes",
-        "Courts and courtiers"
+        "Princes"
       ],
       "by": "Eliza",
       "status": "approved",
