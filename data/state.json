@@ -1,5 +1,5 @@
 {
-  "rev": 1354,
+  "rev": 1355,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1164,8 +1164,6 @@
       "genres": [
         "Fiction.",
         "Children's",
-        "Murder",
-        "Criminals",
         "Crime",
         "Thriller"
       ],
