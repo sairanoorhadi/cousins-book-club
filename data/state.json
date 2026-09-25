@@ -1,5 +1,5 @@
 {
-  "rev": 1360,
+  "rev": 1361,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1573,9 +1573,10 @@
       "genres": [
         "Humour",
         "Robots",
-        "Gifted children",
         "Human behavior",
-        "Reaalistic"
+        "Literary Fiction",
+        "Social Problems",
+        "Issues"
       ],
       "by": "Ms. Wendy",
       "status": "approved",
