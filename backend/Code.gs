@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-25c';
+var SCRIPT_VERSION = '2026-09-25d';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -695,7 +695,16 @@ function cleanTop5(b) {
       if (isNaN(n)) n = 0;
       return { score: Math.max(0, Math.min(5, Math.round(n * 100) / 100)),
                source: String((r && r.source) || '').trim().slice(0, 40) };
-    }).filter(function (r) { return r.score > 0; })
+    }).filter(function (r) { return r.score > 0; }),
+    /* The member's own verdict on their own shelf: a score out of five and
+       what they thought. Separate from `ratings`, which are the numbers the
+       rating sites quote. */
+    myScore: (function () {
+      var n = Number(b.myScore);
+      if (isNaN(n) || n <= 0) return 0;
+      return Math.max(0, Math.min(5, Math.round(n * 100) / 100));
+    })(),
+    myReview: String(b.myReview || '').trim().slice(0, 4000)
   };
   if (Number(b.ageMin) > 0) out.ageMin = Math.round(Number(b.ageMin));
   if (Number(b.ageMax) > 0) out.ageMax = Math.round(Number(b.ageMax));
