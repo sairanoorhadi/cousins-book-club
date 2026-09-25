@@ -1,5 +1,5 @@
 {
-  "rev": 1394,
+  "rev": 1395,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -45,6 +45,8 @@
               "source": "Goodreads"
             }
           ],
+          "myScore": 5,
+          "myReview": "Loved it. Chakraborty really know how to build a world and have dynamic characters",
           "ageMin": 15,
           "ageMax": 100
         }
