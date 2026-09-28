@@ -82,7 +82,14 @@ img{max-width:100%;display:block}
 /* the header stays on screen, so anything else that sticks has to clear it */
 :root{--topbar-h:66px}
 .topbar__in{display:flex;align-items:center;gap:20px;min-height:64px}
-.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;text-decoration:none;color:inherit;
+  border-radius:8px;padding:3px 5px;margin:-3px -5px;cursor:pointer}
+/* the same lift every other pressable thing on the page uses */
+.brand__mark{transition:transform .12s ease,box-shadow .12s ease}
+.brand:hover .brand__mark{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--stamp)}
+.brand:hover .brand__name{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}
+.brand:active .brand__mark{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--stamp)}
+.brand:focus-visible{outline:2px solid var(--grape);outline-offset:2px}
 .brand__mark{width:32px;height:32px;flex:none;border:2px solid var(--edge);border-radius:5px;background:var(--flare);position:relative;box-shadow:2px 2px 0 var(--stamp);overflow:hidden}
 .brand__mark::after{content:"";position:absolute;left:9px;top:4px;bottom:4px;width:2px;background:var(--on-flare);opacity:.85}
 .brand__mark img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
@@ -1318,10 +1325,14 @@ img{max-width:100%;display:block}
 
 <div class="topbar">
   <div class="wrap topbar__in">
-    <div class="brand">
+    <!-- A real anchor to ./ so it is a link in every sense: it focuses with
+         Tab, follows with Enter, opens in a new tab on ctrl-click, and if the
+         script never runs it does a plain fresh load — which is the very
+         thing the handler is imitating. -->
+    <a class="brand" id="brandHome" href="./" title="Back to the top">
       <div class="brand__mark" id="brandMark" aria-hidden="true"></div>
       <div class="brand__name" id="brandName">Book Club</div>
-    </div>
+    </a>
     <nav class="navlinks" aria-label="Sections">
       <button class="btn btn--sm btn--ghost" id="loginOpen" type="button">Sign in</button>
       <button class="btn btn--sm btn--surf" id="signupOpen" type="button" data-memform="join">Sign up</button>
@@ -4254,6 +4265,86 @@ window.addEventListener("beforeunload", function(e){
   e.returnValue = "";
 });
 
+/* ------------------------------------------------------- the way back
+   The club's name in the bar puts the page back the way it opens. Not by
+   reloading it: a member stays signed in, the club's file is not fetched
+   again, and nothing is thrown away that was not already on screen. */
+
+/* The suggestion form on the Recommendations page keeps no saved copy to
+   compare against, because there is nothing to compare to — an empty form is
+   its resting state. So "unsaved" here means "has anything been put in it",
+   with the one exception of the name box, which the page fills in by itself
+   for whoever is signed in. */
+function sugStarted(){
+  /* while a place is being edited the form belongs to the profile, and
+     profDirty is already the right question to ask about it */
+  if(profSlot !== null) return false;
+  var typed = ["sTitle","sAuthor","sPages","sGenres","sBlurb","sMyScore","sMyReview"];
+  for(var i = 0; i < typed.length; i++){
+    var el = $(typed[i]);
+    if(el && String(el.value || "").trim()) return true;
+  }
+  var by = $("sBy");
+  if(by && String(by.value || "").trim() && by.value.trim() !== myName()) return true;
+  if(sugCover) return true;
+  if(ratingsForSubmit().length) return true;
+  return false;
+}
+
+/* Asked once, here, rather than again by each panel this is about to close.
+   Same question the profile asks on its own way out, because it is the same
+   thing being lost. */
+function homeLeaveOk(){
+  if(profDirty()) return profLeaveOk("You have changes that aren\u2019t saved. Go back to the top without saving them?");
+  if(sugStarted()) return window.confirm("You\u2019ve started a book suggestion that hasn\u2019t been sent. Go back to the top without it?");
+  return true;
+}
+
+function goHome(){
+  if(!homeLeaveOk()) return false;
+
+  menuShut();
+  /* The profile goes first on purpose: while one of the five is being edited
+     the suggestion form is on loan to it, and closing the profile is what
+     hands the form back to its own page before it is cleared. Straight to
+     closeScrim rather than through the Escape route, which would ask about
+     unsaved work a second time after it has already been answered. */
+  if(!$("meScrim").hidden) closeScrim("meScrim");
+  SCRIMS.forEach(function(id){ if(!$(id).hidden) closeScrim(id); });
+
+  /* the profile's own editing state, which outlives the panel */
+  profEditing = false;
+  profEdits = null;
+  profDraft = null;
+
+  TAB_GROUPS.forEach(function(g){ tabShow(g[0], g[1], g[0][0]); });
+  memberOpen = {};
+  /* the badge bar picks itself again, the way it does on a first visit */
+  focusIds = []; focusTouched = false; focusAuto = false;
+  clearSuggestForm();
+
+  /* A fresh visit has no #section on it. replaceState rather than setting the
+     hash, which would leave a bare "#" behind and add a history entry. */
+  try{ history.replaceState(null, "", location.pathname + location.search); }
+  catch(e){ /* nothing to do about it, and not worth stopping for */ }
+
+  renderAll();
+  window.scrollTo(0, 0);
+  /* clearSuggestForm puts the cursor in the title box, which is the last place
+     it belongs after asking to go back to the top */
+  var home = $("brandHome");
+  if(home && home.focus) home.focus();
+  return true;
+}
+
+$("brandHome").addEventListener("click", function(e){
+  /* Left click only, and only when no modifier is held: ctrl-click, the middle
+     button and "open in a new tab" belong to the link, not to us. */
+  if(e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+  goHome();
+});
+
 function openMeeting(id){
   var m = meetingById(id); if(!m) return;
   var b = bookById(m.bookId);
@@ -6949,19 +7040,22 @@ document.addEventListener("change", function(e){
 });
 
 /* ---------- tabs ---------- */
-function tabGroup(ids, prefix){
-  ids.forEach(function(k){
-    $(prefix + k).addEventListener("click", function(){
-      ids.forEach(function(j){
-        var on = j === k;
-        $(prefix + j).setAttribute("aria-selected", String(on));
-        $("panel-" + j).hidden = !on;
-      });
-    });
+/* Lifted out of the click handler so something other than a click can choose
+   a tab — the club's name, putting the page back the way it starts. */
+var TAB_GROUPS = [ [["recs","short","suggest"], "tab-"], [["tree","time"], "tab-"] ];
+function tabShow(ids, prefix, k){
+  ids.forEach(function(j){
+    var on = j === k;
+    var b = $(prefix + j); if(b) b.setAttribute("aria-selected", String(on));
+    var pane = $("panel-" + j); if(pane) pane.hidden = !on;
   });
 }
-tabGroup(["recs","short","suggest"], "tab-");
-tabGroup(["tree","time"], "tab-");
+function tabGroup(ids, prefix){
+  ids.forEach(function(k){
+    $(prefix + k).addEventListener("click", function(){ tabShow(ids, prefix, k); });
+  });
+}
+TAB_GROUPS.forEach(function(g){ tabGroup(g[0], g[1]); });
 
 /* ---------- the Suggest a Book form ---------- */
 var sugMode = "own", sugCover = "";
