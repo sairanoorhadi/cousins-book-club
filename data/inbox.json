@@ -1281,6 +1281,37 @@
         "name": "Saira",
         "vote": "up"
       }
+    },
+    {
+      "id": "suggest-880508de-751",
+      "kind": "suggest",
+      "at": "2026-09-28T22:16:16.669Z",
+      "payload": {
+        "title": "Destiny's Edge",
+        "author": "M.L. Wang",
+        "pages": 250,
+        "ageMin": 18,
+        "ageMax": 100,
+        "level": "Ages 18+",
+        "genres": [
+          "Fantasy",
+          "LGBT",
+          "Lesbian",
+          "Science Fiction Fantasy",
+          "Adult",
+          "Queer",
+          "High Fantasy",
+          "Romance"
+        ],
+        "blurb": "The most powerful warlord in the steppe sends a convoy consisting of his ten best men and his fourth wife, Chi, to escort his newest bride home—an easy journey. At least, it was supposed to be.\n\nSince losing her family and her right eye to cursed fire, Chi has been adrift, struggling to find her place within the Champion’s household. Unable to bear children due to her family’s blood curse, she has spent most of her married years training the Champion’s sons in the sword techniques she inherited from her father. When an undead monster attacks the bride’s party, killing all ten of the Champion’s men, Chi’s sword skills barely keep her alive, leaving her as the last line of defense for the young bride, Sangya.\n\nAfter a lifetime cloistered in a remote temple, Sangya is maddeningly inquisitive about everything around her, including Chi. While Chi scrambles to guide the chirpy nun through the wilderness, Sangya slowly pries her way through the walls Chi has built around her soul and wakes something forbidden.\n\nWith enemies closing in, Chi realizes that the thing she wants most from life might be the one thing she can’t have. And in the dark of foreign woods, she decides that the best thing she can do for the world is die protecting the Champion’s bride. Better that than face a desire so dangerous.",
+        "summarySource": "fetched",
+        "cover": "https://covers.openlibrary.org/b/id/15230604-L.jpg",
+        "by": "Saira",
+        "byId": "mb-saira",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
