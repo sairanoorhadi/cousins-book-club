@@ -151,7 +151,20 @@ img{max-width:100%;display:block}
 .memmark{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid var(--edge);border-radius:50%;box-shadow:2px 2px 0 var(--stamp);text-decoration:none}
 .memmark__l{font-family:var(--f-display);font-weight:800;font-size:16px;line-height:1}
 .memmark--goodreads{background:#F4F1EA;color:#382110}
+/* The chip keeps its dark fill under the fan, and that is doing work rather
+   than decoration: two of the seven spokes are pale, and on the light theme's
+   paper they fall to 1.4:1. On this they are 9:1 and 11:1, and it is the same
+   colour in both themes, so the mark never has to be checked twice. The
+   weakest spoke against it is the dark blue at 2.8:1. */
 .memmark--fable{background:#1E1B4B;color:#FDE68A}
+/* 24px across a 30px chip with a 2px border: the art's own circle then sits a
+   pixel inside the border all the way round. */
+.memmark__fan{display:block;width:24px;height:24px}
+/* No link set: the same muted treatment the lettermark gets, except that a
+   colour cannot be dimmed by inheriting one — the spokes carry their own. So
+   they are painted over in the muted ink instead, which keeps the shape
+   legible where a washed-out rainbow would not be. */
+.memmark--off .memmark__fan rect{fill:currentColor}
 .memmark:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--stamp)}
 /* nothing behind it: still there, plainly not a link */
 .memmark--off{background:var(--sunk);color:var(--muted);border-style:dashed;box-shadow:none;opacity:.7}
@@ -3942,13 +3955,46 @@ function top5HTML(m){
   for(var n = picks.length; n < 5; n++) out.push(tileSlotHTML(n + 1));
   return out.join("");
 }
+/* Fable's fan, drawn rather than embedded: a PNG would bring its own
+   background with it and sit in the chip as a pale box on the dark theme.
+   Seven spokes at thirty degrees apart, measured off the artwork — inner
+   radius 29.5, outer 100, fourteen wide — with the colours sampled from it
+   rather than guessed at.
+   The viewBox is square and centred on the hub, which is not where the mark's
+   bounding box is centred: the fan is nearly twice as wide as it is tall, and
+   centring the box in a round chip pushes the two horizontal spokes down to
+   where the circle has narrowed, so their ends cross the border. Centred on
+   the hub instead, the corners that reach furthest — the outer ends of those
+   same two spokes, at radius 100.24 — land exactly on the viewBox's inscribed
+   circle, so it fills the chip as far as it can go and cannot spill out of it.
+   Sliding it any lower to balance it by eye costs two pixels of fan for every
+   pixel of shift, which at this size is not a trade worth making.
+   Each spoke names its colour on the element, which is what lets the unset
+   state paint them all one colour with a single CSS rule. */
+var FABLE_FAN = (function(){
+  var spokes = [
+    [0,   "#4252F1"], [30,  "#43A1D7"], [60,  "#81BA6D"], [90, "#F2D63F"],
+    [120, "#E27D44"], [150, "#FFABE7"], [180, "#CB3F3F"]
+  ];
+  return '<svg class="memmark__fan" viewBox="-100.25 -100.25 200.5 200.5" aria-hidden="true" ' +
+    'focusable="false" preserveAspectRatio="xMidYMid meet">' +
+    spokes.map(function(sp){
+      /* rotate() turns clockwise here because y runs down, so the angle is
+         negated to raise the spoke rather than drop it */
+      return '<rect x="29.5" y="-7" width="70.5" height="14" rx="1" ' +
+        'transform="rotate(' + (-sp[0]) + ')" fill="' + sp[1] + '"/>';
+    }).join("") + "</svg>";
+})();
+
 function profileLinkHTML(url, name, mark){
   var safe = safeUrl(url);
   var cls = "memmark memmark--" + name.toLowerCase();
-  /* A lettermark in the service's own colour rather than its logo: the real
-     artwork is theirs, and drawing it from memory would be a bad copy of
-     something that is not ours to copy. Swap in their SVG to use the real one. */
-  var inner = '<span class="memmark__l" aria-hidden="true">' + esc(mark) + "</span>";
+  /* Goodreads keeps its lettermark: the real artwork is theirs, and drawing it
+     from memory would be a bad copy of something that is not ours to copy.
+     Fable's is the mark itself, which the club was given. */
+  var inner = name === "Fable"
+    ? FABLE_FAN
+    : '<span class="memmark__l" aria-hidden="true">' + esc(mark) + "</span>";
   return safe
     ? '<a class="' + cls + '" href="' + esc(safe) + '" target="_blank" rel="noopener noreferrer" ' +
       'title="' + esc(name) + '" aria-label="' + esc("Their " + name + " profile") + '">' + inner + "</a>"
