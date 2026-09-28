@@ -121,6 +121,18 @@ img{max-width:100%;display:block}
 .menu__panel .menu__item--out{margin-top:6px;border-top:2px solid var(--hairline);border-radius:0 0 6px 6px;padding-top:12px}
 /* The sign-in card's two ways on: a code for an account that exists, and a way
    to make one. Opposite ends of the row so neither is taken for the other. */
+/* The strip across the top of the hero. Deliberately close to a line of
+   text: mono, one row, a grape edge to say it is the thing that will go. */
+#heroFlag{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.flagbar{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;width:100%;text-align:left;
+  font-family:var(--f-mono);font-size:12.5px;line-height:1.5;
+  padding:9px 14px;border:2px solid var(--edge);border-left:5px solid var(--grape);
+  border-radius:7px;background:var(--sunk);color:var(--ink);cursor:pointer;
+  transition:background .12s ease}
+.flagbar:hover{background:var(--surface)}
+.flagbar:focus-visible{outline:2px solid var(--grape);outline-offset:2px}
+.flagbar__k{font-weight:700}
+.flagbar__in{font-weight:700;color:var(--grape)}
 .loginact{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:18px}
 /* what shares the left-hand end with the way back */
 .loginact__aside{display:flex;gap:12px;flex-wrap:wrap;align-items:center;min-width:0}
@@ -1364,6 +1376,11 @@ img{max-width:100%;display:block}
   <!-- ===== NOW READING ===== -->
   <section class="hero" id="now">
     <div class="wrap">
+      <!-- A meeting whose book has been finished but which has not happened
+           yet. One thin line across the top rather than a card of its own:
+           it is a reminder, not a second thing to read. Hidden and empty the
+           rest of the time. -->
+      <div id="heroFlag" hidden></div>
       <div class="hero__grid">
         <div class="hero__main swipe" id="heroSwipe">
           <div class="hero__cover cover-wrap" id="heroCover"></div>
@@ -3360,6 +3377,25 @@ function upcomingMeetings(){
   return state.meetings.filter(function(m){ return !meetingIsPast(m); })
     .sort(function(a,b){ return String(a.date||"9999").localeCompare(String(b.date||"9999")); });
 }
+/* Meetings with no card of their own, which is how a party came to vanish.
+   A book's party usually happens after the book is finished, and finishing a
+   book takes it off the hero and pulls the next one up in its place. The card
+   below follows the book on the hero, so the party — still to come, never
+   marked done — had nothing left to appear on. An event in the future, made
+   invisible by a status on something else.
+   A queued book's meeting is deliberately not here: its book has not been
+   read and gets the card to itself the moment it is started, so flagging it
+   above the book people are actually reading would be noise.
+   What takes a meeting off the page is meetingIsPast and nothing else —
+   marked done, or actually over. No book's status touches it. */
+function homelessMeetings(){
+  return upcomingMeetings().filter(function(m){
+    if(!m.bookId) return true;              /* a club night belongs to nobody */
+    var b = bookById(m.bookId);
+    if(!b) return true;                     /* its book is gone */
+    return b.status === "past";             /* read, but the meeting has not happened */
+  });
+}
 /* the meeting card follows whichever current book is on screen */
 function upcomingForBook(bookId){
   if(!bookId) return upcomingMeetings();
@@ -3572,17 +3608,46 @@ function renderHero(){
           : '<button class="btn btn--ghost btn--sm" type="button" data-memform="notify" data-nbook="' + esc(meet.bookId) + '">Email me about this</button>') +
       "</div>";
   }
+  renderFlags();
   renderUpNext();
   $("footStats").textContent = pastBooks().length + " finished · " + nextBooks().length + " queued · " +
     approvedRecs().length + " recommended · " + state.members.length + " members";
 }
 /* keep the countdown honest without re-rendering the whole hero */
 setInterval(function(){
-  var el = $("meetCountdown"); if(!el || !state) return;
+  if(!state) return;
   var b = currentBooks()[heroIdx];
   var m = (b ? upcomingForBook(b.id) : upcomingMeetings())[meetIdx];
-  if(m) el.textContent = countdownText(m);
+  var el = $("meetCountdown");
+  if(el && m) el.textContent = countdownText(m);
+  renderFlags();   /* the strip counts down too */
 }, 30000);
+/* One line per meeting still owed. The whole strip is the way into its notes,
+   because without a card there is no other route to them from this page. */
+function flagLine(m){
+  var b = bookById(m.bookId) || recById(m.bookId);
+  var what = m.kind === "party"
+    ? (b ? "Party for " + b.title : "Party")
+    : (b ? "Meeting for " + b.title : "Club meeting");
+  var d = parseDate(m.date);
+  var when = d ? DAYS[d.getDay()] + ", " + MONTHS[d.getMonth()].slice(0, 3) + " " + d.getDate()
+               : "date to be confirmed";
+  var t = prettyTime(m.time), cd = countdownText(m);
+  return '<button class="flagbar" type="button" data-meet="' + esc(m.id) + '">' +
+    '<span class="flagbar__k">' + esc(what) + ":</span>" +
+    "<span>" + esc(when + (t ? ", " + t : "") + (m.place ? " at " + m.place : "")) + "</span>" +
+    /* "In 5 days" reads as a sentence of its own; mid-line it wants lowercase */
+    (cd ? '<span class="flagbar__in">\u2014 ' + esc(cd.charAt(0).toLowerCase() + cd.slice(1)) + "</span>" : "") +
+    "</button>";
+}
+function renderFlags(){
+  var host = $("heroFlag");
+  if(!host) return;
+  var owed = homelessMeetings();
+  host.hidden = !owed.length;
+  host.innerHTML = owed.map(flagLine).join("");
+}
+
 function renderUpNext(){
   var q = nextBooks(), host = $("upNext");
   if(!q.length){ host.hidden = true; host.innerHTML = ""; return; }
