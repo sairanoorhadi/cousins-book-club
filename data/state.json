@@ -1,5 +1,5 @@
 {
-  "rev": 1425,
+  "rev": 1426,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -815,6 +815,21 @@
         }
       ],
       "sent": {}
+    },
+    {
+      "id": "mt-mulvzypwkgypz",
+      "bookId": "bk-ck",
+      "kind": "meeting",
+      "date": "2026-10-04",
+      "time": "19:00",
+      "place": "Online - Discord",
+      "chapters": "6-13",
+      "pages": "118",
+      "done": false,
+      "summary": "",
+      "photos": [],
+      "predictions": [],
+      "points": []
     }
   ],
   "recs": [
