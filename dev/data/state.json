@@ -1,5 +1,5 @@
 {
-  "rev": 1317,
+  "rev": 1316,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -206,7 +206,7 @@
       "finished": "",
       "progressPage": 0,
       "members": [],
-      "order": 2,
+      "order": 1,
       "level": "Ages 10-13"
     }
   ],
