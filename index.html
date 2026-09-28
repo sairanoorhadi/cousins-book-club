@@ -2075,12 +2075,12 @@ async function scriptVersionWatch(){
   if(probe && probe.ok && !scriptCurrent(probe.version)) say(scriptVersionNote(probe.version), "bad");
 }
 
-function notesTrouble(err){
+function notesTrouble(err, detail){
   if(err === "dev-blocked") return "This is the test site \u2014 nothing here is written down. Try it on the real site.";
   if(err === "meeting closed") return "This meeting is marked done \u2014 only the organiser can still change its notes.";
   if(err === "not found") return "That one\u2019s already gone \u2014 someone else must have removed it.";
   if(err === "no text") return "Type something first.";
-  return repoWriteTrouble(err);
+  return repoWriteTrouble(err, detail);
 }
 /* Two ways an edit here goes nowhere: no token at all, or one GitHub has
    started refusing. The second is only knowable from a save that came back
@@ -2293,35 +2293,143 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    summary could be typed, saved and lost with a success message over it. */
 var SCRIPT_WANT = "2026-09-25d";
 
-async function callEndpoint(kind, payload, urlOverride){
-  if(DEV && DEV_SAFE.indexOf(kind) === -1) return { ok: false, error: "dev-blocked" };
-  var url = urlOverride || endpoint();
-  if(!url) return { ok: false, error: "unconfigured" };
-  var res;
+/* Add ?debug=endpoint to the address to watch every call to the script go
+   out and come back: the kind, the URL, the status, how long it took and the
+   raw body. Off otherwise, so the console stays usable — but there when the
+   next "it just says check the app script" needs answering without a
+   rebuild. Same pattern as ?debug=lookup. */
+var ENDPOINT_DEBUG = /[?&]debug=endpoint\b/.test(location.search);
+function endpointSay(){
+  if(!ENDPOINT_DEBUG) return;
+  try{ console.log.apply(console, ["%c[endpoint]", "color:#7C31D8;font-weight:700"]
+    .concat(Array.prototype.slice.call(arguments))); }catch(e){}
+}
+/* A long body is cut down rather than dropped: enough to recognise a Google
+   sign-in page or a stack trace, not enough to bury the console. */
+function bodySnip(text, n){
+  text = String(text == null ? "" : text);
+  var flat = text.replace(/\s+/g, " ").trim();
+  return flat.length > n ? flat.slice(0, n) + "\u2026 (" + text.length + " chars)" : flat;
+}
+
+/* Which calls may be sent a second time.
+   Reads cost nothing to repeat. The writes on this list send the whole value
+   rather than a change to it — the same profile, the same notify list, the
+   same deletion — so writing it twice leaves the file exactly as writing it
+   once did.
+   Everything absent is absent on purpose: login-request sends an email and
+   rotates the code, so a second one silently invalidates the code already in
+   somebody's inbox; notes-add and photo-add append, so a second one shows up
+   twice; approve-notify emails a member. Those are left for a person to press
+   again, knowing what they are pressing. */
+var ENDPOINT_REPEATABLE = {
+  "ping": 1, "session": 1, "logout": 1,
+  "notify-get": 1, "notify-set": 1,
+  "profile-get": 1, "profile-set": 1,
+  "photo-list": 1,
+  "details": 1, "summarise": 1, "images": 1, "agenote": 1,
+  /* Worth repeating despite not being a read. If the first attempt never
+     arrived, the second signs you in. If it did arrive and worked, its answer
+     was lost either way and the second gets "no code" — which the sign-in
+     form turns into a true sentence rather than a dead end. What it must
+     never do is repeat a code the script has already called wrong, which is
+     why only a transport failure gets a second go. */
+  "login-verify": 1
+};
+/* The failures that are the transport's rather than the script's: nothing
+   came back, what came back wasn't JSON, or the server itself fell over. A
+   real ok:false is the script's considered answer and is never sent twice —
+   a wrong sign-in code stays wrong. */
+function endpointWorthRetry(r){
+  return r.error === "unreachable" || r.error === "timed out" ||
+         r.error === "crashed" || /^http 5\d\d$/.test(String(r.error || ""));
+}
+var ENDPOINT_RETRY_MS = 1400;
+/* How long the club's own script gets before the page gives up on it. See
+   fetchSoon for why this is not the twelve seconds a book lookup gets. */
+var ENDPOINT_WAIT_MS = 20000;
+
+/* One attempt, and an honest account of how it ended. Every failure carries a
+   `detail` saying what actually happened, because "couldn't reach the script"
+   covered five different faults and named only one of them — and named the
+   wrong one often enough to send somebody into the deployment settings after
+   a dropped connection. */
+async function endpointOnce(kind, url, payload){
+  var began = Date.now(), res;
+  endpointSay(kind, "\u2192 POST", url);
   try{
     res = await fetchSoon(url, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ kind: kind, payload: payload || {}, at: new Date().toISOString() })
-    });
+    }, ENDPOINT_WAIT_MS);
   }catch(e){
-    /* the browser never got an answer: wrong address, the script isn't
-       deployed, or its access isn't "Anyone" (Google redirects those to a
-       sign-in page, which a page like this isn't allowed to read). */
-    return { ok: false, error: "unreachable" };
+    /* Two different things, told apart at last. A timeout means the twelve
+       seconds ran out — the script very often finishes anyway, which is why
+       its own log can show every run completed while the page saw nothing.
+       Anything else means the browser could not even get that far. */
+    var name = (e && e.name) || "", msg = (e && e.message) || String(e);
+    var late = name === "TimeoutError" || name === "AbortError";
+    var out = { ok: false, error: late ? "timed out" : "unreachable",
+                detail: (name ? name + ": " : "") + msg, ms: Date.now() - began };
+    endpointSay(kind, "\u2717 threw after " + out.ms + "ms", out.detail);
+    return out;
   }
-  if(!res.ok) return { ok: false, error: "http " + res.status };
-  /* Apps Script hands back an HTML error page when the script itself throws —
-     usually because it was never authorised to send mail. */
-  var text = await res.text();
+  var text = "";
+  try{ text = await res.text(); }catch(e3){ text = ""; }
+  var ms = Date.now() - began;
+  endpointSay(kind, "\u2190 " + res.status + " in " + ms + "ms", bodySnip(text, 600));
+  if(!res.ok) return { ok: false, error: "http " + res.status, detail: bodySnip(text, 100), ms: ms };
   try{ return JSON.parse(text); }
-  catch(e2){ return { ok: false, error: "crashed" }; }
+  catch(e2){
+    /* Not JSON. Google's own sign-in page and its "script completed but
+       returned nothing" page both land here, and they mean different
+       things — so the body goes in the message instead of a guess. */
+    return { ok: false, error: "crashed", status: res.status,
+             detail: "HTTP " + res.status + ": " + (bodySnip(text, 100) || "(empty body)"), ms: ms };
+  }
 }
-/* Plain English for the failures above, so nobody has to guess. */
-function endpointTrouble(err){
+
+async function callEndpoint(kind, payload, urlOverride){
+  if(DEV && DEV_SAFE.indexOf(kind) === -1) return { ok: false, error: "dev-blocked" };
+  var url = urlOverride || endpoint();
+  if(!url) return { ok: false, error: "unconfigured" };
+
+  var first = await endpointOnce(kind, url, payload);
+  if(first.ok || !endpointWorthRetry(first) || !ENDPOINT_REPEATABLE[kind]) return first;
+
+  /* These clear up on their own often enough that asking a person to press the
+     button again was the page making its own problem somebody else's. Kept in
+     the log either way, including when the second attempt works, so how often
+     it happens and what it looked like is visible rather than invisible. */
+  endpointSay(kind, "\u21BB retrying in " + ENDPOINT_RETRY_MS + "ms after", first.error, first.detail || "");
+  await new Promise(function(r){ setTimeout(r, ENDPOINT_RETRY_MS); });
+  var second = await endpointOnce(kind, url, payload);
+  second.retried = true;
+  second.firstError = first.error;
+  second.firstDetail = first.detail;
+  endpointSay(kind, second.ok ? "\u2713 second attempt worked" : "\u2717 second attempt failed too", second.error || "");
+  return second;
+}
+/* Plain English for the failures above, so nobody has to guess.
+   `detail` is what actually happened, and it is appended rather than
+   swallowed: the exception, the status and the first hundred characters of a
+   body that wasn't JSON. Callers that have it should pass it — the ones that
+   don't behave exactly as they did. */
+function endpointTrouble(err, detail){
+  var why = detail ? " (" + detail + ")" : "";
   if(err === "dev-blocked") return "That's switched off on the test site — it would reach real members. Try it on the real site.";
   if(err === "unconfigured") return "No script address saved yet — add it under Admin → Settings.";
-  if(err === "unreachable") return "Couldn't reach the script. In Apps Script, check Deploy → Manage deployments → Edit, and set \u201cWho has access\u201d to \u201cAnyone\u201d.";
+  /* Was "check Who has access is Anyone", for every one of these. That is one
+     of five things this can mean, and on a dropped connection it is the wrong
+     one — which is how a momentary network blip read as a deployment fault
+     and sent somebody into settings that were already correct. */
+  if(err === "unreachable")
+    return "The browser couldn't reach the script at all — nothing came back." + why +
+      " Usually the connection dropping for a moment, so try again. If it keeps happening, check the address under Admin → Settings.";
+  if(err === "timed out")
+    return "The script didn’t answer within " + Math.round(ENDPOINT_WAIT_MS / 1000) + " seconds." + why +
+      " It was most likely still waking up; the run itself usually finishes, so trying again normally works.";
   if(err === "unknown kind") return "The deployed script is an older copy. In Apps Script: Deploy → Manage deployments → Edit → Version: \u201cNew version\u201d → Deploy.";
   /* the AI's own answers back, which the callers used to swallow — every one
      of these was reaching the page as "something went wrong" */
@@ -2331,26 +2439,52 @@ function endpointTrouble(err){
   if(err === "ran out of room") return "The AI ran out of room before it wrote an answer — the script’s token ceiling is too low.";
   if(err === "refused") return "The AI declined to answer that one.";
   if(String(err || "").indexOf("api ") === 0) return "The AI service answered with an error (" + err + ").";
-  if(err === "crashed") return "The script hit an error. Open it in Apps Script and run setUpTrigger once — it'll ask permission to send email, which sign-in codes need.";
-  if(String(err || "").indexOf("http ") === 0) return "The script answered with an error (" + err + "). Re-deploy it and try again.";
+  /* A body that wasn't JSON. Google's sign-in page and the script's own error
+     page both arrive this way and mean opposite things, so the body decides
+     what to say rather than a guess. The access advice appears only when
+     there is evidence for it. */
+  if(err === "crashed"){
+    var d = String(detail || "");
+    if(/accounts\.google\.com|Sign in|signin\/v2|ServiceLogin/i.test(d))
+      return "Google answered with its own sign-in page instead of the script." + why +
+        " That one really is the access setting: Deploy → Manage deployments → Edit → \u201cWho has access\u201d → \u201cAnyone\u201d.";
+    return "The script answered with something that isn't JSON." + why +
+      " If it mentions authorisation, open it in Apps Script and run setUpTrigger once — it'll ask permission to send email, which sign-in codes need.";
+  }
+  if(/^http 5\d\d$/.test(String(err || "")))
+    return "Google's servers answered " + err + "." + why + " That's their end, not the script's — it usually clears in a minute.";
+  if(String(err || "").indexOf("http ") === 0) return "The script answered with an error (" + err + ")." + why + " Re-deploy it and try again.";
   return "";
 }
 /* A call that writes to the club's files fails in ways signing in doesn't —
    signing in survives a dead GitHub token, these can't. */
-function repoWriteTrouble(err){
+function repoWriteTrouble(err, detail){
   if(err === "busy, try again" || err === "busy") return "Someone was saving just then — try again.";
   if(err === "not a member yet") return "You're not on the club's list. Reload the page.";
   if(err === "signed out" || err === "no profile") return "Your sign-in has expired. Sign out and back in.";
-  if(err === "no github token" || err === "github" || err === "crashed")
-    return "The script couldn't save to the club's files. Its GitHub token is missing or has expired — make a new one and update GITHUB_TOKEN in the script (docs/notifications.md, step 1).";
-  return endpointTrouble(err) || "Couldn't save that just now.";
+  if(err === "no github token" || err === "github" || err === "crashed"){
+    /* "crashed" here used to be diagnosed as the GitHub token and nothing
+       else. Usually right for a save — but when the body is Google's own
+       sign-in or error page it is not a token problem at all, and
+       endpointTrouble can read that off the body. */
+    if(err === "crashed" && /accounts\.google\.com|Sign in|signin\/v2|ServiceLogin/i.test(String(detail || "")))
+      return endpointTrouble(err, detail);
+    return "The script couldn't save to the club's files. Its GitHub token is missing or has expired — make a new one and update GITHUB_TOKEN in the script (docs/notifications.md, step 1)." +
+      (detail ? " (" + detail + ")" : "");
+  }
+  return endpointTrouble(err, detail) || "Couldn't save that just now.";
 }
 /* The two ways sign-in can be turned away. Neither is a fault to apologise
    for, so both say what to do next rather than what went wrong. */
-function signInTrouble(err){
+function signInTrouble(err, detail){
   if(err === "not a member") return "Email not linked to account. Please sign up.";
   if(err === "pending") return "Your account is pending approval from an organiser.";
-  return endpointTrouble(err);
+  /* The script had a code for this address and no longer does: it was used,
+     it expired, or five wrong guesses burnt it. All three want the same next
+     step, and none of them was being said at all — they fell through to
+     "Couldn't sign you in." */
+  if(err === "no code") return "That code isn't live any more — it's been used, it expired, or it ran out of tries. Send a new one.";
+  return endpointTrouble(err, detail);
 }
 /* Only the script can say a session is over. Anything else — a call that
    timed out, a script too cold to answer inside twelve seconds, a 500, an
@@ -2397,6 +2531,18 @@ function notesLockedReason(m){
 function myName(){ return (me && (me.name || "")) || ""; }
 
 var loginStep = "email", loginEmail = "";
+/* One sign-in call at a time. Neither button had a guard, and a double click
+   sent the same code twice: the script deletes the code the moment it accepts
+   it, so the second call found nothing and reported failure over a sign-in
+   that had already worked — and on a wrong code it spent two of the five
+   tries on one guess. */
+var loginBusy = false;
+/* Six digits, however they arrive. A code pasted out of an email can bring a
+   space in the middle, a non-breaking space, a hyphen, or a zero-width
+   character the mail client put there. The script hashes what it is given and
+   compares, so every one of those is simply a wrong code — and it costs one
+   of five tries to discover that. */
+function codeDigits(v){ return String(v == null ? "" : v).replace(/\D+/g, ""); }
 function openLogin(){
   loginStep = "email";
   renderLogin();
@@ -3183,14 +3329,21 @@ function ratingPair(rev, small){
 }
 /* A fetch with an end to it. Without one a request that never answers leaves
    whatever is waiting on it waiting too — which is how a progress bar gets
-   stuck. Twelve seconds is far longer than any of these calls needs, and the
+   stuck. Twelve seconds is far longer than a book lookup needs, and those
    callers all treat a failure as "found nothing", so a slow day reads as an
-   empty answer rather than a frozen form. */
-function fetchSoon(url, opts){
+   empty answer rather than a frozen form.
+   The club's own script is not a book lookup. Signing in makes it read
+   state.json out of GitHub — nine hundred kilobytes of it, most of that the
+   club's logo — and loginVerify reads it twice over, once to check membership
+   and once to build the profile. On a cold container that can pass twelve
+   seconds comfortably, and when it does, the script finishes and logs a
+   completed run while this page has already given up and called it
+   unreachable. Hence a ceiling of its own. */
+function fetchSoon(url, opts, ms){
   opts = opts || {};
   try{
     if(typeof AbortSignal !== "undefined" && AbortSignal.timeout){
-      opts.signal = AbortSignal.timeout(12000);
+      opts.signal = AbortSignal.timeout(ms || 12000);
     }
   }catch(e){}
   return fetch(url, opts);
@@ -4463,7 +4616,7 @@ async function saveMyHue(hue){
     if(note) note.textContent = hres.error === "bad colour"
       ? "The club's script hasn't been updated for custom colours yet — the five presets still work."
       : hres.error === "busy, try again" ? "Someone else was saving — try again in a moment."
-      : repoWriteTrouble(hres.error);
+      : repoWriteTrouble(hres.error, hres.detail);
     return false;
   }
   var mm3 = myMember();
@@ -5007,7 +5160,7 @@ async function profSave(extra){
   if(note) note.textContent = "Saving\u2026";
   var res = await callEndpoint("profile-set", payload);
   if(!res.ok){
-    if(note) note.textContent = profTrouble(res.error);
+    if(note) note.textContent = profTrouble(res.error, res.detail);
     return { ok: false, error: res.error };
   }
   /* the answer is what was actually stored, so the page shows that rather
@@ -5019,12 +5172,12 @@ async function profSave(extra){
   renderAll();
   return { ok: true };
 }
-function profTrouble(err){
+function profTrouble(err, detail){
   if(err === "bad colour") return "That isn\u2019t a colour it will take \u2014 use a six-digit hex like #F993FB.";
   if(err === "not a member yet") return "You aren\u2019t on the members list yet.";
   if(err === "no profile") return "This account has no profile to change yet.";
   if(err === "dev-blocked") return "This is the test site \u2014 nothing here is written down. Try it on the real site.";
-  return repoWriteTrouble(err);
+  return repoWriteTrouble(err, detail);
 }
 
 /* ---- the member's own submissions, and where each one stands */
@@ -5846,26 +5999,54 @@ document.addEventListener("click", async function(e){
   if(t.closest("#loginBack")){ loginStep = "email"; renderLogin(); return; }
   if(t.closest("#loginToSignup")){ closeScrim("loginScrim"); openMemberForm("join"); return; }
   if(t.closest("#loginSend")){
+    if(loginBusy) return;
     var lem = $("loginEmail").value.trim();
     if(!lem || lem.indexOf("@") < 1){ $("loginEmail").focus(); say("That doesn't look like an email address.", "bad"); return; }
     $("loginNote").textContent = "Sending…";
+    loginBusy = true;
+    var sendBtn = $("loginSend"); if(sendBtn) sendBtn.disabled = true;
+    /* Not retried on its own: a second request emails a second code and
+       quietly kills the first, so somebody typing the one they are looking at
+       would be told it is wrong. This one is a person's to press again. */
     var lres = await callEndpoint("login-request", { email: lem });
+    loginBusy = false;
+    sendBtn = $("loginSend"); if(sendBtn) sendBtn.disabled = false;
     if(!lres.ok){
-      $("loginNote").textContent = signInTrouble(lres.error) || "Couldn't send a code just now.";
+      $("loginNote").textContent = signInTrouble(lres.error, lres.detail) || "Couldn't send a code just now.";
       return;
     }
     loginEmail = lem; loginStep = "code"; renderLogin();
     return;
   }
   if(t.closest("#loginCheck")){
-    var lcode = $("loginCode").value.trim();
-    if(lcode.length < 6){ $("loginCode").focus(); return; }
+    if(loginBusy) return;
+    var lcode = codeDigits($("loginCode").value);
+    /* Used to return in silence on anything short of six characters, so a
+       half-typed code looked like a dead button. It also let seven characters
+       through — "123 456" pasted from an email — straight into a wrong guess. */
+    if(lcode.length !== 6){
+      $("loginCode").focus();
+      $("loginNote").textContent = "A sign-in code is six digits.";
+      return;
+    }
     $("loginNote").textContent = "Checking…";
+    loginBusy = true;
+    var ckBtn = $("loginCheck"); if(ckBtn) ckBtn.disabled = true;
     var vres = await callEndpoint("login-verify", { email: loginEmail, code: lcode });
+    loginBusy = false;
+    ckBtn = $("loginCheck"); if(ckBtn) ckBtn.disabled = false;
     if(!vres.ok){
       $("loginNote").textContent = vres.error === "expired" ? "That code has expired — send a new one."
         : vres.error === "wrong" ? "Not right. " + (vres.left ? vres.left + " tries left." : "Send a new code.")
-        : signInTrouble(vres.error) || "Couldn't sign you in.";
+        /* Only reachable after a transport failure, because that is the only
+           thing that gets a second attempt. The script had this code and no
+           longer does, so the first attempt did arrive and did accept it —
+           its answer, and the session it handed out, were lost on the way
+           back. Saying that is truer than "couldn't sign you in". */
+        : (vres.retried && vres.error === "no code")
+          ? "Your code went through, but the answer never reached this page (" +
+            (vres.firstError || "connection lost") + "). Send a new code and try again."
+        : signInTrouble(vres.error, vres.detail) || "Couldn't sign you in.";
       return;
     }
     setSessionToken(vres.token);
@@ -6118,7 +6299,7 @@ document.addEventListener("click", async function(e){
           var ares = await callEndpoint("approve-notify", { ref: jref });
           say(ares.ok
             ? (ares.already ? "Approved. They were already told." : "Approved, and they've been emailed.")
-            : "Approved, but the email didn't go: " + (endpointTrouble(ares.error) || ares.error), ares.ok ? "ok" : "bad");
+            : "Approved, but the email didn't go: " + (endpointTrouble(ares.error, ares.detail) || ares.error), ares.ok ? "ok" : "bad");
         }
       }
     }
@@ -6209,12 +6390,12 @@ document.addEventListener("click", async function(e){
     busyOff("profBar", $("profSave"), "Save profile");
     var n = $("profNote");
     if(sres.ok){
-      if(n) n.textContent = (nres.ok ? "Saved." : "Profile saved, but the reminders didn\u2019t: " + notesTrouble(nres.error)) +
+      if(n) n.textContent = (nres.ok ? "Saved." : "Profile saved, but the reminders didn\u2019t: " + notesTrouble(nres.error, nres.detail)) +
         " " + SAVED_LAG;
     }else{
       /* a failed save keeps everything on screen, and says so out loud */
-      if(n) n.textContent = profTrouble(sres.error) + " Nothing was lost \u2014 what you typed is still here.";
-      say(profTrouble(sres.error), "bad");
+      if(n) n.textContent = profTrouble(sres.error, sres.detail) + " Nothing was lost \u2014 what you typed is still here.";
+      say(profTrouble(sres.error, sres.detail), "bad");
     }
     return;
   }
@@ -6234,7 +6415,7 @@ document.addEventListener("click", async function(e){
     var picked = (notePick[kind] || []).slice();
     say("Adding…", "busy", true);
     var ares = await callEndpoint("notes-add", { token: sessionToken(), meetingId: mid, field: kind, text: val, byIds: picked });
-    if(!ares.ok){ say(notesTrouble(ares.error), "bad"); return; }
+    if(!ares.ok){ say(notesTrouble(ares.error, ares.detail), "bad"); return; }
     if(kind === "pred") m.predictions.push(noteAuthors(ares.item, state.members));
     else m.points.push(noteAuthors(ares.item, state.members));
     /* the same people stay picked for the next one, the way the name box used
@@ -6249,7 +6430,7 @@ document.addEventListener("click", async function(e){
     var key = dk === "pred" ? "predictions" : "points";
     say("Removing…", "busy", true);
     var dres = await callEndpoint("notes-del", { token: sessionToken(), meetingId: dm.id, field: dk, itemId: iid });
-    if(!dres.ok){ say(notesTrouble(dres.error), "bad"); return; }
+    if(!dres.ok){ say(notesTrouble(dres.error, dres.detail), "bad"); return; }
     dm[key] = dm[key].filter(function(x){ return x.id !== iid; });
     $("meetModalBody").innerHTML = meetingHTML(dm, bookById(dm.bookId));
     say("Removed.", "ok");
@@ -6570,7 +6751,7 @@ document.addEventListener("click", async function(e){
        so it called a months-old script current, and said so confidently while
        that script was dropping a field on every save. */
     var probe = await callEndpoint("ping", {}, tv);
-    var trouble = endpointTrouble(probe.error);
+    var trouble = endpointTrouble(probe.error, probe.detail);
     if(trouble){ say(trouble, "bad"); return; }
     say(scriptVersionNote(probe.version), scriptCurrent(probe.version) ? "ok" : "bad");
     return;
@@ -8047,8 +8228,8 @@ $("suggestForm").addEventListener("submit", async function(e){
          like a save that happened and reverted: the form closed back to the
          stored value and the only clue was a note nobody was looking at. The
          change is still here and Save can be pressed again. */
-      note.textContent = profTrouble(pres.error) + " Nothing was lost \u2014 your change is still in the form.";
-      say(profTrouble(pres.error), "bad");
+      note.textContent = profTrouble(pres.error, pres.detail) + " Nothing was lost \u2014 your change is still in the form.";
+      say(profTrouble(pres.error, pres.detail), "bad");
       profSlot = slotWas;
     }
     return;
@@ -8301,9 +8482,9 @@ async function profDropDo(){
       ? gone.title + " is off your five. " + SAVED_LAG
       /* nothing was removed, so say so rather than leave a gap on the screen
          that the file knows nothing about */
-      : profTrouble(res.error) + " It is still on your five.";
+      : profTrouble(res.error, res.detail) + " It is still on your five.";
   }
-  if(!res.ok) say(profTrouble(res.error), "bad");
+  if(!res.ok) say(profTrouble(res.error, res.detail), "bad");
 }
 
 /* Lifted out and put back in, so the ones in between shuffle along rather
