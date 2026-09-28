@@ -1312,6 +1312,33 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-f1fa97b2-1ab",
+      "kind": "suggest",
+      "at": "2026-09-28T22:19:49.308Z",
+      "payload": {
+        "title": "The Adventures of Amina Al-Sirafi",
+        "author": "Shannon A. Chakraborty",
+        "pages": 531,
+        "ageMin": 16,
+        "ageMax": 100,
+        "level": "Ages 16+",
+        "genres": [
+          "New York Times bestseller",
+          "Magic",
+          "Pirates",
+          "ancient mysteries"
+        ],
+        "blurb": "Amina al-Sirafi should be content. After a storied and scandalous career as one of the Indian Ocean’s most notorious pirates, she’s survived backstabbing rogues, vengeful merchant princes, several husbands, and one actual demon to retire peacefully with her family to a life of piety, motherhood, and absolutely nothing that hints of the supernatural.\n\nBut when she’s tracked down by the obscenely wealthy mother of a former crewman, she’s offered a job no bandit could refuse: retrieve her comrade’s kidnapped daughter for a kingly sum. The chance to have one last adventure with her crew, do right by an old friend, and win a fortune that will secure her family’s future forever? It seems like such an obvious choice that it must be God’s will.\n\nYet the deeper Amina dives, the more it becomes alarmingly clear there’s more to this job, and the girl’s disappearance, than she was led to believe. For there’s always risk in wanting to become a legend, to seize one last chance at glory, to savor just a bit more power…and the price might be your very sou",
+        "summarySource": "own",
+        "cover": "https://covers.openlibrary.org/b/id/13236045-L.jpg",
+        "by": "Saira",
+        "byId": "mb-saira",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
