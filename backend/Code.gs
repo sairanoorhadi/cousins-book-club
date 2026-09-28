@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-25d';
+var SCRIPT_VERSION = '2026-09-28a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -58,6 +58,8 @@ function propKey(name, prefix) {
 /* ------------------------------------------------------------ web endpoint */
 
 function doPost(e) {
+  /* Nothing carried over from whatever ran last in this container. */
+  stateForget();
   var body;
   try {
     body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
@@ -305,7 +307,7 @@ function memberFor(email) {
   var want = normEmail(email);
   if (!want) return null;
   var state;
-  try { state = JSON.parse(ghGetFile(STATE_PATH).content || '{}'); }
+  try { state = JSON.parse(stateRead().content || '{}'); }
   catch (err) { return null; }
   var rows = state.members || [];
   for (var i = 0; i < rows.length; i++) {
@@ -325,7 +327,7 @@ function pendingFor(email) {
   try { items = JSON.parse(ghGetFile(INBOX_PATH).content || '{"items":[]}').items || []; }
   catch (err) { return false; }
   var state;
-  try { state = JSON.parse(ghGetFile(STATE_PATH).content || '{}'); }
+  try { state = JSON.parse(stateRead().content || '{}'); }
   catch (err) { state = {}; }
   /* the site marks a submission handled by listing its id here */
   var done = state.inbox || [];
@@ -444,6 +446,10 @@ function notesAdd(payload) {
   try {
     for (var attempt = 0; attempt < 2; attempt++) {
       var file;
+      /* Straight to GitHub, not through stateRead: this needs the sha that
+         goes with the bytes it is about to change, and on a second attempt it
+         needs whatever landed in between. ghPutFile empties the memo, so a
+         read later in this execution sees the new file rather than the old. */
       try { file = ghGetFile(STATE_PATH); }
       catch (err) { return { ok: false, error: 'no github token', detail: String(err) }; }
       var state;
@@ -506,6 +512,10 @@ function notesDel(payload) {
   try {
     for (var attempt = 0; attempt < 2; attempt++) {
       var file;
+      /* Straight to GitHub, not through stateRead: this needs the sha that
+         goes with the bytes it is about to change, and on a second attempt it
+         needs whatever landed in between. ghPutFile empties the memo, so a
+         read later in this execution sees the new file rather than the old. */
       try { file = ghGetFile(STATE_PATH); }
       catch (err) { return { ok: false, error: 'no github token', detail: String(err) }; }
       var state;
@@ -563,7 +573,7 @@ function profileGet(payload) {
   if (!entry) return { ok: false, error: 'no profile' };
 
   var state;
-  try { state = JSON.parse(ghGetFile(STATE_PATH).content || '{}'); }
+  try { state = JSON.parse(stateRead().content || '{}'); }
   catch (err) { return { ok: false, error: 'unreadable state' }; }
 
   var member = (state.members || []).filter(function (m) {
@@ -618,6 +628,10 @@ function profileSet(payload) {
   try {
     for (var attempt = 0; attempt < 2; attempt++) {
       var file;
+      /* Straight to GitHub, not through stateRead: this needs the sha that
+         goes with the bytes it is about to change, and on a second attempt it
+         needs whatever landed in between. ghPutFile empties the memo, so a
+         read later in this execution sees the new file rather than the old. */
       try { file = ghGetFile(STATE_PATH); }
       catch (err) { return { ok: false, error: 'no github token', detail: String(err) }; }
       var state;
@@ -729,7 +743,7 @@ function approveNotify(payload) {
   if (!address) return { ok: false, error: 'unknown ref' };
 
   var state;
-  try { state = JSON.parse(ghGetFile(STATE_PATH).content || '{}'); }
+  try { state = JSON.parse(stateRead().content || '{}'); }
   catch (err) { return { ok: false, error: 'unreadable state' }; }
   var member = (state.members || []).filter(function (m) { return m.notifyRef === ref; })[0];
   if (!member) return { ok: false, error: 'not approved' };
@@ -932,7 +946,7 @@ function inboxItems() {
    state.json. Reading them back keeps "still waiting" honest. */
 function handledIds() {
   try {
-    var state = JSON.parse(ghGetFile(STATE_PATH).content || '{}');
+    var state = JSON.parse(stateRead().content || '{}');
     return Array.isArray(state.inbox) ? state.inbox : [];
   } catch (err) {
     return [];
@@ -1068,6 +1082,30 @@ function ghHeaders() {
   };
 }
 
+/* ------------------------------------------------ one read of the club's file
+ * state.json is nine hundred kilobytes, two hundred and twenty-six of which
+ * is the club's logo as base64. Signing in used to fetch the whole of it
+ * twice: loginVerify asks memberFor whether this address belongs to a member,
+ * then asks profileFor to build the profile, and profileFor asks memberFor
+ * again. Someone who is not a member paid for three, because pendingFor reads
+ * it as well.
+ *
+ * One execution, one read. Only the callers that read it and put it down
+ * again use this; a read-modify-write needs the live sha, so those still go
+ * straight to ghGetFile, and they say so where they do it.
+ *
+ * Emptied at the top of every doPost, so the memo can never outlive the
+ * request that filled it however Apps Script chooses to recycle the context,
+ * and emptied by ghPutFile, so nothing that reads after a write in the same
+ * execution can see what the file said before it.
+ */
+var STATE_MEMO = null;
+function stateRead() {
+  if (!STATE_MEMO) STATE_MEMO = ghGetFile(STATE_PATH);
+  return STATE_MEMO;
+}
+function stateForget() { STATE_MEMO = null; }
+
 function ghGetFile(path) {
   var res = UrlFetchApp.fetch(ghUrl(path) + '?ref=' + encodeURIComponent(REPO_BRANCH), {
     headers: ghHeaders(),
@@ -1096,6 +1134,9 @@ function ghPutFile(path, text, sha, message) {
     payload: JSON.stringify(payload),
     muteHttpExceptions: true
   });
+  /* Before the status is looked at: a failed write can still have landed, and
+     a memo that survives either outcome is a memo that can be wrong. */
+  if (path === STATE_PATH) stateForget();
   if (res.getResponseCode() >= 300) throw new Error('GitHub write failed: ' + res.getResponseCode());
 }
 
