@@ -5996,9 +5996,39 @@ function paneRecs(){
 }
 
 var meetBookFilter = "";
+/* Which book a meeting is for.
+   This was one flat list of everything the club has ever had — four books and
+   thirty-seven approved recommendations, forty-one rows — in file order, with
+   nothing saying which of them is actually being read. Worse, a select with no
+   option marked selected opens on its first row, and the first row is
+   state.books[0]: a book finished months ago. So filling the form in and
+   pressing Add meeting, without noticing that Book is the last field in the
+   grid, attached the meeting to that finished book instead of to the current
+   one — which looks exactly like not being able to add a meeting for the book
+   you just started.
+   Grouped by where a book stands, the ones being read first, and opening on
+   one of them. Everything that was selectable before still is. */
+function meetBookOptions(sel){
+  var cur = currentBooks(), nxt = nextBooks();
+  var taken = {};
+  cur.concat(nxt).forEach(function(b){ taken[b.id] = true; });
+  /* whatever is left, however its status is spelt, so nothing can fall out of
+     the list by having an unexpected one */
+  var rest = state.books.filter(function(b){ return !taken[b.id]; });
+  var groups = [["Currently reading", cur], ["Up next", nxt],
+                ["Finished", rest], ["Recommendations", approvedRecs()]];
+  /* nothing chosen yet means a new meeting: open on the book being read */
+  if(!sel && cur.length) sel = cur[0].id;
+  return groups.filter(function(g){ return g[1].length; }).map(function(g){
+    return '<optgroup label="' + esc(g[0]) + '">' +
+      g[1].map(function(b){
+        return '<option value="' + esc(b.id) + '"' + (b.id === sel ? " selected" : "") + ">" +
+          esc(b.title + " \u2014 " + b.author) + "</option>";
+      }).join("") + "</optgroup>";
+  }).join("");
+}
 function paneMeetings(){
   var all = state.meetings.slice().sort(function(a,b){ return String(b.date||"").localeCompare(String(a.date||"")); });
-  var opts = state.books.concat(approvedRecs()).map(function(b){ return { id:b.id, label:b.title + " — " + b.author }; });
   /* only books that actually have meetings, so the chips stay short */
   var withMeets = [];
   all.forEach(function(m){ if(withMeets.indexOf(m.bookId) === -1) withMeets.push(m.bookId); });
@@ -6033,7 +6063,7 @@ function paneMeetings(){
             '<div class="field"><label>Chapters covered</label><input class="input" type="text" value="' + esc(m.chapters || "") + '" data-mfield="chapters" data-mid="' + esc(m.id) + '" placeholder="Chapters 1-15" maxlength="140"></div>' +
             '<div class="field"><label>Pages covered</label><input class="input" type="text" value="' + esc(m.pages || "") + '" data-mfield="pages" data-mid="' + esc(m.id) + '" placeholder="1-240" maxlength="60"></div>') +
           '<div class="field"><label>Book</label><select class="select" data-mfield="bookId" data-mid="' + esc(m.id) + '">' +
-            opts.map(function(o){ return '<option value="' + esc(o.id) + '"' + (o.id === m.bookId ? " selected" : "") + ">" + esc(o.label) + "</option>"; }).join("") + "</select></div>" +
+            meetBookOptions(m.bookId) + "</select></div>" +
         "</div>" +
         (party ? '<p class="hint" style="margin-top:12px">Photo uploads for parties are coming with the member login.</p>' : "") +
         '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
@@ -6053,7 +6083,7 @@ function paneMeetings(){
       '<div class="field"><label for="nmChap">Chapters covered</label><input class="input" type="text" id="nmChap" placeholder="Chapters 1-15" maxlength="140"></div>' +
       '<div class="field"><label for="nmPages">Pages covered</label><input class="input" type="text" id="nmPages" placeholder="1-240" maxlength="60"></div>' +
       '<div class="field"><label for="nmBook">Book</label><select class="select" id="nmBook">' +
-        opts.map(function(o){ return '<option value="' + esc(o.id) + '">' + esc(o.label) + "</option>"; }).join("") + "</select></div>" +
+        meetBookOptions("") + "</select></div>" +
     '</div><div style="margin-top:16px"><button class="btn btn--sm btn--sky" type="button" id="nmAdd">Add meeting</button></div></div>';
 }
 
