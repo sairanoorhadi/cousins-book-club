@@ -2318,7 +2318,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-09-28a";
+var SCRIPT_WANT = "2026-09-28b";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -2511,6 +2511,9 @@ function signInTrouble(err, detail){
      step, and none of them was being said at all — they fell through to
      "Couldn't sign you in." */
   if(err === "no code") return "That code isn't live any more — it's been used, it expired, or it ran out of tries. Send a new one.";
+  /* The script's own gap between codes, which the page's wait mirrors but
+     cannot enforce: anything at all can post to the endpoint. */
+  if(err === "too soon") return "A code has only just gone out to that address — give it a moment before asking for another.";
   return endpointTrouble(err, detail);
 }
 /* Only the script can say a session is over. Anything else — a call that
@@ -2593,7 +2596,16 @@ function coolLeft(){
   return left > 0 ? left : 0;
 }
 function coolClear(){ try{ localStorage.removeItem(LOGIN_COOL_KEY); }catch(e){} }
-function coolStart(){ try{ localStorage.setItem(LOGIN_COOL_KEY, String(Date.now())); }catch(e){} coolPaint(); }
+function coolStart(){ coolStartFor(LOGIN_COOL_MS); }
+/* The script keeps its own gap between codes and says how much of it is left.
+   When it answers "too soon", its clock is the one that decides, so the button
+   is set to agree with it rather than starting a fresh wait of its own —
+   otherwise the button could come back while the script is still refusing. */
+function coolStartFor(ms){
+  ms = Math.max(0, Math.min(LOGIN_COOL_MS, Number(ms) || 0));
+  try{ localStorage.setItem(LOGIN_COOL_KEY, String(Date.now() - (LOGIN_COOL_MS - ms))); }catch(e){}
+  coolPaint();
+}
 
 var loginCoolTimer = null;
 /* Counts down on the button itself. A button that is simply dead looks
@@ -6218,6 +6230,9 @@ document.addEventListener("click", async function(e){
        thirty seconds to correct a typo in their address would be a punishment
        for the script's answer rather than for pressing twice. */
     if(lres.ok || endpointWorthRetry(lres)) coolStart();
+    /* Turned away by the script's own gap: it knows how much of it is left, so
+       the button is put in step with that rather than starting again. */
+    else if(lres.error === "too soon") coolStartFor((Number(lres.wait) || 0) * 1000);
     if(!lres.ok){
       $("loginNote").textContent = signInTrouble(lres.error, lres.detail) || "Couldn't send a code just now.";
       coolPaint();

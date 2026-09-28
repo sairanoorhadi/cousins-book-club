@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-28a';
+var SCRIPT_VERSION = '2026-09-28b';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -190,6 +190,10 @@ function maskEmail(address) {
 
 var CODE_MINUTES = 10;
 var CODE_TRIES = 5;
+/* The shortest gap between two codes to one address. The page waits this long
+   too, but the page is a suggestion: anything at all can post to the /exec
+   URL, and every code is an email out of the script's daily allowance. */
+var CODE_GAP_MS = 30000;
 var SESSION_DAYS = 30;
 
 function normEmail(s) {
@@ -231,12 +235,34 @@ function loginRequest(payload) {
     return { ok: false, error: pendingFor(email) ? 'pending' : 'not a member' };
   }
 
+  /* One code per address per half-minute.
+     Its own key rather than a field on the code record: that record is deleted
+     on a successful sign-in and again after five wrong guesses, so a throttle
+     kept inside it could be cleared by burning guesses.
+     After the membership check and never before. loginRequest answers
+     identically for everyone it will not send to, so it cannot be used to find
+     out who is in the club; a "too soon" reaching somebody ahead of that check
+     would tell them the address is a member's.
+     A stamp from the future is the clock having moved, not a wait owed — the
+     same reading the page takes of its own. */
+  var store = PropertiesService.getScriptProperties();
+  var lastSent = Number(store.getProperty('sent:' + email) || 0);
+  var since = Date.now() - lastSent;
+  if (lastSent && since >= 0 && since < CODE_GAP_MS) {
+    return { ok: false, error: 'too soon',
+             wait: Math.ceil((CODE_GAP_MS - since) / 1000) };
+  }
+
   var code = String(Math.floor(100000 + Math.random() * 900000));
-  PropertiesService.getScriptProperties().setProperty('code:' + email, JSON.stringify({
+  store.setProperty('code:' + email, JSON.stringify({
     hash: hashCode(code, email),
     expires: Date.now() + CODE_MINUTES * 60000,
     tries: 0
   }));
+  /* Stamped before the send rather than after it. What is being rationed is
+     the allowance, and a send that throws may still have gone out; thirty
+     seconds is a small price against letting a failing send be hammered. */
+  store.setProperty('sent:' + email, String(Date.now()));
 
   MailApp.sendEmail({
     to: email,

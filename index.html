@@ -122,6 +122,8 @@ img{max-width:100%;display:block}
 /* The sign-in card's two ways on: a code for an account that exists, and a way
    to make one. Opposite ends of the row so neither is taken for the other. */
 .loginact{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:18px}
+/* what shares the left-hand end with the way back */
+.loginact__aside{display:flex;gap:12px;flex-wrap:wrap;align-items:center;min-width:0}
 /* ---- members ---- */
 /* Two profiles abreast, the next pair under them. One column below 1000px,
    where half a screen is not enough for a shelf of five. */
@@ -2315,7 +2317,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-09-28a";
+var SCRIPT_WANT = "2026-09-28b";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -2508,6 +2510,9 @@ function signInTrouble(err, detail){
      step, and none of them was being said at all — they fell through to
      "Couldn't sign you in." */
   if(err === "no code") return "That code isn't live any more — it's been used, it expired, or it ran out of tries. Send a new one.";
+  /* The script's own gap between codes, which the page's wait mirrors but
+     cannot enforce: anything at all can post to the endpoint. */
+  if(err === "too soon") return "A code has only just gone out to that address — give it a moment before asking for another.";
   return endpointTrouble(err, detail);
 }
 /* Only the script can say a session is over. Anything else — a call that
@@ -2567,6 +2572,64 @@ var loginBusy = false;
    compares, so every one of those is simply a wrong code — and it costs one
    of five tries to discover that. */
 function codeDigits(v){ return String(v == null ? "" : v).replace(/\D+/g, ""); }
+
+/* ---- the wait between codes
+   Every code is an email out of the script's daily allowance, and the button
+   invites a second press: the first one takes a few seconds and says little
+   while it does. Thirty seconds, kept in localStorage rather than a variable,
+   so it survives going back to change the address and survives a refresh —
+   both of which redraw the card from nothing.
+   It is deliberately one wait for the button rather than one per address: the
+   allowance it is protecting is the club's, not an address's. */
+var LOGIN_COOL_MS = 30000;
+var LOGIN_COOL_KEY = "marginNotes.codeAt";
+function coolLeft(){
+  var at = 0;
+  try{ at = Number(localStorage.getItem(LOGIN_COOL_KEY) || 0); }catch(e){ return 0; }
+  if(!at) return 0;
+  var left = LOGIN_COOL_MS - (Date.now() - at);
+  /* A stamp from the future means the clock moved, not that thirty seconds
+     are owed. Locking someone out of signing in over a wrong clock is a far
+     worse failure than letting one extra code through. */
+  if(left > LOGIN_COOL_MS){ coolClear(); return 0; }
+  return left > 0 ? left : 0;
+}
+function coolClear(){ try{ localStorage.removeItem(LOGIN_COOL_KEY); }catch(e){} }
+function coolStart(){ coolStartFor(LOGIN_COOL_MS); }
+/* The script keeps its own gap between codes and says how much of it is left.
+   When it answers "too soon", its clock is the one that decides, so the button
+   is set to agree with it rather than starting a fresh wait of its own —
+   otherwise the button could come back while the script is still refusing. */
+function coolStartFor(ms){
+  ms = Math.max(0, Math.min(LOGIN_COOL_MS, Number(ms) || 0));
+  try{ localStorage.setItem(LOGIN_COOL_KEY, String(Date.now() - (LOGIN_COOL_MS - ms))); }catch(e){}
+  coolPaint();
+}
+
+var loginCoolTimer = null;
+/* Counts down on the button itself. A button that is simply dead looks
+   broken; one that says how long it will be for does not. */
+function coolPaint(){
+  if(loginCoolTimer){ clearInterval(loginCoolTimer); loginCoolTimer = null; }
+  tick();
+  if(coolLeft() > 0) loginCoolTimer = setInterval(tick, 250);
+  function tick(){
+    var b = $("loginSend");
+    /* the card has been redrawn as something else, or is gone */
+    if(!b){ if(loginCoolTimer){ clearInterval(loginCoolTimer); loginCoolTimer = null; } return; }
+    /* while it is actually sending, the sending state owns the label */
+    if(loginBusy) return;
+    var left = coolLeft();
+    if(left > 0){
+      b.disabled = true;
+      b.textContent = "Resend in " + Math.ceil(left / 1000) + "s";
+    }else{
+      b.disabled = false;
+      b.textContent = "Send me a code";
+      if(loginCoolTimer){ clearInterval(loginCoolTimer); loginCoolTimer = null; }
+    }
+  }
+}
 function openLogin(){
   loginStep = "email";
   renderLogin();
@@ -2597,14 +2660,19 @@ function renderLogin(){
            down by the buttons where it read as a comment on the pressing */
         '<span class="hint loginrow__note" id="loginNote"></span>' +
       "</div>" +
+      '<div class="lookbar" id="loginBar" role="status" aria-label="Sending your code" hidden><span></span></div>' +
       /* the two ways out of this card, at opposite ends of the row and in
          different colours: one sends a code to an account that exists, the
-         other is for not having one yet */
+         other is for not having one yet. Carrying on is the right-hand one,
+         which is where a hand goes without being told. */
       '<div class="loginact">' +
-        '<button class="btn btn--surf" type="button" id="loginSend">Send me a code</button>' +
         '<button class="btn btn--grape" type="button" id="loginToSignup">Sign up</button>' +
+        '<button class="btn btn--surf" type="button" id="loginSend">Send me a code</button>' +
       "</div>" +
       '<p class="hint" style="margin-top:16px">Your address is kept privately by the organiser and never published on this site.</p>';
+    /* redrawn from nothing every time, so the wait is put back on it here
+       rather than being something the button remembers */
+    coolPaint();
   }else{
     body.innerHTML =
       '<p class="eyebrow">Check your email</p><h3 style="font-size:24px;margin:8px 0 6px">Enter your code</h3>' +
@@ -2612,10 +2680,17 @@ function renderLogin(){
       '<div class="field" style="margin-top:18px"><label for="loginCode">Six-digit code</label>' +
         '<input class="input mono" id="loginCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" ' +
         'style="font-size:26px;letter-spacing:.32em;text-align:center"></div>' +
-      '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px">' +
+      '<div class="lookbar" id="loginBar" role="status" aria-label="Checking your code" hidden><span></span></div>' +
+      /* Same row as the card before it, so carrying on is in the same place
+         both times. Going back keeps the size and the quietness it had; it
+         has only moved. */
+      '<div class="loginact">' +
+        '<span class="loginact__aside">' +
+          '<button class="btn btn--ghost btn--sm" type="button" id="loginBack">Use a different email</button>' +
+          '<span class="hint" id="loginNote"></span>' +
+        "</span>" +
         '<button class="btn btn--surf" type="button" id="loginCheck">Sign in</button>' +
-        '<button class="btn btn--ghost btn--sm" type="button" id="loginBack">Use a different email</button>' +
-        '<span class="hint" id="loginNote"></span></div>';
+      "</div>";
     setTimeout(function(){ var c = $("loginCode"); if(c) c.focus(); }, 60);
   }
 }
@@ -6136,20 +6211,30 @@ document.addEventListener("click", async function(e){
   if(t.closest("#loginBack")){ loginStep = "email"; renderLogin(); return; }
   if(t.closest("#loginToSignup")){ closeScrim("loginScrim"); openMemberForm("join"); return; }
   if(t.closest("#loginSend")){
-    if(loginBusy) return;
+    if(loginBusy || coolLeft() > 0) return;
     var lem = $("loginEmail").value.trim();
     if(!lem || lem.indexOf("@") < 1){ $("loginEmail").focus(); say("That doesn't look like an email address.", "bad"); return; }
     $("loginNote").textContent = "Sending…";
     loginBusy = true;
-    var sendBtn = $("loginSend"); if(sendBtn) sendBtn.disabled = true;
+    busyOn("loginBar", $("loginSend"), "Sending\u2026");
     /* Not retried on its own: a second request emails a second code and
        quietly kills the first, so somebody typing the one they are looking at
        would be told it is wrong. This one is a person's to press again. */
     var lres = await callEndpoint("login-request", { email: lem });
     loginBusy = false;
-    sendBtn = $("loginSend"); if(sendBtn) sendBtn.disabled = false;
+    busyOff("loginBar", $("loginSend"), "Send me a code");
+    /* The wait is about not sending a second email, so it starts when one was
+       sent — or when we cannot know, which is what a transport failure means.
+       A flat no from the script sent nothing at all, and making somebody wait
+       thirty seconds to correct a typo in their address would be a punishment
+       for the script's answer rather than for pressing twice. */
+    if(lres.ok || endpointWorthRetry(lres)) coolStart();
+    /* Turned away by the script's own gap: it knows how much of it is left, so
+       the button is put in step with that rather than starting again. */
+    else if(lres.error === "too soon") coolStartFor((Number(lres.wait) || 0) * 1000);
     if(!lres.ok){
       $("loginNote").textContent = signInTrouble(lres.error, lres.detail) || "Couldn't send a code just now.";
+      coolPaint();
       return;
     }
     loginEmail = lem; loginStep = "code"; renderLogin();
@@ -6168,10 +6253,13 @@ document.addEventListener("click", async function(e){
     }
     $("loginNote").textContent = "Checking…";
     loginBusy = true;
-    var ckBtn = $("loginCheck"); if(ckBtn) ckBtn.disabled = true;
+    /* The same bar the rest of the site uses, and the button out of reach
+       while it runs: a second press here is a second guess against the five
+       a code allows. */
+    busyOn("loginBar", $("loginCheck"), "Checking\u2026");
     var vres = await callEndpoint("login-verify", { email: loginEmail, code: lcode });
     loginBusy = false;
-    ckBtn = $("loginCheck"); if(ckBtn) ckBtn.disabled = false;
+    busyOff("loginBar", $("loginCheck"), "Sign in");
     if(!vres.ok){
       $("loginNote").textContent = vres.error === "expired" ? "That code has expired — send a new one."
         : vres.error === "wrong" ? "Not right. " + (vres.left ? vres.left + " tries left." : "Send a new code.")
