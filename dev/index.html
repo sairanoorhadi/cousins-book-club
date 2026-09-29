@@ -79,6 +79,9 @@ img{max-width:100%;display:block}
 
 /* ============ chrome ============ */
 .topbar{position:sticky;top:0;z-index:60;background:var(--paper);border-bottom:2px solid var(--edge)}
+/* under the topbar (60) so the header stays readable, over everything else */
+.menuback{display:none;position:fixed;inset:0;z-index:55;background:rgba(12,8,32,.66);
+  background:color-mix(in srgb, var(--ink) 62%, transparent);backdrop-filter:blur(2px)}
 /* the header stays on screen, so anything else that sticks has to clear it */
 :root{--topbar-h:66px}
 .topbar__in{display:flex;align-items:center;gap:20px;min-height:64px}
@@ -1133,8 +1136,21 @@ a.getrow:hover{background:var(--sunk)}
 }
 @media (max-width:620px){
   body{font-size:16px}
-  .topbar__in{padding:12px 0;flex-wrap:wrap}
+  /* Below this width the topbar wraps and the nav drops to its own row,
+     left-aligned — so the burger is nowhere near the right edge. The panel
+     hung off the burger with right:0, which put a 200px panel at -63px and
+     clipped every item. It anchors to the header's content width instead,
+     which fits at any width and needs no guess about where the burger
+     ended up. */
+  .topbar__in{padding:12px 0;flex-wrap:wrap;position:relative}
   .navlinks{margin-left:0;width:100%}
+  .menu{position:static}
+  /* 24px in on each side, so it lines up with the page's own gutter — an
+     absolutely positioned box resolves against the padding box, so left:0
+     would sit flush against the screen edge rather than the content. */
+  .menu__panel{left:24px;right:24px;min-width:0;top:calc(100% + 8px);
+    max-height:calc(100vh - var(--topbar-h) - 40px);overflow:auto}
+  .menuback{display:block}
   .section{padding:44px 0}
 }
 @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms !important;animation-duration:.01ms !important}}
@@ -1449,6 +1465,10 @@ a.getrow:hover{background:var(--sunk)}
 }
 </script>
 
+<!-- Dims the page behind the menu on narrow screens, where the panel spans
+     the width and reads as an overlay rather than a dropdown. A click on it
+     closes the menu through the same outside-click handler as anywhere else. -->
+<div class="menuback" id="menuBack" hidden></div>
 <div class="topbar">
   <div class="wrap topbar__in">
     <!-- A real anchor to ./ so it is a link in every sense: it focuses with
@@ -6242,15 +6262,17 @@ function paintMenuSession(){
   b.textContent = me ? "Sign out" : "Sign in";
 }
 function menuShut(){
-  var p = $("menuPanel"), b = $("menuOpen");
+  var p = $("menuPanel"), b = $("menuOpen"), back = $("menuBack");
   if(p) p.hidden = true;
+  if(back) back.hidden = true;
   if(b) b.setAttribute("aria-expanded", "false");
 }
 function menuToggle(){
-  var p = $("menuPanel"), b = $("menuOpen");
+  var p = $("menuPanel"), b = $("menuOpen"), back = $("menuBack");
   if(!p || !b) return;
   var opening = p.hidden;
   p.hidden = !opening;
+  if(back) back.hidden = !opening;
   b.setAttribute("aria-expanded", opening ? "true" : "false");
   if(opening){ var first = p.querySelector(".menu__item"); if(first) first.focus(); }
 }
