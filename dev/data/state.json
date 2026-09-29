@@ -1,5 +1,5 @@
 {
-  "rev": 1330,
+  "rev": 1331,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -793,6 +793,21 @@
       ],
       "sent": {},
       "ready": []
+    },
+    {
+      "id": "mt-mumv66r5st1r2",
+      "bookId": "bk-mt7pvx697h34g",
+      "kind": "meeting",
+      "date": "2026-09-30",
+      "time": "19:00",
+      "place": "",
+      "chapters": "",
+      "pages": "",
+      "done": false,
+      "summary": "",
+      "photos": [],
+      "predictions": [],
+      "points": []
     }
   ],
   "recs": [
