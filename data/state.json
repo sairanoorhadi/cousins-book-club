@@ -1,5 +1,5 @@
 {
-  "rev": 1448,
+  "rev": 1449,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1945,8 +1945,7 @@
       "ageMax": 100,
       "genres": [
         "Fantasy",
-        "Science Fiction Fantasy",
-        "Adult",
+        "Science Fiction",
         "High Fantasy",
         "Romance"
       ],
