@@ -1393,6 +1393,19 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "join-c5f55485-911",
+      "kind": "join",
+      "at": "2026-09-29T23:49:10.897Z",
+      "payload": {
+        "name": "hadiqa ahmad",
+        "fable": "",
+        "goodreads": "",
+        "note": "No",
+        "emailRef": "sub-f98b5c83-6cc",
+        "emailHint": "h••••@gmail.com"
+      }
     }
   ]
 }
