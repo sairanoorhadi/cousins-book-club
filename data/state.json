@@ -1,5 +1,5 @@
 {
-  "rev": 1448,
+  "rev": 1452,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1945,8 +1945,7 @@
       "ageMax": 100,
       "genres": [
         "Fantasy",
-        "Science Fiction Fantasy",
-        "Adult",
+        "Science Fiction",
         "High Fantasy",
         "Romance"
       ],
@@ -1968,6 +1967,71 @@
         }
       ],
       "level": "Ages 18+"
+    },
+    {
+      "id": "suggest-f1fa97b2-1ab",
+      "title": "The Adventures of Amina Al-Sirafi",
+      "author": "Shannon A. Chakraborty",
+      "pages": 531,
+      "ageMin": 16,
+      "ageMax": 100,
+      "genres": [
+        "Magic",
+        "Pirates",
+        "Ancient",
+        "Mystery",
+        "Fantasy"
+      ],
+      "by": "Saira",
+      "byId": "mb-saira",
+      "status": "approved",
+      "at": "2026-09-28",
+      "cover": "https://covers.openlibrary.org/b/id/13236045-L.jpg",
+      "blurb": "Amina al-Sirafi should be content. After a storied and scandalous career as one of the Indian Ocean’s most notorious pirates, she’s survived backstabbing rogues, vengeful merchant princes, several husbands, and one actual demon to retire peacefully with her family to a life of piety, motherhood, and absolutely nothing that hints of the supernatural.\n\nBut when she’s tracked down by the obscenely wealthy mother of a former crewman, she’s offered a job no bandit could refuse: retrieve her comrade’s kidnapped daughter for a kingly sum. The chance to have one last adventure with her crew, do right by an old friend, and win a fortune that will secure her family’s future forever? It seems like such an obvious choice that it must be God’s will.\n\nYet the deeper Amina dives, the more it becomes alarmingly clear there’s more to this job, and the girl’s disappearance, than she was led to believe. For there’s always risk in wanting to become a legend, to seize one last chance at glory, to savor just a bit more power…and the price might be your very sou",
+      "summarySource": "own",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [
+        {
+          "score": 4.24,
+          "source": "Goodreads"
+        }
+      ],
+      "level": "Ages 16+"
+    },
+    {
+      "id": "suggest-b8ecd213-ef9",
+      "title": "The Grimoire of Grave Fates",
+      "author": "Hanna Alkaf and Margaret Owen",
+      "pages": 449,
+      "ageMin": 12,
+      "ageMax": 100,
+      "genres": [
+        "Fantasy",
+        "Mystery",
+        "Dark",
+        "Academia"
+      ],
+      "by": "Saira",
+      "byId": "mb-saira",
+      "status": "approved",
+      "at": "2026-09-29",
+      "cover": "https://m.media-amazon.com/images/I/91S8rOK03+L._UF1000,1000_QL80_.jpg",
+      "blurb": "Crack open your spell book and enter the world of the illustrious Galileo Academy for the Extraordinary. There's been a murder on campus, and it's up to the students of Galileo to solve it. Follow 18 authors and 18 students as they puzzle out the clues and find the guilty party.\n\nProfessor of Magical History Septimius Dropwort has just been murdered, and now everyone at the Galileo Academy for the Extraordinary is a suspect.\n\nA prestigious school for young magicians, the Galileo Academy has recently undergone a comprehensive overhaul, reinventing itself as a roaming academy in which students of all cultures and identities are celebrated. In this new Galileo, every pupil is welcome—but there are some who aren't so happy with the recent changes. That includes everyone's least favorite professor, Septimius Dropwort, a stodgy old man known for his harsh rules and harsher punishments. But when the professor's body is discovered on school grounds with a mysterious note clenched in his lifeless hand, the Academy's students must solve the murder themselves, because everyone's a suspect.\n\nTold from more than a dozen alternating and diverse perspectives, The Grimoire of Grave Fates follows Galileo's best and brightest young magicians as they race to discover the truth behind Dropwort's mysterious death. Each one of them is confident that only they have the skills needed to unravel the web of secrets hidden within Galileo's halls. But they're about to discover that even for straight-A students, magic doesn't always play by the rules. . . .",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [
+        {
+          "score": 3.33,
+          "source": "Goodreads"
+        }
+      ],
+      "level": "Ages 12+"
     }
   ],
   "inbox": [
@@ -2066,6 +2130,9 @@
     "suggest-7bc66727-47a",
     "suggest-880508de-751",
     "endorse-63278b94-09e",
-    "endorse-302bf781-f43"
+    "endorse-302bf781-f43",
+    "suggest-f1fa97b2-1ab",
+    "suggest-eb5fc82a-308",
+    "suggest-b8ecd213-ef9"
   ]
 }
