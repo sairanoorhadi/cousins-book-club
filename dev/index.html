@@ -251,15 +251,30 @@ img{max-width:100%;display:block}
 
 /* ============ hero ============ */
 .hero{padding:52px 0 44px;border-bottom:2px solid var(--edge)}
-.hero__grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(290px,1fr);gap:36px;align-items:start}
-.hero__main{display:grid;grid-template-columns:172px minmax(0,1fr);gap:30px;align-items:start}
+.hero__grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(290px,1fr);
+  column-gap:36px;row-gap:16px;align-items:start}
+/* Two rows: cover + title block, then Get the book + the progress bar. The
+   second row is what puts those two on one line. */
+.hero__main{display:grid;grid-template-columns:172px minmax(0,1fr);
+  column-gap:30px;row-gap:16px;align-items:start}
+.hero__head{min-width:0}
+/* level with the button beside it rather than hard against the top */
+.hero__prog{align-self:center;min-width:0}
+.hero__prog .progress{margin-top:0}
 .hero__cover{width:172px;box-shadow:var(--shadow);cursor:pointer;transition:transform .14s ease, box-shadow .14s ease}
 .hero__cover:hover{transform:translate(-3px,-3px);box-shadow:7px 7px 0 var(--stamp)}
 .hero h1{font-size:clamp(32px,4.6vw,52px);margin:12px 0 0;cursor:pointer;display:inline-block;text-decoration:3px underline transparent;text-underline-offset:8px;transition:text-decoration-color .15s ease}
 .hero h1:hover{text-decoration-color:var(--flare)}
 .hero__author{font-size:19px;color:var(--muted);margin-top:8px;font-style:italic}
-.hero__facts{display:flex;flex-wrap:wrap;gap:7px;margin-top:18px}
-.hero__blurb{grid-column:1/-1;margin:22px 0 0;max-width:none}
+.hero__facts{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:14px}
+/* Wraps inside itself rather than pushing past the column. Nowrap made it
+   272px in a 204px column on a phone, which took the whole page sideways.
+   The label drops under the stars instead. */
+.ratechip{display:inline-flex;align-items:center;flex-wrap:wrap;gap:3px 8px;max-width:100%;
+  border:1.5px solid var(--hairline);border-radius:999px;padding:3px 11px 3px 9px}
+.ratechip .review__stars{flex-wrap:nowrap}
+.ratechip__k{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.hero__blurb{grid-column:1/-1;margin:0;max-width:none}
 .hero__cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
 
 .progress{margin-top:18px;max-width:460px}
@@ -270,7 +285,7 @@ img{max-width:100%;display:block}
 /* ---- "Get the book" ----
    Sits under the cover, the cover's width, and carries the same top margin as
    the progress bar beside it so the two line up across the hero. */
-.getbtn{display:block;width:100%;margin-top:18px;text-align:left;padding:11px 13px;
+.getbtn{display:block;width:100%;text-align:left;padding:11px 13px;
   border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);color:var(--ink);
   box-shadow:var(--shadow-sm);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease}
 .getbtn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--stamp)}
@@ -1119,7 +1134,7 @@ a.getrow:hover{background:var(--sunk)}
 .foot{padding:34px 0 54px;color:var(--muted);font-size:13.5px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 @media (max-width:960px){
-  .hero__grid{grid-template-columns:1fr;gap:28px}
+  .hero__grid{grid-template-columns:1fr;column-gap:28px;row-gap:16px}
   /* One column stacks main, side column, summary — which reads the summary
      after the meeting card. It belongs with the book it describes, so the
      side column is pushed past it. Nothing moves on two columns, where the
@@ -1540,21 +1555,22 @@ a.getrow:hover{background:var(--sunk)}
            rest of the time. -->
       <div id="heroFlag" hidden></div>
       <div class="hero__grid">
+        <!-- Two columns, two rows: the cover beside the title block, then
+             "Get the book" beside the progress bar. They share a grid row, so
+             they sit on one line without anyone guessing at heights. -->
         <div class="hero__main swipe" id="heroSwipe">
-          <div>
-            <div class="hero__cover cover-wrap" id="heroCover"></div>
-            <!-- Where to get hold of the book. Hidden unless the organiser has
-                 put something there, so the column is the bare cover the rest
-                 of the time. -->
-            <button class="getbtn" type="button" id="heroGet" hidden></button>
-          </div>
-          <div>
+          <div class="hero__cover cover-wrap" id="heroCover"></div>
+          <div class="hero__head">
             <div class="cyc" id="heroCyc"></div>
             <h1 id="heroTitle">—</h1>
             <p class="hero__author" id="heroAuthor"></p>
+            <!-- tags and the community's score share one wrapping row, so a
+                 lone tag does not take a line of its own -->
             <div class="hero__facts tagbank" id="heroFacts"></div>
-            <div id="heroProgress"></div>
           </div>
+          <!-- Hidden unless the organiser has put something there. -->
+          <button class="getbtn" type="button" id="heroGet" hidden></button>
+          <div class="hero__prog" id="heroProgress"></div>
         </div>
         <div class="stack" style="gap:18px">
           <aside class="meetcard swipe" id="meetSwipe">
@@ -3857,6 +3873,14 @@ function renderHero(){
     var facts = ['<span class="tag tag--zest mono">' + esc(book.pages || "?") + " pages</span>",
                  '<span class="tag tag--surf">' + esc(levelText(book)) + "</span>"];
     (book.genres || []).forEach(function(g){ facts.push('<span class="tag">' + esc(g) + "</span>"); });
+    /* What readers elsewhere gave it, on the end of the same wrapping row.
+       Not the club's own score: that is the verdict after finishing, and the
+       book on the hero is one nobody has finished. */
+    var comm = Number((book.review || {}).community) || 0;
+    if(comm > 0){
+      facts.push('<span class="ratechip"><span class="ratechip__k">Reading Community</span>' +
+        '<span class="review__stars">' + stars(comm, true) + "</span></span>");
+    }
     $("heroFacts").innerHTML = facts.join("");
     $("heroBlurb").textContent = book.blurb || "";
 
@@ -6483,6 +6507,19 @@ function bookEditor(b){
                 ((b.members || []).indexOf(m.id) !== -1 ? " checked" : "") + ">" + esc(m.name) + "</label>";
             }).join("") + "</div>"
           : '<p class="hint">Add members on the Members tab first.</p>') + "</div>" +
+      /* The club's own rating belongs to a finished book. The community's
+         does not — it is what readers elsewhere gave it, and the hero shows
+         it while the club is still reading, so it has to be settable before
+         the book is done. */
+      (b.status !== "past"
+        ? '<div class="field" style="margin-top:16px"><label>Reading Community rating</label>' +
+          '<div class="ratepick">' +
+            '<input type="range" min="0" max="5" step="0.1" value="' + clampRating(r.community) + '" ' +
+              'data-bfield="community" data-bid="' + esc(b.id) + '" aria-label="Reading Community rating out of 5">' +
+            '<span class="ratepick__out" data-rateout="c:' + esc(b.id) + '">' + clampRating(r.community).toFixed(1) + " / 5</span>" +
+            '<span data-ratestars="c:' + esc(b.id) + '">' + stars(r.community, true) + "</span></div>" +
+          '<p class="hint">Shows beside the tags on the front page. Set it to 0 to hide it.</p></div>'
+        : "") +
       (b.status === "past"
         ? '<hr class="divider" style="margin:22px 0"><div class="formgrid">' +
           '<div class="field"><label>Club rating</label><div class="ratepick">' +
