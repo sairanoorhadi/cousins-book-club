@@ -259,7 +259,7 @@ img{max-width:100%;display:block}
 .hero h1:hover{text-decoration-color:var(--flare)}
 .hero__author{font-size:19px;color:var(--muted);margin-top:8px;font-style:italic}
 .hero__facts{display:flex;flex-wrap:wrap;gap:7px;margin-top:18px}
-.hero__blurb{margin-top:20px;max-width:58ch}
+.hero__blurb{grid-column:1/-1;margin:22px 0 0;max-width:none}
 .hero__cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
 
 .progress{margin-top:18px;max-width:460px}
@@ -306,10 +306,31 @@ a.getrow:hover{background:var(--sunk)}
 .meetcard__top{background:var(--sky);color:var(--on-sky);padding:13px 20px;border-bottom:2px solid var(--edge)}
 .meetcard__top .eyebrow{color:inherit;opacity:.92}
 .meetcard__body{padding:20px}
-.meetcard__date{font-family:var(--f-display);font-weight:800;font-size:27px;line-height:1.1;letter-spacing:-.02em}
+/* One size for every meeting card, chosen so the longest date this can
+   produce — "Wednesday, September 30, 2026" — stays on one line in the
+   narrowest card the layout makes, rather than some cards reading larger
+   than others depending on the month they landed in. */
+.meetcard__date{font-family:var(--f-display);font-weight:800;font-size:25px;line-height:1.15;letter-spacing:-.02em}
 .meetcard__row{display:flex;gap:10px;align-items:baseline;margin-top:11px;font-size:15px}
 .meetcard__row .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);min-width:74px;flex:none}
-.countdown{display:inline-flex;align-items:baseline;gap:7px;margin-top:14px;background:var(--zest);color:var(--on-zest);border:2px solid var(--edge);border-radius:999px;padding:5px 14px;font-family:var(--f-mono);font-size:12.5px}
+.countdown{display:inline-flex;align-items:baseline;gap:7px;background:var(--zest);color:var(--on-zest);border:2px solid var(--edge);border-radius:999px;padding:5px 14px;font-family:var(--f-mono);font-size:12.5px}
+/* the countdown and what you can do about it, together near the top */
+.meetcard__act{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 4px}
+.meetcard__go{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;min-width:0;flex:1 1 auto}
+.meetcard__go .btn{min-width:0;padding-left:11px;padding-right:11px;text-align:left}
+.meetcard__go .bellbtn{flex:none}
+.meetcard__dot{color:var(--muted)}
+.bellbtn{flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;
+  border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer;
+  box-shadow:2px 2px 0 var(--stamp);transition:transform .12s ease,box-shadow .12s ease}
+.bellbtn:hover{background:var(--zest);color:var(--on-zest);transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--stamp)}
+/* who has finished the section */
+.meetcard__row--ready{align-items:center}
+.readyrow{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.readyface{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:none;
+  border-radius:50%;border:2px solid var(--edge);background:var(--c,var(--sky));color:var(--cf,var(--on-sky));
+  font-family:var(--f-display);font-weight:800;font-size:11px;overflow:hidden;cursor:default}
+.readyface img{width:100%;height:100%;object-fit:cover}
 
 .upnext{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
 .upnext[hidden]{display:none}
@@ -1099,6 +1120,11 @@ a.getrow:hover{background:var(--sunk)}
 
 @media (max-width:960px){
   .hero__grid{grid-template-columns:1fr;gap:28px}
+  /* One column stacks main, side column, summary — which reads the summary
+     after the meeting card. It belongs with the book it describes, so the
+     side column is pushed past it. Nothing moves on two columns, where the
+     summary is a row of its own underneath both. */
+  .hero__grid > .stack{order:1}
 }
 /* Below this the two boxes stop fitting side by side: the fields would be
    squeezed until the title row broke onto two lines. The form goes back to
@@ -1528,11 +1554,6 @@ a.getrow:hover{background:var(--sunk)}
             <p class="hero__author" id="heroAuthor"></p>
             <div class="hero__facts tagbank" id="heroFacts"></div>
             <div id="heroProgress"></div>
-            <p class="hero__blurb" id="heroBlurb"></p>
-            <div class="hero__cta">
-              <button class="btn btn--flare" id="heroDetails" type="button">See meeting notes &rarr;</button>
-              <button class="btn btn--ghost" id="heroPrevMeets" type="button">Meetings</button>
-            </div>
           </div>
         </div>
         <div class="stack" style="gap:18px">
@@ -1542,6 +1563,11 @@ a.getrow:hover{background:var(--sunk)}
           </aside>
           <aside class="upnext" id="upNext"></aside>
         </div>
+        <!-- Its own row across the whole grid, so a long summary uses the
+             width under the cover and under the meeting card instead of
+             scrolling in a narrow column. On one column it is simply the
+             full width of that column. -->
+        <p class="hero__blurb" id="heroBlurb"></p>
       </div>
     </div>
   </section>
@@ -2016,6 +2042,15 @@ function parseDate(iso){
   return isNaN(d.getTime()) ? null : d;
 }
 function longDate(iso){ var d = parseDate(iso); return d ? DAYS[d.getDay()] + ", " + MONTHS[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear() : "Date to be confirmed"; }
+/* "Wed, Sep 30, 2026". The meeting card's heading has about 270px to work
+   with at its narrowest, and the full form needs 14px to fit that on one
+   line — smaller than the time printed under it. Shortened, the same line
+   fits at 25px and reads as a heading again. */
+function cardDate(iso){
+  var d = parseDate(iso);
+  return d ? DAYS[d.getDay()].slice(0, 3) + ", " + MONTHS[d.getMonth()].slice(0, 3) + " " +
+    d.getDate() + ", " + d.getFullYear() : "Date to be confirmed";
+}
 function shortDate(iso){ var d = parseDate(iso); return d ? MONTHS[d.getMonth()].slice(0,3) + " " + d.getDate() + ", " + d.getFullYear() : "TBC"; }
 function prettyTime(t){
   if(!t) return "";
@@ -2173,6 +2208,8 @@ function migrate(s){
        the club loved — no chapters, no pages, and photos of the night */
     if(m.kind !== "party") m.kind = "meeting";
     if(!Array.isArray(m.photos)) m.photos = [];
+    /* member ids who have finished the reading for this meeting */
+    if(!Array.isArray(m.ready)) m.ready = [];
     if(!Array.isArray(m.predictions)) m.predictions = [];
     if(!Array.isArray(m.points)) m.points = [];
     m.predictions.forEach(function(n){ noteAuthors(n, s.members); });
@@ -2534,7 +2571,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-09-29c";
+var SCRIPT_WANT = "2026-09-29d";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -2573,6 +2610,9 @@ var ENDPOINT_REPEATABLE = {
   /* sets three fields to what it was handed, so a second go lands the same
      values — unlike photo-add, which appends */
   "photo-edit": 1,
+  /* the page sends the state it wants rather than "flip it", so repeating
+     it lands where the first one would have */
+  "meet-ready": 1,
   "details": 1, "summarise": 1, "images": 1, "agenote": 1,
   /* Worth repeating despite not being a read. If the first attempt never
      arrived, the second signs you in. If it did arrive and worked, its answer
@@ -3714,6 +3754,53 @@ function discHTML(b, extra){
     (badgeArt(b) ? '<img src="' + esc(badgeArt(b)) + '" alt="">' : "<span>" + esc(initials(b.title)) + "</span>") + "</span>";
 }
 
+/* ---------- the meeting card's own bits ---------- */
+var BELL = '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" focusable="false">' +
+  '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ' +
+  'd="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+
+/* Chapters and pages describe one stretch of reading, so they read as one
+   line. Either can be missing; the row goes away only when both are. */
+function readingRowHTML(m){
+  var ch = String(m.chapters || "").trim(), pg = String(m.pages || "").trim();
+  if(!ch && !pg) return "";
+  var val = ch ? esc(ch) : "";
+  if(pg) val += (val ? ' <span class="meetcard__dot">&middot;</span> ' : "") +
+    'Pages <span class="mono">' + esc(pg) + "</span>";
+  return '<div class="meetcard__row"><span class="k">' + (ch ? "Chapters" : "Pages") + "</span>" +
+    "<span>" + val + "</span></div>";
+}
+
+/* ---------- ready for the section ----------
+   Who has finished the reading for a meeting. A member marks themselves
+   through the script — their id comes from the session there, so nobody can
+   mark anybody else — and the organiser can set it for someone from Admin,
+   for the ones who said so on Discord instead. */
+function readyList(m){ return (m && Array.isArray(m.ready)) ? m.ready : []; }
+function isReady(m, memberId){ return readyList(m).indexOf(memberId) !== -1; }
+function readyFaceHTML(mem){
+  return '<span class="readyface" ' + hueStyle(mem) + ' title="' + esc(mem.name) + '" ' +
+    'tabindex="0" role="img" aria-label="' + esc(mem.name) + ' is ready">' +
+    (mem.avatar ? '<img src="' + esc(mem.avatar) + '" alt="">' : esc(initials(mem.name))) +
+    "</span>";
+}
+function readyRowHTML(m){
+  var mine = myMember();
+  var faces = readyList(m).map(memberById).filter(Boolean);
+  /* nothing to show and nobody who could add themselves */
+  if(!faces.length && !mine) return "";
+  return '<div class="meetcard__row meetcard__row--ready"><span class="k">Ready</span>' +
+    '<span class="readyrow">' +
+      (mine
+        ? '<button class="btn btn--sm ' + (isReady(m, mine.id) ? "btn--surf" : "btn--ghost") +
+          '" type="button" data-ready="' + esc(m.id) + '">' +
+          (isReady(m, mine.id) ? "You’re ready" : "Ready") + "</button>"
+        : "") +
+      faces.map(readyFaceHTML).join("") +
+      (!faces.length ? '<span class="hint">No one yet.</span>' : "") +
+    "</span></div>";
+}
+
 /* ---------- render: hero ---------- */
 var heroIdx = 0, meetIdx = 0;
 function cycHTML(kind, idx, total, label){
@@ -3757,9 +3844,7 @@ function renderHero(){
     $("heroFacts").innerHTML = "";
     $("heroProgress").innerHTML = "";
     $("heroBlurb").textContent = "Open Organiser tools to set the club's current book.";
-    $("heroDetails").hidden = true;
   }else{
-    $("heroDetails").hidden = false;
     $("heroCover").innerHTML = coverHTML(book);
     var gets = getEntries(book), gbtn = $("heroGet");
     gbtn.hidden = !getHas(book);
@@ -3796,25 +3881,35 @@ function renderHero(){
       ? '<p class="empty">Nothing scheduled for ' + esc(book.title) + " yet.</p>"
       : '<p class="empty">No meeting scheduled. The organiser can add one from Organiser tools.</p>';
   }else{
-    var mb = bookById(meet.bookId) || recById(meet.bookId), cd = countdownText(meet);
+    var cd = countdownText(meet);
     body.innerHTML =
-      '<div class="meetcard__date">' + esc(longDate(meet.date)) + "</div>" +
-      (cd ? '<div class="countdown" id="meetCountdown">' + esc(cd) + "</div>" : "") +
-      (isParty ? '<div class="partytag">🎉 Party</div>' : "") +
+      '<div class="meetcard__date">' + esc(cardDate(meet.date)) + "</div>" +
+      /* The countdown and the two things you might do about it, on one line
+         near the top. They used to sit at the foot of the card, below every
+         detail, which is a long way from the thing they act on. */
+      '<div class="meetcard__act">' +
+        (cd ? '<span class="countdown" id="meetCountdown">' + esc(cd) + "</span>" : "") +
+        (isParty ? '<span class="partytag">🎉 Party</span>' : "") +
+        /* The two together in a box that does not wrap, so the bell cannot
+           be pushed onto a line of its own. The button gives up width first
+           and wraps its own text instead. */
+        '<span class="meetcard__go">' +
+          '<button class="btn btn--sky btn--sm" type="button" data-meet="' + esc(meet.id) + '">' +
+            (isParty ? "Party notes" : "Predictions &amp; discussion points") + "</button>" +
+          (me
+            ? '<button class="bellbtn" type="button" id="meetManageNotify" aria-label="Manage my reminders" ' +
+              'title="Manage my reminders">' + BELL + "</button>"
+            : '<button class="bellbtn" type="button" data-memform="notify" data-nbook="' + esc(meet.bookId) + '" ' +
+              'aria-label="Email me about this" title="Email me about this">' + BELL + "</button>") +
+        "</span>" +
+      "</div>" +
       '<div class="meetcard__row"><span class="k">Time</span><span>' + esc(prettyTime(meet.time) || "TBC") + "</span></div>" +
       '<div class="meetcard__row"><span class="k">Where</span><span>' + esc(meet.place || "TBC") + "</span></div>" +
-      '<div class="meetcard__row"><span class="k">Book</span><span>' + esc(mb ? mb.title : "TBC") + "</span></div>" +
-      /* a party has no reading attached to it */
-      (isParty ? "" :
-        '<div class="meetcard__row"><span class="k">Chapters</span><span>' + esc(meet.chapters || "TBC") + "</span></div>" +
-        '<div class="meetcard__row"><span class="k">Pages</span><span class="mono">' + esc(meet.pages || "TBC") + "</span></div>") +
-      '<div style="margin-top:18px;display:flex;gap:9px;flex-wrap:wrap">' +
-        '<button class="btn btn--sky btn--sm" type="button" data-meet="' + esc(meet.id) + '">' +
-          (isParty ? "Party notes" : "Predictions &amp; discussion points") + "</button>" +
-        (me
-          ? '<button class="btn btn--ghost btn--sm" type="button" id="meetManageNotify">Manage my reminders</button>'
-          : '<button class="btn btn--ghost btn--sm" type="button" data-memform="notify" data-nbook="' + esc(meet.bookId) + '">Email me about this</button>') +
-      "</div>";
+      /* The book was named directly above this card, so the row only repeated
+         it. Chapters and pages are one fact about the same reading, so they
+         are one line. A party has no reading attached at all. */
+      (isParty ? "" : readingRowHTML(meet)) +
+      readyRowHTML(meet);
   }
   renderFlags();
   renderUpNext();
@@ -5049,6 +5144,10 @@ function openBookDetail(o, kind, focus){
         '<p class="review__text">' + esc(o.review.text || "") + "</p>" +
         '<p class="review__by">' + esc(o.review.by || "The club") + "</p></div>"
       : "") +
+    /* The book's meetings, the same list and the same buttons the badge
+       panel carries — the cover and the title both land here now, so this
+       is where someone goes looking for them. */
+    (kind === "rec" ? "" : meetingsSectionHTML(o.id)) +
     /* after the review, at the foot of the panel — a recommendation has no
        meetings behind it, so no party either */
     (kind === "rec" ? "" : partyStripHost("bookParty", o.id));
@@ -5098,6 +5197,23 @@ async function loadPhotos(meetingId){
 function photoAltText(p){
   return p.caption ? p.caption : "Party photo from " + (p.by || "a member");
 }
+/* The meeting buttons for a book. Shared so the badge panel and the book
+   panel cannot drift apart on wording or ordering. */
+function meetingButtonsHTML(bookId){
+  var meets = meetingsForBook(bookId);
+  if(!meets.length) return "";
+  return '<div class="meetbtns">' + meets.map(function(m){
+    var party = m.kind === "party";
+    return '<button class="btn btn--sm ' + (party ? "btn--flare" : "btn--grape") + '" type="button" ' +
+      'data-meet="' + esc(m.id) + '">' + esc(meetButtonLabel(m)) + "</button>";
+  }).join("") + "</div>";
+}
+function meetingsSectionHTML(bookId){
+  var btns = meetingButtonsHTML(bookId);
+  if(!btns) return "";
+  return '<hr class="divider"><p class="eyebrow">Meetings</p>' + btns;
+}
+
 /* ---------- a book's party photos, on its panels ----------
    The photos hang off a meeting, not a book, so this finds the book's party
    and shows what was uploaded to it. They arrive from the script, which the
@@ -5531,11 +5647,7 @@ function openBadge(bookId){
     '<hr class="divider">' +
     '<p class="eyebrow">Meetings</p>' +
     (meets.length
-      ? '<div class="meetbtns">' + meets.map(function(m){
-          var party = m.kind === "party";
-          return '<button class="btn btn--sm ' + (party ? "btn--flare" : "btn--grape") + '" type="button" data-meet="' + esc(m.id) + '">' +
-            esc(meetButtonLabel(m)) + "</button>";
-        }).join("") + "</div>"
+      ? meetingButtonsHTML(b.id)
       : '<p class="empty" style="margin-top:10px">No meetings recorded for this book.</p>') +
     partyStripHost("badgeParty", b.id);
   openScrim("badgeScrim");
@@ -6751,6 +6863,16 @@ function paneMeetings(){
             meetBookOptions(m.bookId) + "</select></div>" +
         "</div>" +
         (party ? '<p class="hint" style="margin-top:12px">Photo uploads for parties are coming with the member login.</p>' : "") +
+        /* Who has finished the reading. Members tick themselves on the front
+           page; this is for the ones who said so on Discord instead. */
+        (party ? "" :
+          '<div class="field" style="margin-top:14px"><label>Ready for this one</label>' +
+          (state.members.length
+            ? '<div class="checkgrid">' + state.members.map(function(mem){
+                return "<label><input type=\"checkbox\" data-mready=\"" + esc(mem.id) + "\" data-mid=\"" +
+                  esc(m.id) + "\"" + (isReady(m, mem.id) ? " checked" : "") + ">" + esc(mem.name) + "</label>";
+              }).join("") + "</div>"
+            : '<p class="hint">Add members on the Members tab first.</p>') + "</div>") +
         '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
           '<button class="btn btn--sm btn--zest" type="button" data-msave="' + esc(m.id) + '">Save changes</button>' +
           '<button class="btn btn--sm btn--ghost" type="button" data-mdone="' + esc(m.id) + '">' + (m.done ? "Reopen meeting" : "Mark meeting done") + "</button>" +
@@ -6959,6 +7081,31 @@ document.addEventListener("click", async function(e){
   var t = e.target; if(!t || !t.closest) return;
   var el;
 
+  /* Ready for the section. The script decides whose id goes in, from the
+     session — the browser only says which meeting. */
+  if((el = t.closest("[data-ready]"))){
+    var rmid = el.getAttribute("data-ready");
+    var rme = myMember();
+    if(!rme){ say("Sign in to mark yourself ready.", "bad"); return; }
+    var rm0 = meetingById(rmid);
+    /* The state we want, not "flip it". A toggle cannot be retried: when the
+       answer is lost there is no way to tell which side it landed on, so a
+       second go is as likely to undo it as to finish it. */
+    var rwant = !(rm0 && isReady(rm0, rme.id));
+    el.disabled = true;
+    var rres = await callEndpoint("meet-ready", { token: sessionToken(), meetingId: rmid, ready: rwant });
+    if(!rres || !rres.ok){
+      el.disabled = false;
+      say(rres && rres.error === "signed out" ? "Your session ran out \u2014 sign in again."
+        : "Couldn\u2019t save that just now.", "bad");
+      return;
+    }
+    var rm = meetingById(rmid);
+    if(rm) rm.ready = rres.ready || [];
+    renderHero();
+    say(rres.me ? "Marked ready." : "No longer marked ready.", "ok");
+    return;
+  }
   /* party photos: picking them only opens the form — nothing is sent until
      there has been a chance to say what each one is */
   if((el = t.closest("[data-photoadd]"))){
@@ -7665,6 +7812,12 @@ document.addEventListener("click", async function(e){
     });
     /* a party carries no chapters or pages */
     if(mm2.kind === "party"){ mm2.chapters = ""; mm2.pages = ""; }
+    /* whoever the organiser ticked as ready, read off the same form */
+    var ticked = [];
+    Array.prototype.forEach.call(mp.querySelectorAll('[data-mready][data-mid="' + mm2.id + '"]'), function(n){
+      if(n.checked) ticked.push(n.getAttribute("data-mready"));
+    });
+    if(mp.querySelector('[data-mready][data-mid="' + mm2.id + '"]')) mm2.ready = ticked;
     if(await save("Saving meeting…")){ renderAll(); renderAdmin(); }
     return;
   }
@@ -7813,21 +7966,14 @@ document.addEventListener("click", async function(e){
   }
 
   /* nav — these follow whichever current book the carousel is showing */
-  if(t.closest("#heroDetails") || t.closest("#heroTitle")){
+  /* The title and the cover are the same door now: both open the book, and
+     the meetings it has are a section inside that panel. */
+  if(t.closest("#heroTitle")){
     var cb2 = currentBooks()[heroIdx];
-    if(!cb2){ var any = nextMeeting(); if(any) openMeeting(any.id); return; }
-    /* the next meeting for this book, falling back to its most recent one */
-    var nm2 = upcomingForBook(cb2.id)[0] || pastMeetingsForBook(cb2.id)[0];
-    if(nm2) openMeeting(nm2.id);
-    else say("No meetings for " + cb2.title + " yet.", "busy");
+    if(cb2) openBookDetail(cb2, "book");
     return;
   }
   if(t.closest("#heroCover")){ var cb3 = currentBooks()[heroIdx]; if(cb3) openBookDetail(cb3, "book"); return; }
-  if(t.closest("#heroPrevMeets")){
-    var cb4 = currentBooks()[heroIdx];
-    if(cb4) openBadge(cb4.id);
-    return;
-  }
 });
 
 /* fold an inbox item into the club's own data */
