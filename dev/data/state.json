@@ -1,5 +1,5 @@
 {
-  "rev": 1326,
+  "rev": 1327,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -191,6 +191,12 @@
           "kind": "link",
           "title": "Audiobook - Youtube",
           "url": "https://www.youtube.com/watch?v=9If-D7aizX8&list=PL6Pvh-Hqi64g3Oz9qbbpKxt2tp4zDmyaX"
+        },
+        {
+          "id": "get-mum60lnzr7fnq",
+          "kind": "link",
+          "title": "PDF",
+          "url": "https://drive.google.com/file/d/15e09Tm10hzovgvPVAdp4N0NclmfvARQe/view?usp=drive_link"
         }
       ]
     },
