@@ -1,5 +1,5 @@
 {
-  "rev": 1327,
+  "rev": 1328,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -197,6 +197,12 @@
           "kind": "link",
           "title": "PDF",
           "url": "https://drive.google.com/file/d/15e09Tm10hzovgvPVAdp4N0NclmfvARQe/view?usp=drive_link"
+        },
+        {
+          "id": "get-mum60wqabab8e",
+          "kind": "link",
+          "title": "EPUB",
+          "url": "https://drive.google.com/file/d/1K4fmA-yhxjvhduODCHHkKgz_z9RW5Ys_/view?usp=drive_link"
         }
       ]
     },
