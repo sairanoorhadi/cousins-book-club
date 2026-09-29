@@ -510,7 +510,7 @@ a.getrow:hover{background:var(--sunk)}
 /* ============ modal ============ */
 .scrim{position:fixed;inset:0;z-index:100;background:rgba(12,8,32,.66);background:color-mix(in srgb, var(--ink) 62%, transparent);display:flex;align-items:flex-start;justify-content:center;padding:32px 18px;overflow:auto;backdrop-filter:blur(2px)}
 .scrim[hidden]{display:none}
-#badgeScrim,#prevScrim{z-index:110}
+#badgeScrim{z-index:110}
 #meetScrim{z-index:120}
 #bookScrim{z-index:130}
 #memberScrim,#meScrim{z-index:140}
@@ -1431,7 +1431,7 @@ a.getrow:hover{background:var(--sunk)}
             <p class="hero__blurb" id="heroBlurb"></p>
             <div class="hero__cta">
               <button class="btn btn--flare" id="heroDetails" type="button">See meeting notes &rarr;</button>
-              <button class="btn btn--ghost" id="heroPrevMeets" type="button">Previous meetings</button>
+              <button class="btn btn--ghost" id="heroPrevMeets" type="button">Meetings</button>
             </div>
           </div>
         </div>
@@ -1681,13 +1681,6 @@ a.getrow:hover{background:var(--sunk)}
     <div class="modal__bar"><h2 id="getModalTitle">Get the book</h2>
       <button class="xbtn" type="button" data-close="getScrim" aria-label="Close">&times;</button></div>
     <div class="modal__body" id="getModalBody"></div>
-  </div>
-</div>
-<div class="scrim" id="prevScrim" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="prevModalTitle">
-    <div class="modal__bar"><h2 id="prevModalTitle">Previous meetings</h2>
-      <button class="xbtn" type="button" data-close="prevScrim" aria-label="Close">&times;</button></div>
-    <div class="modal__body" id="prevModalBody"></div>
   </div>
 </div>
 <div class="scrim" id="badgeScrim" hidden>
@@ -3776,9 +3769,11 @@ function renderShelf(){
             '<p class="review__by">' + esc(b.review.by || "The club") + "</p></div>"
           : '<p class="empty" style="margin-top:12px">No club review written yet.</p>') +
       "</div>" +
+      /* One way in, the same panel the badges open: the book, who read it, the
+         review and every meeting. The Summary button that used to sit here
+         only repeated what clicking the cover already does. */
       '<div class="shelfrow__side">' +
-        (m ? '<button class="btn btn--sm btn--grape" type="button" data-meet="' + esc(m.id) + '">Meeting notes</button>' : "") +
-        '<button class="btn btn--sm btn--ghost" type="button" data-book="' + esc(b.id) + '">Summary</button>' +
+        (m ? '<button class="btn btn--sm btn--grape" type="button" data-badge="' + esc(b.id) + '">Meeting notes</button>' : "") +
       "</div></article>";
   }).join("");
 }
@@ -4446,7 +4441,7 @@ function openScrim(id){
   document.body.style.overflow = "hidden";
   var f = $(id).querySelector(".xbtn"); if(f) f.focus();
 }
-var SCRIMS = ["dropScrim","lightbox","loginScrim","meScrim","memberScrim","getScrim","bookScrim","meetScrim","prevScrim","badgeScrim","adminScrim"];
+var SCRIMS = ["dropScrim","lightbox","loginScrim","meScrim","memberScrim","getScrim","bookScrim","meetScrim","badgeScrim","adminScrim"];
 function closeScrim(id){
   $(id).hidden = true;
   /* The book form is on loan to the profile while a place is being edited, and
@@ -5005,32 +5000,30 @@ function pickPhotos(cb){
   inp.click();
 }
 
-/* ---------- previous meetings ----------
-   A tab per past meeting, labelled by what it covered; clicking one opens the
-   usual meeting notes on top. */
-function meetingTabLabel(m){
-  if(m.kind === "party") return "🎉 Party";
-  if(m.chapters) return m.chapters;
-  if(m.pages) return "pp. " + m.pages;
-  return shortDate(m.date);
+/* ---------- naming a meeting ----------
+   One label per meeting: when it was and what it covered, in one piece. It
+   used to be two — a row of chapter tabs above a row of dates — which meant
+   reading across to work out that "1-5" and "Aug 1, 2026" were the same
+   session. */
+function fullDate(iso){
+  var d = parseDate(iso);
+  return d ? MONTHS[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear() : "Date to be confirmed";
 }
-function openPreviousMeetings(bookId){
-  var b = bookById(bookId); if(!b) return;
-  var past = pastMeetingsForBook(bookId);
-  $("prevModalTitle").textContent = b.title + " — previous meetings";
-  $("prevModalBody").innerHTML = past.length
-    ? '<p class="eyebrow">Covered so far</p>' +
-      '<p class="hint" style="margin:6px 0 18px">Pick a session to read its notes.</p>' +
-      '<div class="tabbar" style="width:100%">' + past.map(function(m){
-        return '<button class="tabbtn" type="button" data-prevmeet="' + esc(m.id) + '">' +
-          esc(meetingTabLabel(m)) + "</button>";
-      }).join("") + "</div>" +
-      '<div class="meetbtns" style="margin-top:20px">' + past.map(function(m){
-        return '<button class="btn btn--sm btn--ghost" type="button" data-prevmeet="' + esc(m.id) + '">' +
-          esc(shortDate(m.date)) + (m.kind === "party" ? " · party" : "") + "</button>";
-      }).join("") + "</div>"
-    : '<p class="empty">No meetings have happened for ' + esc(b.title) + " yet.</p>";
-  openScrim("prevScrim");
+/* The chapters field is whatever the organiser typed: "1-5" on one meeting,
+   "Section 6: Chapters 32-45" on another. It is used as it stands, and only
+   given the word "Chapters" when it does not already say so — otherwise the
+   second one reads "Chapters Section 6: Chapters 32-45". */
+function chaptersPhrase(m){
+  var c = String((m && m.chapters) || "").trim();
+  if(!c) return "";
+  return /chapter/i.test(c) ? c : "Chapters " + c;
+}
+function meetButtonLabel(m){
+  var when = fullDate(m.date);
+  /* a party covers no reading, so there is nothing to merge in */
+  if(m.kind === "party") return "🎉 " + when + " \u2014 Party";
+  var what = chaptersPhrase(m) || (m.pages ? "pp. " + m.pages : "");
+  return what ? when + " \u2014 " + what : when;
 }
 
 /* ---------- badge popup ---------- */
@@ -5073,7 +5066,7 @@ function openBadge(bookId){
       ? '<div class="meetbtns">' + meets.map(function(m){
           var party = m.kind === "party";
           return '<button class="btn btn--sm ' + (party ? "btn--flare" : "btn--grape") + '" type="button" data-meet="' + esc(m.id) + '">' +
-            (party ? "🎉 " : "") + esc(shortDate(m.date)) + (party ? " Party" : " Meeting") + "</button>";
+            esc(meetButtonLabel(m)) + "</button>";
         }).join("") + "</div>"
       : '<p class="empty" style="margin-top:10px">No meetings recorded for this book.</p>');
   openScrim("badgeScrim");
@@ -6717,7 +6710,6 @@ document.addEventListener("click", async function(e){
   }
 
   /* a tab in the previous-meetings popup */
-  if((el = t.closest("[data-prevmeet]"))){ openMeeting(el.getAttribute("data-prevmeet")); return; }
 
   /* The +/− shortcut on a card. Signed in, that's the whole interaction — the
      vote is cast under their own name. Otherwise it opens the book with the
@@ -7335,7 +7327,7 @@ document.addEventListener("click", async function(e){
   if(t.closest("#heroCover")){ var cb3 = currentBooks()[heroIdx]; if(cb3) openBookDetail(cb3, "book"); return; }
   if(t.closest("#heroPrevMeets")){
     var cb4 = currentBooks()[heroIdx];
-    if(cb4) openPreviousMeetings(cb4.id);
+    if(cb4) openBadge(cb4.id);
     return;
   }
 });
