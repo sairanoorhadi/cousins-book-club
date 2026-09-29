@@ -306,12 +306,19 @@ a.getrow:hover{background:var(--sunk)}
 .meetcard__top{background:var(--sky);color:var(--on-sky);padding:13px 20px;border-bottom:2px solid var(--edge)}
 .meetcard__top .eyebrow{color:inherit;opacity:.92}
 .meetcard__body{padding:20px}
-.meetcard__date{font-family:var(--f-display);font-weight:800;font-size:27px;line-height:1.1;letter-spacing:-.02em}
+/* One size for every meeting card, chosen so the longest date this can
+   produce — "Wednesday, September 30, 2026" — stays on one line in the
+   narrowest card the layout makes, rather than some cards reading larger
+   than others depending on the month they landed in. */
+.meetcard__date{font-family:var(--f-display);font-weight:800;font-size:14px;line-height:1.25;letter-spacing:-.01em}
 .meetcard__row{display:flex;gap:10px;align-items:baseline;margin-top:11px;font-size:15px}
 .meetcard__row .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);min-width:74px;flex:none}
 .countdown{display:inline-flex;align-items:baseline;gap:7px;background:var(--zest);color:var(--on-zest);border:2px solid var(--edge);border-radius:999px;padding:5px 14px;font-family:var(--f-mono);font-size:12.5px}
 /* the countdown and what you can do about it, together near the top */
 .meetcard__act{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 4px}
+.meetcard__go{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;min-width:0;flex:1 1 auto}
+.meetcard__go .btn{min-width:0;padding-left:11px;padding-right:11px;text-align:left}
+.meetcard__go .bellbtn{flex:none}
 .meetcard__dot{color:var(--muted)}
 .bellbtn{flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;
   border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer;
@@ -3875,13 +3882,18 @@ function renderHero(){
       '<div class="meetcard__act">' +
         (cd ? '<span class="countdown" id="meetCountdown">' + esc(cd) + "</span>" : "") +
         (isParty ? '<span class="partytag">🎉 Party</span>' : "") +
-        '<button class="btn btn--sky btn--sm" type="button" data-meet="' + esc(meet.id) + '">' +
-          (isParty ? "Party notes" : "Predictions &amp; discussion points") + "</button>" +
-        (me
-          ? '<button class="bellbtn" type="button" id="meetManageNotify" aria-label="Manage my reminders" ' +
-            'title="Manage my reminders">' + BELL + "</button>"
-          : '<button class="bellbtn" type="button" data-memform="notify" data-nbook="' + esc(meet.bookId) + '" ' +
-            'aria-label="Email me about this" title="Email me about this">' + BELL + "</button>") +
+        /* The two together in a box that does not wrap, so the bell cannot
+           be pushed onto a line of its own. The button gives up width first
+           and wraps its own text instead. */
+        '<span class="meetcard__go">' +
+          '<button class="btn btn--sky btn--sm" type="button" data-meet="' + esc(meet.id) + '">' +
+            (isParty ? "Party notes" : "Predictions &amp; discussion points") + "</button>" +
+          (me
+            ? '<button class="bellbtn" type="button" id="meetManageNotify" aria-label="Manage my reminders" ' +
+              'title="Manage my reminders">' + BELL + "</button>"
+            : '<button class="bellbtn" type="button" data-memform="notify" data-nbook="' + esc(meet.bookId) + '" ' +
+              'aria-label="Email me about this" title="Email me about this">' + BELL + "</button>") +
+        "</span>" +
       "</div>" +
       '<div class="meetcard__row"><span class="k">Time</span><span>' + esc(prettyTime(meet.time) || "TBC") + "</span></div>" +
       '<div class="meetcard__row"><span class="k">Where</span><span>' + esc(meet.place || "TBC") + "</span></div>" +
