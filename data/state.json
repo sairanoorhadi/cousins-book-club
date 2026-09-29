@@ -1,5 +1,5 @@
 {
-  "rev": 1452,
+  "rev": 1453,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1649,7 +1649,7 @@
       "ageMax": 12,
       "genres": [
         "Realistic",
-        "Orphans",
+        "Orphan",
         "Family"
       ],
       "by": "Ms. Wendy",
