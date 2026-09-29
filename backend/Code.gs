@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-29c';
+var SCRIPT_VERSION = '2026-09-29d';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -85,6 +85,7 @@ function doPost(e) {
   if (kind === 'approve-notify') return json(approveNotify(payload));
   if (kind === 'notes-add') return json(notesAdd(payload));
   if (kind === 'notes-del') return json(notesDel(payload));
+  if (kind === 'meet-ready') return json(meetReady(payload));
   if (kind === 'photo-add') return json(photoAdd(payload));
   if (kind === 'photo-list') return json(photoList(payload));
   if (kind === 'photo-delete') return json(photoDelete(payload));
@@ -450,6 +451,52 @@ function notifySet(payload) {
    never has been. What IS tied to the session is who gets to act at all, and
    whose name lands in the deletion log below. */
 function noteField(f) { return f === 'pred' ? 'predictions' : f === 'disc' ? 'points' : ''; }
+
+/* A member saying they have finished the section for a meeting. The only
+   thing it can change is whether their own id is in that meeting's list —
+   the id comes from the session, not from the browser, so nobody can mark
+   anyone else. Sent without `ready` it toggles; sent with one it sets. */
+function meetReady(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var member = memberFor(email);
+  if (!member || !member.id) return { ok: false, error: 'not a member yet' };
+  if (!propKey('GITHUB_TOKEN', '')) return { ok: false, error: 'no github token' };
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      var file;
+      try { file = ghGetFile(STATE_PATH); }
+      catch (err) { return { ok: false, error: 'no github token', detail: String(err) }; }
+      var state;
+      try { state = JSON.parse(file.content || '{}'); }
+      catch (err) { return { ok: false, error: 'unreadable state' }; }
+
+      var meeting = (state.meetings || []).filter(function (m) { return m.id === payload.meetingId; })[0];
+      if (!meeting) return { ok: false, error: 'no such meeting' };
+      if (!Array.isArray(meeting.ready)) meeting.ready = [];
+
+      var at = meeting.ready.indexOf(member.id);
+      var want = (payload.ready === undefined || payload.ready === null) ? (at === -1) : !!payload.ready;
+      if (want && at === -1) meeting.ready.push(member.id);
+      if (!want && at !== -1) meeting.ready.splice(at, 1);
+      state.rev = Number(state.rev || 0) + 1;
+
+      try {
+        ghPutFile(STATE_PATH, JSON.stringify(state, null, 2), file.sha,
+          want ? 'Member is ready for a meeting' : 'Member is no longer ready');
+        return { ok: true, ready: meeting.ready.slice(), me: want };
+      } catch (err) {
+        if (attempt === 1) return { ok: false, error: 'busy, try again' };
+      }
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  return { ok: false, error: 'busy' };
+}
 
 function notesAdd(payload) {
   var email = whoIs(payload.token);
