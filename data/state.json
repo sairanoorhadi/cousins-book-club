@@ -1,5 +1,5 @@
 {
-  "rev": 1443,
+  "rev": 1444,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -296,7 +296,14 @@
       ],
       "order": 3,
       "level": "Ages 10-13",
-      "getbook": []
+      "getbook": [
+        {
+          "id": "get-mum68x2eu8tam",
+          "kind": "link",
+          "title": "PDF",
+          "url": "https://drive.google.com/file/d/1hfQSrWtJ9z121c2WHZ3X9I3_rVkf9ZKU/view?usp=drive_link"
+        }
+      ]
     }
   ],
   "meetings": [
