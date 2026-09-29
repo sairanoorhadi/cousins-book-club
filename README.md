@@ -74,6 +74,19 @@ Badges and profile pictures are upload-only. Books with no cover at all get a ge
 
 Keep an eye on file size — if `data/state.json` grows past a few megabytes, saves get slow. Searched covers cost nothing here since they're only links; uploads are what add weight.
 
+### Get the book
+
+Each book's editor has a **Get the book** block for saying where people can buy or borrow it. Two kinds of entry:
+
+- **A link** — a title you type and a web address, so "Borrow on Libby" or "Buy on Bookshop.org".
+- **A file** — a short reference document you wrote yourself listing places to find it. PDF, Word, ODT, RTF, plain text or CSV, under 2 MB.
+
+Entries show on the book's panel, under the cover on the front page while the book is being read, and in the book's own panel whatever its status. A book with no entries shows nothing at all, so there is never an empty heading.
+
+The uploaded file is a note about where to get the book. It is not a way to hand out the book itself: the formats a book comes in — EPUB, MOBI, audio, archives — are refused, and so is anything over 2 MB. Those are someone else's copyright to give away, not ours.
+
+Unlike covers, these files are committed to the repo under `files/getbook/` rather than stored inside `data/state.json`, and the entry keeps only the path. `state.json` is rewritten in full on every save, so a document inside it would be re-uploaded each time anyone changed anything. A committed file is fetched once and cached. It takes the usual minute to become downloadable while GitHub Pages rebuilds.
+
 ### Editing by hand
 
 `data/state.json` is plain JSON and can be edited directly on GitHub if you'd rather. The `rev` number at the top only needs to go up, never down. **Download state.json** in Admin → Settings gives you a backup copy any time.

@@ -264,6 +264,33 @@ img{max-width:100%;display:block}
 .progress__fill{height:100%;background:var(--flare);border-right:2px solid var(--edge);transition:width .4s cubic-bezier(.22,1,.36,1)}
 .progress__label{display:flex;justify-content:space-between;gap:12px;margin-top:7px;font-family:var(--f-mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 
+/* ---- "Get the book" ----
+   Sits under the cover, the cover's width, and carries the same top margin as
+   the progress bar beside it so the two line up across the hero. */
+.getbtn{display:block;width:100%;margin-top:18px;text-align:left;padding:11px 13px;
+  border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);color:var(--ink);
+  box-shadow:var(--shadow-sm);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease}
+.getbtn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--stamp)}
+.getbtn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--stamp)}
+.getbtn[hidden]{display:none}
+.getbtn__t{display:block;font-family:var(--f-display);font-weight:800;font-size:15px;line-height:1.15}
+.getbtn__n{display:block;margin-top:3px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted)}
+/* one row per way of getting hold of it */
+.getlist{list-style:none;margin:0;padding:0;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.getlist li + li{border-top:1.5px solid var(--hairline)}
+.getrow{display:flex;gap:13px;align-items:center;padding:13px 16px;text-decoration:none;color:inherit}
+a.getrow:hover{background:var(--sunk)}
+.getrow__k{flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;
+  border:2px solid var(--edge);border-radius:50%;background:var(--c,var(--sky));color:var(--cf,var(--on-sky));
+  font-family:var(--f-mono);font-size:13px}
+.getrow__t{font-family:var(--f-display);font-weight:700;font-size:15.5px;line-height:1.2}
+.getrow__m{display:block;margin-top:2px;font-family:var(--f-mono);font-size:10.5px;color:var(--muted);
+  overflow-wrap:anywhere}
+.getrow__go{margin-left:auto;flex:none;color:var(--muted);font-size:17px}
+/* the organiser's copy of the same list, with a way to take a row back off it */
+.getedit{display:flex;gap:10px;align-items:center;padding:10px 12px}
+.getedit .getrow__t{font-size:14.5px}
+
 .tagbank{display:flex;flex-wrap:wrap;gap:7px}
 .tag{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.04em;padding:4px 9px;border:1.5px solid var(--edge);border-radius:999px;background:var(--surface);white-space:nowrap}
 .tag--zest{background:var(--zest);color:var(--on-zest)}
@@ -1008,6 +1035,11 @@ img{max-width:100%;display:block}
 @media (max-width:700px){
   .hero__main{grid-template-columns:118px minmax(0,1fr);gap:20px}
   .hero__cover{width:118px}
+  /* the column is 118px here, and "Get the book" wraps to three lines at the
+     full size */
+  .getbtn{margin-top:12px;padding:9px 10px}
+  .getbtn__t{font-size:13px}
+  .getbtn__n{font-size:9.5px;letter-spacing:.03em}
   .shelfrow{grid-template-columns:64px minmax(0,1fr)}
   .shelfrow__cover{width:64px}
   .shelfrow__side{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:flex-start}
@@ -1383,7 +1415,13 @@ img{max-width:100%;display:block}
       <div id="heroFlag" hidden></div>
       <div class="hero__grid">
         <div class="hero__main swipe" id="heroSwipe">
-          <div class="hero__cover cover-wrap" id="heroCover"></div>
+          <div>
+            <div class="hero__cover cover-wrap" id="heroCover"></div>
+            <!-- Where to get hold of the book. Hidden unless the organiser has
+                 put something there, so the column is the bare cover the rest
+                 of the time. -->
+            <button class="getbtn" type="button" id="heroGet" hidden></button>
+          </div>
           <div>
             <div class="cyc" id="heroCyc"></div>
             <h1 id="heroTitle">—</h1>
@@ -1636,6 +1674,13 @@ img{max-width:100%;display:block}
         <button class="btn" type="button" id="dropNo">Cancel</button>
       </div>
     </div>
+  </div>
+</div>
+<div class="scrim" id="getScrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="getModalTitle" style="max-width:560px">
+    <div class="modal__bar"><h2 id="getModalTitle">Get the book</h2>
+      <button class="xbtn" type="button" data-close="getScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body" id="getModalBody"></div>
   </div>
 </div>
 <div class="scrim" id="prevScrim" hidden>
@@ -1963,6 +2008,8 @@ function migrate(s){
     if(typeof b.finished !== "string") b.finished = "";
     if(typeof b.progressPage !== "number") b.progressPage = 0;
     if(!Array.isArray(b.members)) b.members = [];
+    /* where to buy or borrow it — organiser-added, see getEditorHTML */
+    if(!Array.isArray(b.getbook)) b.getbook = [];
     if(!b.series){
       var hit = SERIES[String(b.title||"").toLowerCase().trim()];
       if(hit){ b.series = hit.series; b.seriesIndex = hit.i; }
@@ -3582,6 +3629,7 @@ function renderHero(){
 
   if(!book){
     $("heroCover").innerHTML = "";
+    $("heroGet").hidden = true;
     $("heroTitle").textContent = "No book chosen yet";
     $("heroAuthor").textContent = "";
     $("heroFacts").innerHTML = "";
@@ -3591,6 +3639,11 @@ function renderHero(){
   }else{
     $("heroDetails").hidden = false;
     $("heroCover").innerHTML = coverHTML(book);
+    var gets = getEntries(book), gbtn = $("heroGet");
+    gbtn.hidden = !getHas(book);
+    gbtn.setAttribute("data-getopen", book.id);
+    gbtn.innerHTML = '<span class="getbtn__t">Get the book</span>' +
+      '<span class="getbtn__n">' + gets.length + (gets.length === 1 ? " way" : " ways") + " to find it</span>";
     $("heroTitle").textContent = book.title;
     $("heroAuthor").textContent = "by " + book.author;
     var facts = ['<span class="tag tag--zest mono">' + esc(book.pages || "?") + " pages</span>",
@@ -4389,7 +4442,7 @@ function openScrim(id){
   document.body.style.overflow = "hidden";
   var f = $(id).querySelector(".xbtn"); if(f) f.focus();
 }
-var SCRIMS = ["dropScrim","lightbox","loginScrim","meScrim","memberScrim","bookScrim","meetScrim","prevScrim","badgeScrim","adminScrim"];
+var SCRIMS = ["dropScrim","lightbox","loginScrim","meScrim","memberScrim","getScrim","bookScrim","meetScrim","prevScrim","badgeScrim","adminScrim"];
 function closeScrim(id){
   $(id).hidden = true;
   /* The book form is on loan to the profile while a place is being edited, and
@@ -4640,6 +4693,269 @@ function meetingHTML(m, b){
 
 /* `focus` is "up" or "down" when the reader came in via a card's +/- shortcut,
    so the matching field is open and waiting for their name */
+/* ---------- get the book ----------
+   Where to buy or borrow whatever the club is on. The organiser puts the
+   entries there from Admin; nobody else can add one. Two kinds:
+
+     link  a web address they type, with a title — a library page, a shop
+     file  a small reference document they wrote themselves, listing places
+           to find it, uploaded and linked for download
+
+   The uploaded file is a note about where to get the book. It is deliberately
+   not a way to pass the book itself around: a book's own PDF, EPUB or audio
+   would be someone else's copyright to give away, not ours. GET_BAD_EXT
+   refuses the formats a book actually comes in and GET_MAX_BYTES keeps what
+   is left to note-sized, which together stop the obvious cases — though what
+   they check is the wrapper, not what is inside it.
+
+   Files go in the repo beside the page rather than into state.json. Covers
+   are base64 in there and that is already most of its weight; the whole file
+   is rewritten on every save, so a document in it would be re-uploaded each
+   time anyone changed anything. A committed file is fetched once and cached. */
+var GET_MAX_BYTES = 2 * 1024 * 1024;
+var GET_OK_EXT = ["pdf","doc","docx","odt","rtf","txt","md","csv"];
+var GET_BAD_EXT = ["epub","mobi","azw","azw3","kfx","fb2","djvu","cbz","cbr",
+                   "mp3","m4a","m4b","aac","ogg","opus","wav","flac","zip","rar","7z"];
+var GET_DIR = "files/getbook/";
+
+function getEntries(b){ return (b && Array.isArray(b.getbook)) ? b.getbook : []; }
+/* The hero panel and the book panel both ask this. An empty one is never
+   shown: a heading with nothing under it is worse than no heading. */
+function getHas(b){ return getEntries(b).length > 0; }
+function getExt(name){
+  var m = /\.([A-Za-z0-9]+)$/.exec(String(name || ""));
+  return m ? m[1].toLowerCase() : "";
+}
+function getSizeText(n){
+  n = Number(n) || 0;
+  if(n <= 0) return "";
+  return n < 1024 * 1024 ? Math.max(1, Math.round(n / 1024)) + " KB"
+                         : (n / 1024 / 1024).toFixed(1) + " MB";
+}
+/* A link's address is shown as its host, because the full one is usually a
+   line of tracking and the host is the part that says whether it is the
+   library or a shop. */
+function getHost(u){
+  try{ return new URL(u).hostname.replace(/^www\./, ""); }catch(e){ return ""; }
+}
+/* webAddress() checks a link on the way in and the file path is built here,
+   so both are known good when they are written. This is the read back: a
+   state.json is a plain file in a repo, and an href is the one place where a
+   line of it would be executed rather than shown. Anything that is not the
+   shape it should be renders as nothing. */
+function getHref(e){
+  if(e.kind === "file") return /^files\/getbook\/[A-Za-z0-9._-]+$/.test(String(e.url || "")) ? e.url : "";
+  return safeUrl(e.url);
+}
+function getRowHTML(e){
+  var isFile = e.kind === "file";
+  var href = getHref(e);
+  if(!href) return "";
+  var hue = isFile ? "zest" : "sky";
+  var meta = isFile
+    ? [getExt(e.name).toUpperCase(), getSizeText(e.size)].filter(Boolean).join(" · ")
+    : getHost(e.url);
+  return "<li>" +
+    '<a class="getrow" href="' + esc(href) + '"' +
+      (isFile ? ' download="' + esc(e.name || "") + '"' : ' target="_blank" rel="noopener noreferrer"') + ">" +
+      '<span class="getrow__k" style="--c:var(--' + hue + ');--cf:var(--on-' + hue + ')">' +
+        (isFile ? "&#8595;" : "&#8599;") + "</span>" +
+      "<span>" +
+        '<span class="getrow__t">' + esc(e.title) + "</span>" +
+        (meta ? '<span class="getrow__m">' + esc(meta) + "</span>" : "") +
+      "</span>" +
+      '<span class="getrow__go" aria-hidden="true">' + (isFile ? "&#8595;" : "&#8250;") + "</span>" +
+    "</a></li>";
+}
+function getListHTML(b){
+  var es = getEntries(b);
+  if(!es.length) return '<p class="empty">Nothing here yet.</p>';
+  return '<ul class="getlist">' + es.map(getRowHTML).join("") + "</ul>";
+}
+function openGetBook(bookId){
+  var b = bookById(bookId);
+  if(!b) return;
+  $("getModalTitle").textContent = "Get " + b.title;
+  $("getModalBody").innerHTML =
+    '<p class="hint" style="margin-bottom:16px">Where the club found it. Added by the organiser.</p>' +
+    getListHTML(b);
+  openScrim("getScrim");
+}
+
+/* ---- the organiser's side ---- */
+function getRepoPath(rel){ return (DEV ? "dev/" : "") + rel; }
+function getFileUrl(repoPath){
+  return "https://api.github.com/repos/" + GH.owner + "/" + GH.repo + "/contents/" +
+    repoPath.split("/").map(encodeURIComponent).join("/");
+}
+/* Straight to the repo, the same way state.json goes. Returns true or says
+   why not. */
+async function ghPutFile(repoPath, b64, message){
+  if(!ghToken()){ say("No GitHub token set \u2014 open Admin \u2192 Settings to add one.", "bad"); return false; }
+  try{
+    var r = await ghFetch(getFileUrl(repoPath), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: message, content: b64, branch: GH.branch })
+    });
+    if(!r.ok){ say(ghMsg(r.status), "bad"); return false; }
+    return true;
+  }catch(e){
+    say("Couldn’t reach GitHub to upload that file.", "bad");
+    return false;
+  }
+}
+/* Best effort: the entry is already off the site by the time this runs, so a
+   left-behind blob is untidy rather than wrong, and not worth an error. */
+async function ghDeleteFile(repoPath, message){
+  try{
+    var head = await ghFetch(getFileUrl(repoPath) + "?ref=" + encodeURIComponent(GH.branch));
+    if(!head.ok) return;
+    var j = await head.json();
+    if(!j || !j.sha) return;
+    await ghFetch(getFileUrl(repoPath), {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: message, sha: j.sha, branch: GH.branch })
+    });
+  }catch(e){}
+}
+/* base64 of the bytes, without the "data:...;base64," the FileReader puts in
+   front of them. */
+function getPickDoc(cb){
+  var inp = document.createElement("input");
+  inp.type = "file";
+  inp.accept = GET_OK_EXT.map(function(x){ return "." + x; }).join(",") +
+    ",application/pdf,text/plain,text/markdown";
+  inp.addEventListener("change", function(){
+    var f = inp.files && inp.files[0];
+    if(!f) return;
+    var ext = getExt(f.name);
+    if(GET_BAD_EXT.indexOf(ext) !== -1){
+      say("A ." + ext + " is how a book itself is sent around. This is for a note saying where to " +
+          "get one — a PDF or document you wrote.", "bad");
+      return;
+    }
+    if(GET_OK_EXT.indexOf(ext) === -1){
+      say("That kind of file isn’t accepted here. Use a PDF, a document or plain text.", "bad");
+      return;
+    }
+    if(f.size > GET_MAX_BYTES){
+      say("That file is " + getSizeText(f.size) + ". A note about where to find the book should be " +
+          "well under " + getSizeText(GET_MAX_BYTES) + ".", "bad");
+      return;
+    }
+    var fr = new FileReader();
+    fr.onload = function(){
+      var out = String(fr.result || "");
+      var comma = out.indexOf(",");
+      if(comma === -1){ say("That file couldn’t be read.", "bad"); return; }
+      cb({ name: f.name, size: f.size, ext: ext, b64: out.slice(comma + 1) });
+    };
+    fr.onerror = function(){ say("That file couldn’t be read.", "bad"); };
+    fr.readAsDataURL(f);
+  });
+  inp.click();
+}
+function getFieldVal(bid, which){
+  var pane = $("adminPane");
+  var n = pane && pane.querySelector('[data-getfield="' + which + '"][data-bid="' + bid + '"]');
+  return n ? n.value.trim() : "";
+}
+function getPush(b, entry){
+  if(!Array.isArray(b.getbook)) b.getbook = [];
+  b.getbook.push(entry);
+}
+async function getAddLink(bid){
+  var b = bookById(bid);
+  if(!b) return;
+  var title = getFieldVal(bid, "ltitle"), url = webAddress(getFieldVal(bid, "lurl"));
+  if(!title){ say("Give the link a title — that is what people see.", "bad"); return; }
+  if(!url){ say("That doesn’t look like a web address. It needs to start https://", "bad"); return; }
+  getPush(b, { id: uid("get"), kind: "link", title: title.slice(0, 80), url: url });
+  openEditors[bid] = true;
+  if(await save("Adding the link…")){ renderAll(); renderAdmin(); }
+}
+async function getAddFile(bid){
+  var b = bookById(bid);
+  if(!b) return;
+  var title = getFieldVal(bid, "ftitle");
+  if(!title){ say("Give the file a title first — say what it is.", "bad"); return; }
+  getPickDoc(async function(f){
+    say("Uploading …", "busy", true);
+    var rel = GET_DIR + bid.replace(/[^A-Za-z0-9_-]/g, "") + "-" + uid("f").slice(3) + "." + f.ext;
+    if(!(await ghPutFile(getRepoPath(rel), f.b64, "Add a where-to-find-it file (book club site)"))) return;
+    var fresh = bookById(bid);
+    if(!fresh) return;
+    getPush(fresh, { id: uid("get"), kind: "file", title: title.slice(0, 80),
+                     url: rel, name: f.name, size: f.size });
+    openEditors[bid] = true;
+    if(await save("Adding the file…")){ renderAll(); renderAdmin(); }
+  });
+}
+async function getRemove(bid, eid){
+  var b = bookById(bid);
+  if(!b) return;
+  var es = getEntries(b);
+  var at = -1;
+  es.forEach(function(e, i){ if(e.id === eid) at = i; });
+  if(at === -1) return;
+  var gone = es[at];
+  b.getbook = es.slice(0, at).concat(es.slice(at + 1));
+  openEditors[bid] = true;
+  if(await save("Removing…")){
+    renderAll(); renderAdmin();
+    if(gone.kind === "file") ghDeleteFile(getRepoPath(gone.url), "Remove a where-to-find-it file (book club site)");
+  }
+}
+/* The block inside a book's editor. Every status gets one: entries are worth
+   putting together before a book is started, and worth keeping after it is
+   finished. Where they show up is getHas's business, not this one's. */
+function getEditorHTML(b){
+  var es = getEntries(b);
+  return '<hr class="divider" style="margin:22px 0">' +
+    '<p class="eyebrow">Get the book</p>' +
+    '<p class="hint" style="margin:8px 0 14px">Where people can buy or borrow it. These show on the ' +
+      'book’s panel while it is being read or queued up. Only you can add them.</p>' +
+    (es.length
+      ? '<ul class="getlist" style="margin-bottom:16px">' + es.map(function(e){
+          var meta = e.kind === "file"
+            ? [getExt(e.name).toUpperCase(), getSizeText(e.size)].filter(Boolean).join(" · ")
+            : getHost(e.url);
+          return '<li><div class="getedit">' +
+            '<span class="getrow__k" style="--c:var(--' + (e.kind === "file" ? "zest" : "sky") +
+              ');--cf:var(--on-' + (e.kind === "file" ? "zest" : "sky") + ')">' +
+              (e.kind === "file" ? "&#8595;" : "&#8599;") + "</span>" +
+            "<span style=\"min-width:0\"><span class=\"getrow__t\">" + esc(e.title) + "</span>" +
+              (meta ? '<span class="getrow__m">' + esc(meta) + "</span>" : "") + "</span>" +
+            '<button class="btn btn--sm btn--ghost" type="button" style="margin-left:auto" ' +
+              'data-getdel="' + esc(e.id) + '" data-bid="' + esc(b.id) + '">Remove</button>' +
+          "</div></li>";
+        }).join("") + "</ul>"
+      : '<p class="empty" style="margin-bottom:16px">Nothing added yet.</p>') +
+    '<div class="formgrid">' +
+      '<div class="field"><label>Link title</label>' +
+        '<input class="input" type="text" placeholder="Borrow on Libby" maxlength="80" ' +
+          'data-getfield="ltitle" data-bid="' + esc(b.id) + '"></div>' +
+      '<div class="field"><label>Web address</label>' +
+        '<input class="input" type="text" placeholder="libbyapp.com/…" ' +
+          'data-getfield="lurl" data-bid="' + esc(b.id) + '"></div>' +
+    "</div>" +
+    '<div style="margin-top:10px"><button class="btn btn--sm btn--sky" type="button" ' +
+      'data-getlink="' + esc(b.id) + '">Add link</button></div>' +
+    '<div class="formgrid" style="margin-top:16px">' +
+      '<div class="field"><label>File title</label>' +
+        '<input class="input" type="text" placeholder="Where to find it — library &amp; purchase links" ' +
+          'maxlength="80" data-getfield="ftitle" data-bid="' + esc(b.id) + '"></div>' +
+    "</div>" +
+    '<div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
+      '<button class="btn btn--sm btn--zest" type="button" data-getfile="' + esc(b.id) + '">Upload a file</button>' +
+      '<span class="hint">A note you wrote — PDF, document or text, under ' + getSizeText(GET_MAX_BYTES) +
+        '. Not the book itself.</span></div>' +
+    '<p class="hint" style="margin-top:10px">An uploaded file takes about a minute to become downloadable ' +
+      'while the site rebuilds.</p>';
+}
+
 function openBookDetail(o, kind, focus){
   var ups = kind === "rec" ? (o.endorsements || []) : [];
   var downs = kind === "rec" ? (o.dislikes || []) : [];
@@ -4715,6 +5031,13 @@ function openBookDetail(o, kind, focus){
                 '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Not for me</button>') +
           "</div>";
         })()
+      : "") +
+    /* A recommendation has no shelf entry behind it, so there is nowhere for
+       the organiser to have put these; only a real book gets the block. */
+    (kind !== "rec" && getHas(o)
+      ? '<hr class="divider"><p class="eyebrow">Get the book</p>' +
+        '<p class="hint" style="margin:8px 0 12px">Where the club found it. Added by the organiser.</p>' +
+        getListHTML(o)
       : "") +
     '<hr class="divider">' +
     '<p style="white-space:pre-wrap">' + esc(o.blurb || "No summary written yet.") + "</p>" +
@@ -5689,7 +6012,7 @@ function imgField(label, kind, id, cur, round){
 function bookEditor(b){
   var r = b.review || {};
   return '<details class="editor"' + (openEditors[b.id] ? " open" : "") + '>' +
-    '<summary data-editfor="' + esc(b.id) + '">Edit details, cover, badge, dates &amp; members</summary>' +
+    '<summary data-editfor="' + esc(b.id) + '">Edit details, cover, badge, dates, members &amp; where to get it</summary>' +
     '<div class="editor__body">' +
       '<div class="formgrid">' +
         '<div class="field"><label>Title</label><input class="input" type="text" value="' + esc(b.title) + '" data-bfield="title" data-bid="' + esc(b.id) + '" maxlength="140"></div>' +
@@ -5738,6 +6061,7 @@ function bookEditor(b){
           '<div class="field" style="margin-top:14px"><label>Club review</label>' +
             '<textarea class="textarea" data-bfield="text" data-bid="' + esc(b.id) + '" placeholder="What did the group make of it?">' + esc(r.text || "") + "</textarea></div>"
         : "") +
+      getEditorHTML(b) +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
         '<button class="btn btn--sm btn--zest" type="button" data-bsave="' + esc(b.id) + '">Save changes</button>' +
         '<button class="btn btn--sm btn--ghost" type="button" data-bdel="' + esc(b.id) + '" style="margin-left:auto">Remove from the list</button>' +
@@ -6694,6 +7018,10 @@ document.addEventListener("click", async function(e){
     renderFocus(); renderTree(); renderTimeline();
     return;
   }
+  if((el = t.closest("[data-getopen]"))){ openGetBook(el.getAttribute("data-getopen")); return; }
+  if((el = t.closest("[data-getlink]"))){ getAddLink(el.getAttribute("data-getlink")); return; }
+  if((el = t.closest("[data-getfile]"))){ getAddFile(el.getAttribute("data-getfile")); return; }
+  if((el = t.closest("[data-getdel]"))){ getRemove(el.getAttribute("data-bid"), el.getAttribute("data-getdel")); return; }
   if((el = t.closest("[data-badge]"))){ openBadge(el.getAttribute("data-badge")); return; }
   if((el = t.closest("[data-meet]"))){ openMeeting(el.getAttribute("data-meet")); return; }
   if((el = t.closest("[data-rec]"))){ var rr0 = recById(el.getAttribute("data-rec")); if(rr0) openBookDetail(rr0, "rec"); return; }
