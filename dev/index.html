@@ -281,7 +281,7 @@ img{max-width:100%;display:block}
 .getrow{display:flex;gap:13px;align-items:center;padding:13px 16px;text-decoration:none;color:inherit}
 a.getrow:hover{background:var(--sunk)}
 .getrow__k{flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;
-  border:2px solid var(--edge);border-radius:50%;background:var(--c,var(--sky));color:var(--cf,var(--on-sky));
+  border:2px solid var(--edge);border-radius:50%;background:var(--sky);color:var(--on-sky);
   font-family:var(--f-mono);font-size:13px}
 .getrow__t{font-family:var(--f-display);font-weight:700;font-size:15.5px;line-height:1.2}
 .getrow__m{display:block;margin-top:2px;font-family:var(--f-mono);font-size:10.5px;color:var(--muted);
@@ -2008,8 +2008,12 @@ function migrate(s){
     if(typeof b.finished !== "string") b.finished = "";
     if(typeof b.progressPage !== "number") b.progressPage = 0;
     if(!Array.isArray(b.members)) b.members = [];
-    /* where to buy or borrow it — organiser-added, see getEditorHTML */
+    /* where to buy or borrow it — organiser-added, see getEditorHTML.
+       Entries were once either a link or an uploaded file; only links are
+       offered now, so an old file entry is dropped here rather than left in
+       the file rendering as nothing. */
     if(!Array.isArray(b.getbook)) b.getbook = [];
+    b.getbook = b.getbook.filter(function(e){ return e && e.kind !== "file"; });
     if(!b.series){
       var hit = SERIES[String(b.title||"").toLowerCase().trim()];
       if(hit){ b.series = hit.series; b.seriesIndex = hit.i; }
@@ -4694,83 +4698,50 @@ function meetingHTML(m, b){
 /* `focus` is "up" or "down" when the reader came in via a card's +/- shortcut,
    so the matching field is open and waiting for their name */
 /* ---------- get the book ----------
-   Where to buy or borrow whatever the club is on. The organiser puts the
-   entries there from Admin; nobody else can add one. Two kinds:
+   Where to buy or borrow whatever the club is on. An entry is a title the
+   organiser types and a web address; nobody else can add one.
 
-     link  a web address they type, with a title — a library page, a shop
-     file  a small reference document they wrote themselves, listing places
-           to find it, uploaded and linked for download
-
-   The uploaded file is a note about where to get the book. It is deliberately
-   not a way to pass the book itself around: a book's own PDF, EPUB or audio
-   would be someone else's copyright to give away, not ours. GET_BAD_EXT
-   refuses the formats a book actually comes in and GET_MAX_BYTES keeps what
-   is left to note-sized, which together stop the obvious cases — though what
-   they check is the wrapper, not what is inside it.
-
-   Files go in the repo beside the page rather than into state.json. Covers
-   are base64 in there and that is already most of its weight; the whole file
-   is rewritten on every save, so a document in it would be re-uploaded each
-   time anyone changed anything. A committed file is fetched once and cached. */
-var GET_MAX_BYTES = 2 * 1024 * 1024;
-var GET_OK_EXT = ["pdf","doc","docx","odt","rtf","txt","md","csv"];
-var GET_BAD_EXT = ["epub","mobi","azw","azw3","kfx","fb2","djvu","cbz","cbr",
-                   "mp3","m4a","m4b","aac","ogg","opus","wav","flac","zip","rar","7z"];
-var GET_DIR = "files/getbook/";
+   It handled uploaded files too, for a note listing several places at once.
+   That is a Drive link now: the organiser puts the document on their own
+   Drive, shares it to anyone with the link, and pastes it in like any other
+   entry. One kind of entry instead of two, no upload path, and nothing here
+   writes a file anywhere. */
 
 function getEntries(b){ return (b && Array.isArray(b.getbook)) ? b.getbook : []; }
 /* The hero panel and the book panel both ask this. An empty one is never
    shown: a heading with nothing under it is worse than no heading. */
 function getHas(b){ return getEntries(b).length > 0; }
-function getExt(name){
-  var m = /\.([A-Za-z0-9]+)$/.exec(String(name || ""));
-  return m ? m[1].toLowerCase() : "";
-}
-function getSizeText(n){
-  n = Number(n) || 0;
-  if(n <= 0) return "";
-  return n < 1024 * 1024 ? Math.max(1, Math.round(n / 1024)) + " KB"
-                         : (n / 1024 / 1024).toFixed(1) + " MB";
-}
-/* A link's address is shown as its host, because the full one is usually a
-   line of tracking and the host is the part that says whether it is the
-   library or a shop. */
-function getHost(u){
-  try{ return new URL(u).hostname.replace(/^www\./, ""); }catch(e){ return ""; }
-}
-/* webAddress() checks a link on the way in and the file path is built here,
-   so both are known good when they are written. This is the read back: a
+/* webAddress() checks an address on the way in. This is the read back:
    state.json is a plain file in a repo, and an href is the one place where a
-   line of it would be executed rather than shown. Anything that is not the
-   shape it should be renders as nothing. */
-function getHref(e){
-  if(e.kind === "file") return /^files\/getbook\/[A-Za-z0-9._-]+$/.test(String(e.url || "")) ? e.url : "";
-  return safeUrl(e.url);
+   line of it would be executed rather than shown. Anything that is not a
+   plain web address renders as nothing. */
+function getHref(e){ return safeUrl(e && e.url); }
+/* The host, not the whole address: the rest is usually tracking, and the host
+   is the part that says whether this is the library, a shop, or her Drive. */
+function getHost(u){
+  try{
+    var h = new URL(u).hostname.replace(/^www\./, "");
+    return h === "drive.google.com" || h === "docs.google.com" ? "Google Drive" : h;
+  }catch(e){ return ""; }
 }
 function getRowHTML(e){
-  var isFile = e.kind === "file";
   var href = getHref(e);
   if(!href) return "";
-  var hue = isFile ? "zest" : "sky";
-  var meta = isFile
-    ? [getExt(e.name).toUpperCase(), getSizeText(e.size)].filter(Boolean).join(" · ")
-    : getHost(e.url);
+  var meta = getHost(href);
   return "<li>" +
-    '<a class="getrow" href="' + esc(href) + '"' +
-      (isFile ? ' download="' + esc(e.name || "") + '"' : ' target="_blank" rel="noopener noreferrer"') + ">" +
-      '<span class="getrow__k" style="--c:var(--' + hue + ');--cf:var(--on-' + hue + ')">' +
-        (isFile ? "&#8595;" : "&#8599;") + "</span>" +
+    '<a class="getrow" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' +
+      '<span class="getrow__k">&#8599;</span>' +
       "<span>" +
         '<span class="getrow__t">' + esc(e.title) + "</span>" +
         (meta ? '<span class="getrow__m">' + esc(meta) + "</span>" : "") +
       "</span>" +
-      '<span class="getrow__go" aria-hidden="true">' + (isFile ? "&#8595;" : "&#8250;") + "</span>" +
+      '<span class="getrow__go" aria-hidden="true">&#8250;</span>' +
     "</a></li>";
 }
 function getListHTML(b){
-  var es = getEntries(b);
-  if(!es.length) return '<p class="empty">Nothing here yet.</p>';
-  return '<ul class="getlist">' + es.map(getRowHTML).join("") + "</ul>";
+  var rows = getEntries(b).map(getRowHTML).join("");
+  if(!rows) return '<p class="empty">Nothing here yet.</p>';
+  return '<ul class="getlist">' + rows + "</ul>";
 }
 function openGetBook(bookId){
   var b = bookById(bookId);
@@ -4783,88 +4754,10 @@ function openGetBook(bookId){
 }
 
 /* ---- the organiser's side ---- */
-function getRepoPath(rel){ return (DEV ? "dev/" : "") + rel; }
-function getFileUrl(repoPath){
-  return "https://api.github.com/repos/" + GH.owner + "/" + GH.repo + "/contents/" +
-    repoPath.split("/").map(encodeURIComponent).join("/");
-}
-/* Straight to the repo, the same way state.json goes. Returns true or says
-   why not. */
-async function ghPutFile(repoPath, b64, message){
-  if(!ghToken()){ say("No GitHub token set \u2014 open Admin \u2192 Settings to add one.", "bad"); return false; }
-  try{
-    var r = await ghFetch(getFileUrl(repoPath), {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: message, content: b64, branch: GH.branch })
-    });
-    if(!r.ok){ say(ghMsg(r.status), "bad"); return false; }
-    return true;
-  }catch(e){
-    say("Couldn’t reach GitHub to upload that file.", "bad");
-    return false;
-  }
-}
-/* Best effort: the entry is already off the site by the time this runs, so a
-   left-behind blob is untidy rather than wrong, and not worth an error. */
-async function ghDeleteFile(repoPath, message){
-  try{
-    var head = await ghFetch(getFileUrl(repoPath) + "?ref=" + encodeURIComponent(GH.branch));
-    if(!head.ok) return;
-    var j = await head.json();
-    if(!j || !j.sha) return;
-    await ghFetch(getFileUrl(repoPath), {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: message, sha: j.sha, branch: GH.branch })
-    });
-  }catch(e){}
-}
-/* base64 of the bytes, without the "data:...;base64," the FileReader puts in
-   front of them. */
-function getPickDoc(cb){
-  var inp = document.createElement("input");
-  inp.type = "file";
-  inp.accept = GET_OK_EXT.map(function(x){ return "." + x; }).join(",") +
-    ",application/pdf,text/plain,text/markdown";
-  inp.addEventListener("change", function(){
-    var f = inp.files && inp.files[0];
-    if(!f) return;
-    var ext = getExt(f.name);
-    if(GET_BAD_EXT.indexOf(ext) !== -1){
-      say("A ." + ext + " is how a book itself is sent around. This is for a note saying where to " +
-          "get one — a PDF or document you wrote.", "bad");
-      return;
-    }
-    if(GET_OK_EXT.indexOf(ext) === -1){
-      say("That kind of file isn’t accepted here. Use a PDF, a document or plain text.", "bad");
-      return;
-    }
-    if(f.size > GET_MAX_BYTES){
-      say("That file is " + getSizeText(f.size) + ". A note about where to find the book should be " +
-          "well under " + getSizeText(GET_MAX_BYTES) + ".", "bad");
-      return;
-    }
-    var fr = new FileReader();
-    fr.onload = function(){
-      var out = String(fr.result || "");
-      var comma = out.indexOf(",");
-      if(comma === -1){ say("That file couldn’t be read.", "bad"); return; }
-      cb({ name: f.name, size: f.size, ext: ext, b64: out.slice(comma + 1) });
-    };
-    fr.onerror = function(){ say("That file couldn’t be read.", "bad"); };
-    fr.readAsDataURL(f);
-  });
-  inp.click();
-}
 function getFieldVal(bid, which){
   var pane = $("adminPane");
   var n = pane && pane.querySelector('[data-getfield="' + which + '"][data-bid="' + bid + '"]');
   return n ? n.value.trim() : "";
-}
-function getPush(b, entry){
-  if(!Array.isArray(b.getbook)) b.getbook = [];
-  b.getbook.push(entry);
 }
 async function getAddLink(bid){
   var b = bookById(bid);
@@ -4872,41 +4765,20 @@ async function getAddLink(bid){
   var title = getFieldVal(bid, "ltitle"), url = webAddress(getFieldVal(bid, "lurl"));
   if(!title){ say("Give the link a title — that is what people see.", "bad"); return; }
   if(!url){ say("That doesn’t look like a web address. It needs to start https://", "bad"); return; }
-  getPush(b, { id: uid("get"), kind: "link", title: title.slice(0, 80), url: url });
+  if(!Array.isArray(b.getbook)) b.getbook = [];
+  b.getbook.push({ id: uid("get"), kind: "link", title: title.slice(0, 80), url: url });
   openEditors[bid] = true;
   if(await save("Adding the link…")){ renderAll(); renderAdmin(); }
-}
-async function getAddFile(bid){
-  var b = bookById(bid);
-  if(!b) return;
-  var title = getFieldVal(bid, "ftitle");
-  if(!title){ say("Give the file a title first — say what it is.", "bad"); return; }
-  getPickDoc(async function(f){
-    say("Uploading …", "busy", true);
-    var rel = GET_DIR + bid.replace(/[^A-Za-z0-9_-]/g, "") + "-" + uid("f").slice(3) + "." + f.ext;
-    if(!(await ghPutFile(getRepoPath(rel), f.b64, "Add a where-to-find-it file (book club site)"))) return;
-    var fresh = bookById(bid);
-    if(!fresh) return;
-    getPush(fresh, { id: uid("get"), kind: "file", title: title.slice(0, 80),
-                     url: rel, name: f.name, size: f.size });
-    openEditors[bid] = true;
-    if(await save("Adding the file…")){ renderAll(); renderAdmin(); }
-  });
 }
 async function getRemove(bid, eid){
   var b = bookById(bid);
   if(!b) return;
-  var es = getEntries(b);
-  var at = -1;
+  var es = getEntries(b), at = -1;
   es.forEach(function(e, i){ if(e.id === eid) at = i; });
   if(at === -1) return;
-  var gone = es[at];
   b.getbook = es.slice(0, at).concat(es.slice(at + 1));
   openEditors[bid] = true;
-  if(await save("Removing…")){
-    renderAll(); renderAdmin();
-    if(gone.kind === "file") ghDeleteFile(getRepoPath(gone.url), "Remove a where-to-find-it file (book club site)");
-  }
+  if(await save("Removing…")){ renderAll(); renderAdmin(); }
 }
 /* The block inside a book's editor. Every status gets one: entries are worth
    putting together before a book is started, and worth keeping after it is
@@ -4919,13 +4791,9 @@ function getEditorHTML(b){
       'book’s panel while it is being read or queued up. Only you can add them.</p>' +
     (es.length
       ? '<ul class="getlist" style="margin-bottom:16px">' + es.map(function(e){
-          var meta = e.kind === "file"
-            ? [getExt(e.name).toUpperCase(), getSizeText(e.size)].filter(Boolean).join(" · ")
-            : getHost(e.url);
+          var meta = getHost(e.url);
           return '<li><div class="getedit">' +
-            '<span class="getrow__k" style="--c:var(--' + (e.kind === "file" ? "zest" : "sky") +
-              ');--cf:var(--on-' + (e.kind === "file" ? "zest" : "sky") + ')">' +
-              (e.kind === "file" ? "&#8595;" : "&#8599;") + "</span>" +
+            '<span class="getrow__k">&#8599;</span>' +
             "<span style=\"min-width:0\"><span class=\"getrow__t\">" + esc(e.title) + "</span>" +
               (meta ? '<span class="getrow__m">' + esc(meta) + "</span>" : "") + "</span>" +
             '<button class="btn btn--sm btn--ghost" type="button" style="margin-left:auto" ' +
@@ -4934,26 +4802,17 @@ function getEditorHTML(b){
         }).join("") + "</ul>"
       : '<p class="empty" style="margin-bottom:16px">Nothing added yet.</p>') +
     '<div class="formgrid">' +
-      '<div class="field"><label>Link title</label>' +
+      '<div class="field"><label>Title</label>' +
         '<input class="input" type="text" placeholder="Borrow on Libby" maxlength="80" ' +
           'data-getfield="ltitle" data-bid="' + esc(b.id) + '"></div>' +
       '<div class="field"><label>Web address</label>' +
         '<input class="input" type="text" placeholder="libbyapp.com/…" ' +
           'data-getfield="lurl" data-bid="' + esc(b.id) + '"></div>' +
     "</div>" +
-    '<div style="margin-top:10px"><button class="btn btn--sm btn--sky" type="button" ' +
-      'data-getlink="' + esc(b.id) + '">Add link</button></div>' +
-    '<div class="formgrid" style="margin-top:16px">' +
-      '<div class="field"><label>File title</label>' +
-        '<input class="input" type="text" placeholder="Where to find it — library &amp; purchase links" ' +
-          'maxlength="80" data-getfield="ftitle" data-bid="' + esc(b.id) + '"></div>' +
-    "</div>" +
     '<div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
-      '<button class="btn btn--sm btn--zest" type="button" data-getfile="' + esc(b.id) + '">Upload a file</button>' +
-      '<span class="hint">A note you wrote — PDF, document or text, under ' + getSizeText(GET_MAX_BYTES) +
-        '. Not the book itself.</span></div>' +
-    '<p class="hint" style="margin-top:10px">An uploaded file takes about a minute to become downloadable ' +
-      'while the site rebuilds.</p>';
+      '<button class="btn btn--sm btn--sky" type="button" data-getlink="' + esc(b.id) + '">Add link</button>' +
+      '<span class="hint">For a document listing several places, put it on Drive, share it to ' +
+        'anyone with the link, and paste that in as an entry.</span></div>';
 }
 
 function openBookDetail(o, kind, focus){
@@ -7020,7 +6879,6 @@ document.addEventListener("click", async function(e){
   }
   if((el = t.closest("[data-getopen]"))){ openGetBook(el.getAttribute("data-getopen")); return; }
   if((el = t.closest("[data-getlink]"))){ getAddLink(el.getAttribute("data-getlink")); return; }
-  if((el = t.closest("[data-getfile]"))){ getAddFile(el.getAttribute("data-getfile")); return; }
   if((el = t.closest("[data-getdel]"))){ getRemove(el.getAttribute("data-bid"), el.getAttribute("data-getdel")); return; }
   if((el = t.closest("[data-badge]"))){ openBadge(el.getAttribute("data-badge")); return; }
   if((el = t.closest("[data-meet]"))){ openMeeting(el.getAttribute("data-meet")); return; }

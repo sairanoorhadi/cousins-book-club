@@ -76,16 +76,13 @@ Keep an eye on file size — if `data/state.json` grows past a few megabytes, sa
 
 ### Get the book
 
-Each book's editor has a **Get the book** block for saying where people can buy or borrow it. Two kinds of entry:
+Each book's editor has a **Get the book** block for saying where people can buy or borrow it. An entry is a title you type plus a web address — "Borrow on Libby", "Buy on Bookshop.org".
 
-- **A link** — a title you type and a web address, so "Borrow on Libby" or "Buy on Bookshop.org".
-- **A file** — a short reference document you wrote yourself listing places to find it. PDF, Word, ODT, RTF, plain text or CSV, under 2 MB.
+For a document listing several places at once, put it on Google Drive, set sharing to *Anyone with the link*, and paste that link in as an entry with a title like "Where to find it — links". That keeps the document yours to edit without the site having to store it.
 
-Entries show on the book's panel, under the cover on the front page while the book is being read, and in the book's own panel whatever its status. A book with no entries shows nothing at all, so there is never an empty heading.
+Entries show on the book's panel, under the cover on the front page while the book is being read, and in the book's own panel whatever its status. A book with no entries shows nothing at all, so there is never an empty heading. Each entry opens in a new tab.
 
-The uploaded file is a note about where to get the book. It is not a way to hand out the book itself: the formats a book comes in — EPUB, MOBI, audio, archives — are refused, and so is anything over 2 MB. Those are someone else's copyright to give away, not ours.
-
-Unlike covers, these files are committed to the repo under `files/getbook/` rather than stored inside `data/state.json`, and the entry keeps only the path. `state.json` is rewritten in full on every save, so a document inside it would be re-uploaded each time anyone changed anything. A committed file is fetched once and cached. It takes the usual minute to become downloadable while GitHub Pages rebuilds.
+Nothing here is uploaded and nothing is stored beyond the title and the address, so this cannot grow `data/state.json` the way covers do.
 
 ### Editing by hand
 
