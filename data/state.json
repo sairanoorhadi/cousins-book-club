@@ -1,5 +1,5 @@
 {
-  "rev": 1439,
+  "rev": 1440,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -178,7 +178,8 @@
         "rating": 5,
         "community": 4.6,
         "by": ""
-      }
+      },
+      "getbook": []
     },
     {
       "id": "bk-soc",
@@ -214,7 +215,8 @@
       },
       "order": 0,
       "ageMin": 14,
-      "ageMax": 100
+      "ageMax": 100,
+      "getbook": []
     },
     {
       "id": "bk-mt7pvx697h34g",
@@ -242,7 +244,15 @@
         "mb-mtaiuu788is5a"
       ],
       "order": 2,
-      "level": "Ages 9-12"
+      "level": "Ages 9-12",
+      "getbook": [
+        {
+          "id": "get-mum66p10mvfrp",
+          "kind": "link",
+          "title": "Audiobook - Youtube Playlist",
+          "url": "https://www.youtube.com/watch?v=9If-D7aizX8&t=1s"
+        }
+      ]
     },
     {
       "id": "suggest-91746858-bc0",
@@ -273,7 +283,8 @@
         "mb-mtqod125fcqtd"
       ],
       "order": 3,
-      "level": "Ages 10-13"
+      "level": "Ages 10-13",
+      "getbook": []
     }
   ],
   "meetings": [
