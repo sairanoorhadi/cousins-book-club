@@ -252,7 +252,7 @@ img{max-width:100%;display:block}
 /* ============ hero ============ */
 .hero{padding:52px 0 44px;border-bottom:2px solid var(--edge)}
 .hero__grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(290px,1fr);
-  column-gap:36px;row-gap:16px;align-items:start}
+  column-gap:36px;row-gap:8px;align-items:start}
 /* Two rows: cover + title block, then Get the book + the progress bar. The
    second row is what puts those two on one line. */
 .hero__main{display:grid;grid-template-columns:172px minmax(0,1fr);
@@ -1134,7 +1134,7 @@ a.getrow:hover{background:var(--sunk)}
 .foot{padding:34px 0 54px;color:var(--muted);font-size:13.5px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 @media (max-width:960px){
-  .hero__grid{grid-template-columns:1fr;column-gap:28px;row-gap:16px}
+  .hero__grid{grid-template-columns:1fr;column-gap:28px;row-gap:8px}
   /* One column stacks main, side column, summary — which reads the summary
      after the meeting card. It belongs with the book it describes, so the
      side column is pushed past it. Nothing moves on two columns, where the
@@ -6507,21 +6507,10 @@ function bookEditor(b){
                 ((b.members || []).indexOf(m.id) !== -1 ? " checked" : "") + ">" + esc(m.name) + "</label>";
             }).join("") + "</div>"
           : '<p class="hint">Add members on the Members tab first.</p>') + "</div>" +
-      /* The club's own rating belongs to a finished book. The community's
-         does not — it is what readers elsewhere gave it, and the hero shows
-         it while the club is still reading, so it has to be settable before
-         the book is done. */
-      (b.status !== "past"
-        ? '<div class="field" style="margin-top:16px"><label>Reading Community rating</label>' +
-          '<div class="ratepick">' +
-            '<input type="range" min="0" max="5" step="0.1" value="' + clampRating(r.community) + '" ' +
-              'data-bfield="community" data-bid="' + esc(b.id) + '" aria-label="Reading Community rating out of 5">' +
-            '<span class="ratepick__out" data-rateout="c:' + esc(b.id) + '">' + clampRating(r.community).toFixed(1) + " / 5</span>" +
-            '<span data-ratestars="c:' + esc(b.id) + '">' + stars(r.community, true) + "</span></div>" +
-          '<p class="hint">Shows beside the tags on the front page. Set it to 0 to hide it.</p></div>'
-        : "") +
-      (b.status === "past"
-        ? '<hr class="divider" style="margin:22px 0"><div class="formgrid">' +
+      /* Every status. A rating used to appear only once a book was marked
+         finished, which left no way to enter the one the hero shows while
+         the club is still reading it. */
+      ('<hr class="divider" style="margin:22px 0"><div class="formgrid">' +
           '<div class="field"><label>Club rating</label><div class="ratepick">' +
             '<input type="range" min="0" max="5" step="0.1" value="' + clampRating(r.rating) + '" data-bfield="rating" data-bid="' + esc(b.id) + '" aria-label="Club rating out of 5">' +
             '<span class="ratepick__out" data-rateout="' + esc(b.id) + '">' + clampRating(r.rating).toFixed(1) + " / 5</span>" +
@@ -6530,11 +6519,10 @@ function bookEditor(b){
             '<input type="range" min="0" max="5" step="0.1" value="' + clampRating(r.community) + '" data-bfield="community" data-bid="' + esc(b.id) + '" aria-label="Reading Community rating out of 5">' +
             '<span class="ratepick__out" data-rateout="c:' + esc(b.id) + '">' + clampRating(r.community).toFixed(1) + " / 5</span>" +
             '<span data-ratestars="c:' + esc(b.id) + '">' + stars(r.community, true) + "</span></div>" +
-            '<p class="hint">What readers elsewhere gave it — set it to 0 to hide it.</p></div>' +
+            '<p class="hint">What readers elsewhere gave it. Shows beside the tags on the front page while the book is being read — set it to 0 to hide it.</p></div>' +
           '<div class="field"><label>Reviewed by</label><input class="input" type="text" value="' + esc(r.by || "") + '" data-bfield="by" data-bid="' + esc(b.id) + '" placeholder="The club" maxlength="60"></div></div>' +
           '<div class="field" style="margin-top:14px"><label>Club review</label>' +
-            '<textarea class="textarea" data-bfield="text" data-bid="' + esc(b.id) + '" placeholder="What did the group make of it?">' + esc(r.text || "") + "</textarea></div>"
-        : "") +
+            '<textarea class="textarea" data-bfield="text" data-bid="' + esc(b.id) + '" placeholder="What did the group make of it?">' + esc(r.text || "") + "</textarea></div>") +
       getEditorHTML(b) +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
         '<button class="btn btn--sm btn--zest" type="button" data-bsave="' + esc(b.id) + '">Save changes</button>' +
