@@ -2063,7 +2063,14 @@ async function loadState(){
     if(res.ok) file = await res.json();
   }catch(e){}
   state = migrate((file && Number(file.rev || 0) >= Number(seed.rev || 0)) ? file : seed);
+  baseRev = Number(state.rev || 0);
 }
+/* The revision this page was built from. Every save writes the whole of state
+   over the file, so a page holding an older copy silently undoes everything
+   done since — and the way to get an older copy is ordinary: save, refresh
+   inside the minute GitHub Pages takes to rebuild, and the page loads the
+   pre-save file. Kept so a save can tell. */
+var baseRev = 0;
 
 /* ---------- dev copy ----------
    The page under /dev/ is this same file with one marker line added ahead of
@@ -2183,6 +2190,21 @@ async function save(label){
     if(head.ok){
       var headJson = await head.json();
       sha = headJson.sha;
+      /* What is in the repo right now, against what this page started from.
+         If the repo has moved on, this page is working from an older copy and
+         writing it would undo whoever moved it — which has happened: a write
+         at rev 1316 landed after one at 1317, forty seconds apart, because a
+         refresh inside the rebuild window had reloaded the pre-save file.
+         Refusing is the honest answer; merging two whole states field by
+         field is guesswork. */
+      var theirs = freshRev(headJson.content);
+      if(theirs !== null && theirs > baseRev){
+        saveBusy = false;
+        state.rev = Number(state.rev || 1) - 1;
+        say("This page is showing an older copy of the club \u2014 someone (or you, in another tab) has saved since it loaded. " +
+            "Reload before changing anything, or your change will undo theirs.", "bad");
+        return false;
+      }
       adoptFreshNotes(headJson.content);
     }
     else if(head.status !== 404) throw { status: head.status };
@@ -2198,7 +2220,12 @@ async function save(label){
     saveBusy = false;
     tokenRefused = false;
     paintTokenWarning();
-    say("Saved. The live site catches up in about a minute.", "ok");
+    baseRev = Number(state.rev || 0);
+    /* Said plainly because the old wording — "the live site catches up" —
+       reads as somebody else's problem when you are standing on the test
+       site, and the page you are on is exactly the one that will show the
+       old copy if you refresh straight away. */
+    say("Saved. This page may still show the old copy for about a minute \u2014 don\u2019t reload just yet.", "ok");
     return true;
   }catch(err){
     saveBusy = false;
@@ -2220,6 +2247,12 @@ async function save(label){
    here is what stops a save of anything else \u2014 a date, a cover, an
    accepted request \u2014 from carrying a stale set of notes back over
    whatever was added or removed elsewhere while this tab held the old one. */
+/* the rev out of the copy GitHub is holding, or null if it cannot be read */
+function freshRev(rawContent){
+  if(!rawContent) return null;
+  try{ var f = JSON.parse(unb64(rawContent)); return f && f.rev != null ? Number(f.rev) : null; }
+  catch(e){ return null; }
+}
 function adoptFreshNotes(rawContent){
   if(!rawContent || !state || !Array.isArray(state.meetings)) return;
   var fresh;
@@ -5995,20 +6028,54 @@ function paneRecs(){
 }
 
 var meetBookFilter = "";
+/* Which book a meeting is for.
+   This was one flat list of everything the club has ever had — four books and
+   thirty-seven approved recommendations, forty-one rows — in file order, with
+   nothing saying which of them is actually being read. Worse, a select with no
+   option marked selected opens on its first row, and the first row is
+   state.books[0]: a book finished months ago. So filling the form in and
+   pressing Add meeting, without noticing that Book is the last field in the
+   grid, attached the meeting to that finished book instead of to the current
+   one — which looks exactly like not being able to add a meeting for the book
+   you just started.
+   Grouped by where a book stands, the ones being read first, and opening on
+   one of them. Everything that was selectable before still is. */
+function meetBookOptions(sel){
+  var cur = currentBooks(), nxt = nextBooks();
+  var taken = {};
+  cur.concat(nxt).forEach(function(b){ taken[b.id] = true; });
+  /* whatever is left, however its status is spelt, so nothing can fall out of
+     the list by having an unexpected one */
+  var rest = state.books.filter(function(b){ return !taken[b.id]; });
+  var groups = [["Currently reading", cur], ["Up next", nxt],
+                ["Finished", rest], ["Recommendations", approvedRecs()]];
+  /* nothing chosen yet means a new meeting: open on the book being read */
+  if(!sel && cur.length) sel = cur[0].id;
+  return groups.filter(function(g){ return g[1].length; }).map(function(g){
+    return '<optgroup label="' + esc(g[0]) + '">' +
+      g[1].map(function(b){
+        return '<option value="' + esc(b.id) + '"' + (b.id === sel ? " selected" : "") + ">" +
+          esc(b.title + " \u2014 " + b.author) + "</option>";
+      }).join("") + "</optgroup>";
+  }).join("");
+}
 function paneMeetings(){
   var all = state.meetings.slice().sort(function(a,b){ return String(b.date||"").localeCompare(String(a.date||"")); });
-  var opts = state.books.concat(approvedRecs()).map(function(b){ return { id:b.id, label:b.title + " — " + b.author }; });
-  /* only books that actually have meetings, so the chips stay short */
-  var withMeets = [];
-  all.forEach(function(m){ if(withMeets.indexOf(m.bookId) === -1) withMeets.push(m.bookId); });
-  if(meetBookFilter && withMeets.indexOf(meetBookFilter) === -1) meetBookFilter = "";
+  /* Books that have meetings, and every book being read whether it has any or
+     not. A book promoted this minute has none, and that is exactly when its
+     tab is wanted: the tab is how you get to scheduling its first one. */
+  var tabs = [];
+  currentBooks().forEach(function(b){ if(tabs.indexOf(b.id) === -1) tabs.push(b.id); });
+  all.forEach(function(m){ if(tabs.indexOf(m.bookId) === -1) tabs.push(m.bookId); });
+  if(meetBookFilter && tabs.indexOf(meetBookFilter) === -1) meetBookFilter = "";
   var ms = meetBookFilter ? all.filter(function(m){ return m.bookId === meetBookFilter; }) : all;
+  var only = meetBookFilter ? (bookById(meetBookFilter) || recById(meetBookFilter)) : null;
 
   return '<p class="eyebrow">Schedule</p><h3 style="font-size:22px;margin:8px 0 14px">Meetings</h3>' +
-    (withMeets.length > 1
+    (tabs.length > 1
       ? '<div class="focusbar" style="margin-bottom:18px"><span class="focusbar__lab">Book</span>' +
         '<button class="focuschip focuschip--all" type="button" data-mfilter="" aria-pressed="' + (!meetBookFilter) + '">All books</button>' +
-        withMeets.map(function(id){
+        tabs.map(function(id){
           var bb = bookById(id) || recById(id);
           return '<button class="focuschip focuschip--all" type="button" data-mfilter="' + esc(id) + '" aria-pressed="' +
             (meetBookFilter === id) + '">' + esc(bb ? bb.title : "Unassigned") + "</button>";
@@ -6032,7 +6099,7 @@ function paneMeetings(){
             '<div class="field"><label>Chapters covered</label><input class="input" type="text" value="' + esc(m.chapters || "") + '" data-mfield="chapters" data-mid="' + esc(m.id) + '" placeholder="Chapters 1-15" maxlength="140"></div>' +
             '<div class="field"><label>Pages covered</label><input class="input" type="text" value="' + esc(m.pages || "") + '" data-mfield="pages" data-mid="' + esc(m.id) + '" placeholder="1-240" maxlength="60"></div>') +
           '<div class="field"><label>Book</label><select class="select" data-mfield="bookId" data-mid="' + esc(m.id) + '">' +
-            opts.map(function(o){ return '<option value="' + esc(o.id) + '"' + (o.id === m.bookId ? " selected" : "") + ">" + esc(o.label) + "</option>"; }).join("") + "</select></div>" +
+            meetBookOptions(m.bookId) + "</select></div>" +
         "</div>" +
         (party ? '<p class="hint" style="margin-top:12px">Photo uploads for parties are coming with the member login.</p>' : "") +
         '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
@@ -6041,7 +6108,16 @@ function paneMeetings(){
           '<button class="btn btn--sm btn--ghost" type="button" data-meet="' + esc(m.id) + '">Open notes</button>' +
           '<button class="btn btn--sm btn--ghost" type="button" data-mdel="' + esc(m.id) + '" style="margin-left:auto">Delete</button>' +
         "</div></div>";
-    }).join("") : '<p class="empty">No meetings for that book yet.</p>') +
+    }).join("")
+      : (only
+          /* Nothing scheduled for the book whose tab this is. The old wording
+             said so and stopped there, leaving a scroll to the bottom of the
+             page and a hunt through the picker. The button does both. */
+          ? '<div class="adminrow"><p class="empty" style="margin:0">Nothing scheduled for <strong>' +
+            esc(only.title) + "</strong> yet.</p>" +
+            '<div style="margin-top:14px"><button class="btn btn--sm btn--sky" type="button" ' +
+            'data-mschedule="' + esc(meetBookFilter) + '">Schedule a meeting for ' + esc(only.title) + "</button></div></div>"
+          : '<p class="empty">No meetings for that book yet.</p>')) +
     '<hr class="divider"><p class="eyebrow">Add</p><h3 style="font-size:20px;margin:8px 0 16px">Schedule a new meeting</h3>' +
     '<div class="adminrow"><div class="formgrid">' +
       '<div class="field"><label for="nmKind">Kind</label><select class="select" id="nmKind">' +
@@ -6052,7 +6128,8 @@ function paneMeetings(){
       '<div class="field"><label for="nmChap">Chapters covered</label><input class="input" type="text" id="nmChap" placeholder="Chapters 1-15" maxlength="140"></div>' +
       '<div class="field"><label for="nmPages">Pages covered</label><input class="input" type="text" id="nmPages" placeholder="1-240" maxlength="60"></div>' +
       '<div class="field"><label for="nmBook">Book</label><select class="select" id="nmBook">' +
-        opts.map(function(o){ return '<option value="' + esc(o.id) + '">' + esc(o.label) + "</option>"; }).join("") + "</select></div>" +
+        /* standing on a book's tab means that is the book you mean */
+        meetBookOptions(meetBookFilter) + "</select></div>" +
     '</div><div style="margin-top:16px"><button class="btn btn--sm btn--sky" type="button" id="nmAdd">Add meeting</button></div></div>';
 }
 
@@ -6843,7 +6920,9 @@ document.addEventListener("click", async function(e){
     if(want === "past" && !sb.finished) sb.finished = todayISO();
     if(want === "current"){
       if(!sb.started) sb.started = todayISO();
-      sb.order = currentBooks().length;
+      /* sb is already current by now, so it is in this count: minus one, or
+         the first book promoted lands at order 1 with nothing at 0 */
+      sb.order = Math.max(0, currentBooks().length - 1);
     }
     /* only pull the queue forward when the last current book leaves the shelf */
     if(wasCurrent && want !== "current" && !currentBooks().length){
@@ -6924,6 +7003,15 @@ document.addEventListener("click", async function(e){
     var mdid = el.getAttribute("data-mdel");
     state.meetings = state.meetings.filter(function(x){ return x.id !== mdid; });
     if(await save("Deleting…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-mschedule]"))){
+    /* The form is already set to this book, because the tab is. This only has
+       to put it in front of the organiser and give it the cursor. */
+    var want = el.getAttribute("data-mschedule");
+    var sel = $("nmBook"); if(sel) sel.value = want;
+    var d = $("nmDate");
+    if(d){ d.scrollIntoView({ block: "center", behavior: "smooth" }); d.focus(); }
     return;
   }
   if(t.closest("#nmAdd")){
