@@ -922,10 +922,49 @@ a.getrow:hover{background:var(--sunk)}
   .photodraft{grid-template-columns:1fr}
   .photodraft > img{width:100%;max-width:220px}
 }
+.partystrip{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:12px}
+.partystrip__b{position:relative;padding:0;border:0;background:none;cursor:zoom-in;display:block}
+.partystrip__b img{width:100%;aspect-ratio:4/3;object-fit:cover;border:2px solid var(--edge);border-radius:6px;
+  box-shadow:2px 2px 0 var(--stamp);background:var(--sunk);display:block}
+.partystrip__b:hover img{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--stamp)}
+.partystrip__ai{position:absolute;top:5px;right:5px;border:1.5px solid var(--edge);border-radius:999px;
+  background:var(--grape);color:var(--on-grape);padding:0 6px;font-family:var(--f-display);font-weight:700;font-size:9px}
 #lightbox{z-index:160;align-items:center;padding:24px}
 .lightbox__inner{position:relative;max-width:min(1100px,94vw)}
 .lightbox__inner img{max-width:100%;max-height:86vh;border:3px solid var(--edge);border-radius:8px;box-shadow:var(--shadow);background:var(--surface)}
 .lightbox__inner .xbtn{position:absolute;top:-14px;right:-14px;z-index:2}
+/* sits under the cross, in the same corner */
+.lightbox__ai{position:absolute;top:26px;right:-14px;z-index:2;border:2px solid var(--edge);border-radius:999px;
+  background:var(--grape);color:var(--on-grape);padding:3px 11px;font-family:var(--f-display);font-weight:700;
+  font-size:11px;white-space:nowrap;box-shadow:2px 2px 0 var(--stamp)}
+.lightbox__ai[hidden]{display:none}
+/* The arrows used to be placed against the viewport, which put them level
+   with the middle of a tall photo and nowhere near a short one. They belong
+   to the picture, so they hang off the stage it sits in. */
+.lightbox__stage{position:relative;display:flex;align-items:center;justify-content:center;
+  min-height:150px;min-width:240px}
+.lightbox__arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:44px;height:44px;padding:0;
+  border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--ink);
+  font-size:26px;line-height:1;cursor:pointer;box-shadow:2px 2px 0 var(--stamp)}
+.lightbox__arrow:hover{background:var(--grape);color:var(--on-grape);transform:translateY(-50%) scale(1.06)}
+.lightbox__arrow[hidden]{display:none}
+.lightbox__arrow--prev{left:-16px}
+.lightbox__arrow--next{right:-16px}
+.lightbox__foot{margin-top:12px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);
+  box-shadow:var(--shadow-sm);padding:13px 16px}
+.lightbox__foot[hidden]{display:none}
+.lightbox__cap{margin:0;font-size:15.5px;line-height:1.35}
+.lightbox__cap:empty{display:none}
+.lightbox__who{margin:5px 0 0;font-size:13.5px;color:var(--muted)}
+.lightbox__who:empty{display:none}
+.lightbox__foot .btn{margin-top:12px}
+.lightbox__n{margin-left:10px;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+@media(max-width:620px){
+  .lightbox__arrow{width:38px;height:38px;font-size:22px}
+  .lightbox__arrow--prev{left:2px}
+  .lightbox__arrow--next{right:2px}
+  .lightbox__ai{right:6px}
+}
 
 /* ============ account ============ */
 .sumbox{position:relative}
@@ -1681,7 +1720,22 @@ a.getrow:hover{background:var(--sunk)}
 <div class="scrim" id="lightbox" hidden>
   <div class="lightbox__inner">
     <button class="xbtn" type="button" data-close="lightbox" aria-label="Close">&times;</button>
-    <img id="lightboxImg" alt="">
+    <!-- only for a photo that was marked as having AI effects; hidden the
+         rest of the time -->
+    <span class="lightbox__ai" id="lightAi" hidden>Made with AI</span>
+    <div class="lightbox__stage">
+      <button class="lightbox__arrow lightbox__arrow--prev" type="button" id="lightPrev"
+              aria-label="Previous photo" hidden>&#8249;</button>
+      <img id="lightboxImg" alt="">
+      <button class="lightbox__arrow lightbox__arrow--next" type="button" id="lightNext"
+              aria-label="Next photo" hidden>&#8250;</button>
+    </div>
+    <div class="lightbox__foot" id="lightFoot" hidden>
+      <p class="lightbox__cap" id="lightCap"></p>
+      <p class="lightbox__who" id="lightWho"></p>
+      <a class="btn btn--sm btn--grape" id="lightGet" href="#" target="_blank" rel="noopener noreferrer">Download</a>
+      <span class="lightbox__n" id="lightN"></span>
+    </div>
   </div>
 </div>
 <div class="scrim" id="loginScrim" hidden>
@@ -4520,6 +4574,15 @@ function scrimMayClose(id){
   if(id !== "meScrim") return true;
   return profLeaveOk("You have changes to your profile that aren\u2019t saved. Close without saving them?");
 }
+/* The arrows, while the lightbox is the thing on screen. Checked before the
+   Escape handler so a left/right press never falls through to anything else. */
+document.addEventListener("keydown", function(e){
+  if(e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  var lb = $("lightbox");
+  if(!lb || lb.hidden || lightSet.length < 2) return;
+  e.preventDefault();
+  lightStep(e.key === "ArrowRight" ? 1 : -1);
+});
 document.addEventListener("keydown", function(e){
   if(e.key !== "Escape") return;
   /* topmost first, so Escape peels the stack one layer at a time */
@@ -4966,8 +5029,12 @@ function openBookDetail(o, kind, focus){
       ? '<div class="review" style="margin-top:22px">' + ratingPair(o.review) +
         '<p class="review__text">' + esc(o.review.text || "") + "</p>" +
         '<p class="review__by">' + esc(o.review.by || "The club") + "</p></div>"
-      : "");
+      : "") +
+    /* after the review, at the foot of the panel — a recommendation has no
+       meetings behind it, so no party either */
+    (kind === "rec" ? "" : partyStripHost("bookParty", o.id));
   openScrim("bookScrim");
+  if(kind !== "rec") loadPartyStrip("bookParty");
   /* came in from a card's + or − : put the cursor straight in the name box */
   if(focus){
     var box = $("endorseName");
@@ -5012,6 +5079,95 @@ async function loadPhotos(meetingId){
 function photoAltText(p){
   return p.caption ? p.caption : "Party photo from " + (p.by || "a member");
 }
+/* ---------- a book's party photos, on its panels ----------
+   The photos hang off a meeting, not a book, so this finds the book's party
+   and shows what was uploaded to it. They arrive from the script, which the
+   panels cannot wait for, so the host goes in empty and hidden and is filled
+   when the answer lands. A book with no party, or a party with no photos,
+   renders nothing at all rather than an empty heading. */
+function partyFor(bookId){
+  return meetingsForBook(bookId).filter(function(m){ return m.kind === "party"; })[0] || null;
+}
+function partyStripHost(hostId, bookId){
+  var m = partyFor(bookId);
+  if(!m) return "";
+  return '<div id="' + hostId + '" data-partyfor="' + esc(m.id) + '" hidden></div>';
+}
+function paintPartyStrip(hostId){
+  var host = $(hostId);
+  if(!host) return;
+  var mid = host.getAttribute("data-partyfor");
+  var list = photoCache[mid] || [];
+  if(!list.length){ host.hidden = true; host.innerHTML = ""; return; }
+  host.hidden = false;
+  host.innerHTML = '<hr class="divider"><p class="eyebrow">Party photos</p>' +
+    '<div class="partystrip">' + list.map(function(p){
+      /* the ids go on the button, not the image inside it: the handler looks
+         up the tree from whatever was clicked, and a click can land on either */
+      return '<button class="partystrip__b" type="button" aria-label="' + esc(photoAltText(p)) + '" ' +
+          'data-photoview="' + esc(p.id) + '" data-photomid="' + esc(mid) + '">' +
+        '<img src="' + esc(photoSrc(p.id)) + '" alt="" loading="lazy" ' +
+          'data-fallback="' + esc(photoAlt(p.id)) + '">' +
+        (p.ai ? '<span class="partystrip__ai">AI</span>' : "") +
+      "</button>";
+    }).join("") + "</div>";
+}
+async function loadPartyStrip(hostId){
+  var host = $(hostId);
+  if(!host || !endpoint()) return;
+  var mid = host.getAttribute("data-partyfor");
+  if(!photoCache[mid]){
+    var res = await callEndpoint("photo-list", { meetingId: mid });
+    photoCache[mid] = (res && res.ok && res.photos) || [];
+  }
+  /* the panel may have been shut, or another book opened, while that was in
+     the air — only paint if this host is still the one on screen */
+  if($(hostId) === host) paintPartyStrip(hostId);
+}
+
+/* ---------- the lightbox, as a gallery ----------
+   Opened on one photo but holding the whole set it came from, so the arrows
+   and the arrow keys have somewhere to go. */
+var lightSet = [], lightIdx = 0;
+
+/* Drive's viewer link is not a file; this is the one that actually hands the
+   image over. */
+function photoDownload(id){
+  return "https://drive.google.com/uc?export=download&id=" + encodeURIComponent(id);
+}
+function lightPaint(){
+  var p = lightSet[lightIdx];
+  if(!p) return;
+  var many = lightSet.length > 1;
+  $("lightboxImg").src = photoSrc(p.id);
+  $("lightboxImg").setAttribute("data-fallback", photoAlt(p.id));
+  $("lightboxImg").alt = photoAltText(p);
+  $("lightAi").hidden = !p.ai;
+  $("lightPrev").hidden = !many;
+  $("lightNext").hidden = !many;
+  $("lightCap").textContent = p.caption || "";
+  $("lightWho").textContent = p.people ? "In it: " + p.people : "";
+  $("lightGet").href = photoDownload(p.id);
+  $("lightGet").setAttribute("download", "");
+  $("lightN").textContent = many ? (lightIdx + 1) + " of " + lightSet.length : "";
+  /* always shown: even a photo with nothing written about it has a Download */
+  $("lightFoot").hidden = false;
+}
+function lightStep(d){
+  if(!lightSet.length) return;
+  lightIdx = (lightIdx + d + lightSet.length) % lightSet.length;
+  lightPaint();
+}
+function openLightbox(meetingId, photoId){
+  var list = (photoCache[meetingId] || []).slice();
+  if(!list.length) return;
+  lightSet = list;
+  lightIdx = 0;
+  for(var i = 0; i < list.length; i++){ if(list[i].id === photoId) lightIdx = i; }
+  lightPaint();
+  openScrim("lightbox");
+}
+
 /* ---------- the upload queue ----------
    One request per photo, one at a time, carrying on after the modal is shut.
    Sequential is not a throttle: two photo-adds for the same party would read
@@ -5234,7 +5390,8 @@ function renderPhotos(meetingId){
       ? '<div class="photogrid">' + list.map(function(p){
           return '<figure class="photo">' +
             '<img src="' + esc(photoSrc(p.id)) + '" alt="' + esc(photoAltText(p)) + '" ' +
-              'loading="lazy" data-fallback="' + esc(photoAlt(p.id)) + '" data-photoview="' + esc(p.id) + '">' +
+              'loading="lazy" data-fallback="' + esc(photoAlt(p.id)) + '" data-photoview="' + esc(p.id) + '" ' +
+              'data-photomid="' + esc(meetingId) + '">' +
             (p.caption ? '<p class="photo__cap">' + esc(p.caption) + "</p>" : "") +
             (p.people ? '<p class="photo__who"><span class="photo__k">In it</span> ' + esc(p.people) + "</p>" : "") +
             '<figcaption>' + esc(p.by || "") +
@@ -5338,7 +5495,10 @@ function openBadge(bookId){
           ? '<div class="crew__list" style="margin-top:10px">' + crew.map(function(m){
               return '<span class="crewchip"><span class="crewchip__pic" ' + hueStyle(m) + ">" +
                 (m.avatar ? '<img src="' + esc(m.avatar) + '" alt="">' : esc(initials(m.name))) + "</span>" +
-                '<span class="crewchip__n">' + esc(m.name) + "</span>" + memberLinks(m, "") + "</span>";
+                /* No Fable/Goodreads chips here. This is a list of who read the
+                   book; the links belong on the Members page, where they are
+                   the point rather than a second thing to read past. */
+                '<span class="crewchip__n">' + esc(m.name) + "</span></span>";
             }).join("") + "</div>"
           : '<p class="empty" style="margin-top:8px">No members recorded for this book yet.</p>') +
       "</div></div>" +
@@ -5357,8 +5517,10 @@ function openBadge(bookId){
           return '<button class="btn btn--sm ' + (party ? "btn--flare" : "btn--grape") + '" type="button" data-meet="' + esc(m.id) + '">' +
             esc(meetButtonLabel(m)) + "</button>";
         }).join("") + "</div>"
-      : '<p class="empty" style="margin-top:10px">No meetings recorded for this book.</p>');
+      : '<p class="empty" style="margin-top:10px">No meetings recorded for this book.</p>') +
+    partyStripHost("badgeParty", b.id);
   openScrim("badgeScrim");
+  loadPartyStrip("badgeParty");
 }
 
 /* One vote each way per person. Changing your mind moves you across rather than
@@ -6831,10 +6993,11 @@ document.addEventListener("click", async function(e){
     renderPhotos(dmid);
     return;
   }
+  if(t.closest("#lightPrev")){ lightStep(-1); return; }
+  if(t.closest("#lightNext")){ lightStep(1); return; }
+  if(t.closest("#lightGet")) return;   /* a real link; let it be followed */
   if((el = t.closest("[data-photoview]"))){
-    $("lightboxImg").src = el.getAttribute("src");
-    $("lightboxImg").alt = el.getAttribute("alt") || "";
-    openScrim("lightbox");
+    openLightbox(el.getAttribute("data-photomid"), el.getAttribute("data-photoview"));
     return;
   }
 
