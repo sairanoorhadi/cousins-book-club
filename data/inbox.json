@@ -1366,6 +1366,33 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "suggest-eb5fc82a-308",
+      "kind": "suggest",
+      "at": "2026-09-29T00:11:56.396Z",
+      "payload": {
+        "title": "The Grimoire of Grave Fates",
+        "author": "Hanna Alkaf and Margaret Owen",
+        "pages": 449,
+        "ageMin": 12,
+        "ageMax": 100,
+        "level": "Ages 12+",
+        "genres": [
+          "Fantasy",
+          "Mystery",
+          "Dark",
+          "Academia"
+        ],
+        "blurb": "Crack open your spell book and enter the world of the illustrious Galileo Academy for the Extraordinary. There's been a murder on campus, and it's up to the students of Galileo to solve it. Follow 18 authors and 18 students as they puzzle out the clues and find the guilty party.\n\nProfessor of Magical History Septimius Dropwort has just been murdered, and now everyone at the Galileo Academy for the Extraordinary is a suspect.\n\nA prestigious school for young magicians, the Galileo Academy has recently undergone a comprehensive overhaul, reinventing itself as a roaming academy in which students of all cultures and identities are celebrated. In this new Galileo, every pupil is welcome—but there are some who aren't so happy with the recent changes. That includes everyone's least favorite professor, Septimius Dropwort, a stodgy old man known for his harsh rules and harsher punishments. But when the professor's body is discovered on school grounds with a mysterious note clenched in his lifeless hand, the Academy's students must solve the murder themselves, because everyone's a suspect.\n\nTold from more than a dozen alternating and diverse perspectives, The Grimoire of Grave Fates follows Galileo's best and brightest young magicians as they race to discover the truth behind Dropwort's mysterious death. Each one of them is confident that only they have the skills needed to unravel the web of secrets hidden within Galileo's halls. But they're about to discover that even for straight-A students, magic doesn't always play by the rules. . . .",
+        "summarySource": "fetched",
+        "cover": "https://m.media-amazon.com/images/I/91S8rOK03+L._UF1000,1000_QL80_.jpg",
+        "by": "Saira",
+        "byId": "mb-saira",
+        "ratings": [
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
