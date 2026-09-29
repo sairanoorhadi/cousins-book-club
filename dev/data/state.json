@@ -1,5 +1,5 @@
 {
-  "rev": 1324,
+  "rev": 1325,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -213,16 +213,7 @@
       ],
       "order": 2,
       "level": "Ages 10-13",
-      "getbook": [
-        {
-          "id": "get-mum55e0hqjcjw",
-          "kind": "file",
-          "title": "PDF",
-          "url": "files/getbook/suggest-91746858-bc0-um55csnlqd1e.pdf",
-          "name": "95tsbronzecross2020_fillable.pdf",
-          "size": 1131392
-        }
-      ]
+      "getbook": []
     }
   ],
   "meetings": [
