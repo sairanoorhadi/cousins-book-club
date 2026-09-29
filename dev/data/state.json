@@ -1,5 +1,5 @@
 {
-  "rev": 1322,
+  "rev": 1323,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -118,7 +118,8 @@
         "rating": 5,
         "community": 4.6,
         "by": ""
-      }
+      },
+      "getbook": []
     },
     {
       "id": "bk-soc",
@@ -154,7 +155,8 @@
       },
       "order": 0,
       "ageMin": 14,
-      "ageMax": 100
+      "ageMax": 100,
+      "getbook": []
     },
     {
       "id": "bk-mt7pvx697h34g",
@@ -182,7 +184,8 @@
         "mb-mtaiuu788is5a"
       ],
       "order": 2,
-      "level": "Ages 9-12"
+      "level": "Ages 9-12",
+      "getbook": []
     },
     {
       "id": "suggest-91746858-bc0",
@@ -209,7 +212,17 @@
         "mb-saira"
       ],
       "order": 2,
-      "level": "Ages 10-13"
+      "level": "Ages 10-13",
+      "getbook": [
+        {
+          "id": "get-mum55e0hqjcjw",
+          "kind": "file",
+          "title": "PDF",
+          "url": "files/getbook/suggest-91746858-bc0-um55csnlqd1e.pdf",
+          "name": "95tsbronzecross2020_fillable.pdf",
+          "size": 1131392
+        }
+      ]
     }
   ],
   "meetings": [
