@@ -50,4 +50,9 @@ if (process.argv.indexOf('--dry') !== -1) {
 
 fs.writeFileSync(LIVE, promoted);
 console.log('index.html now matches the tested page (' + promoted.length + ' bytes).');
-console.log('Live site updates a minute or so after this reaches main.');
+console.log('');
+console.log('NOT LIVE YET. Pages serves main, so this has to be committed AND');
+console.log('merged into main before anyone sees it. The live site updates a');
+console.log('minute or so after that.');
+console.log('Once merged: node tools/check-live.js  — it reads origin/main and');
+console.log('says whether the live site is really carrying this page.');
