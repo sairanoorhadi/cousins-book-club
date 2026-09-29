@@ -2595,6 +2595,9 @@ var ENDPOINT_REPEATABLE = {
   /* sets three fields to what it was handed, so a second go lands the same
      values — unlike photo-add, which appends */
   "photo-edit": 1,
+  /* the page sends the state it wants rather than "flip it", so repeating
+     it lands where the first one would have */
+  "meet-ready": 1,
   "details": 1, "summarise": 1, "images": 1, "agenote": 1,
   /* Worth repeating despite not being a read. If the first attempt never
      arrived, the second signs you in. If it did arrive and worked, its answer
@@ -7064,8 +7067,13 @@ document.addEventListener("click", async function(e){
     var rmid = el.getAttribute("data-ready");
     var rme = myMember();
     if(!rme){ say("Sign in to mark yourself ready.", "bad"); return; }
+    var rm0 = meetingById(rmid);
+    /* The state we want, not "flip it". A toggle cannot be retried: when the
+       answer is lost there is no way to tell which side it landed on, so a
+       second go is as likely to undo it as to finish it. */
+    var rwant = !(rm0 && isReady(rm0, rme.id));
     el.disabled = true;
-    var rres = await callEndpoint("meet-ready", { token: sessionToken(), meetingId: rmid });
+    var rres = await callEndpoint("meet-ready", { token: sessionToken(), meetingId: rmid, ready: rwant });
     if(!rres || !rres.ok){
       el.disabled = false;
       say(rres && rres.error === "signed out" ? "Your session ran out \u2014 sign in again."
