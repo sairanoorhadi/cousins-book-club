@@ -310,7 +310,7 @@ a.getrow:hover{background:var(--sunk)}
    produce — "Wednesday, September 30, 2026" — stays on one line in the
    narrowest card the layout makes, rather than some cards reading larger
    than others depending on the month they landed in. */
-.meetcard__date{font-family:var(--f-display);font-weight:800;font-size:14px;line-height:1.25;letter-spacing:-.01em}
+.meetcard__date{font-family:var(--f-display);font-weight:800;font-size:25px;line-height:1.15;letter-spacing:-.02em}
 .meetcard__row{display:flex;gap:10px;align-items:baseline;margin-top:11px;font-size:15px}
 .meetcard__row .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);min-width:74px;flex:none}
 .countdown{display:inline-flex;align-items:baseline;gap:7px;background:var(--zest);color:var(--on-zest);border:2px solid var(--edge);border-radius:999px;padding:5px 14px;font-family:var(--f-mono);font-size:12.5px}
@@ -2043,6 +2043,15 @@ function parseDate(iso){
   return isNaN(d.getTime()) ? null : d;
 }
 function longDate(iso){ var d = parseDate(iso); return d ? DAYS[d.getDay()] + ", " + MONTHS[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear() : "Date to be confirmed"; }
+/* "Wed, Sep 30, 2026". The meeting card's heading has about 270px to work
+   with at its narrowest, and the full form needs 14px to fit that on one
+   line — smaller than the time printed under it. Shortened, the same line
+   fits at 25px and reads as a heading again. */
+function cardDate(iso){
+  var d = parseDate(iso);
+  return d ? DAYS[d.getDay()].slice(0, 3) + ", " + MONTHS[d.getMonth()].slice(0, 3) + " " +
+    d.getDate() + ", " + d.getFullYear() : "Date to be confirmed";
+}
 function shortDate(iso){ var d = parseDate(iso); return d ? MONTHS[d.getMonth()].slice(0,3) + " " + d.getDate() + ", " + d.getFullYear() : "TBC"; }
 function prettyTime(t){
   if(!t) return "";
@@ -3875,7 +3884,7 @@ function renderHero(){
   }else{
     var cd = countdownText(meet);
     body.innerHTML =
-      '<div class="meetcard__date">' + esc(longDate(meet.date)) + "</div>" +
+      '<div class="meetcard__date">' + esc(cardDate(meet.date)) + "</div>" +
       /* The countdown and the two things you might do about it, on one line
          near the top. They used to sit at the foot of the card, below every
          detail, which is a long way from the thing they act on. */
