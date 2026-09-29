@@ -1,5 +1,5 @@
 {
-  "rev": 1468,
+  "rev": 1469,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -923,7 +923,7 @@
       "bookId": "suggest-91746858-bc0",
       "kind": "meeting",
       "date": "2026-11-01",
-      "time": "19:00",
+      "time": "16:00",
       "place": "Ferdinand",
       "chapters": "10-12",
       "pages": "38",
