@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-29b';
+var SCRIPT_VERSION = '2026-09-29c';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -88,6 +88,7 @@ function doPost(e) {
   if (kind === 'photo-add') return json(photoAdd(payload));
   if (kind === 'photo-list') return json(photoList(payload));
   if (kind === 'photo-delete') return json(photoDelete(payload));
+  if (kind === 'photo-edit') return json(photoEdit(payload));
 
   /* "Write one for me" on the suggestion form. */
   if (kind === 'summarise') return json(summarise(body.payload || {}));
@@ -931,6 +932,38 @@ function photoList(payload) {
   var meetingId = String(payload.meetingId || '');
   if (!meetingId) return { ok: false, error: 'no meeting' };
   return { ok: true, photos: readPhotos(meetingId).map(publicPhoto) };
+}
+
+/* Changing what a photo says, without touching the photo. The image is left
+   exactly where it is — this only rewrites the three fields in the record.
+   Who may: whoever uploaded it, or the organiser. The same rule as deleting,
+   because the same record decides it. */
+function photoEdit(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+
+  var meetingId = String(payload.meetingId || '');
+  var id = String(payload.id || '');
+  var organiser = normEmail(propEmail('ORGANISER_EMAIL'));
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var list = readPhotos(meetingId);
+    var entry = list.filter(function (p) { return p.id === id; })[0];
+    if (!entry) return { ok: false, error: 'not found' };
+    if (entry.email !== email && email !== organiser) return { ok: false, error: 'not yours' };
+
+    entry.caption = String(payload.caption || '').slice(0, CAPTION_MAX);
+    entry.people = String(payload.people || '').slice(0, PEOPLE_MAX);
+    entry.ai = !!payload.ai;
+    writePhotos(meetingId, list);
+    return { ok: true, photo: publicPhoto(entry) };
+  } catch (err) {
+    return { ok: false, error: String(err).slice(0, 120) };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function photoDelete(payload) {

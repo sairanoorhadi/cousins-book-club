@@ -891,6 +891,11 @@ a.getrow:hover{background:var(--sunk)}
 .photo img{width:100%;aspect-ratio:4/3;object-fit:cover;border:2px solid var(--edge);border-radius:6px;box-shadow:2px 2px 0 var(--stamp);cursor:zoom-in;background:var(--sunk)}
 .photo img:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--stamp)}
 .photo figcaption{display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.photo__e{border:1.5px solid var(--hairline);border-radius:999px;padding:0 8px;line-height:17px;background:var(--surface);
+  color:var(--muted);cursor:pointer;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase}
+.photo__e:hover{background:var(--grape);color:var(--on-grape);border-color:var(--edge)}
+.photo__e + .photo__x{margin-left:0}
+.photo__e{margin-left:auto}
 .photo__x{margin-left:auto;border:1.5px solid var(--hairline);border-radius:50%;width:19px;height:19px;line-height:1;padding:0;background:var(--surface);color:var(--muted);cursor:pointer}
 .photo__x:hover{background:var(--flare);color:var(--on-flare);border-color:var(--edge)}
 /* what a photo is, under the photo */
@@ -2456,7 +2461,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-09-29b";
+var SCRIPT_WANT = "2026-09-29c";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -2492,6 +2497,9 @@ var ENDPOINT_REPEATABLE = {
   "notify-get": 1, "notify-set": 1,
   "profile-get": 1, "profile-set": 1,
   "photo-list": 1,
+  /* sets three fields to what it was handed, so a second go lands the same
+     values — unlike photo-add, which appends */
+  "photo-edit": 1,
   "details": 1, "summarise": 1, "images": 1, "agenote": 1,
   /* Worth repeating despite not being a read. If the first attempt never
      arrived, the second signs you in. If it did arrive and worked, its answer
@@ -5010,6 +5018,8 @@ function photoAltText(p){
    and write the same record and one would lose. */
 var PHOTOS_PER_PARTY = 100;   /* mirrors PHOTOS_PER_MEETING in Code.gs */
 var photoQueue = [], photoRunning = false;
+/* which already-uploaded photo is being retitled, if any */
+var photoEditing = null;
 var photoDoneN = 0, photoTotalN = 0, photoFailed = [];
 
 function photoPending(){ return photoRunning || photoQueue.length > 0; }
@@ -5110,6 +5120,59 @@ function photoRoom(meetingId){
   return Math.max(0, PHOTOS_PER_PARTY - ((photoCache[meetingId] || []).length));
 }
 
+/* Retitling one that is already up. The image is not touched and nothing is
+   re-sent: photo-edit rewrites the three fields on the record in place. */
+function photoEditFormHTML(meetingId){
+  var p = (photoCache[meetingId] || []).filter(function(x){ return x.id === photoEditing.id; })[0];
+  if(!p) return "";
+  return '<div class="photoform">' +
+    '<p class="eyebrow">Editing this photo</p>' +
+    '<p class="hint" style="margin:6px 0 4px">Only what it says changes — the photo itself stays as it is.</p>' +
+    '<div class="photodraft">' +
+      '<img src="' + esc(photoSrc(p.id)) + '" alt="">' +
+      '<div class="photodraft__f">' +
+        "<label>Description" +
+          '<input class="input" type="text" id="photoEditCap" maxlength="500" ' +
+            'placeholder="Add a description" value="' + esc(p.caption || "") + '"></label>' +
+        "<label>Who’s in it" +
+          '<input class="input" type="text" id="photoEditWho" maxlength="300" ' +
+            'placeholder="Who’s in the photo" value="' + esc(p.people || "") + '"></label>' +
+        '<label class="photodraft__ai">' +
+          '<input type="checkbox" id="photoEditAi"' + (p.ai ? " checked" : "") + ">" +
+          "AI effects used</label>" +
+      "</div></div>" +
+    '<div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">' +
+      '<button class="btn btn--sm btn--grape" type="button" id="photoEditSave">Save changes</button>' +
+      '<button class="btn btn--sm btn--ghost" type="button" id="photoEditCancel">Cancel</button>' +
+      '<span class="hint" id="photoEditNote"></span>' +
+    "</div></div>";
+}
+async function photoEditSave(){
+  if(!photoEditing) return;
+  var mid = photoEditing.meetingId, id = photoEditing.id;
+  var cap = $("photoEditCap"), who = $("photoEditWho"), ai = $("photoEditAi");
+  var body = { token: sessionToken(), meetingId: mid, id: id,
+               caption: cap ? cap.value.trim() : "", people: who ? who.value.trim() : "",
+               ai: !!(ai && ai.checked) };
+  var btn = $("photoEditSave"), note = $("photoEditNote");
+  if(btn) btn.disabled = true;
+  if(note) note.textContent = "Saving…";
+  var res;
+  try{ res = await callEndpoint("photo-edit", body); }
+  catch(err){ res = { ok: false, error: "" }; }
+  if(!res || !res.ok){
+    if(btn) btn.disabled = false;
+    if(note) note.textContent = "Couldn’t save that — " + photoWhy(res) + ".";
+    return;
+  }
+  /* in place, so the grid shows the new words without a reload */
+  var list = photoCache[mid] || [];
+  for(var i = 0; i < list.length; i++){ if(list[i].id === id) list[i] = res.photo; }
+  photoEditing = null;
+  renderPhotos(mid);
+  say("Photo updated.", "ok");
+}
+
 function photoFormHTML(){
   var d = photoDraft, n = d.items.length;
   return '<div class="photoform">' +
@@ -5176,12 +5239,15 @@ function renderPhotos(meetingId){
             (p.people ? '<p class="photo__who"><span class="photo__k">In it</span> ' + esc(p.people) + "</p>" : "") +
             '<figcaption>' + esc(p.by || "") +
               (p.ai ? '<span class="photo__ai">AI effects</span>' : "") +
-              (me ? ' <button type="button" class="photo__x" data-photodel="' + esc(p.id) + '" data-mid="' + esc(meetingId) + '" aria-label="Remove this photo">&times;</button>' : "") +
+              (me ? ' <button type="button" class="photo__e" data-photoedit="' + esc(p.id) + '" data-mid="' + esc(meetingId) + '" aria-label="Change what this photo says">Edit</button>' +
+                    ' <button type="button" class="photo__x" data-photodel="' + esc(p.id) + '" data-mid="' + esc(meetingId) + '" aria-label="Remove this photo">&times;</button>' : "") +
             "</figcaption></figure>";
         }).join("") + "</div>"
       : '<p class="empty">No photos from this one yet.</p>') +
     (me
-      ? (drafting
+      ? (photoEditing && photoEditing.meetingId === meetingId
+          ? photoEditFormHTML(meetingId)
+          : drafting
           ? photoFormHTML()
           : '<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">' +
               '<button class="btn btn--sm btn--grape" type="button" data-photoadd="' + esc(meetingId) + '">Add photos</button>' +
@@ -6740,6 +6806,18 @@ document.addEventListener("click", async function(e){
     renderPhotos(smid);
     return;
   }
+  if((el = t.closest("[data-photoedit]"))){
+    photoEditing = { meetingId: el.getAttribute("data-mid"), id: el.getAttribute("data-photoedit") };
+    renderPhotos(photoEditing.meetingId);
+    return;
+  }
+  if(t.closest("#photoEditCancel")){
+    var xmid = photoEditing && photoEditing.meetingId;
+    photoEditing = null;
+    if(xmid) renderPhotos(xmid);
+    return;
+  }
+  if(t.closest("#photoEditSave")){ await photoEditSave(); return; }
   if(t.closest("#photoRetry")){ photoRetryFailed(); return; }
   if(t.closest("#photoBarX")){ photoBarClear(); return; }
   if((el = t.closest("[data-photodel]"))){
