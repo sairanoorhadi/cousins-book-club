@@ -1008,6 +1008,18 @@ a.getrow:hover{background:var(--sunk)}
 /* ============ status ============ */
 .status{position:fixed;right:18px;bottom:18px;z-index:200;font-family:var(--f-mono);font-size:12px;border:2px solid var(--edge);border-radius:999px;padding:8px 16px;background:var(--surface);box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:8px;max-width:min(92vw,420px)}
 .status[hidden]{display:none}
+/* The upload queue's own line. It sits above the toast rather than inside the
+   meeting modal, because the whole point is that it keeps going once that is
+   closed. */
+.uploadbar{position:fixed;left:18px;bottom:18px;z-index:200;display:flex;align-items:center;gap:10px;
+  max-width:min(92vw,440px);border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);
+  box-shadow:var(--shadow);padding:10px 12px}
+.uploadbar[hidden]{display:none}
+.uploadbar__t{font-family:var(--f-mono);font-size:12px;line-height:1.35}
+.uploadbar__b{display:block;height:6px;margin-top:6px;border:1.5px solid var(--edge);border-radius:999px;
+  background:var(--sunk);overflow:hidden;min-width:150px}
+.uploadbar__b i{display:block;height:100%;background:var(--grape);transition:width .25s ease}
+.uploadbar .xbtn{margin-left:auto;flex:none}
 .devbar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;background:repeating-linear-gradient(135deg,#F5A800,#F5A800 14px,#191233 14px,#191233 28px);color:#FFFFFF;padding:0;border-bottom:3px solid var(--edge)}
 .devbar strong,.devbar span,.devbar a{background:#191233;padding:7px 12px}
 .devbar strong{font-family:var(--f-display);font-size:13.5px;letter-spacing:.04em;text-transform:uppercase}
@@ -1729,6 +1741,14 @@ a.getrow:hover{background:var(--sunk)}
   </div>
 </div>
 
+<div class="uploadbar" id="photoBar" hidden>
+  <span>
+    <span class="uploadbar__t" id="photoBarText"></span>
+    <span class="uploadbar__b" id="photoBarTrack" hidden><i id="photoBarFill" style="width:0%"></i></span>
+  </span>
+  <button class="btn btn--sm btn--zest" type="button" id="photoRetry" hidden>Retry failed</button>
+  <button class="xbtn" type="button" id="photoBarX" aria-label="Hide" hidden>&times;</button>
+</div>
 <div class="status" id="status" hidden><span id="statusText"></span></div>
 
 <script>window.__DEV_SITE = true;</script>
@@ -2436,7 +2456,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-09-29a";
+var SCRIPT_WANT = "2026-09-29b";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -4509,7 +4529,9 @@ document.addEventListener("click", function(e){
 /* And the tab itself. The browser shows its own wording here; all it takes
    from us is that there is something to lose. */
 window.addEventListener("beforeunload", function(e){
-  if(!profDirty()) return;
+  /* Photos still queued are held in this page and nowhere else — they are
+     data urls, far too big for localStorage — so leaving loses them. */
+  if(!profDirty() && !photoPending()) return;
   e.preventDefault();
   e.returnValue = "";
 });
@@ -4982,11 +5004,127 @@ async function loadPhotos(meetingId){
 function photoAltText(p){
   return p.caption ? p.caption : "Party photo from " + (p.by || "a member");
 }
+/* ---------- the upload queue ----------
+   One request per photo, one at a time, carrying on after the modal is shut.
+   Sequential is not a throttle: two photo-adds for the same party would read
+   and write the same record and one would lose. */
+var PHOTOS_PER_PARTY = 100;   /* mirrors PHOTOS_PER_MEETING in Code.gs */
+var photoQueue = [], photoRunning = false;
+var photoDoneN = 0, photoTotalN = 0, photoFailed = [];
+
+function photoPending(){ return photoRunning || photoQueue.length > 0; }
+function photoWhy(res){
+  var e = (res && res.error) || "";
+  if(e === "signed out") return "you were signed out";
+  if(e === "that party is full") return "that party is full";
+  if(e === "too big") return "too big to send";
+  if(e === "not an image") return "not an image the script accepts";
+  return e || "the script didn’t answer";
+}
+function photoBarPaint(){
+  var bar = $("photoBar"), txt = $("photoBarText");
+  if(!bar || !txt) return;
+  var track = $("photoBarTrack"), fill = $("photoBarFill");
+  var retry = $("photoRetry"), x = $("photoBarX");
+  if(photoPending()){
+    bar.hidden = false;
+    txt.textContent = "Uploading " + Math.min(photoDoneN + photoFailed.length + 1, photoTotalN) +
+      " of " + photoTotalN + "…" + (photoFailed.length ? "  " + photoFailed.length + " failed so far" : "");
+    if(track){ track.hidden = false; }
+    if(fill){ fill.style.width = Math.round((photoDoneN + photoFailed.length) / Math.max(1, photoTotalN) * 100) + "%"; }
+    if(retry) retry.hidden = true;
+    if(x) x.hidden = true;
+    return;
+  }
+  if(!photoTotalN){ bar.hidden = true; return; }
+  /* finished: say what landed, and name what did not so it can go again */
+  if(track) track.hidden = true;
+  if(photoFailed.length){
+    var names = photoFailed.map(function(f){ return f.job.name || "one"; });
+    txt.textContent = photoDoneN + " of " + photoTotalN + " added. " +
+      photoFailed.length + (photoFailed.length === 1 ? " failed" : " failed") + ": " +
+      names.slice(0, 3).join(", ") + (names.length > 3 ? " and " + (names.length - 3) + " more" : "") +
+      " (" + photoFailed[0].why + ").";
+    if(retry) retry.hidden = false;
+  }else{
+    txt.textContent = photoDoneN === 1 ? "Photo added." : photoDoneN + " photos added.";
+    if(retry) retry.hidden = true;
+  }
+  if(x) x.hidden = false;
+  bar.hidden = false;
+}
+function photoEnqueue(meetingId, items){
+  items.forEach(function(it){
+    photoQueue.push({ meetingId: meetingId, url: it.url, name: it.name || "",
+                      caption: it.caption || "", people: it.people || "", ai: !!it.ai });
+  });
+  photoTotalN += items.length;
+  photoPump();
+}
+/* One at a time until the queue is empty. A photo that fails is set aside and
+   the next one starts — one bad file must not strand the other forty. It is
+   never retried on its own: photo-add appends, so a silent second go is how
+   the same photo lands twice. Retrying is a button. */
+async function photoPump(){
+  if(photoRunning) return;
+  photoRunning = true;
+  photoBarPaint();
+  while(photoQueue.length){
+    var job = photoQueue.shift();
+    var res;
+    try{
+      res = await callEndpoint("photo-add", {
+        token: sessionToken(), meetingId: job.meetingId, dataUrl: job.url,
+        caption: job.caption, people: job.people, ai: job.ai
+      });
+    }catch(err){ res = { ok: false, error: "" }; }
+    if(res && res.ok){
+      photoDoneN++;
+      (photoCache[job.meetingId] = photoCache[job.meetingId] || []).push(res.photo);
+      /* a no-op unless that party happens to be the one on screen */
+      renderPhotos(job.meetingId);
+    }else{
+      photoFailed.push({ job: job, why: photoWhy(res) });
+    }
+    photoBarPaint();
+  }
+  photoRunning = false;
+  photoBarPaint();
+}
+function photoRetryFailed(){
+  if(!photoFailed.length) return;
+  var again = photoFailed.map(function(f){ return f.job; });
+  photoFailed = [];
+  photoDoneN = 0; photoTotalN = again.length;
+  again.forEach(function(j){ photoQueue.push(j); });
+  photoPump();
+}
+function photoBarClear(){
+  if(photoPending()) return;
+  photoDoneN = 0; photoTotalN = 0; photoFailed = [];
+  var bar = $("photoBar"); if(bar) bar.hidden = true;
+}
+/* How much room is left in a party, so a selection that cannot all fit says
+   so while it can still be changed. */
+function photoRoom(meetingId){
+  return Math.max(0, PHOTOS_PER_PARTY - ((photoCache[meetingId] || []).length));
+}
+
 function photoFormHTML(){
   var d = photoDraft, n = d.items.length;
   return '<div class="photoform">' +
     '<p class="eyebrow">' + n + (n === 1 ? " photo" : " photos") + " to add</p>" +
     '<p class="hint" style="margin:6px 0 4px">Say what each one is. Every box is optional.</p>' +
+    (function(){
+      /* Said while the selection can still be changed, rather than letting the
+         last few come back as failures. */
+      var room = photoRoom(d.meetingId);
+      if(n <= room) return "";
+      return '<p class="hint" style="color:var(--flare);margin:0 0 10px">This party holds ' +
+        PHOTOS_PER_PARTY + " photos and has room for " + room +
+        (room === 1 ? " more" : " more") + ", so " + (n - room) +
+        (n - room === 1 ? " of these will be turned away." : " of these will be turned away.") + "</p>";
+    })() +
     d.items.map(function(it, i){
       return '<div class="photodraft">' +
         '<img src="' + esc(it.url) + '" alt="">' +
@@ -5057,8 +5195,12 @@ function pickPhotos(cb){
   inp.addEventListener("change", function(){
     var files = Array.prototype.slice.call(inp.files || []);
     if(!files.length) return;
-    var out = [], done = 0;
-    files.slice(0, 10).forEach(function(f, i){
+    /* No cap. There used to be ten here, which was this function's own idea —
+       nothing on the script's side counts a batch, and each photo goes up as
+       its own request, so a big selection is a long queue rather than a big
+       call. */
+    var out = [], done = 0, want = files.length;
+    files.forEach(function(f, i){
       var fr = new FileReader();
       fr.onload = function(){
         var img = new Image();
@@ -5068,13 +5210,13 @@ function pickPhotos(cb){
           var g = c.getContext("2d");
           g.fillStyle = "#fff"; g.fillRect(0, 0, w, h);
           g.drawImage(img, 0, 0, w, h);
-          out[i] = c.toDataURL("image/jpeg", 0.82);
-          if(++done === Math.min(files.length, 10)) cb(out.filter(Boolean));
+          out[i] = { url: c.toDataURL("image/jpeg", 0.82), name: f.name };
+          if(++done === want) cb(out.filter(Boolean));
         };
-        img.onerror = function(){ if(++done === Math.min(files.length, 10)) cb(out.filter(Boolean)); };
+        img.onerror = function(){ if(++done === want) cb(out.filter(Boolean)); };
         img.src = fr.result;
       };
-      fr.onerror = function(){ if(++done === Math.min(files.length, 10)) cb(out.filter(Boolean)); };
+      fr.onerror = function(){ if(++done === want) cb(out.filter(Boolean)); };
       fr.readAsDataURL(f);
     });
   });
@@ -6572,9 +6714,9 @@ document.addEventListener("click", async function(e){
      there has been a chance to say what each one is */
   if((el = t.closest("[data-photoadd]"))){
     var pmid = el.getAttribute("data-photoadd");
-    pickPhotos(function(urls){
-      photoDraft = { meetingId: pmid, items: urls.map(function(u){
-        return { url: u, caption: "", people: "", ai: false };
+    pickPhotos(function(picked){
+      photoDraft = { meetingId: pmid, items: picked.map(function(u){
+        return { url: u.url, name: u.name, caption: "", people: "", ai: false };
       }) };
       renderPhotos(pmid);
     });
@@ -6589,39 +6731,17 @@ document.addEventListener("click", async function(e){
   if(t.closest("#photoSend")){
     if(!photoDraft) return;
     photoReadDraft();
-    var d = photoDraft, smid = d.meetingId;
-    var send = $("photoSend"), note = $("photoNote");
-    if(send){ send.disabled = true; }
-    var done = 0, failed = null;
-    for(var i = 0; i < d.items.length; i++){
-      if(note) note.textContent = "Uploading " + (i + 1) + " of " + d.items.length + "…";
-      var it = d.items[i];
-      var res = await callEndpoint("photo-add", {
-        token: sessionToken(), meetingId: smid, dataUrl: it.url,
-        caption: it.caption, people: it.people, ai: it.ai
-      });
-      if(!res.ok){
-        failed = res.error === "signed out" ? "Your session ran out — sign in again."
-               : "Couldn't add that one: " + res.error;
-        break;
-      }
-      (photoCache[smid] = photoCache[smid] || []).push(res.photo);
-      done++;
-    }
-    /* Whatever did go up is up. Keeping the rest on the form means the
-       captions already typed for them are not lost to a retry. */
-    if(failed){
-      d.items = d.items.slice(done);
-      renderPhotos(smid);
-      var n2 = $("photoNote"); if(n2) n2.textContent = failed;
-      say(done ? done + " went up, the rest are still here." : failed, "bad");
-      return;
-    }
+    var smid = photoDraft.meetingId, items = photoDraft.items;
+    /* Handed over whole. Nothing is awaited here: the queue runs on its own
+       so the modal can be shut and the site used while it works through. */
     photoDraft = null;
+    photoBarClear();
+    photoEnqueue(smid, items);
     renderPhotos(smid);
-    say(done === 1 ? "Photo added." : done + " photos added.", "ok");
     return;
   }
+  if(t.closest("#photoRetry")){ photoRetryFailed(); return; }
+  if(t.closest("#photoBarX")){ photoBarClear(); return; }
   if((el = t.closest("[data-photodel]"))){
     var dpid = el.getAttribute("data-photodel"), dmid = el.getAttribute("data-mid");
     var dres = await callEndpoint("photo-delete", { token: sessionToken(), meetingId: dmid, id: dpid });

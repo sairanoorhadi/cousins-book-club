@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-29a';
+var SCRIPT_VERSION = '2026-09-29b';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -810,7 +810,7 @@ var PHOTO_FOLDER = 'Cousins Book Club photos';
    browser, and the record carries the uploader's address so they can delete
    their own. Put the two together and the addresses would be a link away. */
 var PHOTO_RECORD_FOLDER = 'Cousins Book Club photo records';
-var PHOTOS_PER_MEETING = 40;
+var PHOTOS_PER_MEETING = 100;
 var CAPTION_MAX = 500;
 var PEOPLE_MAX = 300;
 
