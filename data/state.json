@@ -1,5 +1,5 @@
 {
-  "rev": 1458,
+  "rev": 1459,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -516,7 +516,7 @@
       "place": "Ferdinand",
       "chapters": "",
       "pages": "",
-      "done": false,
+      "done": true,
       "summary": "Played headbands with different characters as well as charades.",
       "predictions": [],
       "points": [],
