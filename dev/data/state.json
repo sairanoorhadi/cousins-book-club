@@ -1,5 +1,5 @@
 {
-  "rev": 1331,
+  "rev": 1332,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -800,14 +800,15 @@
       "kind": "meeting",
       "date": "2026-09-30",
       "time": "19:00",
-      "place": "",
-      "chapters": "",
-      "pages": "",
+      "place": "Online",
+      "chapters": "6-13",
+      "pages": "118",
       "done": false,
       "summary": "",
       "photos": [],
       "predictions": [],
-      "points": []
+      "points": [],
+      "ready": []
     }
   ],
   "recs": [
