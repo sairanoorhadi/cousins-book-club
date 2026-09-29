@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-28b';
+var SCRIPT_VERSION = '2026-09-29a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -805,7 +805,14 @@ function approveNotify(payload) {
    Only a signed-in member can add or remove; anyone can look. */
 
 var PHOTO_FOLDER = 'Cousins Book Club photos';
+/* The record of what each photo is lives in its own folder, NOT in the one
+   above. That one is shared to anyone with the link so the images load in a
+   browser, and the record carries the uploader's address so they can delete
+   their own. Put the two together and the addresses would be a link away. */
+var PHOTO_RECORD_FOLDER = 'Cousins Book Club photo records';
 var PHOTOS_PER_MEETING = 40;
+var CAPTION_MAX = 500;
+var PEOPLE_MAX = 300;
 
 function photoFolder() {
   var store = PropertiesService.getScriptProperties();
@@ -819,11 +826,51 @@ function photoFolder() {
   return folder;
 }
 
-function photoKey(meetingId) { return 'photos:' + String(meetingId).slice(0, 60); }
+/* Private: created with no sharing call, so it stays the organiser's alone. */
+function photoRecordFolder() {
+  var store = PropertiesService.getScriptProperties();
+  var id = store.getProperty('photo_record_folder_id');
+  if (id) {
+    try { return DriveApp.getFolderById(id); } catch (err) {}
+  }
+  var folder = DriveApp.createFolder(PHOTO_RECORD_FOLDER);
+  store.setProperty('photo_record_folder_id', folder.getId());
+  return folder;
+}
 
+function photoKey(meetingId) { return 'photos:' + String(meetingId).slice(0, 60); }
+function photoRecordName(meetingId) { return 'photos-' + String(meetingId).slice(0, 60) + '.json'; }
+
+function photoRecordFile(meetingId, create) {
+  var folder = photoRecordFolder();
+  var hits = folder.getFilesByName(photoRecordName(meetingId));
+  if (hits.hasNext()) return hits.next();
+  if (!create) return null;
+  return folder.createFile(photoRecordName(meetingId), '[]', 'application/json');
+}
+
+/* The record used to be a Script Property. That is a fixed-ceiling key/value
+   store — a single value caps out around 9 KB — and the entries were already
+   using half of it before a caption or a list of who is in the shot was added
+   to each one. A JSON file on Drive has no such ceiling, and photo-list
+   already makes one round trip, so it costs nothing extra to read.
+
+   Anything written before the move is still in the old property; it is read
+   from there once and written to Drive by the next change. */
 function readPhotos(meetingId) {
+  var file = photoRecordFile(meetingId, false);
+  if (file) {
+    try { return JSON.parse(file.getBlob().getDataAsString() || '[]'); }
+    catch (err) { return []; }
+  }
   try { return JSON.parse(PropertiesService.getScriptProperties().getProperty(photoKey(meetingId)) || '[]'); }
   catch (err) { return []; }
+}
+
+function writePhotos(meetingId, list) {
+  photoRecordFile(meetingId, true).setContent(JSON.stringify(list));
+  /* one home for this, so the stale copy does not outlive the move */
+  try { PropertiesService.getScriptProperties().deleteProperty(photoKey(meetingId)); } catch (err) {}
 }
 
 function photoAdd(payload) {
@@ -855,10 +902,15 @@ function photoAdd(payload) {
       id: file.getId(),
       by: (directory()[email] || {}).name || email.split('@')[0],
       at: new Date().toISOString(),
-      email: email          /* so the uploader can delete their own */
+      email: email,         /* so the uploader can delete their own */
+      /* what the photo is, who is in it, and whether it was made or touched
+         up with AI — all three optional, all three typed per photo */
+      caption: String(payload.caption || '').slice(0, CAPTION_MAX),
+      people: String(payload.people || '').slice(0, PEOPLE_MAX),
+      ai: !!payload.ai
     };
     list.push(entry);
-    PropertiesService.getScriptProperties().setProperty(photoKey(meetingId), JSON.stringify(list));
+    writePhotos(meetingId, list);
     return { ok: true, photo: publicPhoto(entry) };
   } catch (err) {
     return { ok: false, error: String(err).slice(0, 120) };
@@ -869,7 +921,10 @@ function photoAdd(payload) {
 
 /* the uploader's address is not part of what anyone else gets to see */
 function publicPhoto(entry) {
-  return { id: entry.id, by: entry.by, at: entry.at };
+  return {
+    id: entry.id, by: entry.by, at: entry.at,
+    caption: entry.caption || '', people: entry.people || '', ai: !!entry.ai
+  };
 }
 
 function photoList(payload) {
@@ -897,7 +952,7 @@ function photoDelete(payload) {
 
     try { DriveApp.getFileById(id).setTrashed(true); } catch (err) {}
     list = list.filter(function (p) { return p.id !== id; });
-    PropertiesService.getScriptProperties().setProperty(photoKey(meetingId), JSON.stringify(list));
+    writePhotos(meetingId, list);
     return { ok: true };
   } finally {
     lock.releaseLock();
