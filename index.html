@@ -893,6 +893,30 @@ a.getrow:hover{background:var(--sunk)}
 .photo figcaption{display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .photo__x{margin-left:auto;border:1.5px solid var(--hairline);border-radius:50%;width:19px;height:19px;line-height:1;padding:0;background:var(--surface);color:var(--muted);cursor:pointer}
 .photo__x:hover{background:var(--flare);color:var(--on-flare);border-color:var(--edge)}
+/* what a photo is, under the photo */
+.photo__cap{margin:7px 0 0;font-size:13.5px;line-height:1.35}
+.photo__who{margin:4px 0 0;font-size:12.5px;color:var(--muted)}
+.photo__k{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase}
+.photo__ai{margin-left:6px;flex:none;border:1.5px solid var(--edge);border-radius:999px;background:var(--grape);color:var(--on-grape);
+  padding:1px 7px;font-family:var(--f-display);font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:none}
+/* the form that stands between picking photos and sending them */
+.photoform{margin-top:14px;border:2px solid var(--edge);border-radius:var(--r);background:var(--sunk);padding:16px}
+.photodraft{display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px;padding:13px 0}
+.photodraft + .photodraft{border-top:1.5px solid var(--hairline)}
+.photodraft > img{width:110px;aspect-ratio:4/3;object-fit:cover;border:2px solid var(--edge);border-radius:6px;background:var(--surface)}
+.photodraft__f{display:flex;flex-direction:column;gap:9px;min-width:0}
+.photodraft__f label{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.photodraft__f .input{margin-top:4px}
+/* ".photodraft__f label" is a class plus an element, so it outranks a bare
+   class and this row came out as an uppercase mono block with the tick
+   jammed against it. Qualified so it wins on its own terms. */
+.photodraft__f label.photodraft__ai{display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;
+  font-family:var(--f-display);font-size:13.5px;font-weight:700;color:var(--ink)}
+.photodraft__f label.photodraft__ai input{width:17px;height:17px;flex:none;margin:0}
+@media(max-width:560px){
+  .photodraft{grid-template-columns:1fr}
+  .photodraft > img{width:100%;max-width:220px}
+}
 #lightbox{z-index:160;align-items:center;padding:24px}
 .lightbox__inner{position:relative;max-width:min(1100px,94vw)}
 .lightbox__inner img{max-width:100%;max-height:86vh;border:3px solid var(--edge);border-radius:8px;box-shadow:var(--shadow);background:var(--surface)}
@@ -4930,6 +4954,11 @@ function openBookDetail(o, kind, focus){
    state.json and git would keep them forever. Anyone can look; only a
    signed-in member can add one or take their own down. */
 var photoCache = {};
+/* Photos picked but not sent yet, with what is being typed about each one.
+   Kept out of the DOM so a re-render cannot lose half-typed captions, and
+   read back only when Upload is pressed — redrawing on every keystroke would
+   take the cursor with it. */
+var photoDraft = null;
 
 /* Drive has changed its direct-image URL more than once, so try the current
    form and fall back to the older one if the browser can't load it. */
@@ -4947,25 +4976,77 @@ async function loadPhotos(meetingId){
   photoCache[meetingId] = (res && res.ok && res.photos) || [];
   renderPhotos(meetingId);
 }
+/* A caption says what the picture is, so it is the better alt text; the
+   uploader's name is the fallback it always was. */
+function photoAltText(p){
+  return p.caption ? p.caption : "Party photo from " + (p.by || "a member");
+}
+function photoFormHTML(){
+  var d = photoDraft, n = d.items.length;
+  return '<div class="photoform">' +
+    '<p class="eyebrow">' + n + (n === 1 ? " photo" : " photos") + " to add</p>" +
+    '<p class="hint" style="margin:6px 0 4px">Say what each one is. Every box is optional.</p>' +
+    d.items.map(function(it, i){
+      return '<div class="photodraft">' +
+        '<img src="' + esc(it.url) + '" alt="">' +
+        '<div class="photodraft__f">' +
+          "<label>Description" +
+            '<input class="input" type="text" data-pdf="caption" data-pi="' + i + '" maxlength="500" ' +
+              'placeholder="Add a description" value="' + esc(it.caption) + '"></label>' +
+          "<label>Who’s in it" +
+            '<input class="input" type="text" data-pdf="people" data-pi="' + i + '" maxlength="300" ' +
+              'placeholder="Who’s in the photo" value="' + esc(it.people) + '"></label>' +
+          '<label class="photodraft__ai">' +
+            '<input type="checkbox" data-pdf="ai" data-pi="' + i + '"' + (it.ai ? " checked" : "") + ">" +
+            "AI effects used</label>" +
+        "</div></div>";
+    }).join("") +
+    '<div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">' +
+      '<button class="btn btn--sm btn--grape" type="button" id="photoSend">' +
+        "Upload " + n + (n === 1 ? " photo" : " photos") + "</button>" +
+      '<button class="btn btn--sm btn--ghost" type="button" id="photoCancel">Cancel</button>' +
+      '<span class="hint" id="photoNote">Anyone visiting the site can see these.</span>' +
+    "</div></div>";
+}
+/* Straight off the form, at the moment Upload is pressed. */
+function photoReadDraft(){
+  if(!photoDraft) return;
+  var host = $("partyPhotos");
+  if(!host) return;
+  photoDraft.items.forEach(function(it, i){
+    var c = host.querySelector('[data-pdf="caption"][data-pi="' + i + '"]');
+    var w = host.querySelector('[data-pdf="people"][data-pi="' + i + '"]');
+    var a = host.querySelector('[data-pdf="ai"][data-pi="' + i + '"]');
+    if(c) it.caption = c.value.trim();
+    if(w) it.people = w.value.trim();
+    if(a) it.ai = !!a.checked;
+  });
+}
 function renderPhotos(meetingId){
   var host = $("partyPhotos");
   if(!host || host.getAttribute("data-photomeet") !== meetingId) return;
   var list = photoCache[meetingId] || [];
+  var drafting = photoDraft && photoDraft.meetingId === meetingId;
   host.innerHTML =
     (list.length
       ? '<div class="photogrid">' + list.map(function(p){
           return '<figure class="photo">' +
-            '<img src="' + esc(photoSrc(p.id)) + '" alt="' + esc("Party photo from " + (p.by || "a member")) + '" ' +
+            '<img src="' + esc(photoSrc(p.id)) + '" alt="' + esc(photoAltText(p)) + '" ' +
               'loading="lazy" data-fallback="' + esc(photoAlt(p.id)) + '" data-photoview="' + esc(p.id) + '">' +
+            (p.caption ? '<p class="photo__cap">' + esc(p.caption) + "</p>" : "") +
+            (p.people ? '<p class="photo__who"><span class="photo__k">In it</span> ' + esc(p.people) + "</p>" : "") +
             '<figcaption>' + esc(p.by || "") +
+              (p.ai ? '<span class="photo__ai">AI effects</span>' : "") +
               (me ? ' <button type="button" class="photo__x" data-photodel="' + esc(p.id) + '" data-mid="' + esc(meetingId) + '" aria-label="Remove this photo">&times;</button>' : "") +
             "</figcaption></figure>";
         }).join("") + "</div>"
       : '<p class="empty">No photos from this one yet.</p>') +
     (me
-      ? '<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">' +
-          '<button class="btn btn--sm btn--grape" type="button" data-photoadd="' + esc(meetingId) + '">Add photos</button>' +
-          '<span class="hint" id="photoNote">Anyone visiting the site can see these.</span></div>'
+      ? (drafting
+          ? photoFormHTML()
+          : '<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">' +
+              '<button class="btn btn--sm btn--grape" type="button" data-photoadd="' + esc(meetingId) + '">Add photos</button>' +
+              '<span class="hint" id="photoNote">Anyone visiting the site can see these.</span></div>')
       : '<p class="hint" style="margin-top:12px">Sign in to add photos.</p>');
 }
 /* several at once, shrunk in the browser before they go anywhere */
@@ -6486,23 +6567,58 @@ document.addEventListener("click", async function(e){
   var t = e.target; if(!t || !t.closest) return;
   var el;
 
-  /* party photos */
+  /* party photos: picking them only opens the form — nothing is sent until
+     there has been a chance to say what each one is */
   if((el = t.closest("[data-photoadd]"))){
     var pmid = el.getAttribute("data-photoadd");
-    pickPhotos(async function(urls){
-      var note = $("photoNote");
-      for(var i = 0; i < urls.length; i++){
-        if(note) note.textContent = "Uploading " + (i + 1) + " of " + urls.length + "…";
-        var res = await callEndpoint("photo-add", { token: sessionToken(), meetingId: pmid, dataUrl: urls[i] });
-        if(!res.ok){
-          if(note) note.textContent = res.error === "signed out" ? "Your session ran out — sign in again." : "Couldn't add that one: " + res.error;
-          break;
-        }
-        (photoCache[pmid] = photoCache[pmid] || []).push(res.photo);
-      }
+    pickPhotos(function(urls){
+      photoDraft = { meetingId: pmid, items: urls.map(function(u){
+        return { url: u, caption: "", people: "", ai: false };
+      }) };
       renderPhotos(pmid);
-      say("Photos added.", "ok");
     });
+    return;
+  }
+  if(t.closest("#photoCancel")){
+    var cmid = photoDraft && photoDraft.meetingId;
+    photoDraft = null;
+    if(cmid) renderPhotos(cmid);
+    return;
+  }
+  if(t.closest("#photoSend")){
+    if(!photoDraft) return;
+    photoReadDraft();
+    var d = photoDraft, smid = d.meetingId;
+    var send = $("photoSend"), note = $("photoNote");
+    if(send){ send.disabled = true; }
+    var done = 0, failed = null;
+    for(var i = 0; i < d.items.length; i++){
+      if(note) note.textContent = "Uploading " + (i + 1) + " of " + d.items.length + "…";
+      var it = d.items[i];
+      var res = await callEndpoint("photo-add", {
+        token: sessionToken(), meetingId: smid, dataUrl: it.url,
+        caption: it.caption, people: it.people, ai: it.ai
+      });
+      if(!res.ok){
+        failed = res.error === "signed out" ? "Your session ran out — sign in again."
+               : "Couldn't add that one: " + res.error;
+        break;
+      }
+      (photoCache[smid] = photoCache[smid] || []).push(res.photo);
+      done++;
+    }
+    /* Whatever did go up is up. Keeping the rest on the form means the
+       captions already typed for them are not lost to a retry. */
+    if(failed){
+      d.items = d.items.slice(done);
+      renderPhotos(smid);
+      var n2 = $("photoNote"); if(n2) n2.textContent = failed;
+      say(done ? done + " went up, the rest are still here." : failed, "bad");
+      return;
+    }
+    photoDraft = null;
+    renderPhotos(smid);
+    say(done === 1 ? "Photo added." : done + " photos added.", "ok");
     return;
   }
   if((el = t.closest("[data-photodel]"))){
