@@ -1,5 +1,5 @@
 {
-  "rev": 1483,
+  "rev": 1484,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -305,7 +305,8 @@
         "mb-mt3zx2lgcj3x8",
         "mb-mtaiuu788is5a",
         "mb-mtcdg54c8cyyc",
-        "mb-mtqod125fcqtd"
+        "mb-mtqod125fcqtd",
+        "mb-munn9nj7dj0fl"
       ],
       "order": 3,
       "level": "Ages 10-13",
@@ -316,7 +317,13 @@
           "title": "PDF",
           "url": "https://drive.google.com/file/d/1hfQSrWtJ9z121c2WHZ3X9I3_rVkf9ZKU/view?usp=drive_link"
         }
-      ]
+      ],
+      "review": {
+        "text": "",
+        "rating": 0,
+        "community": 0,
+        "by": ""
+      }
     }
   ],
   "meetings": [
