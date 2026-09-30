@@ -433,6 +433,25 @@ a.getrow:hover{background:var(--sunk)}
 .reccard__reveal .k{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.62;white-space:nowrap}
 .reccard__reveal .v{font-size:12.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
+/* The recommendations pager, the same round arrows as the shelf's but with
+   both ends of the run reachable and the page itself a way in. It is drawn
+   twice, above the grid and below it, so a page can be changed from wherever
+   the reader happens to have got to. Spent arrows stay in place and go dim
+   rather than vanishing: with five controls in a row, hiding two would shift
+   the number in the middle every time you reached the first or last page. */
+.recpage{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+.recpage--foot{margin:20px 0 0}
+.recpage__go:disabled{opacity:.32;cursor:default}
+.recpage__sel{appearance:none;-webkit-appearance:none;font-family:var(--f-display);font-weight:800;font-size:15px;
+  line-height:1;padding:7px 26px 7px 13px;border:2px solid var(--edge);border-radius:999px;
+  background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:2px 2px 0 var(--stamp)}
+.recpage__sel:hover{background:var(--zest);color:var(--on-zest)}
+/* the caret, drawn rather than left to the platform so it sits inside the pill */
+.recpage__at{position:relative;display:inline-flex;align-items:center}
+.recpage__at::after{content:"";position:absolute;right:11px;top:50%;width:0;height:0;pointer-events:none;
+  margin-top:-1px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid currentColor}
+.recpage__of{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)}
+
 /* ============ badges ============ */
 .badgehead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
 .tree{position:relative;width:100%;aspect-ratio:16/10;min-height:380px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
@@ -858,8 +877,8 @@ a.getrow:hover{background:var(--sunk)}
    page of three moved arrows placed underneath, and every press then had to be
    re-aimed. */
 .bookpage{display:flex;align-items:center;gap:8px;margin-bottom:2px}
-.bookpage__go{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:15px;line-height:1}
-.bookpage__go:hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
+.bookpage__go,.recpage__go{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:15px;line-height:1}
+.bookpage__go:hover,.recpage__go:not(:disabled):hover{background:var(--sky);color:var(--on-sky);border-color:var(--sky)}
 .bookpage__go--off{visibility:hidden;pointer-events:none}
 .bookpage__of{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)}
 /* No width rule for the button any more: in the flow it wraps to its own line
@@ -1191,6 +1210,10 @@ a.getrow:hover{background:var(--sunk)}
   .getbtn__n{font-size:9.5px;letter-spacing:.03em}
   .shelfrow{grid-template-columns:64px minmax(0,1fr)}
   .shelfrow__cover{width:64px}
+  /* Recommendation covers came out about the width of the screen's half here,
+     which is far more room than a cover needs to be recognised. Three to a
+     row at the shelf's own size instead. Desktop is left alone. */
+  .recgrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
   .shelfrow__side{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:flex-start}
   .pending{grid-template-columns:1fr}
   .pending__acts{flex-direction:row}
@@ -1640,7 +1663,9 @@ a.getrow:hover{background:var(--sunk)}
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-recs" aria-labelledby="tab-recs">
         <div class="filters" id="recFilters"></div>
+        <div id="recPageTop"></div>
         <div class="recgrid" id="recGrid"></div>
+        <div id="recPageBot"></div>
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-short" aria-labelledby="tab-short" hidden>
         <p class="focusnote" style="margin-bottom:18px">The books in the running for the next read. The organiser shortlists them from the recommendations.</p>
@@ -4271,16 +4296,70 @@ function recCardHTML(r){
         'aria-label="' + esc("Say " + r.title + " is not for you") + '" title="Not for me">&minus;</button>' +
     "</span></div>";
 }
+/* ---------- paging the recommendations ----------
+   Three rows to a page, whatever a row holds at this width: the grid lays
+   itself out with auto-fill, so the number of columns is the layout's answer
+   rather than a number written down here, and it is read back off the grid. */
+var REC_ROWS = 3;
+var recPage = 0;
+var recColsSeen = 3;   /* the last count actually measured */
+function recCols(host){
+  /* Only a grid that is being laid out has resolved tracks. In a hidden tab
+     panel the computed value is still the rule as written, so fall back to
+     what was measured while it was on screen; showing the tab re-renders. */
+  var tracks = (getComputedStyle(host).gridTemplateColumns || "").trim().split(/\s+/)
+    .filter(function(v){ return /^[\d.]+px$/.test(v); });
+  if(tracks.length) recColsSeen = tracks.length;
+  return recColsSeen;
+}
+function recPerPage(host){ return Math.max(1, recCols(host) * REC_ROWS); }
+function recPageCount(n, per){ return Math.max(1, Math.ceil(n / per)); }
+var REC_ARROWS = [["first", "\u00AB", "Jump to the first page"], ["prev", "\u2190", "The page before this"],
+                  ["next", "\u2192", "The page after this"], ["last", "\u00BB", "Jump to the last page"]];
+function recArrowHTML(to, page, pages){
+  var a = REC_ARROWS.filter(function(x){ return x[0] === to; })[0];
+  var off = (to === "first" || to === "prev") ? page === 0 : page >= pages - 1;
+  return '<button class="recpage__go" type="button" data-recpage="' + to + '" aria-label="' + a[2] + '"' +
+    (off ? " disabled" : "") + ">" + a[1] + "</button>";
+}
+function recPagerHTML(page, pages, where){
+  if(pages < 2) return "";
+  var opts = "";
+  for(var i = 0; i < pages; i++)
+    opts += '<option value="' + i + '"' + (i === page ? " selected" : "") + ">" + (i + 1) + "</option>";
+  return '<div class="recpage' + (where === "foot" ? " recpage--foot" : "") + '" role="group" ' +
+      'aria-label="Recommendation pages">' +
+    recArrowHTML("first", page, pages) + recArrowHTML("prev", page, pages) +
+    '<span class="recpage__at"><select class="recpage__sel" aria-label="Go to a page">' + opts + "</select></span>" +
+    '<span class="recpage__of">of ' + pages + "</span>" +
+    recArrowHTML("next", page, pages) + recArrowHTML("last", page, pages) +
+  "</div>";
+}
 function renderRecGrid(){
   var host = $("recGrid"), all = approvedRecs();
+  var top = $("recPageTop"), bot = $("recPageBot");
+  var clear = function(){ if(top) top.innerHTML = ""; if(bot) bot.innerHTML = ""; };
   if(!all.length){
+    clear();
     host.innerHTML = '<p class="empty">No recommendations approved yet. Use the Suggest a Book tab to put one forward.</p>';
     return;
   }
   var list = sortRecs(all.filter(recMatches));
-  host.innerHTML = list.length
-    ? list.map(recCardHTML).join("")
-    : '<p class="empty">Nothing matches those filters. Try clearing them.</p>';
+  if(!list.length){
+    clear();
+    host.innerHTML = '<p class="empty">Nothing matches those filters. Try clearing them.</p>';
+    return;
+  }
+  var per = recPerPage(host), pages = recPageCount(list.length, per);
+  /* clamped, not reset: a vote or an edit re-renders this, and being thrown
+     back to the first page for it would be its own small annoyance. Narrowing
+     the filters is the one thing that does reset it, where it is asked for. */
+  if(recPage > pages - 1) recPage = pages - 1;
+  if(recPage < 0) recPage = 0;
+  var from = recPage * per;
+  host.innerHTML = list.slice(from, from + per).map(recCardHTML).join("");
+  if(top) top.innerHTML = recPagerHTML(recPage, pages, "head");
+  if(bot) bot.innerHTML = recPagerHTML(recPage, pages, "foot");
 }
 function renderShortlist(){
   var host = $("shortGrid"); if(!host) return;
@@ -8168,9 +8247,17 @@ document.addEventListener("change", function(e){
       if(list.length) btn.removeAttribute("data-empty"); else btn.setAttribute("data-empty", "1"); }
     return;
   }
+  /* the page dropdown. Above the id guard below: it is drawn twice, so it
+     carries a class rather than an id. */
+  if(n && n.classList && n.classList.contains("recpage__sel")){
+    recPage = Number(n.value) || 0;
+    renderRecGrid();
+    return;
+  }
   if(!n || !n.id) return;
-  if(n.id === "fBy"){ recFilter.by = n.value; renderRecs(); }
-  else if(n.id === "fSort"){ recFilter.sort = n.value; renderRecs(); }
+  /* a narrower list is a different list, so it starts at its own first page */
+  if(n.id === "fBy"){ recFilter.by = n.value; recPage = 0; renderRecs(); }
+  else if(n.id === "fSort"){ recFilter.sort = n.value; recPage = 0; renderRecs(); }
 });
 
 /* ---------- tabs ---------- */
@@ -8183,6 +8270,10 @@ function tabShow(ids, prefix, k){
     var b = $(prefix + j); if(b) b.setAttribute("aria-selected", String(on));
     var pane = $("panel-" + j); if(pane) pane.hidden = !on;
   });
+  /* A hidden grid has no laid-out columns, so it cannot be asked how many fit
+     a row. Now that it is on screen it can be, and the page is redrawn with
+     the real answer. */
+  if(k === "recs" && $("recGrid")) renderRecGrid();
 }
 function tabGroup(ids, prefix){
   ids.forEach(function(k){
@@ -9328,6 +9419,18 @@ document.addEventListener("click", async function(e){
     }
     return;
   }
+  /* the recommendations pager, drawn above and below the grid: both are the
+     same control, so either one moves both */
+  var rpg = e.target.closest && e.target.closest("[data-recpage]");
+  if(rpg){
+    var to = rpg.getAttribute("data-recpage");
+    var perNow = recPerPage($("recGrid"));
+    var lastPage = recPageCount(sortRecs(approvedRecs().filter(recMatches)).length, perNow) - 1;
+    recPage = to === "first" ? 0 : to === "last" ? lastPage
+            : to === "next" ? recPage + 1 : recPage - 1;
+    renderRecGrid();
+    return;
+  }
   /* forward and back through the shelf. Nothing is fetched and nothing is
      unpicked — the same list, five at a time. */
   var bpg = e.target.closest && e.target.closest("[data-bookpage]");
@@ -9649,6 +9752,14 @@ function devAsSetup(){
   initSuggestForm();
   renderAll();
   window.addEventListener("resize", function(){ renderTree(); });
+  /* A narrower window fits fewer covers to a row, which makes a page hold
+     fewer of them. Settle first: a drag across a desktop fires this by the
+     hundred, and each one would redraw the whole grid. */
+  var recResize = null;
+  window.addEventListener("resize", function(){
+    clearTimeout(recResize);
+    recResize = setTimeout(function(){ if($("recGrid")) renderRecGrid(); }, 150);
+  });
 })();
 
 
