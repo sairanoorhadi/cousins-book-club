@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-29d';
+var SCRIPT_VERSION = '2026-09-30a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -85,6 +85,9 @@ function doPost(e) {
   if (kind === 'approve-notify') return json(approveNotify(payload));
   if (kind === 'notes-add') return json(notesAdd(payload));
   if (kind === 'notes-del') return json(notesDel(payload));
+  if (kind === 'notes-edit') return json(notesEdit(payload));
+  if (kind === 'notes-verdict') return json(notesVerdict(payload));
+  if (kind === 'notes-carry') return json(notesCarry(payload));
   if (kind === 'meet-ready') return json(meetReady(payload));
   if (kind === 'photo-add') return json(photoAdd(payload));
   if (kind === 'photo-list') return json(photoList(payload));
@@ -451,6 +454,60 @@ function notifySet(payload) {
    never has been. What IS tied to the session is who gets to act at all, and
    whose name lands in the deletion log below. */
 function noteField(f) { return f === 'pred' ? 'predictions' : f === 'disc' ? 'points' : ''; }
+var VERDICTS = { '': 1, 'yes': 1, 'part': 1, 'no': 1 };
+
+/* The locked read-modify-write the note endpoints all need, in one place.
+   Straight to GitHub rather than through stateRead: this needs the sha that
+   goes with the bytes it is about to change, and on a second attempt it needs
+   whatever landed in between. `change` is handed the parsed state and returns
+   either { error: '...' } to refuse, or { reply: {...} } to save and answer
+   with. Refusing costs nothing — the file is only written when it does not. */
+function withState(message, change) {
+  if (!propKey('GITHUB_TOKEN', '')) return { ok: false, error: 'no github token' };
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      var file;
+      try { file = ghGetFile(STATE_PATH); }
+      catch (err) { return { ok: false, error: 'no github token', detail: String(err) }; }
+      var state;
+      try { state = JSON.parse(file.content || '{}'); }
+      catch (err) { return { ok: false, error: 'unreadable state' }; }
+
+      var out = change(state) || {};
+      if (out.error) return { ok: false, error: out.error };
+      state.rev = Number(state.rev || 0) + 1;
+
+      try {
+        ghPutFile(STATE_PATH, JSON.stringify(state, null, 2), file.sha, message);
+        var reply = { ok: true };
+        var got = out.reply || {};
+        for (var k in got) if (got.hasOwnProperty(k)) reply[k] = got[k];
+        return reply;
+      } catch (err) {
+        if (attempt === 1) return { ok: false, error: 'busy, try again' };
+      }
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  return { ok: false, error: 'busy' };
+}
+
+/* Where a prediction gets judged: the next meeting for the same book, by date.
+   Predictions are about the book, so they belong to that book's own run of
+   meetings — the last meeting of a book has no next one, and nothing carries
+   past the end of it. Worked out here rather than taken from the browser, so
+   the window a verdict may be set in is this script's answer, not a claim. */
+function nextMeetingOf(state, meeting) {
+  var later = (state.meetings || []).filter(function (m) {
+    return m && m.bookId === meeting.bookId && m.id !== meeting.id &&
+      String(m.date || '') > String(meeting.date || '');
+  });
+  later.sort(function (a, b) { return String(a.date) < String(b.date) ? -1 : 1; });
+  return later[0] || null;
+}
 
 /* A member saying they have finished the section for a meeting. The only
    thing it can change is whether their own id is in that meeting's list —
@@ -557,6 +614,98 @@ function notesAdd(payload) {
     lock.releaseLock();
   }
   return { ok: false, error: 'busy' };
+}
+
+/* Changing what a note says, rather than deleting it and writing it again.
+   Same rules as adding one: any signed-in member, any meeting not yet closed,
+   whoever first wrote it. The unrestricted-delete trade was made already, and
+   an edit is the smaller half of it — a delete-and-retype was always allowed
+   and reached the same place with the authorship thrown away. */
+function notesEdit(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var member = memberFor(email);
+  if (!member) return { ok: false, error: 'not a member yet' };
+
+  var key = noteField(String(payload.field || ''));
+  if (!key) return { ok: false, error: 'bad field' };
+  var itemId = String(payload.itemId || '');
+  if (!itemId) return { ok: false, error: 'no item' };
+  var text = String(payload.text || '').trim().slice(0, 400);
+  if (!text) return { ok: false, error: 'no text' };
+
+  return withState('Member edited a note', function (state) {
+    var meeting = (state.meetings || []).filter(function (m) { return m.id === payload.meetingId; })[0];
+    if (!meeting) return { error: 'no such meeting' };
+    if (meeting.done) return { error: 'meeting closed' };
+    var item = (Array.isArray(meeting[key]) ? meeting[key] : [])
+      .filter(function (x) { return x.id === itemId; })[0];
+    if (!item) return { error: 'not found' };
+    item.text = text;
+    return { reply: { item: item } };
+  });
+}
+
+/* Marking how a prediction turned out. Its own meeting being closed is not
+   what governs: a prediction is judged at the NEXT meeting, by which time its
+   own is long marked done, so keying off that would lock every verdict before
+   anyone could set one. The window runs until the meeting where it is
+   reviewed is itself closed. */
+function notesVerdict(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var member = memberFor(email);
+  if (!member) return { ok: false, error: 'not a member yet' };
+
+  var itemId = String(payload.itemId || '');
+  if (!itemId) return { ok: false, error: 'no item' };
+  var verdict = String(payload.verdict === undefined || payload.verdict === null ? '' : payload.verdict);
+  if (!VERDICTS[verdict]) return { ok: false, error: 'bad verdict' };
+
+  return withState('Member marked a prediction', function (state) {
+    var meeting = (state.meetings || []).filter(function (m) { return m.id === payload.meetingId; })[0];
+    if (!meeting) return { error: 'no such meeting' };
+    var review = nextMeetingOf(state, meeting);
+    if (review && review.done) return { error: 'review closed' };
+    var item = (Array.isArray(meeting.predictions) ? meeting.predictions : [])
+      .filter(function (x) { return x.id === itemId; })[0];
+    if (!item) return { error: 'not found' };
+    if (verdict) item.verdict = verdict; else delete item.verdict;
+    return { reply: { item: item } };
+  });
+}
+
+/* Still might happen: the prediction is copied onto the next meeting as a new
+   open entry of its own, keeping whose it was. A copy, not a pointer — from
+   there it is that meeting's prediction and is judged with the rest of them.
+   The original keeps its place in the meeting it was made at, flagged as
+   carried so it cannot be sent forward twice. */
+function notesCarry(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var member = memberFor(email);
+  if (!member) return { ok: false, error: 'not a member yet' };
+
+  var itemId = String(payload.itemId || '');
+  if (!itemId) return { ok: false, error: 'no item' };
+
+  return withState('Member carried a prediction over', function (state) {
+    var meeting = (state.meetings || []).filter(function (m) { return m.id === payload.meetingId; })[0];
+    if (!meeting) return { error: 'no such meeting' };
+    var target = nextMeetingOf(state, meeting);
+    if (!target) return { error: 'no next meeting' };
+    if (target.done) return { error: 'review closed' };
+    var item = (Array.isArray(meeting.predictions) ? meeting.predictions : [])
+      .filter(function (x) { return x.id === itemId; })[0];
+    if (!item) return { error: 'not found' };
+    if (item.carried) return { error: 'already carried' };
+    if (!Array.isArray(target.predictions)) target.predictions = [];
+    var copy = { id: 'pred-' + Utilities.getUuid().slice(0, 12), text: item.text, by: item.by || '',
+                 byIds: Array.isArray(item.byIds) ? item.byIds.slice() : [] };
+    target.predictions.push(copy);
+    item.carried = true;
+    return { reply: { item: copy, into: target.id, source: item } };
+  });
 }
 
 /* Anyone signed in may remove anyone's prediction or discussion point — that
