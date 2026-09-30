@@ -1,5 +1,5 @@
 {
-  "rev": 1487,
+  "rev": 1488,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -519,6 +519,17 @@
         },
         {
           "id": "pred-eaecf323-779",
+          "text": "Leslie is going to die",
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mtaiuu788is5a",
+            "mb-mtcdg54c8cyyc",
+            "mb-mtqod125fcqtd"
+          ]
+        },
+        {
+          "id": "pred-2531dd87-4e9",
           "text": "Leslie is going to die",
           "by": "",
           "byIds": [
