@@ -1,5 +1,5 @@
 {
-  "rev": 1471,
+  "rev": 1472,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -140,6 +140,18 @@
       "fable": "",
       "goodreads": "",
       "hue": ""
+    },
+    {
+      "id": "mb-munn9nj7dj0fl",
+      "name": "hadiqa ahmad",
+      "joined": "2026-09-30",
+      "avatar": "",
+      "email": "",
+      "notifyRef": "sub-f98b5c83-6cc",
+      "emailHint": "h••••@gmail.com",
+      "notify": [],
+      "fable": "",
+      "goodreads": ""
     }
   ],
   "books": [
@@ -432,7 +444,8 @@
       ],
       "sent": {},
       "kind": "meeting",
-      "photos": []
+      "photos": [],
+      "ready": []
     },
     {
       "id": "mt-soc",
@@ -448,7 +461,8 @@
       "points": [],
       "sent": {},
       "kind": "meeting",
-      "photos": []
+      "photos": [],
+      "ready": []
     },
     {
       "id": "mt-mt7bmjmu7e7iv",
@@ -473,7 +487,8 @@
       ],
       "sent": {},
       "kind": "meeting",
-      "photos": []
+      "photos": [],
+      "ready": []
     },
     {
       "id": "mt-mt7pzygrjatre",
@@ -506,7 +521,8 @@
       ],
       "sent": {},
       "kind": "meeting",
-      "photos": []
+      "photos": [],
+      "ready": []
     },
     {
       "id": "mt-mt7qevhwoo6bp",
@@ -522,7 +538,8 @@
       "points": [],
       "sent": {},
       "kind": "party",
-      "photos": []
+      "photos": [],
+      "ready": []
     },
     {
       "id": "mt-mt7qhuwhfxm8v",
@@ -551,7 +568,8 @@
       ],
       "sent": {},
       "kind": "meeting",
-      "photos": []
+      "photos": [],
+      "ready": []
     },
     {
       "id": "mt-mt9d1yurksd42",
@@ -567,7 +585,8 @@
       "photos": [],
       "predictions": [],
       "points": [],
-      "sent": {}
+      "sent": {},
+      "ready": []
     },
     {
       "id": "mt-mt9dnl2jsgeby",
@@ -614,7 +633,8 @@
         }
       ],
       "points": [],
-      "sent": {}
+      "sent": {},
+      "ready": []
     },
     {
       "id": "mt-mt9dwsadf9fkj",
@@ -700,7 +720,8 @@
           "byIds": []
         }
       ],
-      "sent": {}
+      "sent": {},
+      "ready": []
     },
     {
       "id": "mt-mt9e9cqdzkz2r",
@@ -747,7 +768,8 @@
         }
       ],
       "points": [],
-      "sent": {}
+      "sent": {},
+      "ready": []
     },
     {
       "id": "mt-mt9ehc1m8ekko",
@@ -763,7 +785,8 @@
       "photos": [],
       "predictions": [],
       "points": [],
-      "sent": {}
+      "sent": {},
+      "ready": []
     },
     {
       "id": "mt-mt9ekpm1dr88z",
@@ -804,7 +827,8 @@
         }
       ],
       "points": [],
-      "sent": {}
+      "sent": {},
+      "ready": []
     },
     {
       "id": "mt-mt9erhoewi3o7",
@@ -852,7 +876,8 @@
           "byIds": []
         }
       ],
-      "sent": {}
+      "sent": {},
+      "ready": []
     },
     {
       "id": "mt-mulvzypwkgypz",
@@ -887,7 +912,8 @@
       "photos": [],
       "predictions": [],
       "points": [],
-      "sent": {}
+      "sent": {},
+      "ready": []
     },
     {
       "id": "mt-mulwpsx4mqmre",
@@ -903,7 +929,8 @@
       "photos": [],
       "predictions": [],
       "points": [],
-      "sent": {}
+      "sent": {},
+      "ready": []
     },
     {
       "id": "mt-mulwtwfic531r",
@@ -919,7 +946,8 @@
       "photos": [],
       "predictions": [],
       "points": [],
-      "sent": {}
+      "sent": {},
+      "ready": []
     },
     {
       "id": "mt-mulwv69hmhxi8",
@@ -935,7 +963,8 @@
       "photos": [],
       "predictions": [],
       "points": [],
-      "sent": {}
+      "sent": {},
+      "ready": []
     }
   ],
   "recs": [
@@ -2143,6 +2172,7 @@
     "endorse-d551ec00-9c1",
     "endorse-d0ad43e2-b47",
     "endorse-3b7b2e58-d52",
-    "endorse-a7221213-c34"
+    "endorse-a7221213-c34",
+    "join-c5f55485-911"
   ]
 }
