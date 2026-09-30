@@ -1897,6 +1897,18 @@ a.getrow:hover{background:var(--sunk)}
      Remove first, Cancel second. A reflexive click goes where a reflexive
      click always goes, and lands on Cancel; removing a book has to be read
      for and meant. Do not "fix" this ordering. -->
+<!-- A recommendation can carry a score from several sites; a book shows one.
+     Rather than the page choosing, it asks. -->
+<div class="scrim" id="rateScrim" hidden>
+  <div class="modal modal--ask" role="alertdialog" aria-modal="true" aria-labelledby="rateAskTitle" aria-describedby="rateAskWhat">
+    <div class="modal__bar"><h2 id="rateAskTitle">Which score should the book show?</h2>
+      <button class="xbtn" type="button" data-close="rateScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body">
+      <p id="rateAskWhat"></p>
+      <div class="askrow" id="rateAskList" style="flex-wrap:wrap"></div>
+    </div>
+  </div>
+</div>
 <div class="scrim" id="dropScrim" hidden>
   <div class="modal modal--ask" role="alertdialog" aria-modal="true" aria-labelledby="dropTitle" aria-describedby="dropWhat">
     <div class="modal__bar"><h2 id="dropTitle">Remove this book?</h2>
@@ -4836,7 +4848,7 @@ function openScrim(id){
   document.body.style.overflow = "hidden";
   var f = $(id).querySelector(".xbtn"); if(f) f.focus();
 }
-var SCRIMS = ["dropScrim","lightbox","loginScrim","meScrim","memberScrim","getScrim","bookScrim","meetScrim","badgeScrim","adminScrim"];
+var SCRIMS = ["rateScrim","dropScrim","lightbox","loginScrim","meScrim","memberScrim","getScrim","bookScrim","meetScrim","badgeScrim","adminScrim"];
 function closeScrim(id){
   $(id).hidden = true;
   /* The book form is on loan to the profile while a place is being edited, and
@@ -4851,6 +4863,11 @@ function closeScrim(id){
      backdrop, Escape — it was not answered, so the place it was about is
      forgotten here rather than at each of them. */
   if(id === "dropScrim") profDropSlot = null;
+  /* The same for the score question: something is waiting on its answer, and
+     the cross, the backdrop and Escape are all ways of not choosing one. The
+     book still goes on the list — that was already pressed — with no Reading
+     Community score against it. */
+  if(id === "rateScrim" && ratePick){ var go = ratePick; ratePick = null; go(0); }
   if(SCRIMS.every(function(s){ return $(s).hidden; })) document.body.style.overflow = "";
   if(lastFocus && lastFocus.focus) lastFocus.focus();
 }
@@ -8189,10 +8206,20 @@ document.addEventListener("click", async function(e){
     if(await save("Removing…")){ renderAll(); renderAdmin(); }
     return;
   }
+  /* answering the score question. The scores it is about were put aside when
+     it was asked, so the answer is an index into those rather than a second
+     attempt at working out which book is being promoted. */
+  if((el = t.closest("[data-ratepick]"))){
+    if(ratePick){
+      var rp = el.getAttribute("data-ratepick");
+      ratePick(rp === "none" ? 0 : Number((rateOptions[Number(rp)] || {}).score) || 0);
+    }
+    return;
+  }
   if((el = t.closest("[data-promote]"))){
     var sel = $("promoSel"); if(!sel) return;
     var pr = recById(sel.value); if(!pr) return;
-    adoptRec(pr, el.getAttribute("data-promote"));
+    adoptRec(pr, el.getAttribute("data-promote"), await askWhichRating(pr));
     if(await save("Moving to the reading list…")){ renderAll(); renderAdmin(); }
     return;
   }
@@ -8241,7 +8268,10 @@ document.addEventListener("click", async function(e){
   }
   if(t.closest("#nmAdd")){
     var nb = $("nmBook").value;
-    if(!bookById(nb)){ var src = recById(nb); if(src) adoptRec(src, currentBook() ? "next" : "current"); }
+    /* adding a meeting for a book the club has not adopted yet does the
+       adopting too, so the same question belongs here */
+    if(!bookById(nb)){ var src = recById(nb);
+      if(src) adoptRec(src, currentBook() ? "next" : "current", await askWhichRating(src)); }
     var nKind = $("nmKind") ? $("nmKind").value : "meeting";
     state.meetings.push({
       id: uid("mt"), bookId: nb, kind: nKind, date: $("nmDate").value, time: $("nmTime").value,
@@ -8460,20 +8490,47 @@ function acceptSubmission(item, opts){
   }
 }
 
-function adoptRec(rec, status){
+/* Which of several scores the book should carry. A recommendation holds one
+   per source — Goodreads and StoryGraph disagree, which is the whole reason
+   the form takes several — and a book holds one number, under Reading
+   Community. One score needs no question and none needs no answer; more than
+   one is a choice about what the club is quoting, so it is put to the
+   organiser rather than settled by taking whichever was typed first. */
+var ratePick = null;      /* resolves the open question, while one is open */
+var rateOptions = [];     /* the scores it is about, so the answer can index them */
+function askWhichRating(rec){
+  var list = cleanRatings(rec && rec.ratings);
+  if(list.length < 2) return Promise.resolve(list.length ? list[0].score : 0);
+  rateOptions = list;
+  $("rateAskWhat").textContent = "\u201c" + (rec.title || "This book") + "\u201d was recommended with " +
+    list.length + " scores. A book shows one, under Reading Community \u2014 which should it be?";
+  $("rateAskList").innerHTML = list.map(function(r, i){
+    return '<button class="btn btn--sm btn--grape" type="button" data-ratepick="' + i + '">' +
+      esc(String(r.score)) + (r.source ? " \u2014 " + esc(r.source) : "") + "</button>";
+  }).join("") +
+    '<button class="btn btn--sm btn--ghost" type="button" data-ratepick="none">Leave it unset</button>';
+  openScrim("rateScrim");
+  return new Promise(function(answered){
+    ratePick = function(v){ ratePick = null; closeScrim("rateScrim"); answered(v); };
+  });
+}
+
+function adoptRec(rec, status, community){
   /* What readers elsewhere gave it, carried across. This list named every
      field a book keeps, and ratings was not one of them — so a recommendation
      that arrived with a score lost it the moment it became the book the club
      was reading, and the Reading Community chip on the hero had to be filled
-     in again by hand. A recommendation holds a score per source; a book holds
-     one number, which is what that chip shows, so the first source named
-     becomes it. */
+     in again by hand. Which score, when there are several, is the caller's
+     answer — see askWhichRating. */
   var scores = cleanRatings(rec.ratings);
+  var picked = community === undefined
+    ? (scores.length ? scores[0].score : 0)
+    : clampRating(community);
   var copy = withAges({ id: rec.id, title: rec.title, author: rec.author, pages: rec.pages, genres: rec.genres || [],
     ageMin: rec.ageMin, ageMax: rec.ageMax, blurb: rec.blurb, status: status, cover: rec.cover || "", badge: "",
     series: "", seriesIndex: 1, started: status === "current" ? todayISO() : "",
     finished: status === "past" ? todayISO() : "", progressPage: 0, members: [],
-    review: { rating: 0, community: scores.length ? scores[0].score : 0, text: "", by: "" },
+    review: { rating: 0, community: picked, text: "", by: "" },
     order: currentBooks().length });
   if(!bookById(copy.id)) state.books.push(copy);
   state.recs = state.recs.filter(function(x){ return x.id !== rec.id; });
