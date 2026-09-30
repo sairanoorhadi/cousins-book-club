@@ -285,14 +285,18 @@ img{max-width:100%;display:block}
 /* ---- "Get the book" ----
    Sits under the cover, the cover's width, and carries the same top margin as
    the progress bar beside it so the two line up across the hero. */
+/* Grape, not the paper it sat on before. The two things nearest it in the hero
+   already have colours — the progress bar beside it fills flare, the meeting
+   card's Predictions button is sky — so this is the one that reads as new. */
 .getbtn{display:block;width:100%;text-align:left;padding:11px 13px;
-  border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);color:var(--ink);
+  border:2px solid var(--edge);border-radius:var(--r);background:var(--grape);color:var(--on-grape);
   box-shadow:var(--shadow-sm);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease}
 .getbtn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--stamp)}
 .getbtn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--stamp)}
 .getbtn[hidden]{display:none}
 .getbtn__t{display:block;font-family:var(--f-display);font-weight:800;font-size:15px;line-height:1.15}
-.getbtn__n{display:block;margin-top:3px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted)}
+.getbtn__n{display:block;margin-top:3px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;
+  color:var(--on-grape);opacity:.8}
 /* one row per way of getting hold of it */
 .getlist{list-style:none;margin:0;padding:0;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);overflow:hidden}
 .getlist li + li{border-top:1.5px solid var(--hairline)}
@@ -321,16 +325,31 @@ a.getrow:hover{background:var(--sunk)}
 .meetcard__top{background:var(--sky);color:var(--on-sky);padding:13px 20px;border-bottom:2px solid var(--edge)}
 .meetcard__top .eyebrow{color:inherit;opacity:.92}
 .meetcard__body{padding:20px}
-/* One size for every meeting card, chosen so the longest date this can
-   produce — "Wednesday, September 30, 2026" — stays on one line in the
-   narrowest card the layout makes, rather than some cards reading larger
-   than others depending on the month they landed in. */
+/* One size for every meeting card, rather than some cards reading larger than
+   others depending on the month they landed in. 25px is what lets the longest
+   date the card can produce — "Wed, Sep 30" — sit beside the countdown on one
+   line in the narrowest card the layout makes, which is why the card leaves
+   the year off: with it, nothing fits alongside at any readable size. */
 .meetcard__date{font-family:var(--f-display);font-weight:800;font-size:25px;line-height:1.15;letter-spacing:-.02em}
-.meetcard__row{display:flex;gap:10px;align-items:baseline;margin-top:11px;font-size:15px}
+/* The date and the countdown are one fact — when this is — so they share a
+   line rather than taking one each. The date keeps its size and never gives
+   up width; the badge keeps its own shape and is the one that shrinks, so a
+   long countdown can never push itself onto a line of its own. */
+.meetcard__when{display:flex;align-items:center;flex-wrap:nowrap;gap:9px;min-width:0}
+.meetcard__when .meetcard__date{flex:none}
+.countdown{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  display:inline-flex;align-items:baseline;background:var(--zest);color:var(--on-zest);
+  border:2px solid var(--edge);border-radius:999px;padding:5px 11px;
+  font-family:var(--f-mono);font-size:12.5px}
+/* Below about 370px the date has taken 170 of the card's 268px and the badge
+   cannot hold both its padding and a ten-character countdown in what is left.
+   It gives up a little of each there rather than being cut off. Every width
+   above this keeps the badge at full size. */
+@media (max-width:370px){ .countdown{padding:4px 7px;font-size:11.5px} }
+.meetcard__row{display:flex;gap:10px;align-items:baseline;margin-top:10px;font-size:15px}
 .meetcard__row .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);min-width:74px;flex:none}
-.countdown{display:inline-flex;align-items:baseline;gap:7px;background:var(--zest);color:var(--on-zest);border:2px solid var(--edge);border-radius:999px;padding:5px 14px;font-family:var(--f-mono);font-size:12.5px}
-/* the countdown and what you can do about it, together near the top */
-.meetcard__act{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 4px}
+/* what you can do about the meeting, on the line the countdown used to have */
+.meetcard__act{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:11px 0 4px}
 .meetcard__go{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;min-width:0;flex:1 1 auto}
 .meetcard__go .btn{min-width:0;padding-left:11px;padding-right:11px;text-align:left}
 .meetcard__go .bellbtn{flex:none}
@@ -339,8 +358,14 @@ a.getrow:hover{background:var(--sunk)}
   border:2px solid var(--edge);border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer;
   box-shadow:2px 2px 0 var(--stamp);transition:transform .12s ease,box-shadow .12s ease}
 .bellbtn:hover{background:var(--zest);color:var(--on-zest);transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--stamp)}
-/* who has finished the section */
-.meetcard__row--ready{align-items:center}
+/* who has finished the section. The row is always on the card, so it has to
+   pay for itself out of the line the countdown gave back: a shorter gap above
+   it, and a button sized to the faces beside it rather than taller than them. */
+.meetcard__row--ready{align-items:center;margin-top:8px}
+.meetcard__row--ready .btn{padding-top:3px;padding-bottom:3px}
+/* the row holds the height the Ready button needs whether or not it is there,
+   so the card does not jump when someone signs in */
+.meetcard__row--ready .readyrow{min-height:30px}
 .readyrow{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
 .readyface{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:none;
   border-radius:50%;border:2px solid var(--edge);background:var(--c,var(--sky));color:var(--cf,var(--on-sky));
@@ -894,7 +919,7 @@ a.getrow:hover{background:var(--sunk)}
 .vote__btn[disabled]:hover{background:none;color:inherit}
 .endorse[data-lean="down"]{border-color:var(--flare)}
 .endorse[data-lean="up"]{border-color:var(--surf)}
-.partytag{display:inline-block;margin-top:12px;background:var(--grape);color:var(--on-grape);border:2px solid var(--edge);border-radius:999px;padding:3px 12px;font-family:var(--f-display);font-weight:700;font-size:12.5px}
+.partytag{display:inline-block;background:var(--grape);color:var(--on-grape);border:2px solid var(--edge);border-radius:999px;padding:3px 12px;font-family:var(--f-display);font-weight:700;font-size:12.5px}
 .reccard__short{position:absolute;top:7px;left:7px;background:var(--flare);color:var(--on-flare);border:2px solid var(--edge);border-radius:999px;padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
 .seconds{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
 .secondchip{font-family:var(--f-mono);font-size:11.5px;padding:3px 10px;border:1.5px solid var(--edge);border-radius:999px;background:var(--sunk);color:var(--ink)}
@@ -2058,14 +2083,17 @@ function parseDate(iso){
   return isNaN(d.getTime()) ? null : d;
 }
 function longDate(iso){ var d = parseDate(iso); return d ? DAYS[d.getDay()] + ", " + MONTHS[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear() : "Date to be confirmed"; }
-/* "Wed, Sep 30, 2026". The meeting card's heading has about 270px to work
-   with at its narrowest, and the full form needs 14px to fit that on one
-   line — smaller than the time printed under it. Shortened, the same line
-   fits at 25px and reads as a heading again. */
+/* "Wed, Sep 30". The meeting card's heading has about 270px to work with at its
+   narrowest, and it now shares that line with the countdown; the full weekday
+   and month need 14px to fit there at all, smaller than the time printed under
+   them. Shortened this far, the line fits at 25px and reads as a heading again.
+   The year goes unsaid because the card only ever names a meeting still to
+   come — the flag bar above it has always read this way, and the meeting's own
+   panel still gives the date in full. */
 function cardDate(iso){
   var d = parseDate(iso);
   return d ? DAYS[d.getDay()].slice(0, 3) + ", " + MONTHS[d.getMonth()].slice(0, 3) + " " +
-    d.getDate() + ", " + d.getFullYear() : "Date to be confirmed";
+    d.getDate() : "Date to be confirmed";
 }
 function shortDate(iso){ var d = parseDate(iso); return d ? MONTHS[d.getMonth()].slice(0,3) + " " + d.getDate() + ", " + d.getFullYear() : "TBC"; }
 function prettyTime(t){
@@ -2108,6 +2136,16 @@ function countdownText(m){
   var days = Math.floor(hrs / 24);
   if(days === 1) return "Tomorrow";
   return "In " + days + " days";
+}
+/* countdownText writes for a sentence — "In 59 minutes" reads well in the flag
+   bar. On the card it shares a line with the date, so the long words come down
+   to their short forms. */
+function cardCountdown(m){
+  var t = countdownText(m);
+  if(!t) return "";
+  if(/\bnow$/i.test(t)) return "Now";
+  return t.replace(/ hours?\b/, function(w){ return w === " hour" ? " hr" : " hrs"; })
+          .replace(/ minutes?\b/, " min");
 }
 function todayISO(){
   var n = new Date();
@@ -3782,9 +3820,11 @@ function readingRowHTML(m){
   if(!ch && !pg) return "";
   var val = ch ? esc(ch) : "";
   if(pg) val += (val ? ' <span class="meetcard__dot">&middot;</span> ' : "") +
-    'Pages <span class="mono">' + esc(pg) + "</span>";
-  return '<div class="meetcard__row"><span class="k">' + (ch ? "Chapters" : "Pages") + "</span>" +
-    "<span>" + val + "</span></div>";
+    'Page count: <span class="mono">' + esc(pg) + "</span>";
+  /* with no chapters the number is the whole row, so the naming moves to the
+     label and the value stays the bare figure rather than saying it twice */
+  return '<div class="meetcard__row"><span class="k">' + (ch ? "Chapters" : "Page count") + "</span>" +
+    "<span>" + (ch ? val : '<span class="mono">' + esc(pg) + "</span>") + "</span></div>";
 }
 
 /* ---------- ready for the section ----------
@@ -3803,8 +3843,9 @@ function readyFaceHTML(mem){
 function readyRowHTML(m){
   var mine = myMember();
   var faces = readyList(m).map(memberById).filter(Boolean);
-  /* nothing to show and nobody who could add themselves */
-  if(!faces.length && !mine) return "";
+  /* Always on the card, even with nobody on it and nobody who could add
+     themselves: an empty Ready row still says something, and a row that is
+     always there means signing in never changes the card's height. */
   return '<div class="meetcard__row meetcard__row--ready"><span class="k">Ready</span>' +
     '<span class="readyrow">' +
       (mine
@@ -3905,14 +3946,19 @@ function renderHero(){
       ? '<p class="empty">Nothing scheduled for ' + esc(book.title) + " yet.</p>"
       : '<p class="empty">No meeting scheduled. The organiser can add one from Organiser tools.</p>';
   }else{
-    var cd = countdownText(meet);
+    var cd = cardCountdown(meet);
     body.innerHTML =
-      '<div class="meetcard__date">' + esc(cardDate(meet.date)) + "</div>" +
-      /* The countdown and the two things you might do about it, on one line
-         near the top. They used to sit at the foot of the card, below every
-         detail, which is a long way from the thing they act on. */
-      '<div class="meetcard__act">' +
+      /* When this is, on one line: the date and how long until it. The
+         countdown used to have a line of its own between the date and the
+         controls, which said nothing the two of them together don't. */
+      '<div class="meetcard__when">' +
+        '<span class="meetcard__date">' + esc(cardDate(meet.date)) + "</span>" +
         (cd ? '<span class="countdown" id="meetCountdown">' + esc(cd) + "</span>" : "") +
+      "</div>" +
+      /* The two things you might do about it, on the line the countdown gave
+         back. They used to sit at the foot of the card, below every detail,
+         which is a long way from the thing they act on. */
+      '<div class="meetcard__act">' +
         (isParty ? '<span class="partytag">🎉 Party</span>' : "") +
         /* The two together in a box that does not wrap, so the bell cannot
            be pushed onto a line of its own. The button gives up width first
@@ -3946,7 +3992,7 @@ setInterval(function(){
   var b = currentBooks()[heroIdx];
   var m = (b ? upcomingForBook(b.id) : upcomingMeetings())[meetIdx];
   var el = $("meetCountdown");
-  if(el && m) el.textContent = countdownText(m);
+  if(el && m) el.textContent = cardCountdown(m);
   renderFlags();   /* the strip counts down too */
 }, 30000);
 /* One line per meeting still owed. The whole strip is the way into its notes,
