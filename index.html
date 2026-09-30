@@ -628,6 +628,33 @@ a.getrow:hover{background:var(--sunk)}
 .notelist li{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:12px;align-items:start;padding:11px 12px;border:1.5px solid var(--hairline);border-radius:6px;background:var(--sunk)}
 .notelist .n{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding-top:2px}
 .notelist .who{display:block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+/* the pencil and the bin on a note, the same pair the profile tiles use */
+.noteacts{display:flex;align-items:center;gap:6px}
+.note__e{width:24px;height:24px;flex:none;display:inline-flex;align-items:center;justify-content:center;
+  border:1.5px solid var(--ink);border-radius:5px;background:var(--paper);color:var(--ink);cursor:pointer;
+  padding:0;box-shadow:1.5px 1.5px 0 var(--ink)}
+.note__e:hover{background:var(--zest)}
+.note__e:focus-visible{outline:2px solid var(--grape);outline-offset:2px}
+/* editing one in place: the row keeps its shape, the text becomes a field */
+.noteedit{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+.noteedit .input{flex:1 1 220px;min-width:0}
+/* How a prediction turned out. Three states and no fourth: unset is the
+   absence of all three rather than a button of its own, so the row says
+   nothing until somebody decides something. */
+.verdicts{display:inline-flex;gap:5px;margin-top:7px}
+.verdict{width:27px;height:25px;flex:none;display:inline-flex;align-items:center;justify-content:center;
+  border:1.5px solid var(--hairline);border-radius:5px;background:var(--surface);color:var(--muted);
+  font-family:var(--f-display);font-weight:800;font-size:13px;line-height:1;cursor:pointer;padding:0}
+.verdict:hover:not(:disabled){border-color:var(--edge);color:var(--ink)}
+.verdict:disabled{cursor:default;opacity:.55}
+.verdict[aria-pressed="true"]{border-color:var(--edge);box-shadow:1.5px 1.5px 0 var(--stamp)}
+.verdict--yes[aria-pressed="true"]{background:var(--surf);color:var(--on-surf)}
+.verdict--part[aria-pressed="true"]{background:var(--zest);color:var(--on-zest)}
+.verdict--no[aria-pressed="true"]{background:var(--flare);color:var(--on-flare)}
+.carrybtn{margin-top:7px}
+.notelist li.note--carried{opacity:.72}
+.carrytag{display:inline-block;margin-top:7px;font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted)}
 .addrow{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
 .addrow .input{flex:1 1 240px;width:auto}
 .addrow .input--who{flex:0 1 150px}
@@ -2650,7 +2677,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-09-29d";
+var SCRIPT_WANT = "2026-09-30a";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -2692,6 +2719,10 @@ var ENDPOINT_REPEATABLE = {
   /* the page sends the state it wants rather than "flip it", so repeating
      it lands where the first one would have */
   "meet-ready": 1,
+  /* both set a field to a value the page chose, so a second go lands exactly
+     where the first would have. notes-carry is left out on purpose: it appends
+     a new prediction, and a repeat would put two of them on the next meeting. */
+  "notes-edit": 1, "notes-verdict": 1,
   "details": 1, "summarise": 1, "images": 1, "agenote": 1,
   /* Worth repeating despite not being a read. If the first attempt never
      arrived, the second signs you in. If it did arrive and worked, its answer
@@ -4950,8 +4981,14 @@ $("brandHome").addEventListener("click", function(e){
   goHome();
 });
 
+/* Which meeting's notes are on screen. The review section shows one
+   meeting's predictions inside another meeting's notes, so a control there
+   names the meeting the prediction belongs to, not the one being looked at —
+   and redrawing afterwards has to redraw the one being looked at. */
+var openMeetId = "";
 function openMeeting(id){
   var m = meetingById(id); if(!m) return;
+  openMeetId = m.id;
   var b = bookById(m.bookId);
   $("meetModalTitle").textContent = (b ? b.title : "Meeting") + " — " + shortDate(m.date);
   whoPickSeed();
@@ -5010,13 +5047,76 @@ function whoPickSeed(){
   });
 }
 
-function noteList(items, kind, mid, m){
-  if(!items || !items.length) return '<p class="empty">' + (kind === "pred" ? "No predictions yet. Call it before you read it." : "No discussion points yet.") + "</p>";
+/* Predictions are about the book, so the meeting one is judged at is that
+   book's next one by date — the same answer the script works out for itself
+   before it will accept a verdict. The last meeting of a book has no next
+   one, and nothing carries past the end of it. */
+function bookMeetingsInOrder(bookId){
+  return state.meetings.filter(function(x){ return x.bookId === bookId; })
+    .slice().sort(function(a, b){ return String(a.date) < String(b.date) ? -1 : 1; });
+}
+function prevMeetingOf(m){
+  if(!m) return null;
+  var run = bookMeetingsInOrder(m.bookId), before = null;
+  run.forEach(function(x){ if(String(x.date) < String(m.date)) before = x; });
+  return before;
+}
+function nextMeetingOf(m){
+  if(!m) return null;
+  var run = bookMeetingsInOrder(m.bookId), after = null;
+  for(var i = 0; i < run.length; i++){
+    if(String(run[i].date) > String(m.date)){ after = run[i]; break; }
+  }
+  return after;
+}
+
+var VERDICT_LABELS = [["yes", "\u2713", "It came true"],
+                      ["part", "~", "Partly \u2014 sort of"],
+                      ["no", "\u2717", "It didn\u2019t come true"]];
+/* The three marks, and no fourth for "not decided": unmarked is none of them
+   pressed, so a prediction nobody has judged says nothing rather than
+   claiming to be undecided. Pressing the one already set clears it. */
+function verdictsHTML(p, ownerId, can){
+  return '<span class="verdicts" role="group" aria-label="How this turned out">' +
+    VERDICT_LABELS.map(function(v){
+      var on = (p.verdict || "") === v[0];
+      return '<button class="verdict verdict--' + v[0] + '" type="button" aria-pressed="' + on + '" ' +
+        'title="' + esc(v[2]) + '" aria-label="' + esc(v[2]) + '"' +
+        (can ? ' data-verdict="' + v[0] + '" data-mid="' + esc(ownerId) + '" data-iid="' + esc(p.id) + '"'
+             : " disabled") + ">" + v[1] + "</button>";
+    }).join("") + "</span>";
+}
+
+/* `review` is set when the list is the previous meeting's, shown for judging
+   inside the meeting that follows it: there the verdict marks and Carry over
+   appear, and the pencil and bin do not — editing a note belongs with the
+   meeting it was written at. */
+function noteList(items, kind, mid, m, review){
+  if(!items || !items.length) return '<p class="empty">' +
+    (review ? "Nothing was predicted last time."
+            : kind === "pred" ? "No predictions yet. Call it before you read it."
+            : "No discussion points yet.") + "</p>";
   var can = canEditNotes(m);
   return '<ul class="notelist">' + items.map(function(p, i){
-    return "<li><span class=\"n\">" + (i+1) + "</span><span>" + esc(p.text) +
-      (function(){ var w = noteWho(p); return w ? '<span class="who">' + esc(w) + "</span>" : ""; })() + "</span>" +
-      (can ? '<button class="btn btn--sm btn--ghost" type="button" data-del="' + kind + '" data-mid="' + esc(mid) + '" data-iid="' + esc(p.id) + '">Remove</button>' : "<span></span>") +
+    return '<li' + (review && p.carried ? ' class="note--carried"' : "") + '><span class="n">' + (i+1) + "</span><span>" +
+      esc(p.text) +
+      (function(){ var w = noteWho(p); return w ? '<span class="who">' + esc(w) + "</span>" : ""; })() +
+      (review
+        ? verdictsHTML(p, mid, can) +
+          (p.carried
+            ? '<span class="carrytag">Carried over</span>'
+            : can ? '<div><button class="btn btn--sm btn--ghost carrybtn" type="button" ' +
+                      'data-carry="' + esc(mid) + '" data-iid="' + esc(p.id) + '">Carry over to this meeting</button></div>'
+                  : "")
+        : "") +
+      "</span>" +
+      (can && !review
+        ? '<span class="noteacts">' +
+            '<button class="note__e" type="button" data-noteedit="' + kind + '" data-mid="' + esc(mid) + '" ' +
+              'data-iid="' + esc(p.id) + '" title="Change what this says" aria-label="Change what this says">' + PENCIL + "</button>" +
+            '<button class="btn btn--sm btn--ghost" type="button" data-del="' + kind + '" data-mid="' + esc(mid) + '" data-iid="' + esc(p.id) + '">Remove</button>' +
+          "</span>"
+        : "<span></span>") +
     "</li>";
   }).join("") + "</ul>";
 }
@@ -5053,6 +5153,22 @@ function meetingHTML(m, b){
           whoPanelHTML("disc")
           : '<p class="hint" style="margin-top:12px">' + esc(notesLockedReason(m)) + '</p>') +
       "</div></section>") +
+    /* Last time's predictions, brought forward to be judged now that the
+       reading has happened. Between the points and the write-up: after what
+       this meeting means to discuss, before what it came to. The marks are
+       set here and only here — a prediction cannot be judged the moment it is
+       made, and this meeting being open is what keeps the window open. */
+    (party ? "" : (function(){
+      var prev = prevMeetingOf(m);
+      if(!prev || !(prev.predictions || []).length) return "";
+      return '<section class="noteblock noteblock--seen"><div class="noteblock__head">' +
+          "<h3>See previous predictions</h3></div><div class=\"noteblock__body\">" +
+          '<p class="hint" style="margin-bottom:12px">Made for ' + esc(cardDate(prev.date)) +
+            ". Mark how each turned out, or carry one over if it still might." + "</p>" +
+          noteList(prev.predictions, "pred", prev.id, m, true) +
+          (canEditNotes(m) ? "" : '<p class="hint" style="margin-top:12px">' + esc(notesLockedReason(m)) + "</p>") +
+        "</div></section>";
+    })()) +
     (party
       ? '<section class="noteblock"><div class="noteblock__head" style="background:var(--grape);color:var(--on-grape)"><h3>Photos</h3></div>' +
         '<div class="noteblock__body" id="partyPhotos" data-photomeet="' + esc(m.id) + '">' +
@@ -7763,6 +7879,80 @@ document.addEventListener("click", async function(e){
        to keep what was typed in it */
     box.innerHTML = meetingHTML(m, bookById(m.bookId));
     say("Added.", "ok");
+    return;
+  }
+  /* the pencil: the row's text turns into a field in place, and Save sends
+     the new words. Nothing is deleted on the way, so the note keeps its id
+     and whoever it was written by. */
+  if((el = t.closest("[data-noteedit]"))){
+    var ek = el.getAttribute("data-noteedit"), eid = el.getAttribute("data-iid");
+    var em = meetingById(el.getAttribute("data-mid")); if(!em) return;
+    var ekey = ek === "pred" ? "predictions" : "points";
+    var eit = (em[ekey] || []).filter(function(x){ return x.id === eid; })[0]; if(!eit) return;
+    var row = el.closest("li"); if(!row) return;
+    var slot = row.children[1];
+    slot.innerHTML = '<span class="noteedit"><input class="input" type="text" maxlength="400" ' +
+      'data-noteinput="' + esc(eid) + '" value="' + esc(eit.text) + '">' +
+      '<button class="btn btn--sm btn--grape" type="button" data-notesave="' + ek + '" ' +
+        'data-mid="' + esc(em.id) + '" data-iid="' + esc(eid) + '">Save</button>' +
+      '<button class="btn btn--sm btn--ghost" type="button" data-notecancel="1">Cancel</button></span>';
+    var box = slot.querySelector("[data-noteinput]"); if(box){ box.focus(); box.select(); }
+    return;
+  }
+  if(t.closest("[data-notecancel]")){
+    var cm = meetingById(openMeetId);
+    if(cm) $("meetModalBody").innerHTML = meetingHTML(cm, bookById(cm.bookId));
+    return;
+  }
+  if((el = t.closest("[data-notesave]"))){
+    var sk = el.getAttribute("data-notesave"), sid = el.getAttribute("data-iid");
+    var sm = meetingById(el.getAttribute("data-mid")); if(!sm) return;
+    var fld = document.querySelector('[data-noteinput="' + sid + '"]');
+    var newText = fld ? (fld.value || "").trim() : "";
+    if(!newText){ if(fld) fld.focus(); return; }
+    say("Saving\u2026", "busy", true);
+    var eres = await callEndpoint("notes-edit", { token: sessionToken(), meetingId: sm.id, field: sk, itemId: sid, text: newText });
+    if(!eres.ok){ say(notesTrouble(eres.error, eres.detail), "bad"); return; }
+    var skey = sk === "pred" ? "predictions" : "points";
+    (sm[skey] || []).forEach(function(x){ if(x.id === sid) x.text = newText; });
+    $("meetModalBody").innerHTML = meetingHTML(sm, bookById(sm.bookId));
+    say("Saved.", "ok");
+    return;
+  }
+  /* how a prediction turned out. The meeting it was made at is long closed by
+     now, so what is sent is the id of that meeting and the mark; the script
+     decides whether the window is still open. Pressing the mark already set
+     clears it. */
+  if((el = t.closest("[data-verdict]"))){
+    var vwant = el.getAttribute("data-verdict"), vid = el.getAttribute("data-iid");
+    var vm = meetingById(el.getAttribute("data-mid")); if(!vm) return;
+    var vit = (vm.predictions || []).filter(function(x){ return x.id === vid; })[0]; if(!vit) return;
+    var vset = (vit.verdict || "") === vwant ? "" : vwant;
+    say("Marking\u2026", "busy", true);
+    var vres = await callEndpoint("notes-verdict", { token: sessionToken(), meetingId: vm.id, itemId: vid, verdict: vset });
+    if(!vres.ok){ say(notesTrouble(vres.error, vres.detail), "bad"); return; }
+    if(vset) vit.verdict = vset; else delete vit.verdict;
+    var vopen = meetingById(openMeetId);
+    if(vopen) $("meetModalBody").innerHTML = meetingHTML(vopen, bookById(vopen.bookId));
+    say("Marked.", "ok");
+    return;
+  }
+  /* still might happen: copied onto this meeting as a prediction of its own */
+  if((el = t.closest("[data-carry]"))){
+    var cid = el.getAttribute("data-iid");
+    var csrc = meetingById(el.getAttribute("data-carry")); if(!csrc) return;
+    say("Carrying over\u2026", "busy", true);
+    var cres = await callEndpoint("notes-carry", { token: sessionToken(), meetingId: csrc.id, itemId: cid });
+    if(!cres.ok){ say(notesTrouble(cres.error, cres.detail), "bad"); return; }
+    var into = meetingById(cres.into);
+    if(into && cres.item){
+      if(!Array.isArray(into.predictions)) into.predictions = [];
+      into.predictions.push(noteAuthors(cres.item, state.members));
+    }
+    (csrc.predictions || []).forEach(function(x){ if(x.id === cid) x.carried = true; });
+    var copen = meetingById(openMeetId);
+    if(copen) $("meetModalBody").innerHTML = meetingHTML(copen, bookById(copen.bookId));
+    say("Carried over.", "ok");
     return;
   }
   if((el = t.closest("[data-del]"))){
