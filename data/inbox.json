@@ -1434,6 +1434,19 @@
           "[object Object]"
         ]
       }
+    },
+    {
+      "id": "notedelete-0e19ec3e-134",
+      "kind": "notedelete",
+      "at": "2026-09-30T14:24:43.656Z",
+      "handled": true,
+      "payload": {
+        "meetingId": "mt-mt7pzygrjatre",
+        "field": "pred",
+        "text": "Leslie is going to die",
+        "by": "",
+        "deletedBy": "Saira"
+      }
     }
   ]
 }
