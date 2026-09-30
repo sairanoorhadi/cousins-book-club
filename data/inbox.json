@@ -1406,6 +1406,34 @@
         "emailRef": "sub-f98b5c83-6cc",
         "emailHint": "h••••@gmail.com"
       }
+    },
+    {
+      "id": "suggest-fddd8ae2-833",
+      "kind": "suggest",
+      "at": "2026-09-30T04:40:00.660Z",
+      "payload": {
+        "title": "A Deadly Education",
+        "author": "Naomi Novik",
+        "pages": 313,
+        "ageMin": 13,
+        "ageMax": 100,
+        "level": "Ages 13+",
+        "genres": [
+          "Coming-of-Age",
+          "Epic",
+          "Fantasy",
+          "Magic"
+        ],
+        "blurb": "A Deadly Education is set at Scholomance, a school for the magically gifted where failure means certain death (for real) — until one girl, El, begins to unlock its many secrets.\n\nThere are no teachers, no holidays, and no friendships, save strategic ones. Survival is more important than any letter grade, for the school won’t allow its students to leave until they graduate… or die! The rules are deceptively simple: Don’t walk the halls alone. And beware of the monsters who lurk everywhere.\n\nEl is uniquely prepared for the school’s dangers. She may be without allies, but she possesses a dark power strong enough to level mountains and wipe out millions. It would be easy enough for El to defeat the monsters that prowl the school. The problem? Her powerful dark magic might also kill all the other students.",
+        "summarySource": "fetched",
+        "cover": "https://covers.openlibrary.org/b/id/10206042-L.jpg",
+        "by": "Saira",
+        "byId": "mb-saira",
+        "ratings": [
+          "[object Object]",
+          "[object Object]"
+        ]
+      }
     }
   ]
 }
