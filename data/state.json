@@ -1,5 +1,5 @@
 {
-  "rev": 1472,
+  "rev": 1473,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -886,8 +886,8 @@
       "date": "2026-10-04",
       "time": "19:00",
       "place": "Online - Discord",
-      "chapters": "6-13",
-      "pages": "118",
+      "chapters": "4-13",
+      "pages": "126",
       "done": false,
       "summary": "",
       "photos": [],
