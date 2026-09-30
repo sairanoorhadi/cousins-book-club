@@ -1,5 +1,5 @@
 {
-  "rev": 1492,
+  "rev": 1493,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2092,6 +2092,38 @@
         }
       ],
       "level": "Ages 12+"
+    },
+    {
+      "id": "suggest-fddd8ae2-833",
+      "title": "A Deadly Education",
+      "author": "Naomi Novik",
+      "pages": 313,
+      "ageMin": 13,
+      "ageMax": 100,
+      "genres": [
+        "Coming-of-Age",
+        "Epic",
+        "Fantasy",
+        "Magic"
+      ],
+      "by": "Saira",
+      "byId": "mb-saira",
+      "status": "approved",
+      "at": "2026-09-30",
+      "cover": "https://covers.openlibrary.org/b/id/10206042-L.jpg",
+      "blurb": "A Deadly Education is set at Scholomance, a school for the magically gifted where failure means certain death (for real) — until one girl, El, begins to unlock its many secrets.\n\nThere are no teachers, no holidays, and no friendships, save strategic ones. Survival is more important than any letter grade, for the school won’t allow its students to leave until they graduate… or die! The rules are deceptively simple: Don’t walk the halls alone. And beware of the monsters who lurk everywhere.\n\nEl is uniquely prepared for the school’s dangers. She may be without allies, but she possesses a dark power strong enough to level mountains and wipe out millions. It would be easy enough for El to defeat the monsters that prowl the school. The problem? Her powerful dark magic might also kill all the other students.",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "endorsements": [],
+      "dislikes": [],
+      "ratings": [
+        {
+          "score": 3.9,
+          "source": "Goodreads"
+        }
+      ],
+      "level": "Ages 13+"
     }
   ],
   "inbox": [
@@ -2201,6 +2233,7 @@
     "endorse-d0ad43e2-b47",
     "endorse-3b7b2e58-d52",
     "endorse-a7221213-c34",
-    "join-c5f55485-911"
+    "join-c5f55485-911",
+    "suggest-fddd8ae2-833"
   ]
 }
