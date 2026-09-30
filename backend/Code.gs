@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-30a';
+var SCRIPT_VERSION = '2026-09-30b';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -141,14 +141,37 @@ function json(obj) {
 }
 
 /* Trim anything oversized before it reaches the repo. */
+/* One scalar, cut to size. Anything that is not a number or a boolean becomes
+   a string, which is what keeps a payload from carrying anything structured
+   into the repo that nothing here has looked at. */
+function cleanScalar(v, cap) {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'number' || typeof v === 'boolean') return v;
+  return String(v).slice(0, cap);
+}
 function clean(payload) {
   var out = {};
   Object.keys(payload).slice(0, 24).forEach(function (k) {
     var v = payload[k];
-    if (Array.isArray(v)) out[k] = v.slice(0, 20).map(function (x) { return String(x).slice(0, 200); });
-    else if (v === null || v === undefined) out[k] = '';
-    else if (typeof v === 'number' || typeof v === 'boolean') out[k] = v;
-    else out[k] = String(v).slice(0, 4000);
+    if (Array.isArray(v)) {
+      out[k] = v.slice(0, 20).map(function (x) {
+        /* An element that is an object keeps its shape, with every one of its
+           own values cut down the same way a top-level one is. It used to be
+           String()d like everything else, which is right for genres — a list
+           of words — and silently turned ratings, a list of {score, source},
+           into a list of "[object Object]". The scores were destroyed here,
+           before anything was written down, so the organiser saw an empty box
+           and typed them again by hand. Nothing nests: an object inside an
+           object inside the array is still flattened to a string. */
+        if (x && typeof x === 'object' && !Array.isArray(x)) {
+          var row = {};
+          Object.keys(x).slice(0, 12).forEach(function (j) { row[j] = cleanScalar(x[j], 200); });
+          return row;
+        }
+        return String(x).slice(0, 200);
+      });
+    }
+    else out[k] = cleanScalar(v, 4000);
   });
   return out;
 }
