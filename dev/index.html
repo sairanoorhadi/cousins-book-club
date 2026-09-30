@@ -285,14 +285,18 @@ img{max-width:100%;display:block}
 /* ---- "Get the book" ----
    Sits under the cover, the cover's width, and carries the same top margin as
    the progress bar beside it so the two line up across the hero. */
+/* Grape, not the paper it sat on before. The two things nearest it in the hero
+   already have colours — the progress bar beside it fills flare, the meeting
+   card's Predictions button is sky — so this is the one that reads as new. */
 .getbtn{display:block;width:100%;text-align:left;padding:11px 13px;
-  border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);color:var(--ink);
+  border:2px solid var(--edge);border-radius:var(--r);background:var(--grape);color:var(--on-grape);
   box-shadow:var(--shadow-sm);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease}
 .getbtn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--stamp)}
 .getbtn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--stamp)}
 .getbtn[hidden]{display:none}
 .getbtn__t{display:block;font-family:var(--f-display);font-weight:800;font-size:15px;line-height:1.15}
-.getbtn__n{display:block;margin-top:3px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted)}
+.getbtn__n{display:block;margin-top:3px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;
+  color:var(--on-grape);opacity:.8}
 /* one row per way of getting hold of it */
 .getlist{list-style:none;margin:0;padding:0;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);overflow:hidden}
 .getlist li + li{border-top:1.5px solid var(--hairline)}
@@ -328,13 +332,20 @@ a.getrow:hover{background:var(--sunk)}
    the year off: with it, nothing fits alongside at any readable size. */
 .meetcard__date{font-family:var(--f-display);font-weight:800;font-size:25px;line-height:1.15;letter-spacing:-.02em}
 /* The date and the countdown are one fact — when this is — so they share a
-   line rather than taking one each. The date keeps its size; the countdown
-   gives up width first and, in the longest forms on the narrowest card, is
-   clipped rather than pushed onto a line of its own. */
-.meetcard__when{display:flex;align-items:baseline;flex-wrap:nowrap;gap:7px;min-width:0}
-.meetcard__when .meetcard__date,.meetcard__when .meetcard__dot{flex:none}
-.meetcard__in{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  font-family:var(--f-mono);font-size:12.5px;color:var(--ink)}
+   line rather than taking one each. The date keeps its size and never gives
+   up width; the badge keeps its own shape and is the one that shrinks, so a
+   long countdown can never push itself onto a line of its own. */
+.meetcard__when{display:flex;align-items:center;flex-wrap:nowrap;gap:9px;min-width:0}
+.meetcard__when .meetcard__date{flex:none}
+.countdown{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  display:inline-flex;align-items:baseline;background:var(--zest);color:var(--on-zest);
+  border:2px solid var(--edge);border-radius:999px;padding:5px 11px;
+  font-family:var(--f-mono);font-size:12.5px}
+/* Below about 370px the date has taken 170 of the card's 268px and the badge
+   cannot hold both its padding and a ten-character countdown in what is left.
+   It gives up a little of each there rather than being cut off. Every width
+   above this keeps the badge at full size. */
+@media (max-width:370px){ .countdown{padding:4px 7px;font-size:11.5px} }
 .meetcard__row{display:flex;gap:10px;align-items:baseline;margin-top:10px;font-size:15px}
 .meetcard__row .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);min-width:74px;flex:none}
 /* what you can do about the meeting, on the line the countdown used to have */
@@ -3810,9 +3821,11 @@ function readingRowHTML(m){
   if(!ch && !pg) return "";
   var val = ch ? esc(ch) : "";
   if(pg) val += (val ? ' <span class="meetcard__dot">&middot;</span> ' : "") +
-    'Pages <span class="mono">' + esc(pg) + "</span>";
-  return '<div class="meetcard__row"><span class="k">' + (ch ? "Chapters" : "Pages") + "</span>" +
-    "<span>" + val + "</span></div>";
+    'Page count: <span class="mono">' + esc(pg) + "</span>";
+  /* with no chapters the number is the whole row, so the naming moves to the
+     label and the value stays the bare figure rather than saying it twice */
+  return '<div class="meetcard__row"><span class="k">' + (ch ? "Chapters" : "Page count") + "</span>" +
+    "<span>" + (ch ? val : '<span class="mono">' + esc(pg) + "</span>") + "</span></div>";
 }
 
 /* ---------- ready for the section ----------
@@ -3941,8 +3954,7 @@ function renderHero(){
          controls, which said nothing the two of them together don't. */
       '<div class="meetcard__when">' +
         '<span class="meetcard__date">' + esc(cardDate(meet.date)) + "</span>" +
-        (cd ? '<span class="meetcard__dot" aria-hidden="true">&middot;</span>' +
-              '<span class="meetcard__in" id="meetCountdown">' + esc(cd) + "</span>" : "") +
+        (cd ? '<span class="countdown" id="meetCountdown">' + esc(cd) + "</span>" : "") +
       "</div>" +
       /* The two things you might do about it, on the line the countdown gave
          back. They used to sit at the foot of the card, below every detail,
