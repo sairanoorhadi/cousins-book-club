@@ -2677,7 +2677,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-09-30a";
+var SCRIPT_WANT = "2026-09-30b";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -3783,12 +3783,6 @@ function pendingRecs(){ return state.recs.filter(function(r){ return r.status ==
 function recById(id){ return state.recs.filter(function(r){ return r.id === id; })[0] || null; }
 function memberById(id){ return state.members.filter(function(m){ return m.id === id; })[0] || null; }
 /* "4.35 Goodreads" per line — the number first, the rest is where it came from */
-function parseRatingLines(text){
-  return cleanRatings(String(text || "").split("\n").map(function(line){
-    var m = line.trim().match(/^([0-9]+(?:\.[0-9]+)?)\s*(?:\/\s*5)?\s*(.*)$/);
-    return m ? { score: m[1], source: m[2].trim() } : null;
-  }).filter(Boolean));
-}
 function cleanRatings(list){
   if(!Array.isArray(list)) return [];
   return list.map(function(r){
@@ -6906,6 +6900,38 @@ function recDraft(it){
   }
   return recDrafts[id];
 }
+/* The same score-and-source rows the public form uses, so a rating reads and
+   is typed the same way wherever it is touched. It was a textarea of
+   "4.35 Goodreads" lines here, which meant the organiser had to know a format
+   nobody is shown, and parsed back out of prose on every save. */
+function adminRatingRowsHTML(r){
+  var rows = (r.ratings || []).slice();
+  if(!rows.length) rows = [{ score: "", source: "" }];
+  return rows.map(function(rt, i){
+    return '<div class="ratingrow">' +
+      '<input class="input mono" type="number" min="0" max="5" step="0.01" inputmode="decimal" ' +
+        'placeholder="4.1" value="' + esc(rt.score || "") + '" data-rrscore="' + i + '" ' +
+        'data-rid="' + esc(r.id) + '" aria-label="Rating out of 5">' +
+      '<input class="input input--src" type="text" maxlength="40" placeholder="Goodreads, StoryGraph\u2026" ' +
+        'value="' + esc(rt.source || "") + '" data-rrsrc="' + i + '" ' +
+        'data-rid="' + esc(r.id) + '" aria-label="Where the rating came from">' +
+      (rows.length > 1
+        ? '<button class="ratingrow__del" type="button" data-rdroprating="' + i + '" ' +
+          'data-rid="' + esc(r.id) + '" aria-label="Remove this rating" title="Remove">&times;</button>'
+        : "") +
+    "</div>";
+  }).join("");
+}
+/* read the boxes back, because they are the truth once someone has typed */
+function adminRatingsFrom(id){
+  var host = document.querySelector('[data-ratinghost="' + id + '"]');
+  if(!host) return null;
+  return cleanRatings([].slice.call(host.querySelectorAll(".ratingrow")).map(function(row){
+    var sc = row.querySelector("[data-rrscore]"), sr = row.querySelector("[data-rrsrc]");
+    return { score: sc ? sc.value : "", source: sr ? sr.value : "" };
+  }));
+}
+
 /* the editor's handlers ask this rather than recById, so one lookup covers a
    real record and a draft alike */
 function recOrDraft(id){ return recById(id) || recDrafts[id] || null; }
@@ -6921,9 +6947,10 @@ function recEditor(r, opts){
       '<div class="field"><label>Reading level</label>' + dualRangeHTML("rc:" + r.id, r.ageMin, r.ageMax) + "</div>" +
       '<div class="field"><label>Recommended by</label><input class="input" type="text" value="' + esc(r.by || "") + '" data-rfield="by" data-rid="' + esc(r.id) + '" maxlength="60"></div>' +
     "</div>" +
-    '<div class="field" style="margin-top:14px"><label>Readers&rsquo; ratings <span style="text-transform:none;letter-spacing:0">(one per line, as &ldquo;4.35 Goodreads&rdquo;)</span></label>' +
-      '<textarea class="textarea" data-rfield="ratings" data-rid="' + esc(r.id) + '" placeholder="4.35 Goodreads&#10;4.1 StoryGraph" style="min-height:70px">' +
-      esc((r.ratings || []).map(function(rt){ return rt.score + (rt.source ? " " + rt.source : ""); }).join("\n")) + "</textarea></div>" +
+    '<div class="field" style="margin-top:14px"><label>Readers&rsquo; ratings <span style="text-transform:none;letter-spacing:0">(out of 5 &mdash; add as many as you like)</span></label>' +
+      '<div data-ratinghost="' + esc(r.id) + '">' + adminRatingRowsHTML(r) + "</div>" +
+      '<div style="margin-top:10px"><button class="btn btn--sm btn--ghost" type="button" ' +
+        'data-raddrating="' + esc(r.id) + '">+ Add rating</button></div></div>' +
     '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
       '<input class="input" type="text" value="' + esc((r.genres || []).join(", ")) + '" data-rfield="genres" data-rid="' + esc(r.id) + '" maxlength="300"></div>' +
     '<div class="field" style="margin-top:14px"><label>Summary</label>' +
@@ -7955,6 +7982,33 @@ document.addEventListener("click", async function(e){
     say("Carried over.", "ok");
     return;
   }
+  /* another rating row, and dropping one. Both redraw only the rows, so
+     nothing else in the open editor is disturbed — and what is already typed
+     into the other rows is read back first so it survives the redraw. */
+  if((el = t.closest("[data-raddrating]"))){
+    var arid = el.getAttribute("data-raddrating"), arec = recOrDraft(arid);
+    if(!arec) return;
+    var now = adminRatingsFrom(arid) || [];
+    arec.ratings = now;
+    var ahost = document.querySelector('[data-ratinghost="' + arid + '"]');
+    if(ahost) ahost.innerHTML = adminRatingRowsHTML({ id: arid, ratings: now.concat([{ score: "", source: "" }]) });
+    var last = ahost && ahost.querySelectorAll("[data-rrscore]");
+    if(last && last.length) last[last.length - 1].focus();
+    return;
+  }
+  if((el = t.closest("[data-rdroprating]"))){
+    var drid = el.getAttribute("data-rid"), at = Number(el.getAttribute("data-rdroprating"));
+    var drec = recOrDraft(drid); if(!drec) return;
+    var kept = [].slice.call(document.querySelectorAll('[data-ratinghost="' + drid + '"] .ratingrow'))
+      .map(function(row){
+        var sc = row.querySelector("[data-rrscore]"), sr = row.querySelector("[data-rrsrc]");
+        return { score: sc ? sc.value : "", source: sr ? sr.value : "" };
+      }).filter(function(x, i){ return i !== at; });
+    drec.ratings = cleanRatings(kept);
+    var dhost = document.querySelector('[data-ratinghost="' + drid + '"]');
+    if(dhost) dhost.innerHTML = adminRatingRowsHTML({ id: drid, ratings: kept });
+    return;
+  }
   if((el = t.closest("[data-del]"))){
     var dk = el.getAttribute("data-del"), dm = meetingById(el.getAttribute("data-mid")), iid = el.getAttribute("data-iid");
     if(!dm) return;
@@ -8336,7 +8390,7 @@ function readRecFields(rec){
     rec.ageMin = age.lo; rec.ageMax = age.hi; rec.level = levelText(rec);
   }
   var rv = get("reviews"); if(rv) rec.reviews = parseReviewLines(rv.value);
-  var rt = get("ratings"); if(rt) rec.ratings = parseRatingLines(rt.value);
+  var rrs = adminRatingsFrom(rec.id); if(rrs) rec.ratings = rrs;
   if(!rec.title) rec.title = "Untitled";
   return rec;
 }
