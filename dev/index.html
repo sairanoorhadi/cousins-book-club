@@ -8461,10 +8461,19 @@ function acceptSubmission(item, opts){
 }
 
 function adoptRec(rec, status){
+  /* What readers elsewhere gave it, carried across. This list named every
+     field a book keeps, and ratings was not one of them — so a recommendation
+     that arrived with a score lost it the moment it became the book the club
+     was reading, and the Reading Community chip on the hero had to be filled
+     in again by hand. A recommendation holds a score per source; a book holds
+     one number, which is what that chip shows, so the first source named
+     becomes it. */
+  var scores = cleanRatings(rec.ratings);
   var copy = withAges({ id: rec.id, title: rec.title, author: rec.author, pages: rec.pages, genres: rec.genres || [],
     ageMin: rec.ageMin, ageMax: rec.ageMax, blurb: rec.blurb, status: status, cover: rec.cover || "", badge: "",
     series: "", seriesIndex: 1, started: status === "current" ? todayISO() : "",
     finished: status === "past" ? todayISO() : "", progressPage: 0, members: [],
+    review: { rating: 0, community: scores.length ? scores[0].score : 0, text: "", by: "" },
     order: currentBooks().length });
   if(!bookById(copy.id)) state.books.push(copy);
   state.recs = state.recs.filter(function(x){ return x.id !== rec.id; });
