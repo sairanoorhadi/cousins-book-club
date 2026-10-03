@@ -1,5 +1,5 @@
 {
-  "rev": 1498,
+  "rev": 1499,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -260,12 +260,6 @@
       "order": 2,
       "level": "Ages 9-12",
       "getbook": [
-        {
-          "id": "get-mum66p10mvfrp",
-          "kind": "link",
-          "title": "Audiobook - Youtube Playlist",
-          "url": "https://www.youtube.com/watch?v=9If-D7aizX8&t=1s"
-        },
         {
           "id": "get-mum67uivzi02p",
           "kind": "link",
