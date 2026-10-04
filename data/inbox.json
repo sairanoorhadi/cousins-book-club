@@ -1510,6 +1510,19 @@
           }
         ]
       }
+    },
+    {
+      "id": "notedelete-0cdbd20b-910",
+      "kind": "notedelete",
+      "at": "2026-10-04T16:22:25.927Z",
+      "handled": true,
+      "payload": {
+        "meetingId": "mt-mulvzypwkgypz",
+        "field": "pred",
+        "text": "Leslie is going to die",
+        "by": "",
+        "deletedBy": "Saira"
+      }
     }
   ]
 }
