@@ -1,5 +1,5 @@
 {
-  "rev": 1513,
+  "rev": 1514,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -22,11 +22,7 @@
         "*"
       ],
       "hue": "#f993fb",
-      "genres": [
-        "Fantasy",
-        "Science Fiction",
-        "Realistic Fiction"
-      ],
+      "genres": [],
       "top5": [
         {
           "id": "",
@@ -126,6 +122,29 @@
           "myReview": "",
           "ageMin": 12,
           "ageMax": 17
+        },
+        {
+          "id": "",
+          "title": "Six of Crows",
+          "author": "Leigh Bardugo",
+          "cover": "https://m.media-amazon.com/images/I/81oanOQ1+nL._AC_UF1000,1000_QL80_.jpg",
+          "pages": 512,
+          "genres": [
+            "Fantasy",
+            "Science Fiction"
+          ],
+          "level": "Ages 13+",
+          "blurb": "Ketterdam: a bustling hub of international trade where anything can be had for the right price—and no one knows that better than criminal prodigy Kaz Brekker. Kaz is offered a chance at a deadly heist that could make him rich beyond his wildest dreams. But he can’t pull it off alone...\n\nA convict with a thirst for revenge\n\nA sharpshooter who can’t walk away from a wager\n\nA runaway with a privileged past\n\nA spy known as the Wraith\n\nA Heartrender using her magic to survive the slums\n\nA thief with a gift for unlikely escapes\n\nSix dangerous outcasts. One impossible heist. Kaz’s crew is the only thing that might stand between the world and destruction—if they don’t kill each other first.",
+          "ratings": [
+            {
+              "score": 4.45,
+              "source": "Goodreads"
+            }
+          ],
+          "myScore": 5,
+          "myReview": "I rarely give out five stars. I believe average ratings for a book that you enjoyed is 2 1/2 stars that is average average is middle. This book went far beyond that I could not find a single flaw that I would say I didn’t like this aspect. I’m knocking it down a .5 or .25.\n\nThe characters were so well done I could not hate any of them, and even when they were fighting against each other internally, I did not know who to root for. Every character was so memorable none were side characters. The main six were awesome.\n\nThe world building was very well done and it blended very good to the atmosphere of this book. Setting was not amazing like an ethereal world with like how to train your Dragon but it was amazing and awesome and fit the story very well.\n\nThe magic system was well done, and the rules were followed, and it wasn’t hard to understand.\n\nSome aspects of the story were predictable, but the way the author went about it. I did not expect it to be done that way.\n\nThe writing was so well done. I was thoroughly entertained the entire time. Well done Leigh Bardugo, truly well done.\n\nThis has become my new push book, meaning the book I give to people that never read to get them into reading.\n\nCharacters 5/5\nPlot 5/5\nSetting 3.5/5\nWriting style 5/5",
+          "ageMin": 13,
+          "ageMax": 100
         }
       ],
       "notifyRecs": false
