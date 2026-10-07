@@ -1,5 +1,5 @@
 {
-  "rev": 1515,
+  "rev": 1516,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -22,7 +22,11 @@
         "*"
       ],
       "hue": "#f993fb",
-      "genres": [],
+      "genres": [
+        "Fantasy",
+        "Science Fiction",
+        "Realistic Fiction"
+      ],
       "top5": [
         {
           "id": "",
