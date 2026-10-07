@@ -320,6 +320,11 @@ a.getrow:hover{background:var(--sunk)}
 .tag--sky{background:var(--sky);color:var(--on-sky)}
 .tag--grape{background:var(--grape);color:var(--on-grape)}
 .tag--flare{background:var(--flare);color:var(--on-flare)}
+/* A trope is not a genre, so it does not look like one: no fill, a dashed
+   edge and the mono face, which is the page's voice for "this is a label
+   somebody typed" rather than a shelf the book sits on. */
+.tag--trope{background:none;border-style:dashed;font-family:var(--f-mono);font-size:11.5px;
+  letter-spacing:.02em;color:var(--ink)}
 
 .meetcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
 .meetcard__top{background:var(--sky);color:var(--on-sky);padding:13px 20px;border-bottom:2px solid var(--edge)}
@@ -925,6 +930,11 @@ a.getrow:hover{background:var(--sunk)}
 .filters__box > summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .filters__box > summary .filters__count{margin-left:auto}
 .filters__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}
+/* Two columns of filters, each a stack of its own. One column on a phone,
+   where two would leave every slider too short to aim at. */
+.filters__cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 28px;align-items:start}
+.filters__stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+@media (max-width:700px){ .filters__cols{grid-template-columns:minmax(0,1fr)} }
 .filters__foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
 .filters__count{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-left:auto}
 .genrepick{display:flex;flex-wrap:wrap;gap:7px;max-height:118px;overflow:auto;padding:2px}
@@ -1759,6 +1769,9 @@ a.getrow:hover{background:var(--sunk)}
             <div id="sAgeSlider"></div>
             <p class="hint" id="sAgeNote" hidden></p></div>
           <div class="field"><label for="sGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label><input class="input" id="sGenres" name="genres" placeholder="Young Adult, Fantasy" maxlength="300"></div>
+          <!-- Under genres, and never filled by the lookup: Open Library
+               shelves books, it does not read them. -->
+          <div class="field"><label for="sTropes">Tropes <span style="text-transform:none;letter-spacing:0">(comma separated &mdash; yours to add, the lookup can&rsquo;t find these)</span></label><input class="input" id="sTropes" name="tropes" placeholder="Enemies to lovers, Found family" maxlength="300"></div>
           <div class="field"><label>Readers&rsquo; ratings <span style="text-transform:none;letter-spacing:0">(out of 5 &mdash; add as many as you like)</span></label>
             <div id="sRatings"></div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">
@@ -2094,6 +2107,21 @@ function canonGenre(raw){
   return GENRE_ALIASES[key] || String(raw).trim();
 }
 /* one flat, de-duplicated list from whatever shape the genres arrived in */
+/* Tropes are what a book DOES — enemies to lovers, locked room, found family.
+   Not genres, so they are not run through canonGenre: there is no vocabulary
+   to merge them against and no shelving noise to strip. Comma separated,
+   trimmed, de-duplicated, and bounded so a paste cannot turn into a wall. */
+function tropeList(v){
+  var out = [], seen = {};
+  (Array.isArray(v) ? v : String(v || "").split(",")).forEach(function(entry){
+    var t = String(entry || "").trim().replace(/\s+/g, " ").slice(0, 40);
+    if(!t) return;
+    var k = t.toLowerCase();
+    if(seen[k]) return;
+    seen[k] = 1; out.push(t);
+  });
+  return out.slice(0, 12);
+}
 function normaliseGenres(list){
   var out = [], seen = {};
   (Array.isArray(list) ? list : String(list || "").split(",")).forEach(function(entry){
@@ -2300,6 +2328,7 @@ function migrate(s){
     }
     if(typeof b.seriesIndex !== "number") b.seriesIndex = 1;
     if(typeof b.order !== "number") b.order = 0;
+    b.tropes = tropeList(b.tropes);
     b.genres = normaliseGenres(b.genres);
     withAges(b);
     if(b.review && typeof b.review.community !== "number") b.review.community = 0;
@@ -2318,6 +2347,7 @@ function migrate(s){
        score and a StoryGraph score and they disagree — worth seeing both rather
        than picking one. The old single pair folds in, so nothing already
        saved is lost. */
+    r.tropes = tropeList(r.tropes);
     r.ratings = cleanRatings(r.ratings);
     if(!r.ratings.length && Number(r.rating) > 0){
       r.ratings = [{ score: clampRating(r.rating), source: String(r.ratingSource || "").slice(0, 40) }];
@@ -2700,7 +2730,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-09-30b";
+var SCRIPT_WANT = "2026-10-07a";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -4125,6 +4155,7 @@ function renderShelf(){
           '<span class="tag tag--surf">' + esc(levelText(b)) + "</span>" +
           '<span class="tag tag--zest mono">' + esc(b.pages || "?") + " pages</span>" +
           (b.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
+          (b.tropes || []).map(function(t){ return '<span class="tag tag--trope">' + esc(t) + "</span>"; }).join("") +
         "</div>" +
         (rev
           ? '<div class="review">' + ratingPair(b.review) +
@@ -4205,7 +4236,33 @@ document.addEventListener("input", function(e){
 });
 
 /* ---------- render: recommendations ---------- */
-var recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP, pagesMin: 0, pagesMax: PAGE_TOP };
+/* Out of five, to a tenth, because that is how the rating sites quote them.
+   Same shape and same styling as the age slider. */
+var RATE_TOP = 5;
+var RATE_SCALE = { max: RATE_TOP, step: 0.1, loLabel: "Lowest rating", hiLabel: "Highest rating",
+  format: function(s){
+    var lo = Math.round(s.lo * 10) / 10, hi = Math.round(s.hi * 10) / 10;
+    if(lo <= 0 && hi >= RATE_TOP) return "Any rating";
+    if(lo <= 0) return "Up to " + hi.toFixed(1);
+    if(hi >= RATE_TOP) return lo.toFixed(1) + " and up";
+    return lo.toFixed(1) + "\u2013" + hi.toFixed(1);
+  } };
+/* A book can carry a Goodreads score and a StoryGraph score that disagree, so
+   the one number to filter on is their average — no single site gets to be
+   the answer. A book with no score at all has no number to compare. */
+function recRating(r){
+  var list = cleanRatings(r && r.ratings);
+  if(!list.length) return null;
+  var sum = 0;
+  list.forEach(function(x){ sum += Number(x.score) || 0; });
+  return Math.round((sum / list.length) * 100) / 100;
+}
+function ratingNarrowed(){ return recFilter.rateMin > 0 || recFilter.rateMax < RATE_TOP; }
+function ratelessCount(){
+  return approvedRecs().filter(function(r){ return recRating(r) === null; }).length;
+}
+var recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP,
+                  pagesMin: 0, pagesMax: PAGE_TOP, rateMin: 0, rateMax: RATE_TOP };
 var filtersOpen = false;
 function recMatches(r){
   if(recFilter.by && r.by !== recFilter.by) return false;
@@ -4218,6 +4275,15 @@ function recMatches(r){
   }
   /* keep anything whose age band overlaps the band being asked for */
   if(r.ageMin > recFilter.ageMax || r.ageMax < recFilter.ageMin) return false;
+  /* At the full range the slider is not asking anything, so a book nobody has
+     scored stays on the shelf. Narrow it and the question becomes one an
+     unrated book cannot answer, so it drops out — the same bargain the length
+     slider already makes, and the count line says how many went. */
+  if(ratingNarrowed()){
+    var score = recRating(r);
+    if(score === null) return false;
+    if(score < recFilter.rateMin || score > recFilter.rateMax) return false;
+  }
   if(pagesNarrowed()){
     /* a book nobody has filled a page count in for can't answer the question,
        so it drops out — the count line says how many did, rather than
@@ -4260,26 +4326,39 @@ function renderRecFilters(){
       '<span id="fActive">' + esc(activeLabel()) + "</span>" +
       ' <span class="filters__count" id="recCountTop">' + esc(countLine()) + "</span></summary>" +
     '<div class="editor__body">' +
-    '<div class="filters__grid">' +
-      '<div class="field"><label for="fBy">Suggested by</label><select class="select" id="fBy">' +
-        '<option value="">Everyone</option>' +
-        people.map(function(p){ return '<option value="' + esc(p) + '"' + (recFilter.by === p ? " selected" : "") + ">" + esc(p) + "</option>"; }).join("") +
-      "</select></div>" +
-      '<div class="field"><label for="fSort">Order</label><select class="select" id="fSort">' +
-        [["top","Most endorsements"],["title","A-Z by title"],["author","A-Z by author surname"]].map(function(o){
-          return '<option value="' + o[0] + '"' + (recFilter.sort === o[0] ? " selected" : "") + ">" + esc(o[1]) + "</option>";
-        }).join("") +
-      "</select></div>" +
-      '<div class="field"><label>Age rating</label>' + dualRangeHTML("filterAge", recFilter.ageMin, recFilter.ageMax, function(){
-        var v = dualValue("filterAge");
-        recFilter.ageMin = v.lo; recFilter.ageMax = v.hi;
-        liveCount();
-      }) + "</div>" +
-      '<div class="field"><label>Length</label>' + dualRangeHTML("filterPages", recFilter.pagesMin, recFilter.pagesMax, function(){
-        var v = dualValue("filterPages");
-        recFilter.pagesMin = v.lo; recFilter.pagesMax = v.hi;
-        liveCount();
-      }, PAGE_SCALE) + "</div>" +
+    /* Two stacks side by side: what the list is OF on the left — who put it
+       forward, and in what order — and what to measure it by on the right.
+       Each stack is a column of its own, so the sliders line up under each
+       other rather than being dealt across a grid. One column on a phone. */
+    '<div class="filters__cols">' +
+      '<div class="filters__stack">' +
+        '<div class="field"><label for="fBy">Suggested by</label><select class="select" id="fBy">' +
+          '<option value="">Everyone</option>' +
+          people.map(function(p){ return '<option value="' + esc(p) + '"' + (recFilter.by === p ? " selected" : "") + ">" + esc(p) + "</option>"; }).join("") +
+        "</select></div>" +
+        '<div class="field"><label for="fSort">Order</label><select class="select" id="fSort">' +
+          [["top","Most endorsements"],["title","A-Z by title"],["author","A-Z by author surname"]].map(function(o){
+            return '<option value="' + o[0] + '"' + (recFilter.sort === o[0] ? " selected" : "") + ">" + esc(o[1]) + "</option>";
+          }).join("") +
+        "</select></div>" +
+      "</div>" +
+      '<div class="filters__stack">' +
+        '<div class="field"><label>Age rating</label>' + dualRangeHTML("filterAge", recFilter.ageMin, recFilter.ageMax, function(){
+          var v = dualValue("filterAge");
+          recFilter.ageMin = v.lo; recFilter.ageMax = v.hi;
+          liveCount();
+        }) + "</div>" +
+        '<div class="field"><label>Length</label>' + dualRangeHTML("filterPages", recFilter.pagesMin, recFilter.pagesMax, function(){
+          var v = dualValue("filterPages");
+          recFilter.pagesMin = v.lo; recFilter.pagesMax = v.hi;
+          liveCount();
+        }, PAGE_SCALE) + "</div>" +
+        '<div class="field"><label>Rating</label>' + dualRangeHTML("filterRate", recFilter.rateMin, recFilter.rateMax, function(){
+          var v = dualValue("filterRate");
+          recFilter.rateMin = v.lo; recFilter.rateMax = v.hi;
+          liveCount();
+        }, RATE_SCALE) + "</div>" +
+      "</div>" +
     "</div>" +
     (genres.length
       ? '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(pick several to narrow &mdash; books must have all of them)</span></label>' +
@@ -4299,12 +4378,14 @@ function countLine(){
   var line = sortRecs(approvedRecs().filter(recMatches)).length + " of " + total + " shown";
   var noPages = pagesNarrowed() ? pagelessCount() : 0;
   if(noPages) line += " \u00b7 " + noPages + " with no page count hidden";
+  var noRate = ratingNarrowed() ? ratelessCount() : 0;
+  if(noRate) line += " \u00b7 " + noRate + " unrated hidden";
   return line;
 }
 function activeFilters(){
   return (recFilter.by ? 1 : 0) + recFilter.genres.length +
     (recFilter.ageMin > 0 || recFilter.ageMax < AGE_TOP ? 1 : 0) +
-    (pagesNarrowed() ? 1 : 0);
+    (pagesNarrowed() ? 1 : 0) + (ratingNarrowed() ? 1 : 0);
 }
 function activeLabel(){ var n = activeFilters(); return n ? " \u00b7 " + n + " active" : ""; }
 /* Redraw the shelf and both count lines without re-rendering the panel — that
@@ -4329,6 +4410,8 @@ function recCardHTML(r){
         '<span class="reccard__by">' + (r.by ? esc(r.by) : "&nbsp;") + "</span></span>" +
       '<span class="reccard__reveal">' +
         '<span class="k">Genres</span><span class="v">' + esc((r.genres || []).join(" · ") || "Unlisted") + "</span>" +
+        ((r.tropes || []).length
+          ? '<span class="k">Tropes</span><span class="v">' + esc(r.tropes.join(" · ")) + "</span>" : "") +
         '<span class="k">Level</span><span class="v">' + esc(levelText(r)) + "</span>" +
         '<span class="k">Endorsed</span><span class="v">' + (up || "none yet") + (down ? " · " + down + " against" : "") + "</span>" +
       "</span>" +
@@ -4514,6 +4597,8 @@ function bookTileHTML(b, where){
         '<span class="reccard__by">' + (b.author ? esc(b.author) : "&nbsp;") + "</span></span>" +
       '<span class="reccard__reveal">' +
         '<span class="k">Genres</span><span class="v">' + esc((b.genres || []).join(" · ") || "Unlisted") + "</span>" +
+        ((b.tropes || []).length
+          ? '<span class="k">Tropes</span><span class="v">' + esc(b.tropes.join(" · ")) + "</span>" : "") +
         '<span class="k">Level</span><span class="v">' + esc(levelText(b)) + "</span>" +
         '<span class="k">Read</span><span class="v">' + esc(readWhen(b)) + "</span>" +
       "</span>" +
@@ -5361,6 +5446,7 @@ function openBookDetail(o, kind, focus){
           '<span class="tag tag--zest mono">' + esc(o.pages || "?") + " pages</span>" +
           '<span class="tag tag--surf">' + esc(levelText(o)) + "</span>" +
           (o.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
+          (o.tropes || []).map(function(t){ return '<span class="tag tag--trope">' + esc(t) + "</span>"; }).join("") +
         "</div>" +
         (o.by ? '<p class="review__by" style="margin-top:14px">Recommended by ' + esc(o.by) + "</p>" : "") +
         (ups.length
@@ -6318,7 +6404,8 @@ function profFiveHTML(five){
     var b = five[i];
     var inner = b
       ? bookTileHTML({ id: b.id || "", title: b.title || "", author: b.author || "", cover: b.cover || "",
-                       pages: b.pages || "", genres: b.genres || [], ageMin: b.ageMin, ageMax: b.ageMax,
+                       pages: b.pages || "", genres: b.genres || [], tropes: b.tropes || [],
+                       ageMin: b.ageMin, ageMax: b.ageMax,
                        level: b.level, finished: "", started: "" }, { five: i })
       : (profEditing ? emptySlotHTML(i) : tileSlotHTML(i + 1));
     out.push('<div class="prof__slot" data-profslot="' + i + '"' +
@@ -6412,6 +6499,7 @@ function profFormSnapshot(){
     author: (($("sAuthor") || {}).value || "").trim(),
     pages: (($("sPages") || {}).value || "").trim(),
     genres: (($("sGenres") || {}).value || "").trim(),
+    tropes: (($("sTropes") || {}).value || "").trim(),
     blurb: (($("sBlurb") || {}).value || "").trim(),
     ratings: JSON.stringify(ratingsForSubmit()),
     myScore: (($("sMyScore") || {}).value || "").trim(),
@@ -6460,6 +6548,7 @@ function profOpenForm(slot){
     if($("sAuthor")) $("sAuthor").value = b.author || "";
     if($("sPages")) $("sPages").value = b.pages || "";
     if($("sGenres")) $("sGenres").value = (b.genres || []).join(", ");
+    if($("sTropes")) $("sTropes").value = (b.tropes || []).join(", ");
     if($("sBlurb")) $("sBlurb").value = b.blurb || "";
     if($("sMyScore")) $("sMyScore").value = b.myScore ? String(b.myScore) : "";
     if($("sMyReview")) $("sMyReview").value = b.myReview || "";
@@ -6524,6 +6613,7 @@ function profFormAsBook(){
     author: ($("sAuthor") && $("sAuthor").value || "").trim(),
     pages: Number($("sPages") && $("sPages").value) || "",
     genres: normaliseGenres($("sGenres") && $("sGenres").value || ""),
+    tropes: tropeList($("sTropes") && $("sTropes").value || ""),
     cover: sugCover || "",
     /* The form has a Summary box and it is the reason most people open this
        screen. It was not being read, so it was typed, saved, and quietly
@@ -6805,6 +6895,8 @@ function bookEditor(b){
       "</div>" +
       '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
         '<input class="input" type="text" value="' + esc((b.genres || []).join(", ")) + '" data-bfield="genres" data-bid="' + esc(b.id) + '" maxlength="200"></div>' +
+      '<div class="field"><label>Tropes <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
+        '<input class="input" type="text" value="' + esc((b.tropes || []).join(", ")) + '" data-bfield="tropes" data-bid="' + esc(b.id) + '" maxlength="300"></div>' +
       '<div class="field" style="margin-top:14px"><label>Summary</label>' +
         '<textarea class="textarea" data-bfield="blurb" data-bid="' + esc(b.id) + '">' + esc(b.blurb || "") + "</textarea></div>" +
       '<div class="formgrid" style="margin-top:18px">' +
@@ -6973,7 +7065,8 @@ function recDraft(it){
     recDrafts[id] = withAges({
       id: id, title: p.title || "Untitled", author: p.author || "",
       pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
-      genres: normaliseGenres(p.genres), by: String(p.by || ""), at: String(it.at || "").slice(0, 10),
+      genres: normaliseGenres(p.genres), tropes: tropeList(p.tropes),
+      by: String(p.by || ""), at: String(it.at || "").slice(0, 10),
       cover: safeUrl(p.cover), blurb: String(p.blurb || ""),
       summarySource: String(p.summarySource || "own"),
       status: "pending", shortlist: false, reviews: [], endorsements: [], dislikes: [],
@@ -7036,6 +7129,8 @@ function recEditor(r, opts){
         'data-raddrating="' + esc(r.id) + '">+ Add rating</button></div></div>' +
     '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
       '<input class="input" type="text" value="' + esc((r.genres || []).join(", ")) + '" data-rfield="genres" data-rid="' + esc(r.id) + '" maxlength="300"></div>' +
+    '<div class="field" style="margin-top:14px"><label>Tropes <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
+      '<input class="input" type="text" value="' + esc((r.tropes || []).join(", ")) + '" data-rfield="tropes" data-rid="' + esc(r.id) + '" maxlength="300"></div>' +
     '<div class="field" style="margin-top:14px"><label>Summary</label>' +
       '<textarea class="textarea" data-rfield="blurb" data-rid="' + esc(r.id) + '">' + esc(r.blurb || "") + "</textarea></div>" +
     '<div class="field" style="margin-top:14px"><label>Reader reviews <span style="text-transform:none;letter-spacing:0">(spoiler-free, one per line as "quote — who said it")</span></label>' +
@@ -7712,14 +7807,17 @@ document.addEventListener("click", async function(e){
 
   /* recommendation filters */
   if((el = t.closest("[data-fgenre]"))){
+    recPage = 0;
     var g = el.getAttribute("data-fgenre"), at = recFilter.genres.indexOf(g);
     if(at === -1) recFilter.genres.push(g); else recFilter.genres.splice(at, 1);
     renderRecs();
     return;
   }
   if(t.closest("#fReset")){
-    recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP, pagesMin: 0, pagesMax: PAGE_TOP };
+    recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP,
+                  pagesMin: 0, pagesMax: PAGE_TOP, rateMin: 0, rateMax: RATE_TOP };
     filtersOpen = true;
+    recPage = 0;          /* a wider list starts at its own first page */
     renderRecs();
     return;
   }
@@ -8203,6 +8301,7 @@ document.addEventListener("click", async function(e){
     var si = get("seriesIndex"); if(si) bb.seriesIndex = Number(si.value) || 1;
     var pp = get("progressPage"); if(pp) bb.progressPage = Math.max(0, Number(pp.value) || 0);
     var gn = get("genres"); if(gn) bb.genres = normaliseGenres(gn.value);
+    var btr = get("tropes"); if(btr) bb.tropes = tropeList(btr.value);
     var picks = p2.querySelectorAll('[data-bmember][data-bid="' + bb.id + '"]');
     if(picks.length){
       bb.members = [];
@@ -8486,6 +8585,7 @@ function readRecFields(rec){
   });
   var pg = get("pages"); if(pg) rec.pages = Number(pg.value) || null;
   var gn = get("genres"); if(gn) rec.genres = normaliseGenres(gn.value);
+  var tr = get("tropes"); if(tr) rec.tropes = tropeList(tr.value);
   if(pane.querySelector('[data-dualid="rc:' + rec.id + '"]')){
     var age = dualValue("rc:" + rec.id);
     rec.ageMin = age.lo; rec.ageMax = age.hi; rec.level = levelText(rec);
@@ -8504,7 +8604,7 @@ function acceptSubmission(item, opts){
     state.recs.push(withAges({
       id: item.id, title: String(p.title || "Untitled").slice(0, 140), author: String(p.author || "").slice(0, 140),
       pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
-      genres: normaliseGenres(p.genres),
+      genres: normaliseGenres(p.genres), tropes: tropeList(p.tropes),
       by: String(p.by || "").slice(0, 60),
       /* who sent it, when they were signed in — a name alone cannot be
          followed back to a person, and two of the names already here belong
@@ -8597,6 +8697,7 @@ function adoptRec(rec, status, community){
     ? (scores.length ? scores[0].score : 0)
     : clampRating(community);
   var copy = withAges({ id: rec.id, title: rec.title, author: rec.author, pages: rec.pages, genres: rec.genres || [],
+    tropes: tropeList(rec.tropes),
     ageMin: rec.ageMin, ageMax: rec.ageMax, blurb: rec.blurb, status: status, cover: rec.cover || "", badge: "",
     series: "", seriesIndex: 1, started: status === "current" ? todayISO() : "",
     finished: status === "past" ? todayISO() : "", progressPage: 0, members: [],
@@ -9274,7 +9375,7 @@ function initSuggestForm(){
    fill having run, nothing found, the lookup failing — opens it. */
 var detailsOpen = false;
 /* the boxes, and the hosts whose contents are redrawn from scratch */
-var GATE_FIELDS = ["sPages", "sGenres", "sBlurb", "sMyScore", "sMyReview",
+var GATE_FIELDS = ["sPages", "sGenres", "sTropes", "sBlurb", "sMyScore", "sMyReview",
                    "sSumSearch", "sAgeCheck", "sAgeAI", "sRatingAdd"];
 var GATE_HOSTS = ["sAgeSlider", "sRatings", "sCoverPick", "sSumMode", "sSumPick"];
 var GATE_SHUT = "Press Look up book first, then you can fill in the rest.";
@@ -10088,7 +10189,8 @@ $("suggestForm").addEventListener("submit", async function(e){
     var res = await submitPublic("suggest", {
       title: title, author: author, pages: Number(el.pages.value) || null,
       ageMin: age.lo, ageMax: age.hi, level: levelText({ ageMin: age.lo, ageMax: age.hi }),
-      genres: genres, blurb: blurb, summarySource: chosen.from, cover: sugCover, by: by,
+      genres: genres, tropes: tropeList(($("sTropes") || {}).value || ""),
+      blurb: blurb, summarySource: chosen.from, cover: sugCover, by: by,
       byId: (myMember() || {}).id || "",
       ratings: ratingsForSubmit()
     });

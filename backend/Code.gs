@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-09-30b';
+var SCRIPT_VERSION = '2026-10-07a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -943,6 +943,12 @@ function cleanTop5(b) {
     genres: (Array.isArray(b.genres) ? b.genres : [])
       .map(function (g) { return String(g || '').trim().slice(0, 40); })
       .filter(function (g) { return g; }).slice(0, 8),
+    /* What the book does, as against what shelf it sits on. Named here or it
+       is stripped on the way through, which is how the summary, the score and
+       the review each went missing before anyone noticed. */
+    tropes: (Array.isArray(b.tropes) ? b.tropes : [])
+      .map(function (t) { return String(t || '').trim().slice(0, 40); })
+      .filter(function (t) { return t; }).slice(0, 12),
     level: String(b.level || '').trim().slice(0, 40),
     /* What they wrote about it. This was missing from the list, so a summary
        could be typed into the form, saved, and stripped here without anyone
