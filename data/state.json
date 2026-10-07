@@ -1,5 +1,5 @@
 {
-  "rev": 1517,
+  "rev": 1518,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -13,8 +13,8 @@
       "name": "Saira",
       "joined": "2026-04-17",
       "avatar": "",
-      "fable": "",
-      "goodreads": "",
+      "fable": "https://fable.co/fabler/saira-hadi-415274071136?tab=stats",
+      "goodreads": "https://www.goodreads.com/user/show/179481168?ref=nav_profile_l",
       "email": "",
       "notifyRef": "sub-84e7607a-09e",
       "emailHint": "s••••@gmail.com",
