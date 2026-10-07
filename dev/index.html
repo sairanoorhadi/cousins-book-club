@@ -1094,6 +1094,15 @@ a.getrow:hover{background:var(--sunk)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ratingrow__warn{color:var(--zest)}}
 :root[data-theme="dark"] .ratingrow__warn{color:var(--zest)}
 .ratingrow__warn[hidden]{display:none}
+/* Everything below the lookup is shut until it has been run. Disabled is the
+   real state — these are disabled controls, not ones painted to look it — so
+   this only has to say so plainly enough that the form does not read as
+   broken. The hint above them says why. */
+.gatehint{margin:4px 0 -4px;padding:9px 13px;border:1.5px dashed var(--edge);border-radius:6px;
+  background:var(--sunk);color:var(--ink)}
+.gatehint[hidden]{display:none}
+.gated{opacity:.55}
+.gated,.gated *{cursor:not-allowed}
 /* The label and its two buttons on one line, as they were when the buttons
    were inside the label — but as siblings, so each answers for itself. The
    slider and its note take the full width below. Spacing is the buttons' own
@@ -1719,6 +1728,7 @@ a.getrow:hover{background:var(--sunk)}
               <button class="btn btn--grape lookupgo" type="button" id="sAskAI">Look up book</button>
               <p class="hint">A title or author on its own is enough &mdash; either works.</p></div>
           </div>
+          <p class="hint gatehint" id="sGateHint" hidden></p>
           <div class="formgrid formgrid--rest">
             <div class="field"><label for="sPages">Page count</label><input class="input" id="sPages" name="pages" type="number" min="1" max="20000" inputmode="numeric"></div>
             <div class="field"><label for="sBy">Your name</label><input class="input" id="sBy" name="by" required maxlength="60"></div>
@@ -6418,6 +6428,11 @@ function profOpenForm(slot){
     renderRatingRows();
     if(b.cover){ sugCover = b.cover; renderSugCover(); }
     if(b.ageMin && b.ageMax){ dualState.sAge = { lo: Number(b.ageMin), hi: Number(b.ageMax) }; syncDual("sAge"); }
+    /* An existing book is already looked up — that is what put it on the
+       shelf. The gate is for filling a new one in from nothing, so editing
+       one opens with everything to hand. Last, after the renders above, each
+       of which re-asserts whatever the gate currently is. */
+    openDetails();
   }
   profPaintFormFor();
   profFormOpened = profFormSnapshot();
@@ -8658,6 +8673,7 @@ function renderSumPick(){
         return '<option value="' + k + '"' + (k === sugPick ? " selected" : "") + ">" + esc(SUM_NAME[k]) + "</option>";
       }).join("") +
     "</select>";
+  applyDetailLock();   /* fresh controls inside a shut gate are shut too */
 }
 /* What actually goes to the organiser. With one summary there is nothing to
    ask and that one goes. With more than one, the choice is theirs to make —
@@ -9099,6 +9115,7 @@ function renderSugCover(){
     (sugCover ? '<span class="cover-wrap" style="width:70px;display:inline-block;margin-bottom:10px"><span class="cover"><img src="' + esc(sugCover) + '" alt=""></span></span>' : "") +
     coverSearchHTML("suggest", function(){ return { title: $("sTitle").value, author: $("sAuthor").value }; },
       function(url){ fillTheirs("cover"); sugCover = url; renderSugCover(); });
+  applyDetailLock();   /* fresh controls inside a shut gate are shut too */
 }
 /* ---- ratings: as many as the book has ----
    A book has a Goodreads score and a StoryGraph score and they disagree. Making
@@ -9125,6 +9142,7 @@ function renderRatingRows(){
         'inaccurate \u2014 double check with another source.</small>' +
     "</div>";
   }).join("");
+  applyDetailLock();   /* fresh controls inside a shut gate are shut too */
 }
 /* read the boxes back, because they are the truth once someone has typed */
 function readRatingRows(){
@@ -9175,11 +9193,63 @@ function initSuggestForm(){
   setSugMode("own");
   renderRatingRows();
   syncSearchLinks();
+  /* Asserts whatever the gate is rather than choosing one, so the first paint
+     of the page comes up shut and profOpenForm's edit, which opens it after
+     this has run, is not shut again behind it. */
+  applyDetailLock();
 }
 /* ---- starting over, and what counts as filled in ----
    A lookup that went wrong leaves more behind than the two boxes at the top:
    a settled name, a picked card, a cover, a summary nobody chose. Starting
    over has to put all of it back. */
+/* ---------- the lookup gate ----------
+   Everything the lookup is meant to fill is shut until it has been run, so a
+   book is looked up first and corrected after, rather than typed out by hand
+   and the lookup never pressed. Title, author and your name stay open: they
+   are what the lookup needs, not what it supplies.
+
+   The gate opens when the lookup has SETTLED, which is not the same as the
+   request having returned. The common path ends with a list of authors on
+   screen and nothing filled in — lookupTheDetails says so itself, "touch
+   nothing else until Confirm" — and the filling only happens on the press
+   after. Opening the fields in that gap would let someone type a page count
+   that Confirm then silently declines to overwrite, which is the one thing
+   the manual-wins rule guarantees. So a pending candidate list keeps the gate
+   shut and says what to press; anything with nothing left to confirm — the
+   fill having run, nothing found, the lookup failing — opens it. */
+var detailsOpen = false;
+/* the boxes, and the hosts whose contents are redrawn from scratch */
+var GATE_FIELDS = ["sPages", "sGenres", "sBlurb", "sMyScore", "sMyReview",
+                   "sSumSearch", "sAgeCheck", "sAgeAI", "sRatingAdd"];
+var GATE_HOSTS = ["sAgeSlider", "sRatings", "sCoverPick", "sSumMode", "sSumPick"];
+var GATE_SHUT = "Press Look up book first, then you can fill in the rest.";
+var GATE_PICK = "Pick the author below and press Confirm, then you can fill in the rest.";
+/* Re-asserted rather than set once: renderRatingRows, renderSugCover and the
+   summary picker all rebuild their host's innerHTML, which would hand back
+   working controls inside a shut gate. They each call this when they are
+   done. */
+function applyDetailLock(){
+  var shut = !detailsOpen;
+  GATE_FIELDS.forEach(function(id){ var n = $(id); if(n) n.disabled = shut; });
+  GATE_HOSTS.forEach(function(id){
+    var host = $(id); if(!host) return;
+    host.classList.toggle("gated", shut);
+    [].slice.call(host.querySelectorAll("input,button,select,textarea"))
+      .forEach(function(n){ n.disabled = shut; });
+  });
+  ["sPages", "sGenres", "sBlurb", "sMyScore", "sMyReview"].forEach(function(id){
+    var n = $(id); if(n) n.closest(".field") && n.closest(".field").classList.toggle("gated", shut);
+  });
+  var hint = $("sGateHint");
+  if(hint){
+    hint.hidden = !shut;
+    hint.textContent = lookupPending() ? GATE_PICK : GATE_SHUT;
+  }
+}
+/* opened by the lookup settling, or by the form being handed an existing book */
+function openDetails(){ detailsOpen = true; applyDetailLock(); }
+function shutDetails(){ detailsOpen = false; applyDetailLock(); }
+
 function clearSuggestForm(){
   $("suggestForm").reset();
   sugCover = "";
@@ -9197,6 +9267,7 @@ function clearSuggestForm(){
   clearMissing();
   $("suggestNote").textContent = "";
   initSuggestForm();          /* slider, ratings, cover, summary, the links */
+  shutDetails();              /* a cleared form is a new one, so shut again */
   $("sTitle").focus();
 }
 
@@ -9406,7 +9477,20 @@ function busyOff(barId, btn, label){
 /* one lookup at a time: a second press is the same question */
 var lookupBusy = false;
 function lookupStart(){ lookupBusy = true; busyOn("sLookBar", $("sAskAI"), "Looking up\u2026"); }
-function lookupEnd(){ lookupBusy = false; busyOff("sLookBar", $("sAskAI"), "Look up book"); }
+function lookupEnd(){
+  lookupBusy = false;
+  busyOff("sLookBar", $("sAskAI"), "Look up book");
+  /* Every lookup comes through here — filled, found nothing, or thrown, since
+     the callers put this in a finally. So this is where the gate settles, and
+     a lookup that falls over cannot leave the form shut for good. The one
+     state that holds it is a candidate list still waiting for Confirm, which
+     has not filled anything yet. */
+  if(lookupPending()) applyDetailLock(); else openDetails();
+}
+/* a list on screen that Confirm has still to answer, of either kind */
+function lookupPending(){
+  return (!authorSettled && authorPickWorth()) || (!bookSettled && bookPickWorth());
+}
 
 /* and one summary at a time. The label depends on which tab is chosen, and
    the tab can be changed while it runs, so it is read at the end rather than
