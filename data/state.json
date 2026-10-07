@@ -1,5 +1,5 @@
 {
-  "rev": 1505,
+  "rev": 1506,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -912,7 +912,7 @@
       "place": "Online - Discord",
       "chapters": "4-13",
       "pages": "126",
-      "done": false,
+      "done": true,
       "summary": "",
       "photos": [],
       "predictions": [],
