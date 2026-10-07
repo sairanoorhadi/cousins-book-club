@@ -6080,14 +6080,41 @@ async function profileRefresh(){
      empty reply must never be mistaken for an empty profile. */
   if(!res || !res.ok || !Array.isArray(res.top5) || !Array.isArray(res.genres)) return;
   var mem = myMember(); if(!mem) return;
-  mem.hue = res.hue; mem.goodreads = res.goodreads; mem.fable = res.fable;
-  mem.genres = res.genres; mem.top5 = res.top5; mem.notifyRecs = res.notifyRecs;
+  /* An answer shaped right can still be an answer from behind. The script
+     reads its own copy of state.json, and when that copy is older than the
+     one this page loaded it returns a profile with the newer fields missing —
+     well-formed empties, which the shape check above lets through. Taking
+     them wrote blanks over good values, the form then drew the blanks, and
+     saving made them permanent. Top5 came back correctly from the same reply,
+     which is why the books survived and nothing else did.
+
+     So an answer is only authoritative when it is at least as new as what we
+     hold. A staler one may still fill a gap — it cannot empty anything. */
+  var fresh = Number(res.rev || 0) >= Number((state && state.rev) || 0);
+  var isEmpty = function(v){
+    return v === "" || v === null || v === undefined || (Array.isArray(v) && !v.length);
+  };
+  var take = function(remote, local){
+    if(fresh) return remote;
+    return isEmpty(remote) ? local : remote;
+  };
+  mem.hue = take(res.hue, mem.hue);
+  mem.goodreads = take(res.goodreads, mem.goodreads);
+  mem.fable = take(res.fable, mem.fable);
+  mem.genres = take(res.genres, mem.genres);
+  mem.top5 = take(res.top5, mem.top5);
+  if(fresh || res.notifyRecs) mem.notifyRecs = res.notifyRecs;
   if(res.name) mem.name = res.name;
   profEdits = null; profDraft = null;
 }
 async function openMe(){
   if(!me){ openLogin(); return; }
+  /* Shut until the profile has been fetched and drawn. Pressing Save against
+     a form that has not been filled in yet is how a blank gets written over
+     something real, and it is only ever a mistake. */
+  profLoaded = false;
   await profileRefresh();
+  profLoaded = true;
   var res = await callEndpoint("notify-get", { token: sessionToken() });
   /* The test site can't ask the script what someone is subscribed to, which
      would leave this whole section looking switched off there. The list the
@@ -6125,6 +6152,14 @@ function webAddress(v){
 var profDrag = -1;        /* which is being dragged */
 var profEdits = null;     /* unsaved five, so a reorder survives a redraw */
 var profDraft = null;     /* the rest of it, for the same reason */
+/* What the form was drawn with, so saving can tell a field somebody emptied
+   on purpose from one that was never filled in — and so a control that is not
+   on screen contributes the stored value rather than a blank. */
+var profBase = null;
+/* Set once the profile has been fetched and drawn. Until then Save is held
+   shut: an early press used to send whatever the half-built form had, which
+   is blanks. */
+var profLoaded = false;
 
 /* Everything typed but not yet saved. Going to look at your recommendations
    and coming back redraws this page, and a redraw reading only from the saved
@@ -6169,6 +6204,10 @@ function renderMe(){
   var showGr = d ? d.goodreads : (mem.goodreads || "");
   var showFa = d ? d.fable : (mem.fable || "");
   var showRecs = d ? d.notifyRecs : !!mem.notifyRecs;
+  /* the values this drawing of the form is showing, which are the ones to
+     keep for any box the member does not touch */
+  profBase = { genres: (genres || []).slice(), goodreads: showGr, fable: showFa,
+               hue: showHue, notifyRecs: showRecs };
   var books = currentBooks().concat(nextBooks());
   var all = myNotify.indexOf("*") !== -1;
   var remindersOn = myNotify.length > 0;
@@ -6264,7 +6303,9 @@ function renderMe(){
     '<hr class="divider">' +
     '<div class="lookbar" id="profBar" role="status" aria-label="Saving your profile" hidden><span></span></div>' +
     '<div class="prof__save">' +
-      '<button class="btn btn--zest" type="button" id="profSave">Save profile</button>' +
+      '<button class="btn btn--zest" type="button" id="profSave"' +
+        (profLoaded ? "" : " disabled") + ">" +
+        (profLoaded ? "Save profile" : "Loading\u2026") + "</button>" +
       '<span class="hint" id="profNote"></span>' +
       '<button class="btn btn--ghost" type="button" id="loginOut" style="margin-left:auto">Sign out</button></div>';
 }
@@ -6503,17 +6544,26 @@ async function profSave(extra){
   var mem = myMember(); if(!mem) return false;
   var note = $("profNote");
   var hex = ($("profHueHex") && $("profHueHex").value || "").trim();
+  /* Every field is sent, because the script writes the profile whole — so
+     what matters is that a field nobody touched is sent back as it was
+     rather than as a blank. A box that is not on screen cannot have been
+     edited, so it contributes what the form was drawn with; only a box that
+     is there and has been emptied clears anything. */
+  var base = profBase || { genres: (mem.genres || []).slice(), goodreads: mem.goodreads || "",
+                           fable: mem.fable || "", hue: mem.hue || "", notifyRecs: !!mem.notifyRecs };
+  var grBox = $("profGoodreads"), faBox = $("profFable");
+  var genBoxes = [0,1,2].map(function(i){ return document.querySelector('[data-profgen="' + i + '"]'); });
+  var recsBox = $("profRecsNotify");
   var payload = {
     token: sessionToken(),
-    hue: isHex(hex) ? hex.toLowerCase() : (mem.hue || ""),
-      goodreads: webAddress($("profGoodreads") && $("profGoodreads").value),
-    fable: webAddress($("profFable") && $("profFable").value),
-    genres: [0,1,2].map(function(i){
-      var el = document.querySelector('[data-profgen="' + i + '"]');
-      return el ? el.value.trim() : "";
-    }).filter(Boolean),
+    hue: isHex(hex) ? hex.toLowerCase() : (base.hue || mem.hue || ""),
+    goodreads: grBox ? webAddress(grBox.value) : (base.goodreads || ""),
+    fable: faBox ? webAddress(faBox.value) : (base.fable || ""),
+    genres: genBoxes.every(function(el){ return !el; })
+      ? (base.genres || []).slice()
+      : genBoxes.map(function(el, i){ return el ? el.value.trim() : ((base.genres || [])[i] || ""); }).filter(Boolean),
     top5: myFive(),
-    notifyRecs: !!($("profRecsNotify") && $("profRecsNotify").checked)
+    notifyRecs: recsBox ? !!recsBox.checked : !!base.notifyRecs
   };
   Object.keys(extra || {}).forEach(function(k){ payload[k] = extra[k]; });
 
@@ -7891,6 +7941,11 @@ document.addEventListener("click", async function(e){
   if(t.closest("#profRecsBack")){ renderMe(); return; }
   if(t.closest("#profSave")){
     if(profSaving) return;
+    /* The panel is not drawn until the profile has been fetched, so this is
+       belt and braces — but it is the guard that actually holds if renderMe
+       is ever reached by another road. Saving a form that was never filled
+       in is how the stored values get written over with blanks. */
+    if(!profLoaded) return;
     profSaving = true;
     busyOn("profBar", $("profSave"), "Saving\u2026");
     var books = [];
