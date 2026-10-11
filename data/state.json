@@ -1,5 +1,5 @@
 {
-  "rev": 1529,
+  "rev": 1530,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1048,7 +1048,16 @@
           ]
         }
       ],
-      "points": [],
+      "points": [
+        {
+          "id": "disc-f6bd2a04-e8c",
+          "text": "Very graphic description of death and injuries",
+          "by": "",
+          "byIds": [
+            "mb-saira"
+          ]
+        }
+      ],
       "sent": {},
       "ready": [
         "mb-saira",
