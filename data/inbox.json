@@ -1523,6 +1523,19 @@
         "by": "",
         "deletedBy": "Saira"
       }
+    },
+    {
+      "id": "notedelete-85cbb6fc-b3c",
+      "kind": "notedelete",
+      "at": "2026-10-11T23:44:58.912Z",
+      "handled": true,
+      "payload": {
+        "meetingId": "mt-mulwpsx4mqmre",
+        "field": "pred",
+        "text": "Steve is not goign to be able to walk or  be absolutely destroyed",
+        "by": "",
+        "deletedBy": "Saira"
+      }
     }
   ]
 }
