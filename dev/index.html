@@ -935,9 +935,31 @@ a.getrow:hover{background:var(--sunk)}
 .filters__cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 28px;align-items:start}
 .filters__stack{display:flex;flex-direction:column;gap:16px;min-width:0}
 @media (max-width:700px){ .filters__cols{grid-template-columns:minmax(0,1fr)} }
+/* All three sliders share one block. Each row puts its label and its answer on
+   the same line with the track beneath, which is what keeps three sliders down
+   to about the height of the two selects opposite them. */
+.sliderbox{border:1.5px solid var(--hairline);border-radius:var(--r);padding:9px 13px 11px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.sliderow{min-width:0}
+.sliderow__head{display:flex;align-items:baseline;gap:10px}
+.sliderow__head > label{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sliderow__head > .dualrange__out{margin:0 0 0 auto;font-size:12px;text-align:right}
+.dualrange--tight{height:23px;margin-top:0}
+.dualrange--tight .dualrange__track,.dualrange--tight .dualrange__fill{top:8px}
+.dualrange--tight input[type=range]{top:3px}
 .filters__foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
 .filters__count{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-left:auto}
-.genrepick{display:flex;flex-wrap:wrap;gap:7px;max-height:118px;overflow:auto;padding:2px}
+/* There are more genres than fit anywhere sensible, and how many you want to
+   see depends on what you are hunting for. So the window has a draggable
+   bottom edge for a size in between, and a toggle for the lot at once. */
+.genrewrap{position:relative;border:1.5px solid var(--hairline);border-radius:var(--r);padding:6px 7px 10px;min-width:0}
+.genrepick{display:flex;flex-wrap:wrap;gap:7px;overflow:auto;padding:2px}
+.genrewrap[data-open="1"] .genrepick{height:auto!important;overflow:visible}
+.genregrip{position:absolute;left:0;right:0;bottom:0;height:10px;cursor:ns-resize;display:flex;align-items:center;justify-content:center;touch-action:none}
+.genregrip::before{content:"";width:44px;height:3px;border-radius:999px;background:var(--hairline)}
+.genregrip:hover::before,.genregrip:focus-visible::before{background:var(--edge)}
+.genregrip:focus-visible{outline:2px solid var(--grape);outline-offset:1px}
+.genrewrap[data-open="1"] .genregrip{display:none}
+.genreact{margin-top:9px}
 .genrechip{font-family:var(--f-mono);font-size:11.5px;padding:4px 11px;border:1.5px solid var(--hairline);border-radius:999px;background:var(--surface);cursor:pointer;color:var(--muted)}
 .genrechip[aria-pressed="true"]{background:var(--grape);color:var(--on-grape);border-color:var(--edge)}
 
@@ -4188,18 +4210,33 @@ var PAGE_SCALE = { max: PAGE_TOP, step: 25, loLabel: "Fewest pages", hiLabel: "M
     return s.lo + "\u2013" + s.hi + " pages";
   } };
 function dualScaleFor(id){ return dualScale[id] || AGE_SCALE; }
-function clampTo(v, top, fallback){
-  var n = Math.round(Number(v));
-  if(!isFinite(n)) n = fallback;
-  return Math.max(0, Math.min(top, n));
+/* Snapped to the scale's own step, not to whole numbers. This rounded every
+   value with Math.round, which is right for ages and near enough for pages in
+   twenty-fives, and quietly turned the rating slider's tenths into whole
+   stars: the input emitted 3.7 and this handed back 4. Rounding to the step
+   also settles the value's precision, so a tenth stays 0.1 rather than
+   drifting into 0.30000000000000004 as the handle moves. */
+function clampTo(v, top, fallback, step){
+  var n = Number(v);
+  if(!isFinite(n)) n = Number(fallback) || 0;
+  n = Math.max(0, Math.min(top, n));
+  if(!(step > 0)) step = 1;
+  n = Math.round(n / step) * step;
+  var dp = (String(step).split(".")[1] || "").length;
+  return Number(n.toFixed(dp));
 }
-function dualRangeHTML(id, lo, hi, hook, scale){
+/* The track and the readout are separate pieces because the filter panel wants
+   the readout up beside the label, while every other slider on the site wants
+   it on its own line underneath. Build the track first either way: it is what
+   registers the scale that the readout is then worded against. */
+function dualTrackHTML(id, lo, hi, hook, scale, tight){
   scale = scale || AGE_SCALE;
   dualScale[id] = scale;
-  dualState[id] = { lo: clampTo(lo, scale.max, 0), hi: clampTo(hi, scale.max, scale.max) };
+  dualState[id] = { lo: clampTo(lo, scale.max, 0, scale.step),
+                    hi: clampTo(hi, scale.max, scale.max, scale.step) };
   if(hook) dualHooks[id] = hook; else delete dualHooks[id];
   var pc = function(v){ return (v / scale.max) * 100; };
-  return '<div class="dualrange" data-dualid="' + esc(id) + '">' +
+  return '<div class="dualrange' + (tight ? " dualrange--tight" : "") + '" data-dualid="' + esc(id) + '">' +
       '<span class="dualrange__track"></span>' +
       '<span class="dualrange__fill" data-dualfill style="left:' + pc(dualState[id].lo) + '%;width:' +
         Math.max(0, pc(dualState[id].hi) - pc(dualState[id].lo)) + '%"></span>' +
@@ -4207,8 +4244,21 @@ function dualRangeHTML(id, lo, hi, hook, scale){
         '" data-dual="' + esc(id) + '" data-end="lo" aria-label="' + esc(scale.loLabel) + '">' +
       '<input type="range" min="0" max="' + scale.max + '" step="' + scale.step + '" value="' + dualState[id].hi +
         '" data-dual="' + esc(id) + '" data-end="hi" aria-label="' + esc(scale.hiLabel) + '">' +
-    "</div>" +
-    '<p class="dualrange__out" data-dualout="' + esc(id) + '">' + esc(scale.format(dualState[id])) + "</p>";
+    "</div>";
+}
+function dualOutHTML(id){
+  var scale = dualScaleFor(id);
+  return '<p class="dualrange__out" data-dualout="' + esc(id) + '">' + esc(scale.format(dualValue(id))) + "</p>";
+}
+function dualRangeHTML(id, lo, hi, hook, scale){
+  return dualTrackHTML(id, lo, hi, hook, scale) + dualOutHTML(id);
+}
+/* One row of the filter panel's slider block: label and answer on a line, a
+   short track under it. */
+function dualRowHTML(label, id, lo, hi, hook, scale){
+  var track = dualTrackHTML(id, lo, hi, hook, scale, true);
+  return '<div class="sliderow"><div class="sliderow__head"><label>' + esc(label) + "</label>" +
+    dualOutHTML(id) + "</div>" + track + "</div>";
 }
 function dualValue(id){ return dualState[id] || { lo: 0, hi: dualScaleFor(id).max }; }
 function syncDual(id){
@@ -4221,18 +4271,34 @@ function syncDual(id){
   var out = document.querySelector('[data-dualout="' + id + '"]');
   if(out) out.textContent = scale.format(s);
 }
-document.addEventListener("input", function(e){
-  var n = e.target;
-  if(!n || !n.getAttribute) return;
+function dualApply(n, v){
   var id = n.getAttribute("data-dual");
-  if(!id) return;
   var scale = dualScaleFor(id);
   var s = dualState[id] || (dualState[id] = { lo: 0, hi: scale.max });
-  var v = clampTo(n.value, scale.max, 0);
+  v = clampTo(v, scale.max, 0, scale.step);
   if(n.getAttribute("data-end") === "lo"){ s.lo = Math.min(v, s.hi); n.value = s.lo; }
   else { s.hi = Math.max(v, s.lo); n.value = s.hi; }
   syncDual(id);
   if(dualHooks[id]) dualHooks[id]();
+}
+document.addEventListener("input", function(e){
+  var n = e.target;
+  if(!n || !n.getAttribute || !n.getAttribute("data-dual")) return;
+  dualApply(n, n.value);
+});
+/* An arrow key already walks the scale's own step, a tenth of a star on the
+   rating. Shift takes five of those at once so you can cross the scale without
+   holding the key down: the browser has no larger step of its own here, so
+   nothing is being overridden. */
+document.addEventListener("keydown", function(e){
+  var n = e.target;
+  if(!e.shiftKey || !n || !n.getAttribute || !n.getAttribute("data-dual")) return;
+  var dir = (e.key === "ArrowRight" || e.key === "ArrowUp") ? 1
+          : (e.key === "ArrowLeft" || e.key === "ArrowDown") ? -1 : 0;
+  if(!dir) return;
+  e.preventDefault();
+  var scale = dualScaleFor(n.getAttribute("data-dual"));
+  dualApply(n, Number(n.value) + dir * scale.step * 5);
 });
 
 /* ---------- render: recommendations ---------- */
@@ -4243,9 +4309,9 @@ var RATE_SCALE = { max: RATE_TOP, step: 0.1, loLabel: "Lowest rating", hiLabel: 
   format: function(s){
     var lo = Math.round(s.lo * 10) / 10, hi = Math.round(s.hi * 10) / 10;
     if(lo <= 0 && hi >= RATE_TOP) return "Any rating";
-    if(lo <= 0) return "Up to " + hi.toFixed(1);
-    if(hi >= RATE_TOP) return lo.toFixed(1) + " and up";
-    return lo.toFixed(1) + "\u2013" + hi.toFixed(1);
+    if(lo <= 0) return "Up to " + hi.toFixed(1) + " stars";
+    if(hi >= RATE_TOP) return lo.toFixed(1) + " stars and up";
+    return lo.toFixed(1) + " to " + hi.toFixed(1) + " stars";
   } };
 /* A book can carry a Goodreads score and a StoryGraph score that disagree, so
    the one number to filter on is their average — no single site gets to be
@@ -4282,7 +4348,11 @@ function recMatches(r){
   if(ratingNarrowed()){
     var score = recRating(r);
     if(score === null) return false;
-    if(score < recFilter.rateMin || score > recFilter.rateMax) return false;
+    /* Both sides to one decimal before comparing. An average of 4.35 against a
+       handle at 4.3 is otherwise decided by whatever the arithmetic left in
+       the low bits, and a book flickers in and out at the boundary. */
+    var d1 = function(v){ return Math.round(Number(v) * 10) / 10; };
+    if(d1(score) < d1(recFilter.rateMin) || d1(score) > d1(recFilter.rateMax)) return false;
   }
   if(pagesNarrowed()){
     /* a book nobody has filled a page count in for can't answer the question,
@@ -4310,6 +4380,57 @@ function sortRecs(list){
       a.title.localeCompare(b.title);
   });
 }
+/* ---------- the genre list's window ---------- */
+/* How tall the genre list is, and whether it is showing everything. Both live
+   here and nowhere else: the state is meant to last the visit, not survive a
+   reload, so nothing is written to storage. */
+var GENRE_DEF = 118, genreH = null, genreOpen = false;
+/* Two rows of chips, measured off a real chip rather than guessed at, plus the
+   list's own padding — so the window cannot be dragged shut. */
+function genreMin(box){
+  var chip = box ? box.querySelector(".genrechip") : null;
+  return Math.round((chip ? chip.offsetHeight : 26) * 2 + 7 + 4);
+}
+/* scrollHeight is the whole list when it is clipped and the box itself once it
+   is not, which is exactly the ceiling wanted: the drag stops where the chips
+   run out instead of opening empty space. */
+function setGenreH(box, px){
+  var min = genreMin(box), max = Math.max(min, box.scrollHeight);
+  genreH = Math.max(min, Math.min(max, Math.round(px)));
+  box.style.height = genreH + "px";
+}
+function genrePickFor(grip){
+  var wrap = grip.closest("[data-genrewrap]");
+  return wrap ? wrap.querySelector("[data-genrepick]") : null;
+}
+document.addEventListener("pointerdown", function(e){
+  var grip = e.target && e.target.closest ? e.target.closest("[data-genregrip]") : null;
+  if(!grip) return;
+  var box = genrePickFor(grip);
+  if(!box) return;
+  e.preventDefault();
+  var y0 = e.clientY, h0 = box.offsetHeight;
+  var move = function(ev){ setGenreH(box, h0 + (ev.clientY - y0)); };
+  var up = function(){
+    document.removeEventListener("pointermove", move);
+    document.removeEventListener("pointerup", up);
+    document.removeEventListener("pointercancel", up);
+  };
+  document.addEventListener("pointermove", move);
+  document.addEventListener("pointerup", up);
+  document.addEventListener("pointercancel", up);
+});
+/* The handle is focusable, so it answers the arrow keys too — a row at a time. */
+document.addEventListener("keydown", function(e){
+  var grip = e.target && e.target.closest ? e.target.closest("[data-genregrip]") : null;
+  if(!grip) return;
+  var dir = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
+  if(!dir) return;
+  var box = genrePickFor(grip);
+  if(!box) return;
+  e.preventDefault();
+  setGenreH(box, box.offsetHeight + dir * 26);
+});
 function renderRecFilters(){
   var host = $("recFilters");
   if(!host) return;
@@ -4342,30 +4463,39 @@ function renderRecFilters(){
           }).join("") +
         "</select></div>" +
       "</div>" +
-      '<div class="filters__stack">' +
-        '<div class="field"><label>Age rating</label>' + dualRangeHTML("filterAge", recFilter.ageMin, recFilter.ageMax, function(){
+      '<div class="sliderbox">' +
+        dualRowHTML("Age rating", "filterAge", recFilter.ageMin, recFilter.ageMax, function(){
           var v = dualValue("filterAge");
           recFilter.ageMin = v.lo; recFilter.ageMax = v.hi;
           liveCount();
-        }) + "</div>" +
-        '<div class="field"><label>Length</label>' + dualRangeHTML("filterPages", recFilter.pagesMin, recFilter.pagesMax, function(){
+        }) +
+        dualRowHTML("Length", "filterPages", recFilter.pagesMin, recFilter.pagesMax, function(){
           var v = dualValue("filterPages");
           recFilter.pagesMin = v.lo; recFilter.pagesMax = v.hi;
           liveCount();
-        }, PAGE_SCALE) + "</div>" +
-        '<div class="field"><label>Rating</label>' + dualRangeHTML("filterRate", recFilter.rateMin, recFilter.rateMax, function(){
+        }, PAGE_SCALE) +
+        dualRowHTML("Rating", "filterRate", recFilter.rateMin, recFilter.rateMax, function(){
           var v = dualValue("filterRate");
           recFilter.rateMin = v.lo; recFilter.rateMax = v.hi;
           liveCount();
-        }, RATE_SCALE) + "</div>" +
+        }, RATE_SCALE) +
       "</div>" +
     "</div>" +
     (genres.length
       ? '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(pick several to narrow &mdash; books must have all of them)</span></label>' +
-        '<div class="genrepick">' + genres.map(function(g){
-          return '<button class="genrechip" type="button" data-fgenre="' + esc(g) + '" aria-pressed="' +
-            (recFilter.genres.indexOf(g) !== -1) + '">' + esc(g) + "</button>";
-        }).join("") + "</div></div>"
+        '<div class="genrewrap" data-genrewrap' + (genreOpen ? ' data-open="1"' : "") + ">" +
+          '<div class="genrepick" data-genrepick' +
+            (genreOpen ? "" : ' style="height:' + (genreH || GENRE_DEF) + 'px"') + ">" +
+          genres.map(function(g){
+            return '<button class="genrechip" type="button" data-fgenre="' + esc(g) + '" aria-pressed="' +
+              (recFilter.genres.indexOf(g) !== -1) + '">' + esc(g) + "</button>";
+          }).join("") + "</div>" +
+          '<div class="genregrip" data-genregrip role="separator" aria-orientation="horizontal" tabindex="0"' +
+            ' aria-label="Resize the genre list" title="Drag to resize"></div>' +
+        "</div>" +
+        '<div class="genreact"><button class="btn btn--sm btn--ghost" type="button" data-genretoggle>' +
+          (genreOpen ? "Collapse" : "Expand") + "</button></div>" +
+        "</div>"
       : "") +
     '<div class="filters__foot">' +
       '<button class="btn btn--sm btn--ghost" type="button" id="fReset">Clear filters</button>' +
@@ -7811,6 +7941,13 @@ document.addEventListener("click", async function(e){
     var g = el.getAttribute("data-fgenre"), at = recFilter.genres.indexOf(g);
     if(at === -1) recFilter.genres.push(g); else recFilter.genres.splice(at, 1);
     renderRecs();
+    return;
+  }
+  if(t.closest("[data-genretoggle]")){
+    /* open shows every chip with no inner scrollbar; closed goes back to the
+       window, at whatever height it was last dragged to */
+    genreOpen = !genreOpen;
+    renderRecFilters();
     return;
   }
   if(t.closest("#fReset")){
