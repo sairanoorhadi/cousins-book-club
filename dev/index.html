@@ -948,20 +948,64 @@ a.getrow:hover{background:var(--sunk)}
 .dualrange--tight input[type=range]{top:3px}
 .filters__foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
 .filters__count{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-left:auto}
-/* There are more genres than fit anywhere sensible, and how many you want to
-   see depends on what you are hunting for. So the window has a draggable
-   bottom edge for a size in between, and a toggle for the lot at once. */
-.genrewrap{position:relative;border:1.5px solid var(--hairline);border-radius:var(--r);padding:6px 7px 10px;min-width:0}
-.genrepick{display:flex;flex-wrap:wrap;gap:7px;overflow:auto;padding:2px}
-.genrewrap[data-open="1"] .genrepick{height:auto!important;overflow:visible}
-.genregrip{position:absolute;left:0;right:0;bottom:0;height:10px;cursor:ns-resize;display:flex;align-items:center;justify-content:center;touch-action:none}
-.genregrip::before{content:"";width:44px;height:3px;border-radius:999px;background:var(--hairline)}
-.genregrip:hover::before,.genregrip:focus-visible::before{background:var(--edge)}
-.genregrip:focus-visible{outline:2px solid var(--grape);outline-offset:1px}
-.genrewrap[data-open="1"] .genregrip{display:none}
-.genreact{margin-top:9px}
-.genrechip{font-family:var(--f-mono);font-size:11.5px;padding:4px 11px;border:1.5px solid var(--hairline);border-radius:999px;background:var(--surface);cursor:pointer;color:var(--muted)}
-.genrechip[aria-pressed="true"]{background:var(--grape);color:var(--on-grape);border-color:var(--edge)}
+/* There are more tags than fit anywhere sensible, and how many you want to see
+   depends on what you are hunting for. So the window has a draggable bottom
+   edge for a size in between, and a toggle for the lot at once. One set of
+   rules, used by the genre list and the trope list alike. */
+.tagwrap{position:relative;border:1.5px solid var(--hairline);border-radius:var(--r);padding:6px 7px 10px;min-width:0}
+/* align-content keeps the rows at the top of the window and, with
+   align-items, stops a short list stretching its chips down the whole box
+   into ellipses. max-height rather than height is what lets a list shorter
+   than the window be only as tall as it is; a drag replaces it with a real
+   height. */
+.tagpick{display:flex;flex-wrap:wrap;align-items:flex-start;align-content:flex-start;gap:7px;
+  max-height:118px;overflow:auto;padding:2px}
+.tagwrap[data-open="1"] .tagpick{height:auto!important;max-height:none!important;overflow:visible}
+.taggrip{position:absolute;left:0;right:0;bottom:0;height:10px;cursor:ns-resize;display:flex;align-items:center;justify-content:center;touch-action:none}
+.taggrip::before{content:"";width:44px;height:3px;border-radius:999px;background:var(--hairline)}
+.taggrip:hover::before,.taggrip:focus-visible::before{background:var(--edge)}
+.taggrip:focus-visible{outline:2px solid var(--grape);outline-offset:1px}
+.tagwrap[data-open="1"] .taggrip,.taggrip[hidden]{display:none}
+.tagact{margin-top:9px}
+.tagchip{font-family:var(--f-mono);font-size:11.5px;padding:4px 11px;border:1.5px solid var(--hairline);border-radius:999px;background:var(--surface);cursor:pointer;color:var(--muted)}
+.tagchip[aria-pressed="true"]{background:var(--grape);color:var(--on-grape);border-color:var(--edge)}
+/* trope chips carry the same accent their pills do elsewhere on the site, so
+   the two lists in the panel are never mistaken for one */
+.tagchip--trope[aria-pressed="true"]{background:var(--zest);color:var(--on-zest)}
+
+/* ============ Compare, and the vocabulary lists ============ */
+/* The panel opens inline, under the tag it was pressed from, rather than over
+   the page: Admin is already inside a modal, and a second layer on top of it
+   is a thing to get wrong on a phone for no gain. */
+.tagbank--cmp{gap:9px}
+.cmptag{display:inline-flex;align-items:center;gap:0}
+.cmptag .tag{border-top-right-radius:0;border-bottom-right-radius:0;border-right-width:0}
+.cmptag__go{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 9px;border:1.5px solid var(--edge);border-radius:0 999px 999px 0;background:var(--sunk);
+  color:var(--muted);cursor:pointer}
+.cmptag__go:hover,.cmptag__go[aria-expanded="true"]{background:var(--grape);color:var(--on-grape)}
+.cmp{margin-top:12px;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);
+  box-shadow:var(--shadow-sm);padding:12px 14px 14px}
+.cmp__head{display:flex;align-items:center;gap:10px;font-size:15px;margin:0 0 10px}
+.cmp__x{margin-left:auto;border:0;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:var(--muted)}
+.cmp__sub{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin:10px 0 6px}
+.cmp__list{display:flex;flex-direction:column;gap:2px;max-height:290px;overflow:auto}
+.cmp__list--near{max-height:none;overflow:visible}
+.cmp__opt{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;cursor:pointer;
+  font-family:var(--f-display);font-size:14.5px;padding:4px 10px;border:1.5px solid transparent;
+  border-radius:8px;background:transparent;color:var(--ink)}
+.cmp__opt:hover,.cmp__opt:focus-visible{background:var(--sunk);border-color:var(--hairline)}
+.cmp__foot{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:12px;padding-top:12px;
+  border-top:1.5px solid var(--hairline)}
+.cmp__foot .input{flex:1 1 180px;min-width:0}
+.vocablist{display:flex;flex-direction:column;gap:7px;max-height:330px;overflow:auto;padding:2px}
+.vocabrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.vocabrow__n{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.vocabrow__alias{font-family:var(--f-mono);font-size:12px;min-width:0;word-break:break-word}
+.vocabrow .select{margin-left:auto;font-size:13px;padding:5px 9px;max-width:230px}
+.vocabadd{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:12px}
+.vocabadd .input{flex:1 1 200px;min-width:0}
 
 /* ============ endorsements ============ */
 /* the vote pill: a score at rest, + and − once you reach for it */
@@ -2124,8 +2168,13 @@ var GENRE_NOISE = {
 };
 
 function canonGenre(raw){
-  var key = String(raw || "").trim().toLowerCase().replace(/\s+/g, " ").replace(/[.]+$/, "");
+  var key = vkey(String(raw || "").replace(/[.]+$/, ""));
   if(!key) return "";
+  /* An alias learned from a Compare swap outranks the table below, which is
+     the whole point of learning it: the admin has seen this club's data and
+     the table has not. */
+  var learned = vocabAlias("genre", key);
+  if(learned) return learned;
   return GENRE_ALIASES[key] || String(raw).trim();
 }
 /* one flat, de-duplicated list from whatever shape the genres arrived in */
@@ -2138,6 +2187,9 @@ function tropeList(v){
   (Array.isArray(v) ? v : String(v || "").split(",")).forEach(function(entry){
     var t = String(entry || "").trim().replace(/\s+/g, " ").slice(0, 40);
     if(!t) return;
+    /* Tropes have no table baked into the page — there is no standard
+       vocabulary to borrow — but they learn the same way genres do. */
+    t = vocabAlias("trope", t) || t;
     var k = t.toLowerCase();
     if(seen[k]) return;
     seen[k] = 1; out.push(t);
@@ -2158,6 +2210,253 @@ function normaliseGenres(list){
     });
   });
   return out.slice(0, 12);
+}
+
+/* ---------- the canonical vocabularies ----------
+   Genres and tropes are the same problem twice: a list of words people type
+   freely, that has to be tidied into something a filter can reason about. So
+   there is one mechanism here and two vocabularies through it. Every function
+   takes a kind — "genre" or "trope" — and nothing below knows which is which.
+
+   What is stored, per kind, under state.vocab:
+     terms   [{name, parent}]  the words an admin has touched, and their
+                               optional parent. Terms nobody has touched are
+                               not listed: the canonical list is this plus
+                               everything already tagged, so it is never empty
+                               and never needs seeding.
+     aliases {typed: Canonical} what a Compare swap taught us, so the same
+                               wording maps itself next time someone submits.  */
+var VOCAB_KINDS = {
+  genre: { one: "genre", many: "Genres", field: "genres",
+           clean: function(v){ return normaliseGenres(v); } },
+  trope: { one: "trope", many: "Tropes", field: "tropes",
+           clean: function(v){ return tropeList(v); } }
+};
+function vkey(s){ return String(s || "").trim().toLowerCase().replace(/\s+/g, " "); }
+function vocabStore(kind){
+  if(!state) return { terms: [], aliases: {} };
+  if(!state.vocab) state.vocab = {};
+  var v = state.vocab[kind];
+  if(!v) v = state.vocab[kind] = { terms: [], aliases: {} };
+  if(!Array.isArray(v.terms)) v.terms = [];
+  if(!v.aliases || typeof v.aliases !== "object") v.aliases = {};
+  return v;
+}
+/* Everything already tagged, wherever tagging happens: the recommendations,
+   the reading list, and every member's Their Five. Run through the kind's own
+   cleaner, so the list reads the way the site displays it rather than the way
+   it happens to be spelled in storage. */
+function vocabInUse(kind){
+  if(!state) return [];
+  var K = VOCAB_KINDS[kind], seen = {}, out = [];
+  var take = function(o){
+    K.clean((o && o[K.field]) || []).forEach(function(t){
+      var k = vkey(t); if(!k || seen[k]) return; seen[k] = 1; out.push(String(t).trim());
+    });
+  };
+  (state.recs || []).forEach(take);
+  (state.books || []).forEach(take);
+  (state.members || []).forEach(function(m){ (m.top5 || []).forEach(take); });
+  return out;
+}
+/* How many books carry each term, for the Admin list — a term used once is
+   usually the one that wants merging. */
+function vocabCounts(kind){
+  if(!state) return {};
+  var K = VOCAB_KINDS[kind], n = {};
+  var take = function(o){
+    K.clean((o && o[K.field]) || []).forEach(function(t){
+      var k = vkey(t); if(k) n[k] = (n[k] || 0) + 1;
+    });
+  };
+  (state.recs || []).forEach(take);
+  (state.books || []).forEach(take);
+  (state.members || []).forEach(function(m){ (m.top5 || []).forEach(take); });
+  return n;
+}
+/* Stored terms first, so an admin's spelling of a word beats whatever casing
+   is sitting in the data. De-duplicated without regard to case. */
+function vocabTerms(kind){
+  var v = vocabStore(kind), seen = {}, out = [];
+  var push = function(t){
+    var k = vkey(t); if(!k || seen[k]) return; seen[k] = 1; out.push(String(t).trim());
+  };
+  v.terms.forEach(function(t){ push(t && t.name); });
+  vocabInUse(kind).forEach(push);
+  return out.sort(function(a, b){ return a.localeCompare(b); });
+}
+function vocabTermRec(kind, name){
+  var v = vocabStore(kind), k = vkey(name);
+  for(var i = 0; i < v.terms.length; i++) if(vkey(v.terms[i] && v.terms[i].name) === k) return v.terms[i];
+  return null;
+}
+function vocabParent(kind, name){ var r = vocabTermRec(kind, name); return (r && r.parent) || ""; }
+/* Walks the whole way up rather than one step, so a three-deep arrangement
+   behaves the way it reads. The seen-set is the part that matters: a parent
+   loop set by mistake in Admin would otherwise hang every filter on the page. */
+function vocabAncestors(kind, name){
+  var out = [], seen = {}, cur = String(name || ""), n = 0;
+  seen[vkey(cur)] = 1;
+  while(cur && n++ < 12){
+    var p = vocabParent(kind, cur);
+    if(!p || seen[vkey(p)]) break;
+    seen[vkey(p)] = 1; out.push(p); cur = p;
+  }
+  return out;
+}
+function vocabAlias(kind, raw){
+  var v = vocabStore(kind), k = vkey(raw);
+  return (k && Object.prototype.hasOwnProperty.call(v.aliases, k)) ? v.aliases[k] : "";
+}
+function vocabAddTerm(kind, name){
+  var v = vocabStore(kind), n = String(name || "").trim();
+  if(!n || vocabTermRec(kind, n)) return;
+  v.terms.push({ name: n, parent: "" });
+}
+/* A swap teaches two things at once: that this wording means that term, and
+   that the term means itself. The second half earns its keep because the page
+   ships with its own alias table, where "historical" is written down as a
+   nickname for "Historical Fiction" — so swapping a tag TO "Historical" has to
+   pin the word, or the next submission of it would be mapped straight back. */
+function vocabLearn(kind, from, to){
+  var v = vocabStore(kind), f = vkey(from), t = String(to || "").trim();
+  if(!t) return;
+  v.aliases[vkey(t)] = t;
+  if(f && f !== vkey(t)) v.aliases[f] = t;
+  var had = vocabTermRec(kind, t);
+  vocabAddTerm(kind, t);
+  /* The conflict this whole arrangement exists for: Historical Fiction sits
+     under Fiction, and renaming it to Historical would drop it out of the
+     Fiction filter, because the word is no longer in the name. So a new word
+     inherits the parent of the one it replaces. A word that already has a
+     parent of its own keeps it — the admin said that, this did not. */
+  var rec = vocabTermRec(kind, t), old = vocabTermRec(kind, from);
+  if(rec && old && !had && !rec.parent && old.parent && vkey(old.parent) !== vkey(t)) rec.parent = old.parent;
+}
+/* Refuses a parent that is the term itself or one of its own descendants —
+   the two ways to make a loop from the Admin dropdown. */
+function vocabSetParent(kind, name, parent){
+  vocabAddTerm(kind, name);
+  var r = vocabTermRec(kind, name);
+  if(!r) return false;
+  var p = String(parent || "").trim();
+  if(vkey(p) === vkey(name)) return false;
+  if(p && vocabAncestors(kind, p).some(function(a){ return vkey(a) === vkey(name); })) return false;
+  r.parent = p;
+  return true;
+}
+/* A whole word, not a substring: "Fiction" is inside "Historical Fiction" and
+   must not be inside "Fictional". */
+function wholeWordIn(needle, hay){
+  var at = hay.indexOf(needle), edge = /[a-z0-9]/;
+  while(at !== -1){
+    var before = at === 0 ? "" : hay.charAt(at - 1);
+    var after = hay.charAt(at + needle.length);
+    if(!edge.test(before) && !edge.test(after)) return true;
+    at = hay.indexOf(needle, at + 1);
+  }
+  return false;
+}
+/* Does a book tagged `tag` answer a filter on `term`? Three ways, in order of
+   how much an admin has told us:
+     the tag is the term;
+     the term sits above the tag in the parent arrangement;
+     the term appears as a whole word inside the tag.
+   The last is the fallback that makes "Fiction" find "Historical Fiction"
+   before a single parent has been set. It stays on afterwards: switching it
+   off per term would make the panel behave differently depending on which
+   words happened to have been tidied, which is worse than a rare wide match. */
+function vocabTagMatches(kind, term, tag){
+  var t = vkey(term), g = vkey(tag);
+  if(!t || !g) return false;
+  if(t === g) return true;
+  var up = vocabAncestors(kind, tag);
+  for(var i = 0; i < up.length; i++) if(vkey(up[i]) === t) return true;
+  return wholeWordIn(t, g);
+}
+function vocabMatches(kind, term, tags){
+  tags = tags || [];
+  for(var i = 0; i < tags.length; i++) if(vocabTagMatches(kind, term, tags[i])) return true;
+  return false;
+}
+/* The chips are what you can usefully press: everything actually tagged, plus
+   every term sitting above one of those tags. That is what puts a "Fiction"
+   chip in the panel when nothing is tagged plain "Fiction" but "Historical
+   Fiction" is parented to it. */
+function vocabFilterTerms(kind){
+  var seen = {}, out = [];
+  var push = function(t){
+    var k = vkey(t); if(!k || seen[k]) return; seen[k] = 1; out.push(String(t).trim());
+  };
+  vocabInUse(kind).forEach(function(t){ push(t); vocabAncestors(kind, t).forEach(push); });
+  return out.sort(function(a, b){ return a.localeCompare(b); });
+}
+
+/* ---------- how close two wordings are ----------
+   "enemies 2 lovers" and "Enemies to lovers" are one phrase typed by two
+   people. Folding the shorthand before splitting into words is what lets the
+   overlap score see that, instead of leaving edit distance to guess. */
+var VOCAB_STOP = { of:1, the:1, a:1, an:1, and:1, to:1, in:1, on:1, for:1, with:1 };
+function vocabTokens(s){
+  var t = vkey(s).replace(/&/g, " and ").replace(/\+/g, " and ")
+    .replace(/\b2\b/g, "to").replace(/\b4\b/g, "for").replace(/\bu\b/g, "you")
+    .replace(/[^a-z0-9]+/g, " ").trim();
+  var out = [];
+  t.split(" ").forEach(function(w){ if(w && !VOCAB_STOP[w]) out.push(w); });
+  return out;
+}
+/* Plain Levenshtein on two rows. The words here are a few characters long, so
+   nothing cleverer would pay for itself. */
+function lev(a, b){
+  if(a === b) return 0;
+  if(!a.length) return b.length;
+  if(!b.length) return a.length;
+  var prev = [], cur = [], i, j;
+  for(j = 0; j <= b.length; j++) prev[j] = j;
+  for(i = 1; i <= a.length; i++){
+    cur[0] = i;
+    for(j = 1; j <= b.length; j++){
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1,
+                        prev[j - 1] + (a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1));
+    }
+    for(j = 0; j <= b.length; j++) prev[j] = cur[j];
+  }
+  return prev[b.length];
+}
+/* Three readings of "close", added together, because each one alone gets a
+   different example wrong: shared words catch "political social problems" and
+   "Social Problems"; containment catches "Historical Fiction" and
+   "Historical"; edit distance catches a plain misspelling that shares no whole
+   word with anything. */
+function vocabScore(raw, cand){
+  var a = vkey(raw), b = vkey(cand);
+  if(!a || !b) return 0;
+  if(a === b) return 1000;
+  var ta = vocabTokens(raw), tb = vocabTokens(cand), seen = {}, shared = 0;
+  tb.forEach(function(w){ seen[w] = 1; });
+  ta.forEach(function(w){ if(seen[w]) shared++; });
+  var s = 0;
+  if(shared) s += 20 + 40 * (shared / Math.max(ta.length, tb.length, 1));
+  if(a.indexOf(b) !== -1 || b.indexOf(a) !== -1) s += 22;
+  var m = Math.max(a.length, b.length);
+  s += 30 * (1 - lev(a, b) / (m || 1));
+  /* A shared opening is how two spellings of one idea usually differ:
+     psychological and Psychology share nine letters and not one whole word,
+     and without this they miss each other by a point. Four letters in before
+     it counts, so Dark and Drama are not dragged together. */
+  var pre = 0, lim = Math.min(a.length, b.length);
+  while(pre < lim && a.charAt(pre) === b.charAt(pre)) pre++;
+  if(pre >= 4) s += 18 * (pre / (lim || 1));
+  return s;
+}
+/* The handful worth pinning above the full list. A floor, not a fixed count:
+   a word with nothing like it in the vocabulary should pin nothing rather
+   than pad the top of the panel with the six least unlike it. */
+function vocabRank(kind, raw, limit){
+  var scored = vocabTerms(kind).filter(function(t){ return vkey(t) !== vkey(raw); })
+    .map(function(t){ return { name: t, score: vocabScore(raw, t) }; });
+  scored.sort(function(x, y){ return y.score - x.score || x.name.localeCompare(y.name); });
+  return scored.filter(function(x){ return x.score >= 22; }).slice(0, limit || 6);
 }
 
 /* ---------- reading level as an age range ----------
@@ -3844,16 +4143,6 @@ function scoreLabel(r){
   return n > 0 ? "+" + n : String(n);
 }
 /* one chip per genre, with near-identical names already folded together */
-function allGenres(){
-  var seen = {}, out = [];
-  approvedRecs().forEach(function(r){
-    normaliseGenres(r.genres).forEach(function(g){
-      var k = g.toLowerCase();
-      if(!seen[k]){ seen[k] = 1; out.push(g); }
-    });
-  });
-  return out.sort(function(a,b){ return a.localeCompare(b); });
-}
 function pendingRecs(){ return state.recs.filter(function(r){ return r.status === "pending"; }); }
 function recById(id){ return state.recs.filter(function(r){ return r.id === id; })[0] || null; }
 function memberById(id){ return state.members.filter(function(m){ return m.id === id; })[0] || null; }
@@ -4327,18 +4616,23 @@ function ratingNarrowed(){ return recFilter.rateMin > 0 || recFilter.rateMax < R
 function ratelessCount(){
   return approvedRecs().filter(function(r){ return recRating(r) === null; }).length;
 }
-var recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP,
+var recFilter = { by: "", sort: "top", genres: [], tropes: [], ageMin: 0, ageMax: AGE_TOP,
                   pagesMin: 0, pagesMax: PAGE_TOP, rateMin: 0, rateMax: RATE_TOP };
 var filtersOpen = false;
+/* One rule for both vocabularies: compare on the merged names, so picking
+   "Humour" also finds "comedy"; every picked tag, not any one, so two tags
+   means books that are both; and each comparison is parent-aware, so picking
+   "Fiction" also finds whatever sits under it. */
+function tagFilterOk(kind, r){
+  var K = VOCAB_KINDS[kind], want = recFilter[K.field] || [];
+  if(!want.length) return true;
+  var have = K.clean(r[K.field]);
+  return want.every(function(t){ return vocabMatches(kind, t, have); });
+}
 function recMatches(r){
   if(recFilter.by && r.by !== recFilter.by) return false;
-  if(recFilter.genres.length){
-    /* compare on the merged names, so picking "Humour" also finds "comedy" */
-    var have = normaliseGenres(r.genres).map(function(g){ return g.toLowerCase(); });
-    /* every one, not any one — two genres means books that are both */
-    var hit = recFilter.genres.every(function(g){ return have.indexOf(canonGenre(g).toLowerCase()) !== -1; });
-    if(!hit) return false;
-  }
+  if(!tagFilterOk("genre", r)) return false;
+  if(!tagFilterOk("trope", r)) return false;
   /* keep anything whose age band overlaps the band being asked for */
   if(r.ageMin > recFilter.ageMax || r.ageMax < recFilter.ageMin) return false;
   /* At the full range the slider is not asking anything, so a book nobody has
@@ -4380,38 +4674,42 @@ function sortRecs(list){
       a.title.localeCompare(b.title);
   });
 }
-/* ---------- the genre list's window ---------- */
-/* How tall the genre list is, and whether it is showing everything. Both live
-   here and nowhere else: the state is meant to last the visit, not survive a
-   reload, so nothing is written to storage. */
-var GENRE_DEF = 118, genreH = null, genreOpen = false;
+/* ---------- a tag list's window ---------- */
+/* How tall each tag list is, and whether it is showing everything. Kept per
+   kind, so opening the genres does not open the tropes, and kept here and
+   nowhere else: the state is meant to last the visit, not survive a reload,
+   so nothing is written to storage. */
+var TAGBOX_DEF = 118, tagBoxH = {}, tagBoxOpen = {};
 /* Two rows of chips, measured off a real chip rather than guessed at, plus the
    list's own padding — so the window cannot be dragged shut. */
-function genreMin(box){
-  var chip = box ? box.querySelector(".genrechip") : null;
+function tagBoxMin(box){
+  var chip = box ? box.querySelector(".tagchip") : null;
   return Math.round((chip ? chip.offsetHeight : 26) * 2 + 7 + 4);
 }
 /* scrollHeight is the whole list when it is clipped and the box itself once it
    is not, which is exactly the ceiling wanted: the drag stops where the chips
    run out instead of opening empty space. */
-function setGenreH(box, px){
-  var min = genreMin(box), max = Math.max(min, box.scrollHeight);
-  genreH = Math.max(min, Math.min(max, Math.round(px)));
-  box.style.height = genreH + "px";
+function setTagBoxH(kind, box, px){
+  var min = tagBoxMin(box), max = Math.max(min, box.scrollHeight);
+  var h = Math.max(min, Math.min(max, Math.round(px)));
+  tagBoxH[kind] = h;
+  box.style.maxHeight = "none";
+  box.style.height = h + "px";
 }
-function genrePickFor(grip){
-  var wrap = grip.closest("[data-genrewrap]");
-  return wrap ? wrap.querySelector("[data-genrepick]") : null;
+function tagBoxOf(grip){
+  var wrap = grip.closest("[data-tagwrap]");
+  return wrap ? { kind: wrap.getAttribute("data-tagkind"), box: wrap.querySelector("[data-tagpick]") } : null;
 }
 document.addEventListener("pointerdown", function(e){
-  var grip = e.target && e.target.closest ? e.target.closest("[data-genregrip]") : null;
+  var grip = e.target && e.target.closest ? e.target.closest("[data-taggrip]") : null;
   if(!grip) return;
-  var box = genrePickFor(grip);
-  if(!box) return;
+  var t = tagBoxOf(grip);
+  if(!t || !t.box) return;
   e.preventDefault();
-  var y0 = e.clientY, h0 = box.offsetHeight;
-  var move = function(ev){ setGenreH(box, h0 + (ev.clientY - y0)); };
+  var y0 = e.clientY, h0 = t.box.offsetHeight;
+  var move = function(ev){ setTagBoxH(t.kind, t.box, h0 + (ev.clientY - y0)); };
   var up = function(){
+    tagBoxTrim();
     document.removeEventListener("pointermove", move);
     document.removeEventListener("pointerup", up);
     document.removeEventListener("pointercancel", up);
@@ -4422,22 +4720,56 @@ document.addEventListener("pointerdown", function(e){
 });
 /* The handle is focusable, so it answers the arrow keys too — a row at a time. */
 document.addEventListener("keydown", function(e){
-  var grip = e.target && e.target.closest ? e.target.closest("[data-genregrip]") : null;
+  var grip = e.target && e.target.closest ? e.target.closest("[data-taggrip]") : null;
   if(!grip) return;
   var dir = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
   if(!dir) return;
-  var box = genrePickFor(grip);
-  if(!box) return;
+  var t = tagBoxOf(grip);
+  if(!t || !t.box) return;
   e.preventDefault();
-  setGenreH(box, box.offsetHeight + dir * 26);
+  setTagBoxH(t.kind, t.box, t.box.offsetHeight + dir * 26);
 });
+/* A list that already fits has nothing to expand and nothing to drag, so it
+   should offer neither. Measured, not counted: whether the chips wrap past the
+   window depends on the width they are given, which only the browser knows. */
+function tagBoxTrim(){
+  [].forEach.call(document.querySelectorAll("[data-tagwrap]"), function(wrap){
+    var box = wrap.querySelector("[data-tagpick]"), grip = wrap.querySelector("[data-taggrip]");
+    var tog = wrap.parentNode.querySelector("[data-tagtoggle]");
+    if(!box) return;
+    var more = box.scrollHeight > box.clientHeight + 1 || wrap.getAttribute("data-open") === "1";
+    if(grip) grip.hidden = !more;
+    if(tog && tog.parentNode) tog.parentNode.hidden = !more;
+  });
+}
+/* One list of chips, for whichever vocabulary it is given. */
+function tagFilterHTML(kind){
+  var K = VOCAB_KINDS[kind], terms = vocabFilterTerms(kind);
+  if(!terms.length) return "";
+  var open = !!tagBoxOpen[kind], picked = recFilter[K.field] || [];
+  var on = function(t){ return picked.some(function(x){ return vkey(x) === vkey(t); }); };
+  return '<div class="field" style="margin-top:14px"><label>' + esc(K.many) +
+      ' <span style="text-transform:none;letter-spacing:0">(pick several to narrow &mdash; books must have all of them)</span></label>' +
+    '<div class="tagwrap" data-tagwrap data-tagkind="' + esc(kind) + '"' + (open ? ' data-open="1"' : "") + ">" +
+      '<div class="tagpick" data-tagpick' +
+        (open || !tagBoxH[kind] ? "" : ' style="height:' + tagBoxH[kind] + 'px;max-height:none"') + ">" +
+      terms.map(function(t){
+        return '<button class="tagchip' + (kind === "trope" ? " tagchip--trope" : "") + '" type="button" data-ftag="' +
+          esc(t) + '" data-fkind="' + esc(kind) + '" aria-pressed="' + on(t) + '">' + esc(t) + "</button>";
+      }).join("") + "</div>" +
+      '<div class="taggrip" data-taggrip role="separator" aria-orientation="horizontal" tabindex="0"' +
+        ' aria-label="Resize the ' + esc(K.many.toLowerCase()) + ' list" title="Drag to resize"></div>' +
+    "</div>" +
+    '<div class="tagact"><button class="btn btn--sm btn--ghost" type="button" data-tagtoggle="' + esc(kind) + '">' +
+      (open ? "Collapse" : "Expand") + "</button></div>" +
+    "</div>";
+}
 function renderRecFilters(){
   var host = $("recFilters");
   if(!host) return;
   var people = [];
   approvedRecs().forEach(function(r){ if(r.by && people.indexOf(r.by) === -1) people.push(r.by); });
   people.sort(function(a,b){ return a.localeCompare(b); });
-  var genres = allGenres();
   var active = activeFilters();
   /* press-to-open, like the editors on the admin side; stays open once you've
      set something, so the filters you applied don't hide themselves */
@@ -4481,26 +4813,13 @@ function renderRecFilters(){
         }, RATE_SCALE) +
       "</div>" +
     "</div>" +
-    (genres.length
-      ? '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(pick several to narrow &mdash; books must have all of them)</span></label>' +
-        '<div class="genrewrap" data-genrewrap' + (genreOpen ? ' data-open="1"' : "") + ">" +
-          '<div class="genrepick" data-genrepick' +
-            (genreOpen ? "" : ' style="height:' + (genreH || GENRE_DEF) + 'px"') + ">" +
-          genres.map(function(g){
-            return '<button class="genrechip" type="button" data-fgenre="' + esc(g) + '" aria-pressed="' +
-              (recFilter.genres.indexOf(g) !== -1) + '">' + esc(g) + "</button>";
-          }).join("") + "</div>" +
-          '<div class="genregrip" data-genregrip role="separator" aria-orientation="horizontal" tabindex="0"' +
-            ' aria-label="Resize the genre list" title="Drag to resize"></div>' +
-        "</div>" +
-        '<div class="genreact"><button class="btn btn--sm btn--ghost" type="button" data-genretoggle>' +
-          (genreOpen ? "Collapse" : "Expand") + "</button></div>" +
-        "</div>"
-      : "") +
+    tagFilterHTML("genre") +
+    tagFilterHTML("trope") +
     '<div class="filters__foot">' +
       '<button class="btn btn--sm btn--ghost" type="button" id="fReset">Clear filters</button>' +
       '<span class="filters__count" id="recCount">' + esc(countLine()) + "</span>" +
     "</div></div></details>";
+  tagBoxTrim();
 }
 /* one wording for both the summary line and the foot, so they can't disagree */
 function countLine(){
@@ -4513,7 +4832,7 @@ function countLine(){
   return line;
 }
 function activeFilters(){
-  return (recFilter.by ? 1 : 0) + recFilter.genres.length +
+  return (recFilter.by ? 1 : 0) + recFilter.genres.length + recFilter.tropes.length +
     (recFilter.ageMin > 0 || recFilter.ageMax < AGE_TOP ? 1 : 0) +
     (pagesNarrowed() ? 1 : 0) + (ratingNarrowed() ? 1 : 0);
 }
@@ -6974,6 +7293,7 @@ function renderAdmin(){
   var waiting = inbox.filter(function(i){ return i && !i.handled && i.kind !== "suggest"; }).length;
   var tabs = [["shelf","Reading list"],["recs","Recommendations" + (pend ? " (" + pend + ")" : "")],
               ["meetings","Meetings"],["members","Members"],
+              ["tags","Genres & tropes"],
               ["inbox","Inbox" + (waiting ? " (" + waiting + ")" : "")],["settings","Settings"]];
   $("adminModalBody").innerHTML =
     /* the Reading list tab carries its own, more specific version of this */
@@ -6989,6 +7309,7 @@ function renderAdminPane(){
     : adminTab === "recs" ? paneRecs()
     : adminTab === "meetings" ? paneMeetings()
     : adminTab === "members" ? paneMembers()
+    : adminTab === "tags" ? paneTags()
     : adminTab === "inbox" ? paneInbox()
     : paneSettings();
 }
@@ -7023,10 +7344,8 @@ function bookEditor(b){
         '<div class="field"><label>Finished</label><input class="input" type="date" value="' + esc(b.finished || "") + '" data-bfield="finished" data-bid="' + esc(b.id) + '"></div>' +
         (b.status === "current" ? '<div class="field"><label>Pages read so far</label><input class="input" type="number" min="0" max="20000" value="' + esc(b.progressPage || 0) + '" data-bfield="progressPage" data-bid="' + esc(b.id) + '"></div>' : "") +
       "</div>" +
-      '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
-        '<input class="input" type="text" value="' + esc((b.genres || []).join(", ")) + '" data-bfield="genres" data-bid="' + esc(b.id) + '" maxlength="200"></div>' +
-      '<div class="field"><label>Tropes <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
-        '<input class="input" type="text" value="' + esc((b.tropes || []).join(", ")) + '" data-bfield="tropes" data-bid="' + esc(b.id) + '" maxlength="300"></div>' +
+      tagFieldHTML("genre", "book", b, 'data-bfield="genres" data-bid="' + esc(b.id) + '"') +
+      tagFieldHTML("trope", "book", b, 'data-bfield="tropes" data-bid="' + esc(b.id) + '"') +
       '<div class="field" style="margin-top:14px"><label>Summary</label>' +
         '<textarea class="textarea" data-bfield="blurb" data-bid="' + esc(b.id) + '">' + esc(b.blurb || "") + "</textarea></div>" +
       '<div class="formgrid" style="margin-top:18px">' +
@@ -7257,10 +7576,8 @@ function recEditor(r, opts){
       '<div data-ratinghost="' + esc(r.id) + '">' + adminRatingRowsHTML(r) + "</div>" +
       '<div style="margin-top:10px"><button class="btn btn--sm btn--ghost" type="button" ' +
         'data-raddrating="' + esc(r.id) + '">+ Add rating</button></div></div>' +
-    '<div class="field" style="margin-top:14px"><label>Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
-      '<input class="input" type="text" value="' + esc((r.genres || []).join(", ")) + '" data-rfield="genres" data-rid="' + esc(r.id) + '" maxlength="300"></div>' +
-    '<div class="field" style="margin-top:14px"><label>Tropes <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
-      '<input class="input" type="text" value="' + esc((r.tropes || []).join(", ")) + '" data-rfield="tropes" data-rid="' + esc(r.id) + '" maxlength="300"></div>' +
+    tagFieldHTML("genre", "rec", r, 'data-rfield="genres" data-rid="' + esc(r.id) + '"') +
+    tagFieldHTML("trope", "rec", r, 'data-rfield="tropes" data-rid="' + esc(r.id) + '"') +
     '<div class="field" style="margin-top:14px"><label>Summary</label>' +
       '<textarea class="textarea" data-rfield="blurb" data-rid="' + esc(r.id) + '">' + esc(r.blurb || "") + "</textarea></div>" +
     '<div class="field" style="margin-top:14px"><label>Reader reviews <span style="text-transform:none;letter-spacing:0">(spoiler-free, one per line as "quote — who said it")</span></label>' +
@@ -7332,12 +7649,167 @@ function pendingCard(r, approveAttr, rejectAttr){
   return '<div class="pending"><div><h4>' + esc(r.title) + "</h4>" +
     '<p style="color:var(--muted);font-style:italic;margin-top:4px">by ' + esc(r.author || "unknown") + " · " + esc(r.pages || "?") + " pages</p>" +
     '<div class="tagbank" style="margin-top:10px"><span class="tag mono">' + esc(levelText(r)) + "</span>" +
-      normaliseGenres(r.genres).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") + "</div>" +
+      normaliseGenres(r.genres).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
+      tropeList(r.tropes).map(function(t){ return '<span class="tag tag--trope">' + esc(t) + "</span>"; }).join("") + "</div>" +
     '<p style="margin-top:12px;font-size:15.5px">' + esc(r.blurb || "No summary given.") + "</p>" +
     '<p class="review__by">Submitted by ' + esc(r.by || "anonymous") + (r.at ? " · " + esc(shortDate(String(r.at).slice(0, 10))) : "") + "</p></div>" +
     '<div class="pending__acts"><button class="btn btn--sm btn--surf" type="button" ' + approveAttr + '>Approve</button>' +
     '<button class="btn btn--sm btn--ghost" type="button" ' + rejectAttr + '>Reject</button></div></div>';
 }
+
+/* ---------- Compare: one tag against its canonical list ---------- */
+/* Which tag is open, identified by where it lives rather than by its text:
+   two books can carry the same messy wording, and only the one whose button
+   was pressed should open. */
+var compareAt = null;
+function compareTarget(owner, id){
+  if(owner === "book") return bookById(id);
+  return recById(id) || recDrafts[id] || null;
+}
+function compareHostId(kind, owner, id){ return "cmp:" + kind + ":" + owner + ":" + id; }
+/* The canonical list, closest first and then all of it alphabetically, with
+   the pinned few left out of the long list so nothing is offered twice. */
+function compareHTML(kind, owner, id, i){
+  var obj = compareTarget(owner, id);
+  if(!obj) return "";
+  var K = VOCAB_KINDS[kind], tag = (obj[K.field] || [])[i] || "";
+  if(!tag) return "";
+  var near = vocabRank(kind, tag, 6), pinned = {};
+  near.forEach(function(x){ pinned[vkey(x.name)] = 1; });
+  var rest = vocabTerms(kind).filter(function(t){ return !pinned[vkey(t)] && vkey(t) !== vkey(tag); });
+  var opt = function(name){
+    return '<button class="cmp__opt" type="button" data-cmppick="' + esc(name) + '">' + esc(name) + "</button>";
+  };
+  return '<div class="cmp" data-cmp="' + esc(kind) + '" data-cmpowner="' + esc(owner) +
+      '" data-cmpid="' + esc(id) + '" data-cmpi="' + i + '">' +
+    '<p class="cmp__head">Replace <strong>' + esc(tag) + "</strong> with…" +
+      '<button class="cmp__x" type="button" data-cmpclose aria-label="Close">×</button></p>' +
+    (near.length
+      ? '<p class="cmp__sub">Closest matches</p><div class="cmp__list cmp__list--near">' +
+        near.map(function(x){ return opt(x.name); }).join("") + "</div>"
+      : "") +
+    '<p class="cmp__sub">All ' + esc(K.many.toLowerCase()) + "</p>" +
+    '<div class="cmp__list">' +
+      (rest.length ? rest.map(opt).join("")
+        : '<p class="hint" style="margin:0">Nothing else in the list yet.</p>') + "</div>" +
+    '<div class="cmp__foot">' +
+      '<input class="input" type="text" data-cmpnew placeholder="Or a word of your own" maxlength="40">' +
+      '<button class="btn btn--sm btn--surf" type="button" data-cmpuse>Use</button>' +
+      '<button class="btn btn--sm btn--ghost" type="button" data-cmpkeep>Keep as new</button>' +
+    "</div></div>";
+}
+/* The tags of one kind, as chips, each with its own Compare. The comma field
+   stays underneath: chips are for fixing one word, the field for retyping the
+   lot. */
+function tagChipsHTML(kind, owner, obj){
+  var K = VOCAB_KINDS[kind], list = obj[K.field] || [];
+  return '<div class="tagbank tagbank--cmp" data-tagchips="' + esc(kind) + '" data-chipowner="' + esc(owner) +
+      '" data-chipid="' + esc(obj.id) + '">' +
+    (list.length
+      ? list.map(function(t, i){
+          return '<span class="cmptag"><span class="tag' + (kind === "trope" ? " tag--trope" : "") + '">' +
+            esc(t) + "</span>" +
+            '<button class="cmptag__go" type="button" data-cmpopen="' + esc(kind) + '" data-cmpowner="' +
+              esc(owner) + '" data-cmpid="' + esc(obj.id) + '" data-cmpi="' + i +
+              '" aria-expanded="false">Compare</button></span>';
+        }).join("")
+      : '<p class="hint" style="margin:0">No ' + esc(K.many.toLowerCase()) + " yet.</p>") +
+    "</div><div id=\"" + esc(compareHostId(kind, owner, obj.id)) + "\"></div>";
+}
+/* Label, chips, the panel's landing place, and the comma field — the whole
+   block for one vocabulary, used by the book editor and the rec editor alike. */
+function tagFieldHTML(kind, owner, obj, attr){
+  var K = VOCAB_KINDS[kind];
+  return '<div class="field" style="margin-top:14px"><label>' + esc(K.many) +
+      ' <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label>' +
+    tagChipsHTML(kind, owner, obj) +
+    '<input class="input" style="margin-top:9px" type="text" value="' + esc((obj[K.field] || []).join(", ")) +
+      '" ' + attr + ' maxlength="300"></div>';
+}
+/* Re-draws one chip row and its panel where it stands. Opening Compare must
+   not re-render the pane: an organiser halfway through retyping a summary two
+   fields up would lose it for having looked at a list. */
+function compareRefresh(kind, owner, id){
+  var host = document.getElementById(compareHostId(kind, owner, id));
+  if(host) host.innerHTML = (compareAt && compareAt.kind === kind && compareAt.owner === owner &&
+    String(compareAt.id) === String(id)) ? compareHTML(kind, owner, id, compareAt.i) : "";
+  var bank = document.querySelector('[data-tagchips="' + kind + '"][data-chipowner="' + owner +
+    '"][data-chipid="' + id + '"]');
+  if(bank) [].forEach.call(bank.querySelectorAll("[data-cmpopen]"), function(b){
+    b.setAttribute("aria-expanded", String(!!(compareAt && compareAt.kind === kind &&
+      compareAt.owner === owner && String(compareAt.id) === String(id) &&
+      Number(b.getAttribute("data-cmpi")) === compareAt.i)));
+  });
+}
+/* The swap itself. One path for picking an existing term, typing a new one and
+   keeping the tag as it stands — they differ only in what `to` is. */
+async function compareSwap(kind, owner, id, i, to){
+  var obj = compareTarget(owner, id);
+  if(!obj) return;
+  var K = VOCAB_KINDS[kind], list = obj[K.field] || [];
+  var from = list[i];
+  to = String(to || "").trim();
+  if(!from || !to) return;
+  vocabLearn(kind, from, to);
+  /* Swapping onto a word the book already carries would leave it twice. */
+  var dupe = list.some(function(x, j){ return j !== i && vkey(x) === vkey(to); });
+  if(dupe) list.splice(i, 1); else list[i] = to;
+  compareAt = null;
+  if(await save("Standardising tags…")){ renderAll(); renderAdmin(); }
+}
+
+/* ---------- Admin: the canonical lists themselves ---------- */
+function paneTags(){
+  return '<p class="eyebrow">Genres &amp; tropes</p>' +
+    '<h3 style="font-size:22px;margin:8px 0 18px">The words the filters run on</h3>' +
+    '<p class="hint" style="margin-bottom:18px">Every word already tagged on a book is in these lists. ' +
+    'Give one a parent and filtering by the parent also finds it — so a Historical Fiction parented to ' +
+    'Fiction turns up under either. Nothing is assumed: a term has no parent until you give it one.</p>' +
+    vocabBlock("genre") + vocabBlock("trope");
+}
+function vocabBlock(kind){
+  var K = VOCAB_KINDS[kind], terms = vocabTerms(kind), counts = vocabCounts(kind), v = vocabStore(kind);
+  var key = "vocab:" + kind;
+  /* a self-alias is the pin that stops the built-in table renaming a word;
+     it is machinery, not something to read back as a mapping */
+  var aliases = Object.keys(v.aliases).filter(function(k){ return vkey(v.aliases[k]) !== k; }).sort();
+  return '<details class="editor"' + (openEditors[key] ? " open" : "") + ">" +
+    '<summary data-vopen="' + esc(key) + '">' + esc(K.many) +
+      ' <span class="pill">' + terms.length + " in the list</span></summary>" +
+    '<div class="editor__body">' +
+      (terms.length
+        ? '<div class="vocablist">' + terms.map(function(t){
+            var cur = vocabParent(kind, t);
+            return '<div class="vocabrow"><span class="tag' + (kind === "trope" ? " tag--trope" : "") + '">' +
+              esc(t) + "</span>" +
+              '<span class="vocabrow__n">' + (counts[vkey(t)] || 0) + " in use</span>" +
+              '<select class="select" data-vparent="' + esc(t) + '" data-vkind="' + esc(kind) + '">' +
+                '<option value="">No parent</option>' +
+                terms.filter(function(o){ return vkey(o) !== vkey(t); }).map(function(o){
+                  return '<option value="' + esc(o) + '"' + (vkey(o) === vkey(cur) ? " selected" : "") +
+                    ">" + esc(o) + "</option>";
+                }).join("") +
+              "</select></div>";
+          }).join("") + "</div>"
+        : '<p class="hint">Nothing tagged yet, so there is nothing to tidy. The list fills itself as ' +
+          esc(K.many.toLowerCase()) + " are used.</p>") +
+      '<div class="vocabadd"><input class="input" type="text" data-vnew="' + esc(kind) +
+        '" placeholder="Add a ' + esc(K.one) + '" maxlength="40">' +
+        '<button class="btn btn--sm btn--surf" type="button" data-vadd="' + esc(kind) + '">Add</button></div>' +
+      (aliases.length
+        ? '<div class="field" style="margin-top:20px"><label>Remembered wordings</label>' +
+          '<p class="hint" style="margin:0 0 8px">What a Compare swap taught the site. These are applied to ' +
+          'new submissions before anything else.</p><div class="vocablist">' +
+          aliases.map(function(k){
+            return '<div class="vocabrow"><span class="vocabrow__alias">' + esc(k) + " → " +
+              esc(v.aliases[k]) + "</span>" +
+              '<button class="btn btn--sm btn--ghost" type="button" style="margin-left:auto" data-vforget="' +
+                esc(k) + '" data-vkind="' + esc(kind) + '">Forget</button></div>';
+          }).join("") + "</div></div>"
+        : "") +
+    "</div></details>";
+}
+
 function paneRecs(){
   var pend = pendingRecs(), fresh = inboxSuggestions();
   var ok = approvedRecs(), rej = state.recs.filter(function(r){ return r.status === "rejected"; });
@@ -7936,22 +8408,26 @@ document.addEventListener("click", async function(e){
   }
 
   /* recommendation filters */
-  if((el = t.closest("[data-fgenre]"))){
+  if((el = t.closest("[data-ftag]"))){
     recPage = 0;
-    var g = el.getAttribute("data-fgenre"), at = recFilter.genres.indexOf(g);
-    if(at === -1) recFilter.genres.push(g); else recFilter.genres.splice(at, 1);
+    var fkind = el.getAttribute("data-fkind") || "genre";
+    var list = recFilter[VOCAB_KINDS[fkind].field], g = el.getAttribute("data-ftag");
+    var at = -1;
+    list.forEach(function(x, i){ if(vkey(x) === vkey(g)) at = i; });
+    if(at === -1) list.push(g); else list.splice(at, 1);
     renderRecs();
     return;
   }
-  if(t.closest("[data-genretoggle]")){
+  if((el = t.closest("[data-tagtoggle]"))){
     /* open shows every chip with no inner scrollbar; closed goes back to the
        window, at whatever height it was last dragged to */
-    genreOpen = !genreOpen;
+    var tk = el.getAttribute("data-tagtoggle");
+    tagBoxOpen[tk] = !tagBoxOpen[tk];
     renderRecFilters();
     return;
   }
   if(t.closest("#fReset")){
-    recFilter = { by: "", sort: "top", genres: [], ageMin: 0, ageMax: AGE_TOP,
+    recFilter = { by: "", sort: "top", genres: [], tropes: [], ageMin: 0, ageMax: AGE_TOP,
                   pagesMin: 0, pagesMax: PAGE_TOP, rateMin: 0, rateMax: RATE_TOP };
     filtersOpen = true;
     recPage = 0;          /* a wider list starts at its own first page */
@@ -8364,6 +8840,70 @@ document.addEventListener("click", async function(e){
   if(t.closest("#menuSession")){ if(me) await signOut(); else openLogin(); return; }
   if(t.closest("#admUnlock")){ tryUnlock(); return; }
   if((el = t.closest("[data-atab]"))){ adminTab = el.getAttribute("data-atab"); renderAdmin(); return; }
+
+  /* Compare: standardising one tag against its canonical list */
+  if((el = t.closest("[data-cmpopen]"))){
+    var ck = el.getAttribute("data-cmpopen"), co = el.getAttribute("data-cmpowner");
+    var ci = el.getAttribute("data-cmpid"), cn = Number(el.getAttribute("data-cmpi"));
+    var wasOpen = compareAt && compareAt.kind === ck && compareAt.owner === co &&
+                  String(compareAt.id) === String(ci) && compareAt.i === cn;
+    var prev = compareAt;
+    compareAt = wasOpen ? null : { kind: ck, owner: co, id: ci, i: cn };
+    /* only ever one open, so the one being left has to be redrawn too */
+    if(prev && !(prev.kind === ck && prev.owner === co && String(prev.id) === String(ci)))
+      compareRefresh(prev.kind, prev.owner, prev.id);
+    compareRefresh(ck, co, ci);
+    return;
+  }
+  if((el = t.closest("[data-cmpclose]"))){
+    var cw = el.closest("[data-cmp]");
+    compareAt = null;
+    if(cw) compareRefresh(cw.getAttribute("data-cmp"), cw.getAttribute("data-cmpowner"), cw.getAttribute("data-cmpid"));
+    return;
+  }
+  if((el = t.closest("[data-cmppick]")) && compareAt){
+    await compareSwap(compareAt.kind, compareAt.owner, compareAt.id, compareAt.i, el.getAttribute("data-cmppick"));
+    return;
+  }
+  if(t.closest("[data-cmpuse]") && compareAt){
+    var box = t.closest("[data-cmp]").querySelector("[data-cmpnew]");
+    var typed = box ? box.value.trim() : "";
+    if(!typed){ say("Type the word to use first.", "bad"); if(box) box.focus(); return; }
+    await compareSwap(compareAt.kind, compareAt.owner, compareAt.id, compareAt.i, typed);
+    return;
+  }
+  if(t.closest("[data-cmpkeep]") && compareAt){
+    /* keeping it is a swap onto itself: the tag does not move, but the word
+       joins the canonical list and is pinned against the built-in table */
+    var keepObj = compareTarget(compareAt.owner, compareAt.id);
+    var keepList = keepObj ? (keepObj[VOCAB_KINDS[compareAt.kind].field] || []) : [];
+    await compareSwap(compareAt.kind, compareAt.owner, compareAt.id, compareAt.i, keepList[compareAt.i]);
+    return;
+  }
+  if((el = t.closest("[data-vadd]"))){
+    var ak = el.getAttribute("data-vadd");
+    var an = document.querySelector('[data-vnew="' + ak + '"]');
+    var av = an ? an.value.trim() : "";
+    if(!av){ say("Type the word to add first.", "bad"); if(an) an.focus(); return; }
+    if(vocabTermRec(ak, av)){ say("That one is already in the list.", "bad"); return; }
+    vocabAddTerm(ak, av);
+    vocabLearn(ak, av, av);
+    openEditors["vocab:" + ak] = true;
+    if(await save("Adding to the list\u2026")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-vforget]"))){
+    var fk = el.getAttribute("data-vkind");
+    delete vocabStore(fk).aliases[el.getAttribute("data-vforget")];
+    openEditors["vocab:" + fk] = true;
+    if(await save("Forgetting\u2026")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-vopen]"))){
+    var ok2 = el.getAttribute("data-vopen"), dbox = el.closest("details");
+    openEditors[ok2] = dbox ? !dbox.open : !openEditors[ok2];
+    return;
+  }
   if((el = t.closest("[data-mfilter]"))){ meetBookFilter = el.getAttribute("data-mfilter"); renderAdminPane(); return; }
   if((el = t.closest("[data-editfor]"))){ var eid = el.getAttribute("data-editfor"); openEditors[eid] = !openEditors[eid]; return; }
 
@@ -8845,8 +9385,22 @@ function adoptRec(rec, status, community){
 }
 
 /* the two filter dropdowns */
-document.addEventListener("change", function(e){
+document.addEventListener("change", async function(e){
   var n = e.target;
+  /* A parent chosen in the Genres & tropes tab. Refused rather than silently
+     dropped when it would make a loop, because a loop set by accident is the
+     one thing here that would take the filters down with it. */
+  if(n && n.hasAttribute && n.hasAttribute("data-vparent")){
+    var pk = n.getAttribute("data-vkind"), pn = n.getAttribute("data-vparent");
+    if(!vocabSetParent(pk, pn, n.value)){
+      say("That would make " + pn + " its own ancestor \u2014 pick another parent.", "bad");
+      n.value = vocabParent(pk, pn);
+      return;
+    }
+    openEditors["vocab:" + pk] = true;
+    if(await save("Saving the parent\u2026")){ renderAll(); renderAdmin(); }
+    return;
+  }
   if(n && n.id === "profRemind"){
     var how = $("profRemindHow"); if(how) how.hidden = !n.checked;
     return;
