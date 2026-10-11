@@ -1,5 +1,5 @@
 {
-  "rev": 1528,
+  "rev": 1529,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1036,6 +1036,15 @@
             "mb-mtqod125fcqtd",
             "mb-mtaiuu788is5a",
             "mb-mtcdg54c8cyyc"
+          ]
+        },
+        {
+          "id": "pred-3f4319b3-d20",
+          "text": "Steve's mom is not a racist",
+          "by": "",
+          "byIds": [
+            "mb-mtcdg54c8cyyc",
+            "mb-mtqod125fcqtd"
           ]
         }
       ],
