@@ -1,5 +1,5 @@
 {
-  "rev": 1530,
+  "rev": 1531,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -378,7 +378,7 @@
       "seriesIndex": 1,
       "started": "2026-09-28",
       "finished": "",
-      "progressPage": 0,
+      "progressPage": 45,
       "members": [
         "mb-saira",
         "mb-mt3zx2lgcj3x8",
@@ -400,7 +400,7 @@
       "review": {
         "text": "",
         "rating": 0,
-        "community": 0,
+        "community": 3.6,
         "by": ""
       }
     }
