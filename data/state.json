@@ -1,5 +1,5 @@
 {
-  "rev": 1527,
+  "rev": 1528,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1025,6 +1025,17 @@
             "mb-saira",
             "mb-mtqod125fcqtd",
             "mb-mtaiuu788is5a"
+          ]
+        },
+        {
+          "id": "pred-133b7baa-043",
+          "text": "Steve's dad is going to blame Fatimah for the bombing",
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mtqod125fcqtd",
+            "mb-mtaiuu788is5a",
+            "mb-mtcdg54c8cyyc"
           ]
         }
       ],
