@@ -1549,6 +1549,19 @@
         "by": "",
         "deletedBy": "Saira"
       }
+    },
+    {
+      "id": "join-28be4897-08c",
+      "kind": "join",
+      "at": "2026-10-12T17:02:38.121Z",
+      "payload": {
+        "name": "Mariam Noor Abid-Alexander",
+        "fable": "",
+        "goodreads": "",
+        "note": "",
+        "emailRef": "sub-94a26144-74f",
+        "emailHint": "m••••@gmail.com"
+      }
     }
   ]
 }
