@@ -1536,6 +1536,19 @@
         "by": "",
         "deletedBy": "Saira"
       }
+    },
+    {
+      "id": "notedelete-28cc2fa9-7b5",
+      "kind": "notedelete",
+      "at": "2026-10-12T05:21:34.977Z",
+      "handled": true,
+      "payload": {
+        "meetingId": "mt-mulwpsx4mqmre",
+        "field": "pred",
+        "text": "Steve is not goign to be able to walk or be absolutely destroyed",
+        "by": "",
+        "deletedBy": "Saira"
+      }
     }
   ]
 }
