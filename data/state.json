@@ -1,5 +1,5 @@
 {
-  "rev": 1533,
+  "rev": 1534,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1078,7 +1078,16 @@
       "summary": "",
       "photos": [],
       "predictions": [],
-      "points": [],
+      "points": [
+        {
+          "id": "disc-ca3e5a10-86a",
+          "text": "What does it say about Fatimah's world or more specifically how she sees it, that she is so focused on how other people see things",
+          "by": "",
+          "byIds": [
+            "mb-saira"
+          ]
+        }
+      ],
       "sent": {},
       "ready": []
     },
