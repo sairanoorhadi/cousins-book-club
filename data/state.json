@@ -1,5 +1,5 @@
 {
-  "rev": 1532,
+  "rev": 1533,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1077,19 +1077,7 @@
       "done": false,
       "summary": "",
       "photos": [],
-      "predictions": [
-        {
-          "id": "pred-aad83d89-967",
-          "text": "Steve is not goign to be able to walk or be absolutely destroyed",
-          "by": "",
-          "byIds": [
-            "mb-saira",
-            "mb-mtaiuu788is5a",
-            "mb-mtcdg54c8cyyc",
-            "mb-mtqod125fcqtd"
-          ]
-        }
-      ],
+      "predictions": [],
       "points": [],
       "sent": {},
       "ready": []
