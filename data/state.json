@@ -1,5 +1,5 @@
 {
-  "rev": 1543,
+  "rev": 1544,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -417,7 +417,7 @@
       "review": {
         "text": "",
         "rating": 0,
-        "community": 3.6,
+        "community": 3.4,
         "by": ""
       },
       "tropes": []
