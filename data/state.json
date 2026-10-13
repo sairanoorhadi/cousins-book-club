@@ -1,5 +1,5 @@
 {
-  "rev": 1541,
+  "rev": 1542,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2436,9 +2436,15 @@
         {
           "name": "Civil Rights",
           "parent": "Social Issues"
+        },
+        {
+          "name": "Global",
+          "parent": ""
         }
       ],
-      "aliases": {}
+      "aliases": {
+        "global": "Global"
+      }
     },
     "trope": {
       "terms": [],
