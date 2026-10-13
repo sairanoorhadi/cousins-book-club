@@ -1,5 +1,5 @@
 {
-  "rev": 1538,
+  "rev": 1539,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -228,13 +228,15 @@
     },
     {
       "id": "mb-mv75yt4orjyed",
-      "name": "Mariam Noor Abid-Alexander",
+      "name": "Mariam",
       "joined": "2026-10-13",
       "avatar": "",
       "email": "",
       "notifyRef": "sub-94a26144-74f",
       "emailHint": "m••••@gmail.com",
-      "notify": [],
+      "notify": [
+        "*"
+      ],
       "fable": "",
       "goodreads": ""
     }
