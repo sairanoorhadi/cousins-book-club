@@ -1,5 +1,5 @@
 {
-  "rev": 1537,
+  "rev": 1538,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -225,6 +225,18 @@
       "fable": "",
       "goodreads": "",
       "hue": ""
+    },
+    {
+      "id": "mb-mv75yt4orjyed",
+      "name": "Mariam Noor Abid-Alexander",
+      "joined": "2026-10-13",
+      "avatar": "",
+      "email": "",
+      "notifyRef": "sub-94a26144-74f",
+      "emailHint": "m••••@gmail.com",
+      "notify": [],
+      "fable": "",
+      "goodreads": ""
     }
   ],
   "books": [
@@ -2413,7 +2425,8 @@
     "join-c5f55485-911",
     "suggest-fddd8ae2-833",
     "suggest-fc4ee003-c91",
-    "suggest-82286c1a-d8e"
+    "suggest-82286c1a-d8e",
+    "join-28be4897-08c"
   ],
   "vocab": {
     "genre": {
