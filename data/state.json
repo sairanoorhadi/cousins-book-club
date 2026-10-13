@@ -1,5 +1,5 @@
 {
-  "rev": 1540,
+  "rev": 1541,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2435,7 +2435,7 @@
       "terms": [
         {
           "name": "Civil Rights",
-          "parent": "Horror"
+          "parent": "Social Issues"
         }
       ],
       "aliases": {}
