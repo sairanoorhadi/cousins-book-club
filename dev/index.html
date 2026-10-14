@@ -990,12 +990,15 @@ a.getrow:hover{background:var(--sunk)}
 .cmp__x{margin-left:auto;border:0;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:var(--muted)}
 .cmp__sub{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
   color:var(--muted);margin:10px 0 6px}
-.cmp__list{display:flex;flex-direction:column;gap:2px;max-height:290px;overflow:auto}
+.cmp__list{display:flex;flex-direction:column;max-height:290px;overflow:auto}
 .cmp__list--near{max-height:none;overflow:visible}
 .cmp__opt{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;cursor:pointer;
-  font-family:var(--f-display);font-size:14.5px;padding:4px 10px;border:1.5px solid transparent;
-  border-radius:8px;background:transparent;color:var(--ink)}
-.cmp__opt:hover,.cmp__opt:focus-visible{background:var(--sunk);border-color:var(--hairline)}
+  font-family:var(--f-display);font-size:14.5px;padding:5px 10px;border:1.5px solid transparent;
+  border-radius:6px;color:var(--ink)}
+.cmp__opt:nth-child(odd){background:color-mix(in srgb, var(--ink) 3%, transparent)}
+.cmp__opt:nth-child(even){background:color-mix(in srgb, var(--ink) 8%, transparent)}
+.cmp__opt:hover,.cmp__opt:focus-visible{background:color-mix(in srgb, var(--grape) 16%, transparent);
+  border-color:var(--hairline)}
 .cmp__foot{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:12px;padding-top:12px;
   border-top:1.5px solid var(--hairline)}
 .cmptag__go--move{border-left-width:0}
@@ -1005,11 +1008,25 @@ a.getrow:hover{background:var(--sunk)}
 .mv__opt{display:flex;align-items:flex-start;gap:8px;margin-top:8px;font-size:14px;cursor:pointer}
 .mv__opt input{margin-top:3px;flex:0 0 auto}
 .cmp__foot .input{flex:1 1 180px;min-width:0}
-.vocablist{display:flex;flex-direction:column;gap:7px;max-height:330px;overflow:auto;padding:2px}
-.vocabrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* Banded rows. Both tones are mixed out of --ink, which is near-black in the
+   light theme and near-white in the dark one, so the pair inverts with the
+   theme and neither needs a rule of its own. No gap between rows: a band with
+   a gap under it reads as a box, not as a stripe. */
+.vocablist{display:flex;flex-direction:column;max-height:330px;overflow:auto;padding:2px}
+.vocabitem{min-width:0}
+.vocabitem:nth-child(odd) > .vocabrow{background:color-mix(in srgb, var(--ink) 3%, transparent)}
+.vocabitem:nth-child(even) > .vocabrow{background:color-mix(in srgb, var(--ink) 8%, transparent)}
+.vocabitem > .vocabrow:hover,.vocabitem:focus-within > .vocabrow{
+  background:color-mix(in srgb, var(--grape) 16%, transparent)}
+.vocabrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:7px 10px;border-radius:6px}
 .vocabrow__n{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
 .vocabrow__alias{font-family:var(--f-mono);font-size:12px;min-width:0;word-break:break-word}
 .vocabrow .select{margin-left:auto;font-size:13px;padding:5px 9px;max-width:230px}
+.vocabrow__move{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 10px;border:1.5px solid var(--edge);border-radius:999px;background:var(--surface);
+  color:var(--muted);cursor:pointer;white-space:nowrap}
+.vocabrow__move:hover,.vocabrow__move[aria-expanded="true"]{background:var(--grape);color:var(--on-grape)}
+.vocabhost:not(:empty){padding:0 4px 10px}
 .vocabadd{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:12px}
 .vocabadd .input{flex:1 1 200px;min-width:0}
 
@@ -7787,6 +7804,19 @@ function tagFieldHTML(kind, owner, obj, attr){
 /* Re-draws one chip row and its panel where it stands. Opening Compare must
    not re-render the pane: an organiser halfway through retyping a summary two
    fields up would lose it for having looked at a list. */
+/* The vocabulary rows keep their panel in a host of their own, addressed by
+   row position. Cleared wholesale first, so only ever one is open. */
+function vocabMoveRefresh(){
+  [].forEach.call(document.querySelectorAll("[data-vhost]"), function(h){ h.innerHTML = ""; });
+  [].forEach.call(document.querySelectorAll("[data-mvterm]"), function(b){
+    b.setAttribute("aria-expanded", "false");
+  });
+  if(!(compareAt && compareAt.owner === "vocab")) return;
+  var host = document.querySelector('[data-vhost="' + compareAt.row + '"]');
+  if(host) host.innerHTML = tagMoveHTML(compareAt.kind, "vocab", compareAt.id, -1);
+  var btn = document.querySelector('[data-mvrow="' + compareAt.row + '"]');
+  if(btn) btn.setAttribute("aria-expanded", "true");
+}
 function compareRefresh(kind, owner, id){
   var mine = compareAt && compareAt.kind === kind && compareAt.owner === owner &&
              String(compareAt.id) === String(id);
@@ -7896,20 +7926,36 @@ function tagFamily(kind, term){
            children: vocabStore(kind).terms.filter(function(x){ return vkey(x.parent) === k; })
              .map(function(x){ return x.name; }) };
 }
-function tagMoveHTML(kind, owner, id, i){
+/* Which word a move is about. From a book's chip it is the tag at that
+   position; from a row of the vocabulary there is no book at all and the row
+   IS the word. Everything after this point is the same either way, which is
+   the whole reason the vocabulary rows reuse this panel rather than growing
+   one of their own. */
+function moveTermOf(kind, owner, id, i){
+  if(owner === "vocab") return String(id || "");
   var obj = compareTarget(owner, id);
-  if(!obj) return "";
+  return obj ? ((obj[VOCAB_KINDS[kind].field] || [])[i] || "") : "";
+}
+function tagMoveHTML(kind, owner, id, i){
+  var fromList = owner === "vocab";
+  var obj = fromList ? null : compareTarget(owner, id);
+  if(!fromList && !obj) return "";
   var K = VOCAB_KINDS[kind], other = VOCAB_KINDS[otherKind(kind)];
-  var term = (obj[K.field] || [])[i] || "";
+  var term = moveTermOf(kind, owner, id, i);
   if(!term) return "";
   var hit = tagCarriers(kind, term), fam = tagFamily(kind, term);
-  var dupe = (obj[other.field] || []).some(function(x){ return vkey(x) === vkey(term); });
+  var dupe = !fromList && (obj[other.field] || []).some(function(x){ return vkey(x) === vkey(term); });
   return '<div class="cmp" data-cmp="' + esc(kind) + '" data-cmpmode="move" data-cmpowner="' + esc(owner) +
       '" data-cmpid="' + esc(id) + '" data-cmpi="' + i + '">' +
     '<p class="cmp__head">Move <strong>' + esc(term) + "</strong> to " + esc(other.many) +
       '<button class="cmp__x" type="button" data-cmpclose aria-label="Close">×</button></p>' +
     (dupe ? '<p class="hint" style="margin:0 0 10px">This book already has it as a ' + esc(other.one) +
       ", so the two will be merged into one tag.</p>" : "") +
+    (fromList
+      ? '<p class="hint" style="margin:0 0 10px">From here the move is everywhere — ' +
+        esc(carrierLine(hit)) + ". To move it on one book only, use the button beside that book's tag." +
+        "</p>"
+      : "") +
     (fam.parent || fam.children.length
       ? '<div class="mv__fam">' +
           (fam.parent
@@ -7927,23 +7973,25 @@ function tagMoveHTML(kind, owner, id, i){
               '<label class="mv__opt"><input type="checkbox" data-mvkids checked> Move them across too ' +
               '<span class="hint">(unchecked, they stay in ' + esc(K.many) + " with no parent)</span></label>"
             : "") +
-          '<p class="hint" style="margin:10px 0 0">These only apply to Move everywhere.</p>' +
+          (fromList ? "" :
+            '<p class="hint" style="margin:10px 0 0">These only apply to Move everywhere.</p>') +
         "</div>"
       : "") +
     '<div class="cmp__foot">' +
-      '<button class="btn btn--sm btn--surf" type="button" data-mvone>Move on this book</button>' +
-      '<button class="btn btn--sm btn--ghost" type="button" data-mvall>Move everywhere — ' +
-        esc(carrierLine(hit)) + "</button>" +
+      (fromList ? ""
+        : '<button class="btn btn--sm btn--surf" type="button" data-mvone>Move on this book</button>') +
+      '<button class="btn btn--sm ' + (fromList ? "btn--surf" : "btn--ghost") +
+        '" type="button" data-mvall>Move everywhere — ' + esc(carrierLine(hit)) + "</button>" +
     "</div></div>";
 }
 /* The move. One record or every one of them; the sweep is the same operation
    repeated, plus the canonical half. */
 async function tagMove(kind, owner, id, i, all){
-  var obj = compareTarget(owner, id);
-  if(!obj) return;
-  var K = VOCAB_KINDS[kind];
-  var term = (obj[K.field] || [])[i];
+  var obj = owner === "vocab" ? null : compareTarget(owner, id);
+  if(owner !== "vocab" && !obj) return;
+  var term = moveTermOf(kind, owner, id, i);
   if(!term) return;
+  if(owner === "vocab") all = true;   /* there is no one book to move it on */
   if(all){
     var box = document.querySelector("[data-cmp][data-cmpmode='move']");
     var kids = box && box.querySelector("[data-mvkids]");
@@ -7989,18 +8037,25 @@ function vocabBlock(kind){
       ' <span class="pill">' + terms.length + " in the list</span></summary>" +
     '<div class="editor__body">' +
       (terms.length
-        ? '<div class="vocablist">' + terms.map(function(t){
-            var cur = vocabParent(kind, t);
-            return '<div class="vocabrow"><span class="tag' + (kind === "trope" ? " tag--trope" : "") + '">' +
-              esc(t) + "</span>" +
+        /* Each row is addressed by its position rather than by its text: a
+           term can hold a quote or a bracket, and a selector built out of one
+           would not survive it. */
+        ? '<div class="vocablist">' + terms.map(function(t, ri){
+            var cur = vocabParent(kind, t), row = kind + "-" + ri;
+            return '<div class="vocabitem"><div class="vocabrow">' +
+              '<span class="tag' + (kind === "trope" ? " tag--trope" : "") + '">' + esc(t) + "</span>" +
               '<span class="vocabrow__n">' + (counts[vkey(t)] || 0) + " in use</span>" +
+              '<button class="vocabrow__move" type="button" data-mvterm="' + esc(kind) + '" data-mvrow="' +
+                esc(row) + '" data-mvname="' + esc(t) + '" aria-expanded="false">→ ' +
+                esc(VOCAB_KINDS[otherKind(kind)].many) + "</button>" +
               '<select class="select" data-vparent="' + esc(t) + '" data-vkind="' + esc(kind) + '">' +
                 '<option value="">No parent</option>' +
                 terms.filter(function(o){ return vkey(o) !== vkey(t); }).map(function(o){
                   return '<option value="' + esc(o) + '"' + (vkey(o) === vkey(cur) ? " selected" : "") +
                     ">" + esc(o) + "</option>";
                 }).join("") +
-              "</select></div>";
+              "</select></div>" +
+              '<div class="vocabhost" data-vhost="' + esc(row) + '"></div></div>';
           }).join("") + "</div>"
         : '<p class="hint">Nothing tagged yet, so there is nothing to tidy. The list fills itself as ' +
           esc(K.many.toLowerCase()) + " are used.</p>") +
@@ -8012,10 +8067,10 @@ function vocabBlock(kind){
           '<p class="hint" style="margin:0 0 8px">What a Compare swap taught the site. These are applied to ' +
           'new submissions before anything else.</p><div class="vocablist">' +
           aliases.map(function(k){
-            return '<div class="vocabrow"><span class="vocabrow__alias">' + esc(k) + " → " +
-              esc(v.aliases[k]) + "</span>" +
+            return '<div class="vocabitem"><div class="vocabrow"><span class="vocabrow__alias">' + esc(k) +
+              " → " + esc(v.aliases[k]) + "</span>" +
               '<button class="btn btn--sm btn--ghost" type="button" style="margin-left:auto" data-vforget="' +
-                esc(k) + '" data-vkind="' + esc(kind) + '">Forget</button></div>';
+                esc(k) + '" data-vkind="' + esc(kind) + '">Forget</button></div></div>';
           }).join("") + "</div></div>"
         : "") +
     "</div></details>";
@@ -9053,6 +9108,14 @@ document.addEventListener("click", async function(e){
   if((el = t.closest("[data-atab]"))){ adminTab = el.getAttribute("data-atab"); renderAdmin(); return; }
 
   /* Compare: standardising one tag against its canonical list */
+  if((el = t.closest("[data-mvterm]"))){
+    var vk = el.getAttribute("data-mvterm"), vrow = el.getAttribute("data-mvrow");
+    var vname = el.getAttribute("data-mvname");
+    var vWas = compareAt && compareAt.owner === "vocab" && compareAt.row === vrow;
+    compareAt = vWas ? null : { kind: vk, owner: "vocab", id: vname, i: -1, mode: "move", row: vrow };
+    vocabMoveRefresh();
+    return;
+  }
   if((el = t.closest("[data-cmpopen]")) || (el = t.closest("[data-mvopen]"))){
     var cmode = el.hasAttribute("data-mvopen") ? "move" : "compare";
     var ck = el.getAttribute(cmode === "move" ? "data-mvopen" : "data-cmpopen");
@@ -9064,15 +9127,17 @@ document.addEventListener("click", async function(e){
     var prev = compareAt;
     compareAt = wasOpen ? null : { kind: ck, owner: co, id: ci, i: cn, mode: cmode };
     /* only ever one open, so the one being left has to be redrawn too */
-    if(prev && !(prev.kind === ck && prev.owner === co && String(prev.id) === String(ci)))
+    if(prev && prev.owner === "vocab") vocabMoveRefresh();
+    else if(prev && !(prev.kind === ck && prev.owner === co && String(prev.id) === String(ci)))
       compareRefresh(prev.kind, prev.owner, prev.id);
     compareRefresh(ck, co, ci);
     return;
   }
   if((el = t.closest("[data-cmpclose]"))){
-    var cw = el.closest("[data-cmp]");
+    var cw = el.closest("[data-cmp]"), wasVocab = cw && cw.getAttribute("data-cmpowner") === "vocab";
     compareAt = null;
-    if(cw) compareRefresh(cw.getAttribute("data-cmp"), cw.getAttribute("data-cmpowner"), cw.getAttribute("data-cmpid"));
+    if(wasVocab) vocabMoveRefresh();
+    else if(cw) compareRefresh(cw.getAttribute("data-cmp"), cw.getAttribute("data-cmpowner"), cw.getAttribute("data-cmpid"));
     return;
   }
   if((t.closest("[data-mvone]") || t.closest("[data-mvall]")) && compareAt){
