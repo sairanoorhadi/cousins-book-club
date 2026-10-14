@@ -973,6 +973,18 @@ a.getrow:hover{background:var(--sunk)}
    the two lists in the panel are never mistaken for one */
 .tagchip--trope[aria-pressed="true"]{background:var(--zest);color:var(--on-zest)}
 
+/* ============ already-have-it notice on the suggestion form ============ */
+/* Three strengths, because the three cases are not the same thing: one is a
+   wall, one is "we did that for you", one is a note. */
+.dupebar{border:2px solid var(--edge);border-radius:var(--r);padding:12px 14px;margin:0 0 14px;
+  background:var(--sunk);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.dupebar--stop{background:color-mix(in srgb, var(--flare) 16%, var(--surface));border-color:var(--flare)}
+.dupebar--done{background:color-mix(in srgb, var(--surf) 16%, var(--surface));border-color:var(--surf)}
+.dupebar__t{flex:1 1 220px;min-width:0;font-size:15.5px}
+.dupebar__t strong{font-family:var(--f-display)}
+.pending__also{margin-top:10px;border-left:3px solid var(--hairline);padding:2px 0 2px 12px}
+.pending__also p{margin:0 0 4px;font-size:14.5px;color:var(--muted)}
+
 /* ============ Compare, and the vocabulary lists ============ */
 /* The panel opens inline, under the tag it was pressed from, rather than over
    the page: Admin is already inside a modal, and a second layer on top of it
@@ -1890,6 +1902,7 @@ a.getrow:hover{background:var(--sunk)}
               <button class="btn btn--sm btn--sky sumbox__go" type="button" id="sSumSearch" hidden>Search the web</button></div>
             <div class="sumpick" id="sSumPick" hidden></div>
           </div>
+          <div class="dupebar" id="sDupe" role="status" hidden></div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
             <button class="btn btn--surf" type="submit" id="suggestSubmit">Send it to the organiser</button>
             <button class="btn btn--ghost" type="button" id="suggestClear">Clear all fields</button>
@@ -3051,6 +3064,16 @@ async function submitPublic(kind, payload){
       body: JSON.stringify({ kind: kind, payload: payload, at: new Date().toISOString() })
     });
     if(!res.ok) return { ok: false, reason: "http", status: res.status };
+    /* The script's answer used to be thrown away — every submission read
+       back as a plain success. It has something to say now: a suggestion can
+       come back refused as a duplicate of a book already recommended, or
+       accepted as an endorsement on one already waiting. A body that cannot
+       be read still counts as the success the HTTP status reported, which is
+       how every kind behaved before this. */
+    try{
+      var body = await res.json();
+      if(body && typeof body === "object") return Object.assign({ ok: true }, body);
+    }catch(e2){}
     return { ok: true };
   }catch(e){ return { ok: false, reason: "network" }; }
 }
@@ -3124,7 +3147,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-07a";
+var SCRIPT_WANT = "2026-10-14a";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -3950,6 +3973,63 @@ window.fuzzyProbe = async function(cases){
 };
 
 function sameTitle(a, b){ return normTitle(a) === normTitle(b); }
+/* "M.L. Wang" and "M. L. Wang" are one person, and so are "Wang, M. L." and
+   "M L Wang". Two readings, either of which is enough: the words sorted, which
+   survives a reordering, and the letters with everything between them removed,
+   which survives initials being spaced or not. An empty author on either side
+   is not a disagreement — the title is carrying the comparison. */
+/* normTitle moves a leading article. Catalogue records write the other form
+   — "Sword of Kaigen, The" — and a submitter pasting from one would
+   otherwise look like a different book. Only the duplicate check uses this;
+   the lookup's own scoring keeps normTitle as it was. */
+function dupeKey(s){
+  return normTitle(String(s || "").replace(/,\s*(the|a|an)\s*$/i, ""));
+}
+function authorWords(s){
+  var t = String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  return t ? t.split(" ").sort().join(" ") : "";
+}
+function authorTight(s){ return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, ""); }
+function sameAuthor(a, b){
+  var x = authorWords(a), y = authorWords(b);
+  if(!x || !y) return true;
+  return x === y || authorTight(a) === authorTight(b);
+}
+/* Has the club got this already, and in what sense? Checked against the
+   approved recommendations first, then anything waiting for approval
+   — including submissions that have landed in the inbox but have not been
+   folded into the club's file yet — then the shelf. One answer, the
+   strongest that applies. */
+function dupeFind(title, author){
+  var nt = dupeKey(title);
+  if(!nt) return null;
+  var same = function(t, a){ return dupeKey(t) === nt && sameAuthor(a, author); };
+  var hit = null;
+  (state.recs || []).forEach(function(r){
+    if(hit || !same(r.title, r.author)) return;
+    if(r.status === "approved") hit = { how: "approved", title: r.title, by: r.by, id: r.id };
+    else if(r.status === "pending") hit = { how: "pending", title: r.title, by: r.by, id: r.id };
+  });
+  if(!hit) inbox.forEach(function(it){
+    if(hit || !it || it.kind !== "suggest" || it.handled) return;
+    var p = it.payload || {};
+    if(recById(it.id) || !same(p.title, p.author)) return;
+    hit = { how: "pending", title: p.title, by: p.by, id: it.id };
+  });
+  if(!hit) (state.books || []).forEach(function(b){
+    if(hit || !same(b.title, b.author)) return;
+    hit = { how: "shelf", title: b.title, status: b.status, id: b.id,
+            finished: b.finished || "" };
+  });
+  return hit;
+}
+/* What the shelf case says, which depends on where the book is on it. */
+function shelfLine(hit){
+  if(hit.status === "current") return "The club is reading this right now.";
+  if(hit.status === "next") return "This one is already queued up next.";
+  var when = hit.finished ? " in " + shortDate(String(hit.finished).slice(0, 10)) : "";
+  return "The club has already read this" + when + ".";
+}
 
 window.typoSuite = async function(cases){
   cases = cases || TYPO_CASES;
@@ -7580,6 +7660,25 @@ async function recAgeAI(r){
    are read off the boxes at the moment Approve is pressed \u2014 which is the
    point: the record is built from what was corrected, not from what arrived. */
 var recDrafts = {};
+/* Names folded onto a waiting submission by the script, when somebody tried
+   to put the same book forward again. Shaped exactly like a real
+   endorsement — {name, at} — because that is what it becomes. */
+function preEndorsements(p){
+  var seen = {}, out = [];
+  ((p && p.preEndorsements) || []).forEach(function(e){
+    var n = String((e && e.name) || "").trim();
+    if(!n || seen[n.toLowerCase()]) return;
+    seen[n.toLowerCase()] = 1;
+    out.push({ name: n, at: String((e && e.at) || "") });
+  });
+  return out;
+}
+/* What the second submitter wrote, kept so the organiser can prefer it to
+   the first one's. It does not travel onto the record — it is a thing to
+   read while deciding, and it stays in the inbox item. */
+function alsoFrom(p){
+  return (((p && p.alsoFrom) || []).filter(function(a){ return a && (a.by || a.blurb || (a.ratings || []).length); }));
+}
 function recDraft(it){
   var id = it.id;
   if(!recDrafts[id]){
@@ -7591,7 +7690,11 @@ function recDraft(it){
       by: String(p.by || ""), at: String(it.at || "").slice(0, 10),
       cover: safeUrl(p.cover), blurb: String(p.blurb || ""),
       summarySource: String(p.summarySource || "own"),
-      status: "pending", shortlist: false, reviews: [], endorsements: [], dislikes: [],
+      status: "pending", shortlist: false, reviews: [], dislikes: [],
+      /* Endorsements that arrived as duplicate submissions, folded onto the
+         waiting item by the script. Carried onto the draft so the organiser
+         reviews what the record will actually have. */
+      endorsements: preEndorsements(p),
       ratings: cleanRatings(p.ratings).length ? cleanRatings(p.ratings)
         : (Number(p.rating) > 0 ? [{ score: clampRating(p.rating), source: String(p.ratingSource || "").slice(0, 40) }] : [])
     });
@@ -7718,6 +7821,13 @@ function inboxSuggestions(){
     return it && it.kind === "suggest" && !it.handled && !recById(it.id);
   });
 }
+/* What a second submitter wrote, looked up from the inbox item the draft was
+   built from. Kept out of the record itself: it is something to read while
+   deciding whose summary to keep, not a field of the book. */
+function dupeExtras(r){
+  var it = inbox.filter(function(x){ return x && x.id === (r && r.id); })[0];
+  return it ? alsoFrom(it.payload || {}) : [];
+}
 function pendingCard(r, approveAttr, rejectAttr){
   return '<div class="pending"><div><h4>' + esc(r.title) + "</h4>" +
     '<p style="color:var(--muted);font-style:italic;margin-top:4px">by ' + esc(r.author || "unknown") + " · " + esc(r.pages || "?") + " pages</p>" +
@@ -7725,7 +7835,25 @@ function pendingCard(r, approveAttr, rejectAttr){
       normaliseGenres(r.genres).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
       tropeList(r.tropes).map(function(t){ return '<span class="tag tag--trope">' + esc(t) + "</span>"; }).join("") + "</div>" +
     '<p style="margin-top:12px;font-size:15.5px">' + esc(r.blurb || "No summary given.") + "</p>" +
-    '<p class="review__by">Submitted by ' + esc(r.by || "anonymous") + (r.at ? " · " + esc(shortDate(String(r.at).slice(0, 10))) : "") + "</p></div>" +
+    '<p class="review__by">Submitted by ' + esc(r.by || "anonymous") + (r.at ? " · " + esc(shortDate(String(r.at).slice(0, 10))) : "") + "</p>" +
+    /* Everyone who tried to put this forward again while it waited. The
+       script turned each attempt into an endorsement rather than a second
+       entry, and this is where that becomes visible. */
+    ((r.endorsements || []).length
+      ? '<p class="review__by">Pre-endorsed by ' +
+        esc(andList((r.endorsements || []).map(function(e){ return e.name; }))) + "</p>"
+      : "") +
+    (dupeExtras(r).length
+      ? '<div class="pending__also">' + dupeExtras(r).map(function(a){
+          var bits = [];
+          if((a.ratings || []).length) bits.push(cleanRatings(a.ratings).map(function(x){
+            return x.score + (x.source ? " " + x.source : ""); }).join(", "));
+          return "<p><strong>" + esc(a.by || "Someone") + "</strong> sent it too" +
+            (bits.length ? " · rated " + esc(bits.join(" · ")) : "") + "</p>" +
+            (a.blurb ? "<p>" + esc(a.blurb) + "</p>" : "");
+        }).join("") + "</div>"
+      : "") +
+    "</div>" +
     '<div class="pending__acts"><button class="btn btn--sm btn--surf" type="button" ' + approveAttr + '>Approve</button>' +
     '<button class="btn btn--sm btn--ghost" type="button" ' + rejectAttr + '>Reject</button></div></div>';
 }
@@ -8746,6 +8874,12 @@ document.addEventListener("click", async function(e){
     return;
   }
 
+  if((el = t.closest("[data-dupeopen]"))){
+    var dr = recById(el.getAttribute("data-dupeopen"));
+    if(dr) openBookDetail(dr, "rec");
+    return;
+  }
+
   /* member requests */
   if((el = t.closest("[data-memform]"))){
     openMemberForm(el.getAttribute("data-memform"), el.getAttribute("data-nbook") || "");
@@ -9585,8 +9719,9 @@ function acceptSubmission(item, opts){
       /* approved on the spot when the organiser pressed Approve on the
          Recommendations tab; anything else waits there */
       status: opts.approve ? "approved" : "pending", at: String(item.at || "").slice(0, 10),
+      endorsements: preEndorsements(p),
       cover: safeUrl(p.cover), blurb: String(p.blurb || ""), summarySource: String(p.summarySource || "own"),
-      shortlist: false, reviews: [], endorsements: [], dislikes: [],
+      shortlist: false, reviews: [], dislikes: [],
       ratings: cleanRatings(p.ratings).length ? cleanRatings(p.ratings)
         : (Number(p.rating) > 0 ? [{ score: clampRating(p.rating), source: String(p.ratingSource || "").slice(0, 40) }] : [])
     }));
@@ -10252,6 +10387,60 @@ async function applyBookHit(h, siblings){
   renderAuthorPick();
   /* these fields were filled in code, which fires no input event */
   syncSearchLinks();
+  /* Title and author are settled now, which is the first moment the question
+     "has the club got this already?" can be asked — and the last moment
+     worth asking it before somebody writes a summary for nothing. */
+  dupeCheckNow();
+}
+
+/* ---------- the already-have-it notice ---------- */
+/* What the three cases do: an approved recommendation is a wall with a way
+   through it, a waiting one is something we have already handled, and a book
+   on the shelf is a note they can read and carry on past. */
+function dupeBlocks(hit){ return !!hit && (hit.how === "approved" || hit.how === "own"); }
+function paintDupe(hit){
+  var bar = $("sDupe");
+  if(!bar) return;
+  if(!hit){ bar.hidden = true; bar.innerHTML = ""; bar.className = "dupebar"; return; }
+  var body, cls = "dupebar", act = "";
+  if(hit.how === "own"){
+    cls += " dupebar--stop";
+    body = "You already put <strong>" + esc(hit.title) + "</strong> forward" +
+      (hit.how === "own" && hit.pending ? ", and it is still waiting for approval." : ".");
+  }
+  else if(hit.how === "approved"){
+    cls += " dupebar--stop";
+    body = "Hey, this one’s already recommended. Go endorse it instead.";
+    act = '<button class="btn btn--sm btn--zest" type="button" data-dupeopen="' + esc(hit.id) + '">Endorse ' +
+      esc(hit.title) + "</button>";
+  }
+  else if(hit.how === "pending"){
+    cls += " dupebar--done";
+    body = "This book is already waiting for approval, and we’ve added your endorsement.";
+  }
+  else {
+    body = shelfLine(hit) + " You can still put it forward if you think it is worth another look.";
+  }
+  bar.className = cls;
+  bar.innerHTML = '<span class="dupebar__t">' + body + "</span>" + act;
+  bar.hidden = false;
+}
+/* Is this the submitter's own book? Matched on the typed name, the same way
+   the Endorse button decides you cannot endorse yourself. */
+function dupeIsMine(hit){
+  var me = String(($("sBy") && $("sBy").value) || myName() || "").trim().toLowerCase();
+  return !!me && !!hit && String(hit.by || "").trim().toLowerCase() === me;
+}
+/* Called once the lookup has settled a title and an author, so nobody fills
+   in a whole form for a book the club already has. */
+function dupeCheckNow(){
+  if(profSlot !== null){ paintDupe(null); return null; }   /* filling a Their Five slot */
+  var hit = dupeFind(($("sTitle") || {}).value, ($("sAuthor") || {}).value);
+  if(hit && dupeIsMine(hit) && hit.how !== "shelf"){
+    hit = { how: "own", title: hit.title, id: hit.id, pending: hit.how === "pending" };
+  }
+  paintDupe(hit);
+  return hit;
 }
 function renderSugCover(){
   $("sCoverPick").innerHTML =
@@ -10408,6 +10597,7 @@ function clearSuggestForm(){
   var ai = $("sAgeAIOut");
   if(ai){ ai.hidden = true; ai.innerHTML = ""; }
   clearMissing();
+  paintDupe(null);
   $("suggestNote").textContent = "";
   initSuggestForm();          /* slider, ratings, cover, summary, the links */
   shutDetails();              /* a cleared form is a new one, so shut again */
@@ -11038,6 +11228,10 @@ document.addEventListener("click", async function(e){
       /* no clearing needed any more: every field the lookup filled is still
          marked as ours and gets replaced, and every field they typed is not */
       await askAIForDetails();
+      /* This is the moment the book is settled — a title and an author both
+         confirmed — and so the first moment it is worth saying the club
+         already has it, before anyone writes a summary for nothing. */
+      dupeCheckNow();
     }
     return;
   }
@@ -11162,6 +11356,19 @@ $("suggestForm").addEventListener("submit", async function(e){
     return;
   }
 
+  /* Asked again here, because the lookup-time answer can be minutes old and
+     the form can be filled in by hand without a lookup at all. The script
+     asks a third time, which is the only one that can see a submission that
+     landed while this page was open. */
+  var dupe = dupeCheckNow();
+  if(dupeBlocks(dupe)){
+    note.textContent = dupe.how === "own"
+      ? "You already put this one forward."
+      : "Already recommended — endorse it instead.";
+    var bar0 = $("sDupe"); if(bar0) bar0.scrollIntoView({ block: "center" });
+    return;
+  }
+
   /* Everything else is a question, not a bar. The organiser would rather have
      the book with gaps than not have it. */
   var gaps = missingRest();
@@ -11182,6 +11389,22 @@ $("suggestForm").addEventListener("submit", async function(e){
       byId: (myMember() || {}).id || "",
       ratings: ratingsForSubmit()
     });
+    /* The script looked too, and it can see what this page cannot: a
+       submission that arrived while this form was being filled in. Its answer
+       is the one that decides, either way. */
+    if(res.duplicate){
+      paintDupe(res.duplicate);
+      if(res.ok){
+        clearSuggestForm();
+        paintDupe(res.duplicate);     /* clearing the form wipes the bar */
+        note.textContent = "Already waiting — your endorsement is on it.";
+      }
+      else note.textContent = res.duplicate.how === "own"
+        ? "You already put this one forward."
+        : "Already recommended — endorse it instead.";
+      var bar1 = $("sDupe"); if(bar1) bar1.scrollIntoView({ block: "center" });
+      return;
+    }
     if(!res.ok){ note.textContent = submitFailMsg(res); return; }
     clearSuggestForm();
     note.textContent = "Sent. The organiser will take a look.";

@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-07a';
+var SCRIPT_VERSION = '2026-10-14a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -116,6 +116,9 @@ function doPost(e) {
   };
 
   try {
+    /* A suggestion is the one kind that can already exist. Everything else
+       just goes on the pile. */
+    if (kind === 'suggest') return json(fileSuggestion(item));
     appendToInbox(item);
   } catch (err) {
     return json({ ok: false, error: String(err) });
@@ -1218,6 +1221,130 @@ function photoDelete(payload) {
 }
 
 /* --------------------------------------------------------------- the inbox */
+
+
+/* ------------------------------------------------- the same book, twice
+   Two people can put the same book forward seconds apart. The page checks
+   before it sends, but it is working from a copy of the club's file that can
+   be minutes old and cannot see a submission that landed while the form was
+   being filled in. This can: it runs inside the same lock that writes the
+   inbox, so between the look and the write nothing else gets in.
+
+   Kept deliberately in step with the page's own normTitle/sameAuthor. If one
+   of them changes, the other has to. */
+function normTitleGS(s) {
+  /* A leading article is moved, and so is the catalogue form that puts it at
+     the end: "Sword of Kaigen, The" is the same book as "The Sword of
+     Kaigen", and somebody pasting from a library record will send either. */
+  return String(s || '').replace(/,\s*(the|a|an)\s*$/i, '').toLowerCase()
+    .replace(/[‘’']/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/^(the|a|an)\s+/, '');
+}
+function authorWordsGS(s) {
+  var t = String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  return t ? t.split(' ').sort().join(' ') : '';
+}
+function authorTightGS(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
+/* "M.L. Wang" and "M. L. Wang" are one person. An empty author on either side
+   is not a disagreement — the title is carrying the comparison. */
+function sameAuthorGS(a, b) {
+  var x = authorWordsGS(a), y = authorWordsGS(b);
+  if (!x || !y) return true;
+  return x === y || authorTightGS(a) === authorTightGS(b);
+}
+function sameBookGS(t1, a1, t2, a2) {
+  var n = normTitleGS(t1);
+  return !!n && n === normTitleGS(t2) && sameAuthorGS(a1, a2);
+}
+function sameNameGS(a, b) {
+  return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase() &&
+         String(a || '').trim() !== '';
+}
+/* One suggestion, filed. Either it is new and goes on the inbox as any other
+   submission does, or the club already has the book and what happens instead
+   depends on where it has it:
+     an approved recommendation  — refused, with the id so the page can offer
+                                   the Endorse button on that book;
+     one already waiting         — no second entry. The sender's name is added
+                                   to that item as a pre-endorsement, and what
+                                   they wrote is kept beside it for the
+                                   organiser to compare;
+     their own, either way       — refused, and said plainly. The site does not
+                                   let anyone endorse their own book.
+   The shelf is not checked here on purpose: a book the club has read is a
+   warning on the form, not a refusal, and the sender has already seen it. */
+function fileSuggestion(item) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var p = item.payload || {};
+    var title = p.title, author = p.author, who = String(p.by || '').trim();
+
+    var state = {};
+    try { state = JSON.parse(ghGetFile(STATE_PATH).content || '{}'); } catch (err) { state = {}; }
+    var recs = Array.isArray(state.recs) ? state.recs : [];
+    for (var i = 0; i < recs.length; i++) {
+      var r = recs[i];
+      if (r.status !== 'approved' || !sameBookGS(title, author, r.title, r.author)) continue;
+      if (sameNameGS(who, r.by)) {
+        return { ok: false, error: 'duplicate',
+                 duplicate: { how: 'own', title: r.title, id: r.id, pending: false } };
+      }
+      return { ok: false, error: 'duplicate',
+               duplicate: { how: 'approved', title: r.title, by: r.by, id: r.id } };
+    }
+
+    var file = ghGetFile(INBOX_PATH);
+    var data = { items: [] };
+    if (file.content) {
+      try { data = JSON.parse(file.content); } catch (err2) { data = { items: [] }; }
+    }
+    if (!Array.isArray(data.items)) data.items = [];
+    /* Which submissions the organiser has already dealt with: the club's file
+       lists their ids, and anything on it is no longer waiting. */
+    var done = {};
+    (Array.isArray(state.inbox) ? state.inbox : []).forEach(function (id) { done[id] = 1; });
+    var recById = {};
+    recs.forEach(function (r) { recById[r.id] = 1; });
+
+    for (var j = 0; j < data.items.length; j++) {
+      var it = data.items[j];
+      if (!it || it.kind !== 'suggest' || done[it.id] || recById[it.id]) continue;
+      var q = it.payload || {};
+      if (!sameBookGS(title, author, q.title, q.author)) continue;
+      if (sameNameGS(who, q.by)) {
+        return { ok: false, error: 'duplicate',
+                 duplicate: { how: 'own', title: q.title, id: it.id, pending: true } };
+      }
+      if (!Array.isArray(q.preEndorsements)) q.preEndorsements = [];
+      var already = q.preEndorsements.some(function (e) { return sameNameGS(e && e.name, who); });
+      if (!already && who) q.preEndorsements.push({ name: who, at: new Date().toISOString() });
+      /* What they wrote is worth keeping even though their entry is not: the
+         organiser may prefer their summary or their rating to the first
+         sender's, and otherwise it is simply thrown away. */
+      if (!Array.isArray(q.alsoFrom)) q.alsoFrom = [];
+      if (!q.alsoFrom.some(function (a) { return sameNameGS(a && a.by, who); })) {
+        q.alsoFrom.push({ by: who, blurb: String(p.blurb || '').slice(0, 2400),
+                          ratings: Array.isArray(p.ratings) ? p.ratings.slice(0, 6) : [],
+                          at: new Date().toISOString() });
+      }
+      it.payload = q;
+      ghPutFile(INBOX_PATH, JSON.stringify(data, null, 2), file.sha,
+                'Endorsement folded onto a waiting suggestion');
+      return { ok: true, merged: true,
+               duplicate: { how: 'pending', title: q.title, by: q.by, id: it.id } };
+    }
+
+    data.items.push(item);
+    if (data.items.length > 400) data.items = data.items.slice(-400);
+    ghPutFile(INBOX_PATH, JSON.stringify(data, null, 2), file.sha, 'New suggest from the site');
+    return { ok: true, id: item.id };
+  } finally {
+    lock.releaseLock();
+  }
+}
 
 function appendToInbox(item) {
   /* Two people submitting at once would otherwise clobber each other. */
