@@ -1,5 +1,5 @@
 {
-  "rev": 1544,
+  "rev": 1545,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -238,7 +238,8 @@
         "*"
       ],
       "fable": "",
-      "goodreads": ""
+      "goodreads": "",
+      "hue": ""
     }
   ],
   "books": [
@@ -2260,8 +2261,7 @@
       "genres": [
         "Fantasy",
         "Mystery",
-        "Dark",
-        "Academia"
+        "Dark"
       ],
       "by": "Saira",
       "byId": "mb-saira",
@@ -2281,7 +2281,9 @@
         }
       ],
       "level": "Ages 12+",
-      "tropes": []
+      "tropes": [
+        "Academia"
+      ]
     },
     {
       "id": "suggest-fddd8ae2-833",
@@ -2451,8 +2453,16 @@
       }
     },
     "trope": {
-      "terms": [],
+      "terms": [
+        {
+          "name": "Academia",
+          "parent": ""
+        }
+      ],
       "aliases": {}
+    },
+    "home": {
+      "academia": "trope"
     }
   }
 }
