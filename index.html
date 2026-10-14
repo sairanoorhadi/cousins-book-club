@@ -3050,31 +3050,26 @@ function downloadState(){
    data/inbox.json, which the organiser reviews under Organiser tools. */
 var inbox = [];
 function endpoint(){ return safeUrl(state && state.club && state.club.formEndpoint); }
+/* Every public submission — a book put forward, an endorsement, a join
+   request — goes through here.
+
+   It used to have a fetch of its own: no timeout, no logging, and the answer
+   thrown away unread. That is why a submission the script refused could only
+   ever be reported as "an error (?)": the script had said exactly what was
+   wrong and nothing on this side had kept it. ?debug=endpoint showed nothing
+   either, because the logging lives in endpointOnce and this never went near
+   it. So now it does, and submissions are visible in the console and
+   explainable in the message like every other call. */
 async function submitPublic(kind, payload){
   /* every one of these lands in the real inbox */
-  if(DEV) return { ok: false, reason: "dev-blocked" };
+  if(DEV) return { ok: false, reason: "dev-blocked", error: "dev-blocked" };
   var url = endpoint();
-  if(!url) return { ok: false, reason: "unconfigured" };
-  try{
-    var res = await fetch(url, {
-      method: "POST",
-      /* text/plain keeps this a simple CORS request, which Apps Script accepts without a preflight */
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ kind: kind, payload: payload, at: new Date().toISOString() })
-    });
-    if(!res.ok) return { ok: false, reason: "http", status: res.status };
-    /* The script's answer used to be thrown away — every submission read
-       back as a plain success. It has something to say now: a suggestion can
-       come back refused as a duplicate of a book already recommended, or
-       accepted as an endorsement on one already waiting. A body that cannot
-       be read still counts as the success the HTTP status reported, which is
-       how every kind behaved before this. */
-    try{
-      var body = await res.json();
-      if(body && typeof body === "object") return Object.assign({ ok: true }, body);
-    }catch(e2){}
-    return { ok: true };
-  }catch(e){ return { ok: false, reason: "network" }; }
+  if(!url) return { ok: false, reason: "unconfigured", error: "unconfigured" };
+  var res = await endpointOnce(kind, url, payload || {});
+  /* A body that parsed but never said whether it was ok counts as the success
+     its HTTP status reported — the way every submission was read before. */
+  if(res && res.ok === undefined) res.ok = true;
+  return res || { ok: false, error: "crashed" };
 }
 async function loadInbox(){
   try{
@@ -3112,11 +3107,27 @@ function applyInbox(){
     if(!dupe) r[list].push({ name: name, at: it.at || "" });
   });
 }
+/* What went wrong, in words. The last line of this used to be
+   "returned an error (" + (res.status || "?") + ")", and a refusal from the
+   script carries no HTTP status — it is a 200 whose body says no. So every
+   refusal the script could give, for every reason it could give one, reached
+   the reader as a question mark, and there was nothing to go on. */
 function submitFailMsg(res){
-  if(res.reason === "dev-blocked") return "This is the test site, so nothing is actually sent. Submit on the real site.";
-  if(res.reason === "unconfigured") return "Submissions aren’t switched on yet — the organiser needs to add an endpoint under Settings.";
+  res = res || {};
+  var why = res.error || res.reason;
+  if(why === "dev-blocked") return "This is the test site, so nothing is actually sent. Submit on the real site.";
+  if(why === "unconfigured") return "Submissions aren’t switched on yet — the organiser needs to add an endpoint under Settings.";
   if(res.reason === "network") return "Couldn’t reach the club’s inbox. Check your connection and try again.";
-  return "The club’s inbox returned an error (" + (res.status || "?") + "). Try again in a moment.";
+  /* endpointTrouble already knows how to word a timeout, an unreachable
+     script, a non-JSON body and Google's own sign-in page. */
+  if(why){
+    var said = endpointTrouble(why, res.detail);
+    if(said) return said;
+    return "The club’s inbox refused it: " + why + (res.detail ? " (" + res.detail + ")" : "") + ".";
+  }
+  if(res.status) return "The club’s inbox returned an error (" + res.status + "). Try again in a moment.";
+  return "The club’s inbox didn’t accept that and didn’t say why. Add ?debug=endpoint to the address " +
+    "and send it once more — the console will show the script’s own answer.";
 }
 
 /* ---------- signing in ----------
@@ -3146,7 +3157,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-14a";
+var SCRIPT_WANT = "2026-10-14b";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -3315,6 +3326,30 @@ function endpointTrouble(err, detail){
         " That one really is the access setting: Deploy → Manage deployments → Edit → \u201cWho has access\u201d → \u201cAnyone\u201d.";
     return "The script answered with something that isn't JSON." + why +
       " If it mentions authorisation, open it in Apps Script and run setUpTrigger once — it'll ask permission to send email, which sign-in codes need.";
+  }
+  /* The script's own words when it could not reach the repo. These arrive as
+     "Error: GitHub read failed: 401" and used to be printed raw, or not at
+     all — and they are the ones that mean a submission was lost rather
+     than delayed, so they are worth saying properly. */
+  if(/GITHUB_TOKEN is not set/i.test(String(err || "")))
+    return "The script has no GitHub token saved, so it has nowhere to put this. " +
+      "Nothing was saved. Add GITHUB_TOKEN under Project Settings \u2192 Script properties in Apps Script.";
+  var gh = String(err || "").match(/GitHub (read|write) failed: (\d+)(?: on (\S+))?/);
+  if(gh){
+    var act = (gh[1] === "read" ? "read " : "save to ") + (gh[3] || "the club\u2019s files");
+    if(gh[2] === "401")
+      return "The script\u2019s own GitHub token has expired or been revoked, so it couldn\u2019t " + act +
+        ". Nothing was saved. It needs a fresh token in the Apps Script project under " +
+        "Project Settings \u2192 Script properties \u2192 GITHUB_TOKEN.";
+    if(gh[2] === "403")
+      return "GitHub refused the script\u2019s token when it tried to " + act +
+        " (403). Either the token has lost write permission on the repository, or GitHub is rate-limiting it.";
+    if(gh[2] === "404")
+      return "The script couldn\u2019t find the file it writes to (404) when it tried to " + act +
+        ". Check the repository and branch names in the script.";
+    if(gh[2] === "409" || gh[2] === "422")
+      return "Two saves landed at the same moment (" + gh[2] + "). Nothing was lost \u2014 try again.";
+    return "GitHub answered " + gh[2] + " when the script tried to " + act + ".";
   }
   if(/^http 5\d\d$/.test(String(err || "")))
     return "Google's servers answered " + err + "." + why + " That's their end, not the script's — it usually clears in a minute.";
