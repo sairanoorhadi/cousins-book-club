@@ -990,20 +990,43 @@ a.getrow:hover{background:var(--sunk)}
 .cmp__x{margin-left:auto;border:0;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:var(--muted)}
 .cmp__sub{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
   color:var(--muted);margin:10px 0 6px}
-.cmp__list{display:flex;flex-direction:column;gap:2px;max-height:290px;overflow:auto}
+.cmp__list{display:flex;flex-direction:column;max-height:290px;overflow:auto}
 .cmp__list--near{max-height:none;overflow:visible}
 .cmp__opt{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;cursor:pointer;
-  font-family:var(--f-display);font-size:14.5px;padding:4px 10px;border:1.5px solid transparent;
-  border-radius:8px;background:transparent;color:var(--ink)}
-.cmp__opt:hover,.cmp__opt:focus-visible{background:var(--sunk);border-color:var(--hairline)}
+  font-family:var(--f-display);font-size:14.5px;padding:5px 10px;border:1.5px solid transparent;
+  border-radius:6px;color:var(--ink)}
+.cmp__opt:nth-child(odd){background:color-mix(in srgb, var(--ink) 3%, transparent)}
+.cmp__opt:nth-child(even){background:color-mix(in srgb, var(--ink) 8%, transparent)}
+.cmp__opt:hover,.cmp__opt:focus-visible{background:color-mix(in srgb, var(--grape) 16%, transparent);
+  border-color:var(--hairline)}
 .cmp__foot{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:12px;padding-top:12px;
   border-top:1.5px solid var(--hairline)}
+.cmptag__go--move{border-left-width:0}
+.cmptag .tag + .cmptag__go{border-radius:0}
+.cmptag__go:last-child{border-radius:0 999px 999px 0}
+.mv__fam{border:1.5px solid var(--hairline);border-radius:var(--r);background:var(--sunk);padding:10px 12px}
+.mv__opt{display:flex;align-items:flex-start;gap:8px;margin-top:8px;font-size:14px;cursor:pointer}
+.mv__opt input{margin-top:3px;flex:0 0 auto}
 .cmp__foot .input{flex:1 1 180px;min-width:0}
-.vocablist{display:flex;flex-direction:column;gap:7px;max-height:330px;overflow:auto;padding:2px}
-.vocabrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* Banded rows. Both tones are mixed out of --ink, which is near-black in the
+   light theme and near-white in the dark one, so the pair inverts with the
+   theme and neither needs a rule of its own. No gap between rows: a band with
+   a gap under it reads as a box, not as a stripe. */
+.vocablist{display:flex;flex-direction:column;max-height:330px;overflow:auto;padding:2px}
+.vocabitem{min-width:0}
+.vocabitem:nth-child(odd) > .vocabrow{background:color-mix(in srgb, var(--ink) 3%, transparent)}
+.vocabitem:nth-child(even) > .vocabrow{background:color-mix(in srgb, var(--ink) 8%, transparent)}
+.vocabitem > .vocabrow:hover,.vocabitem:focus-within > .vocabrow{
+  background:color-mix(in srgb, var(--grape) 16%, transparent)}
+.vocabrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:7px 10px;border-radius:6px}
 .vocabrow__n{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
 .vocabrow__alias{font-family:var(--f-mono);font-size:12px;min-width:0;word-break:break-word}
 .vocabrow .select{margin-left:auto;font-size:13px;padding:5px 9px;max-width:230px}
+.vocabrow__move{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 10px;border:1.5px solid var(--edge);border-radius:999px;background:var(--surface);
+  color:var(--muted);cursor:pointer;white-space:nowrap}
+.vocabrow__move:hover,.vocabrow__move[aria-expanded="true"]{background:var(--grape);color:var(--on-grape)}
+.vocabhost:not(:empty){padding:0 4px 10px}
 .vocabadd{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:12px}
 .vocabadd .input{flex:1 1 200px;min-width:0}
 
@@ -2303,6 +2326,43 @@ function vocabAncestors(kind, name){
   }
   return out;
 }
+/* Which list a word belongs in, once an admin has moved it. A different
+   thing from an alias: an alias says what a word should be CALLED, this says
+   which of the two vocabularies it lives in. It has to be read somewhere that
+   can see both fields at once, which is what routeTags is for — on its own,
+   normaliseGenres only ever sees the genres box. */
+function vocabHomes(){
+  if(!state) return {};
+  if(!state.vocab) state.vocab = {};
+  if(!state.vocab.home || typeof state.vocab.home !== "object") state.vocab.home = {};
+  return state.vocab.home;
+}
+function vocabHome(name, from){
+  var map = from ? ((from.vocab && from.vocab.home) || {}) : vocabHomes();
+  var h = map[vkey(name)];
+  return h === "genre" || h === "trope" ? h : "";
+}
+/* Genres in and tropes in, genres out and tropes out, with every word sent to
+   the side it now belongs on whichever box it was typed into. Called wherever
+   the pair is set together — including when state is first read, so a word
+   moved everywhere lands right even on records written before the move. */
+/* `from` is the state to read the homes out of. It matters in exactly one
+   place and it is easy to miss: migrate() runs as `state = migrate(file)`, so
+   while it is routing, `state` is still null and reading the live one would
+   quietly find nothing. The backstop has to be handed the file it is
+   cleaning, not go looking for a global that is not there yet. */
+function routeTags(genres, tropes, from){
+  var g = [], t = [], seenG = {}, seenT = {};
+  var put = function(name, fallback){
+    var k = vkey(name); if(!k) return;
+    var side = vocabHome(name, from) || fallback;
+    if(side === "trope"){ if(!seenT[k]){ seenT[k] = 1; t.push(name); } }
+    else if(!seenG[k]){ seenG[k] = 1; g.push(name); }
+  };
+  normaliseGenres(genres).forEach(function(x){ put(x, "genre"); });
+  tropeList(tropes).forEach(function(x){ put(x, "trope"); });
+  return { genres: g.slice(0, 12), tropes: t.slice(0, 12) };
+}
 function vocabAlias(kind, raw){
   var v = vocabStore(kind), k = vkey(raw);
   return (k && Object.prototype.hasOwnProperty.call(v.aliases, k)) ? v.aliases[k] : "";
@@ -2378,16 +2438,25 @@ function vocabMatches(kind, term, tags){
   for(var i = 0; i < tags.length; i++) if(vocabTagMatches(kind, term, tags[i])) return true;
   return false;
 }
-/* The chips are what you can usefully press: everything actually tagged, plus
-   every term sitting above one of those tags. That is what puts a "Fiction"
-   chip in the panel when nothing is tagged plain "Fiction" but "Historical
-   Fiction" is parented to it. */
+/* The chips are what you can usefully press, and the panel filters the
+   recommendations — so they come from the recommendations, plus every term
+   sitting above one of those tags. That is what puts a "Fiction" chip in the
+   panel when nothing is tagged plain "Fiction" but "Historical Fiction" is
+   parented to it.
+
+   Drawn from the whole vocabulary at first, which was wrong twice over: it
+   offered chips like "Astronauts" that exist only on somebody's Their Five
+   and can never match a recommendation, and it would have kept a tag in the
+   old list's chips forever after a move. The canonical list in Admin still
+   covers every source; only the filter is narrowed to what it can answer. */
 function vocabFilterTerms(kind){
-  var seen = {}, out = [];
+  var K = VOCAB_KINDS[kind], seen = {}, out = [];
   var push = function(t){
     var k = vkey(t); if(!k || seen[k]) return; seen[k] = 1; out.push(String(t).trim());
   };
-  vocabInUse(kind).forEach(function(t){ push(t); vocabAncestors(kind, t).forEach(push); });
+  approvedRecs().forEach(function(r){
+    K.clean(r[K.field]).forEach(function(t){ push(t); vocabAncestors(kind, t).forEach(push); });
+  });
   return out.sort(function(a, b){ return a.localeCompare(b); });
 }
 
@@ -2648,8 +2717,11 @@ function migrate(s){
     }
     if(typeof b.seriesIndex !== "number") b.seriesIndex = 1;
     if(typeof b.order !== "number") b.order = 0;
-    b.tropes = tropeList(b.tropes);
-    b.genres = normaliseGenres(b.genres);
+    /* Routed rather than cleaned separately, so a word an admin moved
+       between the lists is on the right side even in records written before
+       the move — the backstop behind every write path below. */
+    var broute = routeTags(b.genres, b.tropes, s);
+    b.genres = broute.genres; b.tropes = broute.tropes;
     withAges(b);
     if(b.review && typeof b.review.community !== "number") b.review.community = 0;
   });
@@ -2667,7 +2739,8 @@ function migrate(s){
        score and a StoryGraph score and they disagree — worth seeing both rather
        than picking one. The old single pair folds in, so nothing already
        saved is lost. */
-    r.tropes = tropeList(r.tropes);
+    var rroute = routeTags(r.genres, r.tropes, s);
+    r.genres = rroute.genres; r.tropes = rroute.tropes;
     r.ratings = cleanRatings(r.ratings);
     if(!r.ratings.length && Number(r.rating) > 0){
       r.ratings = [{ score: clampRating(r.rating), source: String(r.ratingSource || "").slice(0, 40) }];
@@ -7060,8 +7133,8 @@ function profFormAsBook(){
   return { id: "", title: title,
     author: ($("sAuthor") && $("sAuthor").value || "").trim(),
     pages: Number($("sPages") && $("sPages").value) || "",
-    genres: normaliseGenres($("sGenres") && $("sGenres").value || ""),
-    tropes: tropeList($("sTropes") && $("sTropes").value || ""),
+    genres: routeTags($("sGenres") && $("sGenres").value || "", $("sTropes") && $("sTropes").value || "").genres,
+    tropes: routeTags($("sGenres") && $("sGenres").value || "", $("sTropes") && $("sTropes").value || "").tropes,
     cover: sugCover || "",
     /* The form has a Summary box and it is the reason most people open this
        screen. It was not being read, so it was typed, saved, and quietly
@@ -7513,7 +7586,7 @@ function recDraft(it){
     recDrafts[id] = withAges({
       id: id, title: p.title || "Untitled", author: p.author || "",
       pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
-      genres: normaliseGenres(p.genres), tropes: tropeList(p.tropes),
+      genres: routeTags(p.genres, p.tropes).genres, tropes: routeTags(p.genres, p.tropes).tropes,
       by: String(p.by || ""), at: String(it.at || "").slice(0, 10),
       cover: safeUrl(p.cover), blurb: String(p.blurb || ""),
       summarySource: String(p.summarySource || "own"),
@@ -7706,11 +7779,13 @@ function tagChipsHTML(kind, owner, obj){
       '" data-chipid="' + esc(obj.id) + '">' +
     (list.length
       ? list.map(function(t, i){
+          var at = ' data-cmpowner="' + esc(owner) + '" data-cmpid="' + esc(obj.id) + '" data-cmpi="' + i + '"';
           return '<span class="cmptag"><span class="tag' + (kind === "trope" ? " tag--trope" : "") + '">' +
             esc(t) + "</span>" +
-            '<button class="cmptag__go" type="button" data-cmpopen="' + esc(kind) + '" data-cmpowner="' +
-              esc(owner) + '" data-cmpid="' + esc(obj.id) + '" data-cmpi="' + i +
-              '" aria-expanded="false">Compare</button></span>';
+            '<button class="cmptag__go" type="button" data-cmpopen="' + esc(kind) + '"' + at +
+              ' aria-expanded="false">Compare</button>' +
+            '<button class="cmptag__go cmptag__go--move" type="button" data-mvopen="' + esc(kind) + '"' + at +
+              ' aria-expanded="false">→ ' + esc(VOCAB_KINDS[otherKind(kind)].many) + "</button></span>";
         }).join("")
       : '<p class="hint" style="margin:0">No ' + esc(K.many.toLowerCase()) + " yet.</p>") +
     "</div><div id=\"" + esc(compareHostId(kind, owner, obj.id)) + "\"></div>";
@@ -7728,16 +7803,33 @@ function tagFieldHTML(kind, owner, obj, attr){
 /* Re-draws one chip row and its panel where it stands. Opening Compare must
    not re-render the pane: an organiser halfway through retyping a summary two
    fields up would lose it for having looked at a list. */
+/* The vocabulary rows keep their panel in a host of their own, addressed by
+   row position. Cleared wholesale first, so only ever one is open. */
+function vocabMoveRefresh(){
+  [].forEach.call(document.querySelectorAll("[data-vhost]"), function(h){ h.innerHTML = ""; });
+  [].forEach.call(document.querySelectorAll("[data-mvterm]"), function(b){
+    b.setAttribute("aria-expanded", "false");
+  });
+  if(!(compareAt && compareAt.owner === "vocab")) return;
+  var host = document.querySelector('[data-vhost="' + compareAt.row + '"]');
+  if(host) host.innerHTML = tagMoveHTML(compareAt.kind, "vocab", compareAt.id, -1);
+  var btn = document.querySelector('[data-mvrow="' + compareAt.row + '"]');
+  if(btn) btn.setAttribute("aria-expanded", "true");
+}
 function compareRefresh(kind, owner, id){
+  var mine = compareAt && compareAt.kind === kind && compareAt.owner === owner &&
+             String(compareAt.id) === String(id);
   var host = document.getElementById(compareHostId(kind, owner, id));
-  if(host) host.innerHTML = (compareAt && compareAt.kind === kind && compareAt.owner === owner &&
-    String(compareAt.id) === String(id)) ? compareHTML(kind, owner, id, compareAt.i) : "";
+  if(host) host.innerHTML = !mine ? ""
+    : compareAt.mode === "move" ? tagMoveHTML(kind, owner, id, compareAt.i)
+    : compareHTML(kind, owner, id, compareAt.i);
   var bank = document.querySelector('[data-tagchips="' + kind + '"][data-chipowner="' + owner +
     '"][data-chipid="' + id + '"]');
-  if(bank) [].forEach.call(bank.querySelectorAll("[data-cmpopen]"), function(b){
-    b.setAttribute("aria-expanded", String(!!(compareAt && compareAt.kind === kind &&
-      compareAt.owner === owner && String(compareAt.id) === String(id) &&
-      Number(b.getAttribute("data-cmpi")) === compareAt.i)));
+  if(bank) [].forEach.call(bank.querySelectorAll("[data-cmpopen],[data-mvopen]"), function(b){
+    var wantMove = b.hasAttribute("data-mvopen");
+    b.setAttribute("aria-expanded", String(!!(mine &&
+      Number(b.getAttribute("data-cmpi")) === compareAt.i &&
+      (compareAt.mode === "move") === wantMove)));
   });
 }
 /* The swap itself. One path for picking an existing term, typing a new one and
@@ -7755,6 +7847,173 @@ async function compareSwap(kind, owner, id, i, to){
   if(dupe) list.splice(i, 1); else list[i] = to;
   compareAt = null;
   if(await save("Standardising tags…")){ renderAll(); renderAdmin(); }
+}
+
+
+/* ---------- moving a tag between the two lists ---------- */
+/* The other kind. Written once so nothing below has to spell out that there
+   are exactly two of them. */
+function otherKind(kind){ return kind === "genre" ? "trope" : "genre"; }
+/* Everything a sweep would touch: the recommendations, including any pending
+   submission still being reviewed, and the reading list. Their Five is left
+   alone deliberately — those are a member's own five books rather than the
+   club's shelves. */
+function tagCarriers(kind, term){
+  var field = VOCAB_KINDS[kind].field, k = vkey(term);
+  var has = function(o){ return ((o && o[field]) || []).some(function(x){ return vkey(x) === k; }); };
+  var recs = (state.recs || []).filter(has);
+  Object.keys(recDrafts).forEach(function(id){
+    if(!recById(id) && has(recDrafts[id])) recs.push(recDrafts[id]);
+  });
+  return { recs: recs, books: (state.books || []).filter(has) };
+}
+function carrierLine(hit){
+  var bits = [];
+  if(hit.recs.length) bits.push(hit.recs.length + " recommendation" + (hit.recs.length > 1 ? "s" : ""));
+  if(hit.books.length) bits.push(hit.books.length + " on the reading list");
+  return bits.length ? bits.join(" · ") : "nothing else";
+}
+/* One record. Out of the list it is in, into the other one — and if the other
+   one already carries the word, the two become one rather than two. */
+function moveTagOn(obj, kind, term){
+  var from = VOCAB_KINDS[kind].field, to = VOCAB_KINDS[otherKind(kind)].field, k = vkey(term);
+  var src = obj[from] || [], dst = obj[to] || [];
+  var at = -1;
+  src.forEach(function(x, i){ if(vkey(x) === k) at = i; });
+  if(at === -1) return false;
+  var word = src[at];
+  src.splice(at, 1);
+  if(!dst.some(function(x){ return vkey(x) === k; })) dst.push(word);
+  obj[from] = src; obj[to] = dst;
+  return true;
+}
+/* The canonical side of a sweep: the term record crosses over, the aliases
+   that pointed at it come too, and the word is written down as living in the
+   new list so the next submission of it is routed there. */
+function moveTermAcross(kind, term, opts){
+  opts = opts || {};
+  var src = vocabStore(kind), dst = vocabStore(otherKind(kind)), k = vkey(term);
+  var rec = vocabTermRec(kind, term);
+  var kids = src.terms.filter(function(x){ return vkey(x.parent) === k; });
+  src.terms = src.terms.filter(function(x){ return vkey(x.name) !== k; });
+  var name = rec ? rec.name : String(term).trim();
+  if(!vocabTermRec(otherKind(kind), name)) dst.terms.push({ name: name, parent: "" });
+  /* a renaming alias follows the word it renames, or it would go on sending
+     submissions into a list the term has left */
+  Object.keys(src.aliases).forEach(function(a){
+    if(vkey(src.aliases[a]) === k){ dst.aliases[a] = name; delete src.aliases[a]; }
+  });
+  vocabHomes()[k] = otherKind(kind);
+  /* Children either come along, keeping this term as their parent, or stay
+     where they are with no parent at all. Never left pointing at a word that
+     is no longer in their list. */
+  kids.forEach(function(child){
+    if(opts.children === "move") moveTermAcross(kind, child.name, { children: "move" });
+    else child.parent = "";
+  });
+  if(opts.children === "move"){
+    kids.forEach(function(child){
+      var moved = vocabTermRec(otherKind(kind), child.name);
+      if(moved) moved.parent = name;
+    });
+  }
+}
+/* Does this term have family that a sweep would disturb? */
+function tagFamily(kind, term){
+  var k = vkey(term);
+  return { parent: vocabParent(kind, term),
+           children: vocabStore(kind).terms.filter(function(x){ return vkey(x.parent) === k; })
+             .map(function(x){ return x.name; }) };
+}
+/* Which word a move is about. From a book's chip it is the tag at that
+   position; from a row of the vocabulary there is no book at all and the row
+   IS the word. Everything after this point is the same either way, which is
+   the whole reason the vocabulary rows reuse this panel rather than growing
+   one of their own. */
+function moveTermOf(kind, owner, id, i){
+  if(owner === "vocab") return String(id || "");
+  var obj = compareTarget(owner, id);
+  return obj ? ((obj[VOCAB_KINDS[kind].field] || [])[i] || "") : "";
+}
+function tagMoveHTML(kind, owner, id, i){
+  var fromList = owner === "vocab";
+  var obj = fromList ? null : compareTarget(owner, id);
+  if(!fromList && !obj) return "";
+  var K = VOCAB_KINDS[kind], other = VOCAB_KINDS[otherKind(kind)];
+  var term = moveTermOf(kind, owner, id, i);
+  if(!term) return "";
+  var hit = tagCarriers(kind, term), fam = tagFamily(kind, term);
+  var dupe = !fromList && (obj[other.field] || []).some(function(x){ return vkey(x) === vkey(term); });
+  return '<div class="cmp" data-cmp="' + esc(kind) + '" data-cmpmode="move" data-cmpowner="' + esc(owner) +
+      '" data-cmpid="' + esc(id) + '" data-cmpi="' + i + '">' +
+    '<p class="cmp__head">Move <strong>' + esc(term) + "</strong> to " + esc(other.many) +
+      '<button class="cmp__x" type="button" data-cmpclose aria-label="Close">×</button></p>' +
+    (dupe ? '<p class="hint" style="margin:0 0 10px">This book already has it as a ' + esc(other.one) +
+      ", so the two will be merged into one tag.</p>" : "") +
+    (fromList
+      ? '<p class="hint" style="margin:0 0 10px">From here the move is everywhere — ' +
+        esc(carrierLine(hit)) + ". To move it on one book only, use the button beside that book's tag." +
+        "</p>"
+      : "") +
+    (fam.parent || fam.children.length
+      ? '<div class="mv__fam">' +
+          (fam.parent
+            ? '<p class="hint" style="margin:0">It sits under <strong>' + esc(fam.parent) + "</strong>, which stays in " +
+              esc(K.many) + ". Parents only work inside one list, so it arrives with none.</p>" +
+              '<label class="mv__opt"><input type="checkbox" data-mvparent> Move ' + esc(fam.parent) +
+              " across as well" + (fam.children.length ? "" : "") +
+              ' <span class="hint">(its other children would be left without a parent)</span></label>'
+            : "") +
+          (fam.children.length
+            ? '<p class="hint" style="margin:' + (fam.parent ? "10px 0 0" : "0") + '">' +
+                esc(fam.children.length) + " " + esc(K.one) +
+                (fam.children.length > 1 ? "s sit" : " sits") + " under it: " +
+                esc(fam.children.join(", ")) + ".</p>" +
+              '<label class="mv__opt"><input type="checkbox" data-mvkids checked> Move them across too ' +
+              '<span class="hint">(unchecked, they stay in ' + esc(K.many) + " with no parent)</span></label>"
+            : "") +
+          (fromList ? "" :
+            '<p class="hint" style="margin:10px 0 0">These only apply to Move everywhere.</p>') +
+        "</div>"
+      : "") +
+    '<div class="cmp__foot">' +
+      (fromList ? ""
+        : '<button class="btn btn--sm btn--surf" type="button" data-mvone>Move on this book</button>') +
+      '<button class="btn btn--sm ' + (fromList ? "btn--surf" : "btn--ghost") +
+        '" type="button" data-mvall>Move everywhere — ' + esc(carrierLine(hit)) + "</button>" +
+    "</div></div>";
+}
+/* The move. One record or every one of them; the sweep is the same operation
+   repeated, plus the canonical half. */
+async function tagMove(kind, owner, id, i, all){
+  var obj = owner === "vocab" ? null : compareTarget(owner, id);
+  if(owner !== "vocab" && !obj) return;
+  var term = moveTermOf(kind, owner, id, i);
+  if(!term) return;
+  if(owner === "vocab") all = true;   /* there is no one book to move it on */
+  if(all){
+    var box = document.querySelector("[data-cmp][data-cmpmode='move']");
+    var kids = box && box.querySelector("[data-mvkids]");
+    var par = box && box.querySelector("[data-mvparent]");
+    var hit = tagCarriers(kind, term);
+    var parentName = par && par.checked ? vocabParent(kind, term) : "";
+    hit.recs.concat(hit.books).forEach(function(o){ moveTagOn(o, kind, term); });
+    if(parentName){
+      tagCarriers(kind, parentName).recs.concat(tagCarriers(kind, parentName).books)
+        .forEach(function(o){ moveTagOn(o, kind, parentName); });
+    }
+    moveTermAcross(kind, term, { children: kids && kids.checked ? "move" : "drop" });
+    if(parentName){
+      moveTermAcross(kind, parentName, { children: "drop" });
+      /* Both crossed over, so the relationship crosses with them — moving a
+         parent along is only worth offering if the pair arrives still joined. */
+      var landed = vocabTermRec(otherKind(kind), term);
+      if(landed) landed.parent = parentName;
+    }
+  }
+  else moveTagOn(obj, kind, term);
+  compareAt = null;
+  if(await save("Moving the tag…")){ renderAll(); renderAdmin(); }
 }
 
 /* ---------- Admin: the canonical lists themselves ---------- */
@@ -7777,18 +8036,25 @@ function vocabBlock(kind){
       ' <span class="pill">' + terms.length + " in the list</span></summary>" +
     '<div class="editor__body">' +
       (terms.length
-        ? '<div class="vocablist">' + terms.map(function(t){
-            var cur = vocabParent(kind, t);
-            return '<div class="vocabrow"><span class="tag' + (kind === "trope" ? " tag--trope" : "") + '">' +
-              esc(t) + "</span>" +
+        /* Each row is addressed by its position rather than by its text: a
+           term can hold a quote or a bracket, and a selector built out of one
+           would not survive it. */
+        ? '<div class="vocablist">' + terms.map(function(t, ri){
+            var cur = vocabParent(kind, t), row = kind + "-" + ri;
+            return '<div class="vocabitem"><div class="vocabrow">' +
+              '<span class="tag' + (kind === "trope" ? " tag--trope" : "") + '">' + esc(t) + "</span>" +
               '<span class="vocabrow__n">' + (counts[vkey(t)] || 0) + " in use</span>" +
+              '<button class="vocabrow__move" type="button" data-mvterm="' + esc(kind) + '" data-mvrow="' +
+                esc(row) + '" data-mvname="' + esc(t) + '" aria-expanded="false">→ ' +
+                esc(VOCAB_KINDS[otherKind(kind)].many) + "</button>" +
               '<select class="select" data-vparent="' + esc(t) + '" data-vkind="' + esc(kind) + '">' +
                 '<option value="">No parent</option>' +
                 terms.filter(function(o){ return vkey(o) !== vkey(t); }).map(function(o){
                   return '<option value="' + esc(o) + '"' + (vkey(o) === vkey(cur) ? " selected" : "") +
                     ">" + esc(o) + "</option>";
                 }).join("") +
-              "</select></div>";
+              "</select></div>" +
+              '<div class="vocabhost" data-vhost="' + esc(row) + '"></div></div>';
           }).join("") + "</div>"
         : '<p class="hint">Nothing tagged yet, so there is nothing to tidy. The list fills itself as ' +
           esc(K.many.toLowerCase()) + " are used.</p>") +
@@ -7800,10 +8066,10 @@ function vocabBlock(kind){
           '<p class="hint" style="margin:0 0 8px">What a Compare swap taught the site. These are applied to ' +
           'new submissions before anything else.</p><div class="vocablist">' +
           aliases.map(function(k){
-            return '<div class="vocabrow"><span class="vocabrow__alias">' + esc(k) + " → " +
-              esc(v.aliases[k]) + "</span>" +
+            return '<div class="vocabitem"><div class="vocabrow"><span class="vocabrow__alias">' + esc(k) +
+              " → " + esc(v.aliases[k]) + "</span>" +
               '<button class="btn btn--sm btn--ghost" type="button" style="margin-left:auto" data-vforget="' +
-                esc(k) + '" data-vkind="' + esc(kind) + '">Forget</button></div>';
+                esc(k) + '" data-vkind="' + esc(kind) + '">Forget</button></div></div>';
           }).join("") + "</div></div>"
         : "") +
     "</div></details>";
@@ -8841,23 +9107,40 @@ document.addEventListener("click", async function(e){
   if((el = t.closest("[data-atab]"))){ adminTab = el.getAttribute("data-atab"); renderAdmin(); return; }
 
   /* Compare: standardising one tag against its canonical list */
-  if((el = t.closest("[data-cmpopen]"))){
-    var ck = el.getAttribute("data-cmpopen"), co = el.getAttribute("data-cmpowner");
+  if((el = t.closest("[data-mvterm]"))){
+    var vk = el.getAttribute("data-mvterm"), vrow = el.getAttribute("data-mvrow");
+    var vname = el.getAttribute("data-mvname");
+    var vWas = compareAt && compareAt.owner === "vocab" && compareAt.row === vrow;
+    compareAt = vWas ? null : { kind: vk, owner: "vocab", id: vname, i: -1, mode: "move", row: vrow };
+    vocabMoveRefresh();
+    return;
+  }
+  if((el = t.closest("[data-cmpopen]")) || (el = t.closest("[data-mvopen]"))){
+    var cmode = el.hasAttribute("data-mvopen") ? "move" : "compare";
+    var ck = el.getAttribute(cmode === "move" ? "data-mvopen" : "data-cmpopen");
+    var co = el.getAttribute("data-cmpowner");
     var ci = el.getAttribute("data-cmpid"), cn = Number(el.getAttribute("data-cmpi"));
     var wasOpen = compareAt && compareAt.kind === ck && compareAt.owner === co &&
-                  String(compareAt.id) === String(ci) && compareAt.i === cn;
+                  String(compareAt.id) === String(ci) && compareAt.i === cn &&
+                  compareAt.mode === cmode;
     var prev = compareAt;
-    compareAt = wasOpen ? null : { kind: ck, owner: co, id: ci, i: cn };
+    compareAt = wasOpen ? null : { kind: ck, owner: co, id: ci, i: cn, mode: cmode };
     /* only ever one open, so the one being left has to be redrawn too */
-    if(prev && !(prev.kind === ck && prev.owner === co && String(prev.id) === String(ci)))
+    if(prev && prev.owner === "vocab") vocabMoveRefresh();
+    else if(prev && !(prev.kind === ck && prev.owner === co && String(prev.id) === String(ci)))
       compareRefresh(prev.kind, prev.owner, prev.id);
     compareRefresh(ck, co, ci);
     return;
   }
   if((el = t.closest("[data-cmpclose]"))){
-    var cw = el.closest("[data-cmp]");
+    var cw = el.closest("[data-cmp]"), wasVocab = cw && cw.getAttribute("data-cmpowner") === "vocab";
     compareAt = null;
-    if(cw) compareRefresh(cw.getAttribute("data-cmp"), cw.getAttribute("data-cmpowner"), cw.getAttribute("data-cmpid"));
+    if(wasVocab) vocabMoveRefresh();
+    else if(cw) compareRefresh(cw.getAttribute("data-cmp"), cw.getAttribute("data-cmpowner"), cw.getAttribute("data-cmpid"));
+    return;
+  }
+  if((t.closest("[data-mvone]") || t.closest("[data-mvall]")) && compareAt){
+    await tagMove(compareAt.kind, compareAt.owner, compareAt.id, compareAt.i, !!t.closest("[data-mvall]"));
     return;
   }
   if((el = t.closest("[data-cmppick]")) && compareAt){
@@ -8976,8 +9259,12 @@ document.addEventListener("click", async function(e){
     var pg = get("pages"); if(pg) bb.pages = Number(pg.value) || null;
     var si = get("seriesIndex"); if(si) bb.seriesIndex = Number(si.value) || 1;
     var pp = get("progressPage"); if(pp) bb.progressPage = Math.max(0, Number(pp.value) || 0);
-    var gn = get("genres"); if(gn) bb.genres = normaliseGenres(gn.value);
-    var btr = get("tropes"); if(btr) bb.tropes = tropeList(btr.value);
+    var gn = get("genres"), btr = get("tropes");
+    if(gn || btr){
+      var broute2 = routeTags(gn ? gn.value : bb.genres, btr ? btr.value : bb.tropes);
+      if(gn) bb.genres = broute2.genres;
+      if(btr) bb.tropes = broute2.tropes;
+    }
     var picks = p2.querySelectorAll('[data-bmember][data-bid="' + bb.id + '"]');
     if(picks.length){
       bb.members = [];
@@ -9260,8 +9547,16 @@ function readRecFields(rec){
     var n = get(f); if(n) rec[f] = f === "blurb" ? n.value : n.value.trim();
   });
   var pg = get("pages"); if(pg) rec.pages = Number(pg.value) || null;
-  var gn = get("genres"); if(gn) rec.genres = normaliseGenres(gn.value);
-  var tr = get("tropes"); if(tr) rec.tropes = tropeList(tr.value);
+  /* Both boxes together, because a word that was moved between the lists has
+     to land on the right side whichever box it is sitting in. This runs on
+     Approve as well as on Save, which is where a move on a pending suggestion
+     would otherwise be read back out of the old box and undone. */
+  var gn = get("genres"), tr = get("tropes");
+  if(gn || tr){
+    var rroute2 = routeTags(gn ? gn.value : rec.genres, tr ? tr.value : rec.tropes);
+    if(gn) rec.genres = rroute2.genres;
+    if(tr) rec.tropes = rroute2.tropes;
+  }
   if(pane.querySelector('[data-dualid="rc:' + rec.id + '"]')){
     var age = dualValue("rc:" + rec.id);
     rec.ageMin = age.lo; rec.ageMax = age.hi; rec.level = levelText(rec);
@@ -9280,7 +9575,7 @@ function acceptSubmission(item, opts){
     state.recs.push(withAges({
       id: item.id, title: String(p.title || "Untitled").slice(0, 140), author: String(p.author || "").slice(0, 140),
       pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
-      genres: normaliseGenres(p.genres), tropes: tropeList(p.tropes),
+      genres: routeTags(p.genres, p.tropes).genres, tropes: routeTags(p.genres, p.tropes).tropes,
       by: String(p.by || "").slice(0, 60),
       /* who sent it, when they were signed in — a name alone cannot be
          followed back to a person, and two of the names already here belong
@@ -9372,8 +9667,9 @@ function adoptRec(rec, status, community){
   var picked = community === undefined
     ? (scores.length ? scores[0].score : 0)
     : clampRating(community);
-  var copy = withAges({ id: rec.id, title: rec.title, author: rec.author, pages: rec.pages, genres: rec.genres || [],
-    tropes: tropeList(rec.tropes),
+  var proute = routeTags(rec.genres, rec.tropes);
+  var copy = withAges({ id: rec.id, title: rec.title, author: rec.author, pages: rec.pages, genres: proute.genres,
+    tropes: proute.tropes,
     ageMin: rec.ageMin, ageMax: rec.ageMax, blurb: rec.blurb, status: status, cover: rec.cover || "", badge: "",
     series: "", seriesIndex: 1, started: status === "current" ? todayISO() : "",
     finished: status === "past" ? todayISO() : "", progressPage: 0, members: [],
@@ -10879,7 +11175,8 @@ $("suggestForm").addEventListener("submit", async function(e){
     var res = await submitPublic("suggest", {
       title: title, author: author, pages: Number(el.pages.value) || null,
       ageMin: age.lo, ageMax: age.hi, level: levelText({ ageMin: age.lo, ageMax: age.hi }),
-      genres: genres, tropes: tropeList(($("sTropes") || {}).value || ""),
+      genres: routeTags(genres, ($("sTropes") || {}).value || "").genres,
+      tropes: routeTags(genres, ($("sTropes") || {}).value || "").tropes,
       blurb: blurb, summarySource: chosen.from, cover: sugCover, by: by,
       byId: (myMember() || {}).id || "",
       ratings: ratingsForSubmit()
