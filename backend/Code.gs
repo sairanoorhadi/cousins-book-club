@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-14a';
+var SCRIPT_VERSION = '2026-10-14b';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -1282,8 +1282,11 @@ function fileSuggestion(item) {
     var p = item.payload || {};
     var title = p.title, author = p.author, who = String(p.by || '').trim();
 
-    var state = {};
-    try { state = JSON.parse(ghGetFile(STATE_PATH).content || '{}'); } catch (err) { state = {}; }
+    /* Not swallowed. A read that fails here would leave the club looking as
+       though it had no recommendations at all, and the submission would be
+       filed as new against an empty list — the one outcome this whole
+       function exists to prevent. Better to refuse it and say why. */
+    var state = JSON.parse(ghGetFile(STATE_PATH).content || '{}');
     var recs = Array.isArray(state.recs) ? state.recs : [];
     for (var i = 0; i < recs.length; i++) {
       var r = recs[i];
@@ -1578,7 +1581,10 @@ function ghGetFile(path) {
     muteHttpExceptions: true
   });
   if (res.getResponseCode() === 404) return { content: '', sha: null };
-  if (res.getResponseCode() >= 300) throw new Error('GitHub read failed: ' + res.getResponseCode());
+  /* The path is in the message because the site shows this to whoever was
+     submitting, and "GitHub read failed: 401" alone does not say whether the
+     club's file or its inbox was out of reach. */
+  if (res.getResponseCode() >= 300) throw new Error('GitHub read failed: ' + res.getResponseCode() + ' on ' + path);
   var j = JSON.parse(res.getContentText());
   return {
     content: Utilities.newBlob(Utilities.base64Decode(j.content)).getDataAsString(),
@@ -1603,7 +1609,7 @@ function ghPutFile(path, text, sha, message) {
   /* Before the status is looked at: a failed write can still have landed, and
      a memo that survives either outcome is a memo that can be wrong. */
   if (path === STATE_PATH) stateForget();
-  if (res.getResponseCode() >= 300) throw new Error('GitHub write failed: ' + res.getResponseCode());
+  if (res.getResponseCode() >= 300) throw new Error('GitHub write failed: ' + res.getResponseCode() + ' on ' + path);
 }
 
 /* ----------------------------------------------------------- AI summaries */
