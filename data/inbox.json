@@ -1562,6 +1562,42 @@
         "emailRef": "sub-94a26144-74f",
         "emailHint": "m••••@gmail.com"
       }
+    },
+    {
+      "id": "suggest-fa0a1dad-191",
+      "kind": "suggest",
+      "at": "2026-10-16T06:38:27.226Z",
+      "payload": {
+        "title": "Artemis",
+        "author": "Andy Weir",
+        "pages": 322,
+        "ageMin": 0,
+        "ageMax": 100,
+        "level": "Ages 0+",
+        "genres": [
+          "Science Fiction",
+          "Smuggling",
+          "Conspiracies",
+          "Conspiraciones",
+          "Contrabando",
+          "Luna",
+          "Ficción",
+          "Spanish language materials",
+          "New York Times bestseller"
+        ],
+        "tropes": [],
+        "blurb": "",
+        "summarySource": "own",
+        "cover": "https://covers.openlibrary.org/b/id/8235551-L.jpg",
+        "by": "Saira",
+        "byId": "",
+        "ratings": [
+          {
+            "score": 3.68,
+            "source": "Open Library"
+          }
+        ]
+      }
     }
   ]
 }
