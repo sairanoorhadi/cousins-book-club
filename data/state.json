@@ -1,5 +1,5 @@
 {
-  "rev": 1549,
+  "rev": 1550,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2448,6 +2448,14 @@
         {
           "name": "African American",
           "parent": "Global"
+        },
+        {
+          "name": "Animals",
+          "parent": "Fables"
+        },
+        {
+          "name": "Immigration",
+          "parent": "Social Issues"
         }
       ],
       "aliases": {
