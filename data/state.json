@@ -1,5 +1,5 @@
 {
-  "rev": 1567,
+  "rev": 1568,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2415,38 +2415,6 @@
       ],
       "level": "Ages 13+",
       "tropes": []
-    },
-    {
-      "id": "suggest-fa0a1dad-191",
-      "title": "Artemis",
-      "author": "Andy Weir",
-      "pages": 322,
-      "ageMin": 0,
-      "ageMax": 100,
-      "genres": [
-        "Science Fiction",
-        "Conspiracies",
-        "Spanish"
-      ],
-      "tropes": [],
-      "by": "Saira",
-      "byId": "",
-      "status": "approved",
-      "at": "2026-10-16",
-      "endorsements": [],
-      "cover": "https://covers.openlibrary.org/b/id/8235551-L.jpg",
-      "blurb": "",
-      "summarySource": "own",
-      "shortlist": false,
-      "reviews": [],
-      "dislikes": [],
-      "ratings": [
-        {
-          "score": 3.68,
-          "source": "Open Library"
-        }
-      ],
-      "level": "Ages 0+"
     }
   ],
   "inbox": [
