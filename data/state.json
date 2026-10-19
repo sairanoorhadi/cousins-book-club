@@ -1,5 +1,5 @@
 {
-  "rev": 1553,
+  "rev": 1554,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1046,7 +1046,8 @@
             "mb-saira",
             "mb-mtqod125fcqtd",
             "mb-mtaiuu788is5a"
-          ]
+          ],
+          "carried": true
         },
         {
           "id": "pred-133b7baa-043",
@@ -1109,6 +1110,16 @@
             "mb-mtqod125fcqtd",
             "mb-mtaiuu788is5a",
             "mb-mtcdg54c8cyyc"
+          ]
+        },
+        {
+          "id": "pred-88f8af33-483",
+          "text": "By the end of the book Steve's dad is going to get over his racism",
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mtqod125fcqtd",
+            "mb-mtaiuu788is5a"
           ]
         }
       ],
