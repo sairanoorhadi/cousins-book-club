@@ -1,5 +1,5 @@
 {
-  "rev": 1557,
+  "rev": 1558,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1127,6 +1127,17 @@
         {
           "id": "pred-2045f831-ba0",
           "text": "Steve is not goign to be able to walk or be absolutely destroyed",
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mtaiuu788is5a",
+            "mb-mtcdg54c8cyyc",
+            "mb-mtqod125fcqtd"
+          ]
+        },
+        {
+          "id": "pred-107b68b4-fbc",
+          "text": "Hasan does not fully believe in Islam",
           "by": "",
           "byIds": [
             "mb-saira",
