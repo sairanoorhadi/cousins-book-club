@@ -1,5 +1,5 @@
 {
-  "rev": 1558,
+  "rev": 1559,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1144,6 +1144,16 @@
             "mb-mtaiuu788is5a",
             "mb-mtcdg54c8cyyc",
             "mb-mtqod125fcqtd"
+          ]
+        },
+        {
+          "id": "pred-2db2b0a2-5f9",
+          "text": "Someone from Hasan's friend group is in kahoots with the terroist group",
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mtcdg54c8cyyc",
+            "mb-mtaiuu788is5a"
           ]
         }
       ],
