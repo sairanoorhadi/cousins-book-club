@@ -1,5 +1,5 @@
 {
-  "rev": 1335,
+  "rev": 1336,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1533,7 +1533,7 @@
       "cover": "https://covers.openlibrary.org/b/id/7016872-L.jpg",
       "blurb": "REEF IS AN EMBITTERED YOUNG OFFENDER, hardly able to contain his anger at the world over the death of his grandmother, the only person who had shown him any love. Seventeen-year-old Leeza is mourning the death of her older sister. A stone hurled in rage shatters both their lives and throws them together in the most unexpected way―and offers them a chance at healing.",
       "summarySource": "fetched",
-      "shortlist": false,
+      "shortlist": true,
       "reviews": [],
       "endorsements": [],
       "dislikes": [],
