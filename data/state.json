@@ -1,5 +1,5 @@
 {
-  "rev": 1560,
+  "rev": 1561,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1179,6 +1179,14 @@
         {
           "id": "disc-e1bac1cd-290",
           "text": "Fatimah sees herself as the perfect child",
+          "by": "",
+          "byIds": [
+            "mb-saira"
+          ]
+        },
+        {
+          "id": "disc-5d29c9f9-9ee",
+          "text": "Fatimah did not show her mom the note!!!!!!",
           "by": "",
           "byIds": [
             "mb-saira"
