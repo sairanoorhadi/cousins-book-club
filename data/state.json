@@ -1,5 +1,5 @@
 {
-  "rev": 1565,
+  "rev": 1566,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2552,10 +2552,15 @@
         {
           "name": "Immigration",
           "parent": "Social Issues"
+        },
+        {
+          "name": "Spanish language materials",
+          "parent": ""
         }
       ],
       "aliases": {
-        "global": "Global"
+        "global": "Global",
+        "spanish language materials": "Spanish language materials"
       }
     },
     "trope": {
