@@ -1,5 +1,5 @@
 {
-  "rev": 1559,
+  "rev": 1560,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1154,6 +1154,16 @@
             "mb-saira",
             "mb-mtcdg54c8cyyc",
             "mb-mtaiuu788is5a"
+          ]
+        },
+        {
+          "id": "pred-cf8ba065-2b3",
+          "text": "The terrorists are going to get caught because of the phone call or snowball effect from it",
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mtaiuu788is5a",
+            "mb-mtqod125fcqtd"
           ]
         }
       ],
