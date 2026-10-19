@@ -1,5 +1,5 @@
 {
-  "rev": 1337,
+  "rev": 1338,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1311,7 +1311,7 @@
       "cover": "https://covers.openlibrary.org/b/id/7434883-L.jpg",
       "blurb": "In Mare Barrow's world, blood color decides everything: Silvers rule with superhuman abilities, and Reds like Mare scrape by as servants and soldiers. A pickpocket with no prospects, she lands a job at the Silver palace and then, in front of the entire court, does something a Red should not be able to do. The king's solution is to hide her in plain sight — passed off as a lost Silver noble and betrothed to a prince — while Mare quietly makes contact with a Red resistance movement. Aveyard writes a fast-moving court intrigue where the question is less what Mare can do than whom she can believe.",
       "summarySource": "ai",
-      "shortlist": false,
+      "shortlist": true,
       "reviews": [],
       "endorsements": [],
       "dislikes": [],
