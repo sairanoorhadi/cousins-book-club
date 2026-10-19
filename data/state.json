@@ -1,5 +1,5 @@
 {
-  "rev": 1554,
+  "rev": 1555,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1036,7 +1036,8 @@
             "mb-mtaiuu788is5a",
             "mb-mtcdg54c8cyyc",
             "mb-mtqod125fcqtd"
-          ]
+          ],
+          "carried": true
         },
         {
           "id": "pred-c3c416c5-8af",
@@ -1120,6 +1121,17 @@
             "mb-saira",
             "mb-mtqod125fcqtd",
             "mb-mtaiuu788is5a"
+          ]
+        },
+        {
+          "id": "pred-2045f831-ba0",
+          "text": "Steve is not goign to be able to walk or be absolutely destroyed",
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mtaiuu788is5a",
+            "mb-mtcdg54c8cyyc",
+            "mb-mtqod125fcqtd"
           ]
         }
       ],
