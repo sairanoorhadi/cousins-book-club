@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-14b';
+var SCRIPT_VERSION = '2026-10-19a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -34,6 +34,206 @@ var REMIND_MINUTES = 30;
 
 /* Submissions the web app will accept. Anything else is rejected. */
 var KINDS = ['suggest', 'join', 'profile', 'endorse', 'notify'];
+
+/* ------------------------------------------------------------ voting
+   Which book the club reads next. Every member rates every candidate from 1
+   to 10 — ten being "I am dying to read this", one being "throw it in the
+   bin" — and the highest total wins.
+
+   The ballots do NOT live in data/state.json. That file is the public face of
+   a public repository: anything in it can be read by anyone who finds the
+   URL, for ever, including by the people whose ballots they are. They live in
+   this script's own Script Properties instead, which nothing outside the
+   script can read, and every write to them is serialised with LockService so
+   two people voting in the same second cannot overwrite each other.
+
+   What IS published is the arithmetic: how many have voted, and after the
+   vote closes the totals and the winner. Not who gave what. */
+var VOTE_MIN = 1, VOTE_MAX = 10;
+var VOTE_BALLOT_KEY = 'ballots:';
+
+/* The live vote, or the most recent one. Reading rather than deciding: the
+   status is worked out from the clock every time, never stored, so a vote
+   opens and closes on time whether or not anything happened to write to the
+   file at the right moment. */
+function voteOf(state, id) {
+  var list = (state && state.votes) || [];
+  if (id) {
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+  return list.length ? list[list.length - 1] : null;
+}
+function voteStatus(v, nowMs) {
+  if (!v) return 'none';
+  var now = nowMs || Date.now();
+  if (v.cancelledAt) return 'cancelled';
+  if (v.closedAt) return 'closed';
+  var opens = Date.parse(v.opensAt), closes = Date.parse(v.closesAt);
+  if (isFinite(opens) && now < opens) return 'scheduled';
+  if (isFinite(closes) && now >= closes) return 'closed';
+  return 'open';
+}
+function ballotKeyFor(id) { return VOTE_BALLOT_KEY + String(id || ''); }
+function ballotsRead(id) {
+  try { return JSON.parse(PropertiesService.getScriptProperties()
+    .getProperty(ballotKeyFor(id)) || '{}'); }
+  catch (err) { return {}; }
+}
+function ballotsWrite(id, all) {
+  PropertiesService.getScriptProperties().setProperty(ballotKeyFor(id), JSON.stringify(all));
+}
+
+/* One member's ratings, cleaned against the candidates the vote was launched
+   with. A rating for a book that is not on the ballot is dropped rather than
+   stored, and every candidate must carry a number in range or the ballot is
+   refused — a half-filled ballot would quietly count as low scores. */
+function voteRatings(v, raw) {
+  var want = (v.candidates || []).map(function (c) { return String(c.id); });
+  var out = {}, got = 0;
+  want.forEach(function (id) {
+    var n = Math.round(Number((raw || {})[id]));
+    if (!isFinite(n) || n < VOTE_MIN || n > VOTE_MAX) return;
+    out[id] = n; got++;
+  });
+  return got === want.length ? out : null;
+}
+
+function voteCast(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var member = memberFor(email);
+  if (!member) return { ok: false, error: 'not a member yet' };
+
+  var state;
+  try { state = JSON.parse(stateRead().content || '{}'); }
+  catch (err) { return { ok: false, error: 'unreadable state' }; }
+  var v = voteOf(state, String(payload.voteId || ''));
+  if (!v) return { ok: false, error: 'no such vote' };
+
+  /* The window is enforced here, not by hiding a button. A ballot posted
+     before it opens or after it closes is refused whatever the page thinks. */
+  var st = voteStatus(v);
+  if (st === 'scheduled') return { ok: false, error: 'not open yet' };
+  if (st === 'closed') return { ok: false, error: 'voting has closed' };
+  if (st === 'cancelled') return { ok: false, error: 'vote cancelled' };
+
+  var ballot;
+  if (v.kind === 'runoff') {
+    var pick = String(payload.pick || '');
+    var ok = (v.candidates || []).some(function (c) { return String(c.id) === pick; });
+    if (!ok) return { ok: false, error: 'pick one of the books' };
+    ballot = { pick: pick };
+  } else {
+    var rates = voteRatings(v, payload.ratings);
+    if (!rates) return { ok: false, error: 'rate every book from 1 to 10' };
+    ballot = { ratings: rates };
+  }
+  ballot.at = new Date().toISOString();
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  var turnout;
+  try {
+    var all = ballotsRead(v.id);
+    /* One ballot each: a second submission replaces the first rather than
+       adding to it, which is what lets anyone change their mind. */
+    all[member.id] = ballot;
+    ballotsWrite(v.id, all);
+    turnout = Object.keys(all).length;
+  } finally {
+    lock.releaseLock();
+  }
+
+  /* The count is public; the ballots are not. */
+  var wrote = withState('A member voted', function (st2) {
+    var vv = voteOf(st2, v.id);
+    if (!vv) return { error: 'no such vote' };
+    vv.turnout = turnout;
+    return {};
+  });
+  return { ok: true, turnout: turnout, mine: ballot, published: !!wrote.ok };
+}
+
+/* Your own ballot, and nobody else's. There is no endpoint that returns
+   another member's. */
+function voteMine(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var member = memberFor(email);
+  if (!member) return { ok: false, error: 'not a member yet' };
+  var all = ballotsRead(String(payload.voteId || ''));
+  return { ok: true, mine: all[member.id] || null };
+}
+
+/* Who has voted — ids only, never what they chose. Any signed-in member may
+   ask, so the club can chase its own stragglers. Deliberately not published
+   to state.json, which anyone at all can read. */
+function voteWho(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  if (!memberFor(email)) return { ok: false, error: 'not a member yet' };
+  var all = ballotsRead(String(payload.voteId || ''));
+  return { ok: true, voted: Object.keys(all) };
+}
+
+/* Count the ballots and publish the arithmetic. Needs no permission of its
+   own because it refuses to run until the vote is actually over: there is
+   nothing here an organiser can do early that anyone else could not do
+   honestly once the clock ran out. */
+function voteTally(payload) {
+  var state;
+  try { state = JSON.parse(stateRead().content || '{}'); }
+  catch (err) { return { ok: false, error: 'unreadable state' }; }
+  var v = voteOf(state, String(payload.voteId || ''));
+  if (!v) return { ok: false, error: 'no such vote' };
+  if (v.cancelledAt) return { ok: false, error: 'vote cancelled' };
+  if (voteStatus(v) !== 'closed') return { ok: false, error: 'still open' };
+  if (v.totals) return { ok: true, already: true, totals: v.totals, winner: v.winner };
+
+  var all = ballotsRead(v.id);
+  var ids = Object.keys(all);
+  var rows = (v.candidates || []).map(function (c) {
+    var total = 0, raters = 0, picks = 0;
+    ids.forEach(function (mid) {
+      var b = all[mid] || {};
+      if (v.kind === 'runoff') { if (String(b.pick) === String(c.id)) picks++; }
+      else {
+        var n = Number((b.ratings || {})[c.id]);
+        if (isFinite(n) && n) { total += n; raters++; }
+      }
+    });
+    return { id: c.id, title: c.title, total: v.kind === 'runoff' ? picks : total,
+             raters: v.kind === 'runoff' ? picks : raters };
+  });
+  var best = -1;
+  rows.forEach(function (r) { if (r.total > best) best = r.total; });
+  var top = rows.filter(function (r) { return r.total === best; });
+  rows.sort(function (a, b) { return b.total - a.total; });
+
+  var out = withState('Vote counted', function (st2) {
+    var vv = voteOf(st2, v.id);
+    if (!vv) return { error: 'no such vote' };
+    vv.totals = rows;
+    vv.turnout = ids.length;
+    if (!vv.closedAt) vv.closedAt = new Date().toISOString();
+    /* A tie is reported as a tie. The organiser launches a runoff or breaks
+       it by hand; this does not pick for them. */
+    vv.winner = (ids.length && top.length === 1) ? top[0].id : null;
+    vv.tied = top.length > 1 ? top.map(function (r) { return r.id; }) : null;
+    return {};
+  });
+  if (!out.ok) return out;
+  return { ok: true, totals: rows, winner: top.length === 1 ? top[0].id : null,
+           tied: top.length > 1 ? top.map(function (r) { return r.id; }) : null,
+           turnout: ids.length };
+}
+
+/* Nothing keeps ballots for a vote that was cancelled or whose result is
+   already published and settled. */
+function voteForget(id) {
+  PropertiesService.getScriptProperties().deleteProperty(ballotKeyFor(id));
+}
 
 function prop(name) {
   return PropertiesService.getScriptProperties().getProperty(name) || '';
@@ -89,6 +289,10 @@ function doPost(e) {
   if (kind === 'notes-verdict') return json(notesVerdict(payload));
   if (kind === 'notes-carry') return json(notesCarry(payload));
   if (kind === 'meet-ready') return json(meetReady(payload));
+  if (kind === 'vote-cast') return json(voteCast(payload));
+  if (kind === 'vote-mine') return json(voteMine(payload));
+  if (kind === 'vote-who') return json(voteWho(payload));
+  if (kind === 'vote-tally') return json(voteTally(payload));
   if (kind === 'photo-add') return json(photoAdd(payload));
   if (kind === 'photo-list') return json(photoList(payload));
   if (kind === 'photo-delete') return json(photoDelete(payload));
