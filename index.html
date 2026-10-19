@@ -3755,6 +3755,38 @@ function normTitle(s){
     .trim()
     .replace(/^(the|a|an)\s+/, "");
 }
+
+/* ---------- putting titles in order ----------
+   One key, and every alphabetical list on the site uses it. normTitle is left
+   exactly as it stands: its job is deciding whether two titles are the SAME
+   book, for the duplicate check and the typo correction, and widening it for
+   sorting would quietly change both of those. This is a separate question
+   with a separate answer.
+
+   Nothing here touches how a title is displayed. "The Book Thief" files under
+   B and still reads "The Book Thief". */
+function titleKey(s){
+  var t = String(s || "").toLowerCase()
+    /* A title can open with a quote or a bracket — "‘Salem’s Lot" files
+       under S rather than ahead of every other book on the shelf. */
+    .replace(/^[\s"'‘’“”(\[{«]+/, "");
+  /* The article goes only when something follows it, so a book actually
+     called "The" or "A" keeps its name instead of sorting as nothing. */
+  t = t.replace(/^(the|a|an)\s+(?=\S)/, "");
+  return t.trim();
+}
+/* numeric so "1984" and "2001" land where a reader expects rather than in
+   character order, and base sensitivity so an accent or a capital is not a
+   different letter. Author then id break the tie, so two books sharing a
+   title keep the same order between renders instead of swapping about. */
+function byTitle(a, b){
+  var opt = { numeric: true, sensitivity: "base" };
+  return titleKey(a && a.title).localeCompare(titleKey(b && b.title), undefined, opt) ||
+    String((a && a.author) || "").localeCompare(String((b && b.author) || ""), undefined, opt) ||
+    String((a && a.id) || "").localeCompare(String((b && b.id) || ""));
+}
+function sortedByTitle(list){ return (list || []).slice().sort(byTitle); }
+
 function titleHasQuery(query, title){
   var q = normTitle(query), t = normTitle(title);
   return !!q && t.indexOf(q) !== -1;
@@ -4853,12 +4885,13 @@ function pagelessCount(){
 function sortRecs(list){
   var by = recFilter.sort;
   return list.slice().sort(function(a, b){
-    if(by === "title") return a.title.localeCompare(b.title);
-    if(by === "author") return surname(a.author).localeCompare(surname(b.author)) || a.title.localeCompare(b.title);
-    /* default: most endorsed first (dislikes count against), then author surname */
-    return (recScore(b) - recScore(a)) ||
-      surname(a.author).localeCompare(surname(b.author)) ||
-      a.title.localeCompare(b.title);
+    if(by === "title") return byTitle(a, b);
+    if(by === "author") return surname(a.author).localeCompare(surname(b.author)) || byTitle(a, b);
+    /* Default: most endorsed first, dislikes counting against. Two books on
+       the same score used to be separated by their authors' surnames, which
+       is not a thing anyone scanning a shelf is reading for — it is the
+       titles they are looking at, so it is the titles that settle it. */
+    return (recScore(b) - recScore(a)) || byTitle(a, b);
   });
 }
 /* ---------- a tag list's window ---------- */
@@ -5130,7 +5163,13 @@ function renderRecGrid(){
 }
 function renderShortlist(){
   var host = $("shortGrid"); if(!host) return;
-  var list = sortRecs(shortlistRecs());
+  /* Contenders, in the order that makes them contenders: most endorsed
+     first, and titles settling a tie. It used to follow whatever the shelf's
+     Order dropdown was set to, which meant picking "A-Z by title" quietly
+     turned the shortlist into something other than a ranking. */
+  var list = shortlistRecs().slice().sort(function(a, b){
+    return (recScore(b) - recScore(a)) || byTitle(a, b);
+  });
   host.innerHTML = list.length
     ? list.map(recCardHTML).join("")
     : '<p class="empty">Nothing shortlisted yet. The organiser marks contenders under Organiser tools → Recommendations.</p>';
@@ -6930,7 +6969,10 @@ function renderMe(){
      keep for any box the member does not touch */
   profBase = { genres: (genres || []).slice(), goodreads: showGr, fable: showFa,
                hue: showHue, notifyRecs: showRecs };
-  var books = currentBooks().concat(nextBooks());
+  /* Reading now first, then queued — and alphabetical inside each, so a
+     long list is something you can find a title in. The lanes themselves keep
+     their own order; this is only the picker. */
+  var books = sortedByTitle(currentBooks()).concat(sortedByTitle(nextBooks()));
   var all = myNotify.indexOf("*") !== -1;
   var remindersOn = myNotify.length > 0;
 
@@ -7633,7 +7675,7 @@ function paneShelf(){
   out += '<hr class="divider"><p class="eyebrow">Or</p><h3 style="font-size:20px;margin:8px 0 16px">Pull one from the recommendations</h3>' +
     (approvedRecs().length
       ? '<div class="adminrow"><div class="field"><label for="promoSel">Recommendation</label><select class="select" id="promoSel">' +
-        approvedRecs().map(function(r){ return '<option value="' + esc(r.id) + '">' + esc(r.title + " — " + r.author) + "</option>"; }).join("") + "</select></div>" +
+        sortedByTitle(approvedRecs()).map(function(r){ return '<option value="' + esc(r.id) + '">' + esc(r.title + " — " + r.author) + "</option>"; }).join("") + "</select></div>" +
         '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">' +
           '<button class="btn btn--sm btn--grape" type="button" data-promote="next">Add to Up next</button>' +
           '<button class="btn btn--sm btn--flare" type="button" data-promote="current">Make it the current book</button>' +
@@ -8268,7 +8310,7 @@ function paneRecs(){
     ok.length + " recommendation" + (ok.length === 1 ? "" : "s") + "</h3>";
   /* alphabetical — this list only gets longer, and scanning it is the whole job */
   out += ok.length
-    ? ok.slice().sort(function(a, b){ return String(a.title).localeCompare(String(b.title)); }).map(function(r){
+    ? sortedByTitle(ok).map(function(r){
         return '<div class="adminrow"><div class="adminrow__head"><strong>' + esc(r.title) + "</strong>" +
           '<span class="lanerow__meta">' + esc(r.author) + " · " + esc(r.pages || "?") + " pp" + (r.by ? " · rec. " + esc(r.by) : "") + "</span>" +
           '<button class="btn btn--sm btn--ghost" type="button" data-reject="' + esc(r.id) + '" style="margin-left:auto">Unpublish</button></div>' +
@@ -8278,7 +8320,7 @@ function paneRecs(){
 
   if(rej.length){
     out += '<hr class="divider"><p class="eyebrow">Rejected / unpublished</p><div style="margin-top:12px">' +
-      rej.slice().sort(function(a, b){ return String(a.title).localeCompare(String(b.title)); }).map(function(r){
+      sortedByTitle(rej).map(function(r){
         return '<div class="adminrow"><div class="adminrow__head"><strong>' + esc(r.title) + "</strong>" +
           '<span class="pill pill--done">Hidden</span>' +
           '<span style="margin-left:auto;display:flex;gap:8px">' +
@@ -8313,9 +8355,14 @@ function meetBookOptions(sel){
                 ["Finished", rest], ["Recommendations", approvedRecs()]];
   /* nothing chosen yet means a new meeting: open on the book being read */
   if(!sel && cur.length) sel = cur[0].id;
+  /* The groups keep the order they had — what the club is reading, then
+     what is queued, then what is done, then what has been put forward. Only
+     the books inside each one move, into alphabetical order, because a
+     dropdown is something you look a title up in rather than a list that
+     means anything by its sequence. */
   return groups.filter(function(g){ return g[1].length; }).map(function(g){
     return '<optgroup label="' + esc(g[0]) + '">' +
-      g[1].map(function(b){
+      sortedByTitle(g[1]).map(function(b){
         return '<option value="' + esc(b.id) + '"' + (b.id === sel ? " selected" : "") + ">" +
           esc(b.title + " \u2014 " + b.author) + "</option>";
       }).join("") + "</optgroup>";
