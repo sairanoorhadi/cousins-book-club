@@ -997,6 +997,12 @@ a.getrow:hover{background:var(--sunk)}
   box-shadow:var(--shadow-sm);padding:18px 20px;margin-bottom:24px}
 .ballot__head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
 .ballot__head h3{font-size:20px}
+/* The top bar is sticky, so an anchor scrolled to the very top lands
+   underneath it. This is the room it needs. */
+#recs-vote{scroll-margin-top:96px}
+/* The ballot follows the row of covers, so the space between them belongs to
+   it. Empty on a tab with no vote, where it must take up nothing at all. */
+#voteBox:not(:empty){margin-top:26px}
 .ballot__pill{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
   padding:3px 10px;border-radius:999px;border:1.5px solid currentColor}
 .ballot__pill--open{color:var(--surf)}
@@ -1048,6 +1054,7 @@ a.getrow:hover{background:var(--sunk)}
 /* ============ the landing call to vote ============ */
 /* A section in the ordinary flow at the top of the page, so it pushes the
    hero down rather than sitting over it. The whole thing is one link. */
+#voteCta:not(:empty){padding-top:26px}
 .votecta{display:block;text-decoration:none;color:inherit;border:2px solid var(--edge);
   border-radius:var(--r);background:color-mix(in srgb, var(--grape) 12%, var(--surface));
   box-shadow:var(--shadow-sm);padding:20px 22px;margin:0 0 26px}
@@ -1057,8 +1064,13 @@ a.getrow:hover{background:var(--sunk)}
 .votecta__head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 .votecta__head h2{font-size:23px}
 .votecta__when{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+/* Left, with the heading and the call to action above and below them. The
+   point of the box is that its left edge is the hero's left edge; centring
+   the covers inside it would set up a second alignment arguing with the
+   first. max-width keeps five covers a sensible size in a wide box rather
+   than stretching them across it. */
 .votecta__covers{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0 14px;
-  max-width:560px}
+  max-width:560px;justify-items:start}
 @media (max-width:620px){ .votecta__covers{grid-template-columns:repeat(3,1fr)} }
 .votecta__go{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-display);
   font-weight:800;font-size:16px;color:var(--grape)}
@@ -1820,7 +1832,10 @@ a.getrow:hover{background:var(--sunk)}
 </div>
 
 <main>
-  <div id="voteCta"></div>
+  <!-- .wrap is the hero's own container, reused rather than reinvented, so
+       the banner's edges are the hero's edges at every width by construction
+       instead of by two numbers that have to be kept equal. -->
+  <div class="wrap" id="voteCta"></div>
   <!-- ===== NOW READING ===== -->
   <section class="hero" id="now">
     <div class="wrap">
@@ -1896,8 +1911,8 @@ a.getrow:hover{background:var(--sunk)}
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-short" aria-labelledby="tab-short" hidden>
         <p class="focusnote" style="margin-bottom:18px">The books in the running for the next read. The organiser shortlists them from the recommendations.</p>
-        <div id="voteBox"></div>
         <div class="recgrid" id="shortGrid"></div>
+        <div id="voteBox"></div>
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-suggest" aria-labelledby="tab-suggest" hidden>
         <form class="suggestform" id="suggestForm" novalidate>
