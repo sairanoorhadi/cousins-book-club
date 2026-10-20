@@ -1894,107 +1894,127 @@
     },
     {
       "id": "vote-seed-closed",
+      "type": "vote",
       "kind": "rate",
       "candidates": [
         {
-          "id": "rc-elevator",
-          "title": "The Elevator Ghost",
-          "author": "Glen Huser",
+          "id": "rc-thief",
+          "title": "The Book Thief",
+          "author": "Markus Zusak",
           "cover": ""
         },
         {
-          "id": "suggest-f70a1c8e-a89",
-          "title": "The First Stone",
-          "author": "Don Aker",
+          "id": "rc-1984",
+          "title": "1984",
+          "author": "George Orwell",
           "cover": ""
         },
         {
-          "id": "suggest-9430b520-ce4",
-          "title": "Heaven",
-          "author": "Mieko Kawakami",
-          "cover": ""
-        },
-        {
-          "id": "suggest-5b4bab6f-ca1",
-          "title": "Red Queen",
-          "author": "Victoria Aveyard",
+          "id": "rc-kite",
+          "title": "The Kite Runner",
+          "author": "Khaled Hosseini",
           "cover": ""
         }
       ],
-      "opensAt": "2026-10-17T14:00:00.000Z",
-      "closesAt": "2026-10-19T14:00:00.000Z",
+      "opensAt": "2026-10-15T14:00:00.000Z",
+      "closesAt": "2026-10-17T14:00:00.000Z",
       "cancelledAt": null,
-      "closedAt": "2026-10-19T14:00:00.000Z",
+      "closedAt": "2026-10-17T14:00:00.000Z",
       "turnout": 2,
       "totals": [
         {
-          "id": "rc-elevator",
-          "title": "The Elevator Ghost",
+          "id": "rc-thief",
+          "title": "The Book Thief",
           "total": 17,
           "raters": 2,
           "avg": 8.5
         },
         {
-          "id": "suggest-f70a1c8e-a89",
-          "title": "The First Stone",
+          "id": "rc-1984",
+          "title": "1984",
           "total": 14,
           "raters": 2,
-          "avg": 7
-        },
-        {
-          "id": "suggest-9430b520-ce4",
-          "title": "Heaven",
-          "total": 13,
-          "raters": 2,
-          "avg": 6.5
-        },
-        {
-          "id": "suggest-5b4bab6f-ca1",
-          "title": "Red Queen",
-          "total": 10,
-          "raters": 2,
-          "avg": 5
-        }
-      ],
-      "winner": "rc-elevator",
-      "tied": null,
-      "parent": null,
-      "at": "2026-10-17T14:00:00.000Z",
-      "seededForChecking": "remove this whole entry to get the open vote back"
-    },
-    {
-      "id": "nom-seed-open",
-      "type": "nomination",
-      "kind": "nominate",
-      "candidates": [],
-      "opensAt": "2026-10-19T14:00:00.000Z",
-      "closesAt": "2026-10-24T22:00:00.000Z",
-      "cancelledAt": null,
-      "closedAt": "2026-10-20T05:52:25.630Z",
-      "turnout": 3,
-      "nominated": [
-        {
-          "id": "rc-thief",
-          "n": 2,
-          "org": false
-        },
-        {
-          "id": "rc-1984",
-          "n": 1,
-          "org": false
+          "avg": 7.0
         },
         {
           "id": "rc-kite",
-          "n": 0,
-          "org": true
+          "title": "The Kite Runner",
+          "total": 11,
+          "raters": 2,
+          "avg": 5.5
         }
       ],
+      "winner": "rc-thief",
+      "tied": null,
+      "parent": null,
+      "at": "2026-10-15T14:00:00.000Z",
+      "seededForChecking": "THE CLOSED VOTE: shortlist tab and landing page must both show nothing. Admin keeps the averages, the winner and Add winner to Up next."
+    },
+    {
+      "id": "vote-seed-open",
+      "type": "vote",
+      "kind": "rate",
+      "candidates": [
+        {
+          "id": "rc-thief",
+          "title": "The Book Thief",
+          "author": "Markus Zusak",
+          "cover": ""
+        },
+        {
+          "id": "rc-1984",
+          "title": "1984",
+          "author": "George Orwell",
+          "cover": ""
+        },
+        {
+          "id": "rc-kite",
+          "title": "The Kite Runner",
+          "author": "Khaled Hosseini",
+          "cover": ""
+        }
+      ],
+      "opensAt": "2026-10-19T14:00:00.000Z",
+      "closesAt": "2026-10-27T22:00:00.000Z",
+      "cancelledAt": null,
+      "closedAt": null,
+      "turnout": 1,
       "totals": null,
       "winner": null,
       "tied": null,
       "parent": null,
       "at": "2026-10-19T14:00:00.000Z",
-      "seededForChecking": "remove this whole entry to get the vote banner back; set closedAt to a past time for the closed banner; set opensAt to a future time for the scheduled one"
+      "seededForChecking": "AN OPEN VOTE: still shows its panel and its banner. Delete this entry to fall back to vote-seed-closed."
+    },
+    {
+      "id": "vote-seed-runoff",
+      "type": "vote",
+      "kind": "runoff",
+      "candidates": [
+        {
+          "id": "rc-thief",
+          "title": "The Book Thief",
+          "author": "Markus Zusak",
+          "cover": ""
+        },
+        {
+          "id": "rc-1984",
+          "title": "1984",
+          "author": "George Orwell",
+          "cover": ""
+        }
+      ],
+      "opensAt": "2026-10-19T15:00:00.000Z",
+      "closesAt": "2026-10-27T22:00:00.000Z",
+      "cancelledAt": null,
+      "closedAt": null,
+      "turnout": 0,
+      "totals": null,
+      "winner": null,
+      "tied": null,
+      "parent": "vote-seed-closed",
+      "at": "2026-10-19T15:00:00.000Z",
+      "seededForChecking": "A RUNOFF: still shows. Delete it to see vote-seed-open, delete both to see vote-seed-closed (which should show nothing)."
     }
   ]
 }

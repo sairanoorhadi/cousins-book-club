@@ -1011,7 +1011,6 @@ a.getrow:hover{background:var(--sunk)}
   padding:3px 10px;border-radius:999px;border:1.5px solid currentColor}
 .ballot__pill--open{color:var(--surf)}
 .ballot__pill--scheduled{color:var(--sky)}
-.ballot__pill--closed{color:var(--muted)}
 .ballot__when{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
 .ballot__rows{display:flex;flex-direction:column;gap:10px;margin:16px 0}
 .voterow{display:grid;grid-template-columns:1fr auto;gap:4px 14px;align-items:center;
@@ -5234,39 +5233,19 @@ function renderVote(){
   var v = currentVote();
   if(!v){ host.innerHTML = ""; return; }
   var st = voteStatusOf(v), mem = myMember();
+  /* A closed vote is not news this tab breaks. The result is announced in
+     Discord, the book turns up under Up next, and the full arithmetic is in
+     Admin — so the tab goes back to being the row of shortlisted covers it
+     was before voting existed. Checked before the panel is built rather than
+     inside it, so there is no pill, no heading and no empty box. */
+  if(st === "closed" || st === "cancelled"){ host.innerHTML = ""; return; }
   var total = voteMembers().length;
   var pill = '<span class="ballot__pill ballot__pill--' + st + '">' +
-    (st === "open" ? "Voting open" : st === "scheduled" ? "Opens soon" : "Closed") + "</span>";
+    (st === "scheduled" ? "Opens soon" : "Voting open") + "</span>";
   var head = '<div class="ballot__head"><h3 id="recs-vote">' +
     (v.kind === "runoff" ? "Runoff — pick one" : "Vote now") + "</h3>" + pill + "</div>";
   var turn = '<span class="ballot__turn">' + esc(v.turnout || 0) + " of " + esc(total) +
     " members have voted</span>";
-
-  if(st === "closed"){
-    var rows = (v.totals || []).slice();
-    var byId = {};
-    rows.forEach(function(r){ byId[r.id] = r; });
-    var tied = v.tied || [];
-    host.innerHTML = '<div class="ballot">' + head +
-      '<p class="ballot__when">' + (v.totals
-        ? "Closed " + esc(voteWhen(v.closedAt || v.closesAt)) + " · " +
-          esc(v.turnout || 0) + " of " + esc(total) + " voted"
-        : "Closed " + esc(voteWhen(v.closedAt || v.closesAt)) +
-          " — the count has not been published yet.") + "</p>" +
-      '<div class="ballot__rows">' + (v.candidates || []).map(function(c){
-        var r = byId[c.id] || {};
-        return voteRowHTML(v, c, {
-          right: v.totals ? (v.kind === "runoff" ? r.total : voteAvg(r).toFixed(1)) : "–",
-          win: v.winner && String(v.winner) === String(c.id),
-          tied: tied.indexOf(c.id) !== -1,
-          note: v.totals ? (v.kind === "runoff"
-            ? (r.total === 1 ? "1 pick" : (r.total || 0) + " picks")
-            : (r.raters || 0) + (r.raters === 1 ? " rating" : " ratings")) : "" });
-      }).join("") + "</div>" +
-      (tied.length ? '<p class="hint">Tied at the top. The organiser decides what happens next.</p>' : "") +
-      "</div>";
-    return;
-  }
 
   var scheduled = st === "scheduled";
   var body, foot = "";
@@ -5324,20 +5303,6 @@ function voteCountdown(iso){
   var days = Math.round(hrs / 24);
   return days + (days === 1 ? " day" : " days") + " left";
 }
-/* How long a finished nominations round stays up, and the one thing that
-   takes it down sooner. Unlike a vote's result, which belongs on the
-   shortlist tab, "nominations closed" is news with nowhere else to live --
-   until the vote it was leading to exists, which says the same thing better. */
-var NOM_CLOSED_DAYS = 3;
-function nomRoundSuperseded(r){
-  var list = allRounds(), seen = false;
-  for(var i = 0; i < list.length; i++){
-    if(list[i].id === r.id){ seen = true; continue; }
-    /* a vote launched after this round is the thing it was leading to */
-    if(seen && roundTypeOf(list[i]) === "vote" && !list[i].cancelledAt) return true;
-  }
-  return false;
-}
 function renderVoteCta(){
   var host = $("voteCta");
   if(!host) return;
@@ -5379,20 +5344,11 @@ function renderVoteCta(){
    only differences are the words, the covers it shows and where it goes. */
 function renderNomCta(host, r){
   var st = voteStatusOf(r);
-  if(st === "cancelled"){ host.innerHTML = ""; return; }
-  if(st === "closed"){
-    var since = Date.now() - Date.parse(r.closedAt || r.closesAt);
-    if(nomRoundSuperseded(r) || !(since < NOM_CLOSED_DAYS * 86400000)){
-      host.innerHTML = ""; return;
-    }
-    host.innerHTML = '<a class="votecta votecta--quiet" href="#recs">' +
-      '<span class="votecta__head"><h2>Nominations closed</h2>' +
-        '<span class="votecta__when">' + esc(nomList(r).length) +
-          (nomList(r).length === 1 ? " book was put forward" : " books were put forward") +
-        "</span></span>" +
-      nomCoversHTML(r) + '<span class="votecta__go">See the recommendations \u2192</span></a>';
-    return;
-  }
+  /* Closed is as silent as cancelled, for the same reason the vote's result
+     is: the outcome is announced in Discord and the nominated books are on
+     the shortlist. There is no timer to run down and no flag to clear --
+     there is simply nothing drawn. */
+  if(st === "cancelled" || st === "closed"){ host.innerHTML = ""; return; }
   if(st === "scheduled"){
     host.innerHTML = '<a class="votecta votecta--quiet" href="#recs">' +
       '<span class="votecta__head"><h2>Nominations open soon</h2>' +
@@ -9030,10 +8986,19 @@ function paneVotePart(){
       (v.totals
         ? '<div class="ballot__rows">' + (v.totals || []).map(function(r){
             var c = voteCandidate(v, r.id) || { title: r.title, author: "" };
-            return voteRowHTML(v, c, { right: r.total,
+            /* The average, because the average is what decides it -- and
+               because the shortlist tab used to be the only place it was
+               shown, so taking that panel away would have taken the number
+               with it. The count of raters goes beside it, since an 8.5
+               from two people and an 8.5 from seven are not the same claim. */
+            return voteRowHTML(v, c, {
+              right: v.kind === "runoff" ? r.total : voteAvg(r).toFixed(1),
               win: v.winner && String(v.winner) === String(r.id),
               tied: tied.indexOf(r.id) !== -1,
-              note: v.kind === "runoff" ? r.total + " picks" : r.raters + " rated it" });
+              note: v.kind === "runoff"
+                ? (r.total === 1 ? "1 pick" : (r.total || 0) + " picks")
+                : (r.raters || 0) + (r.raters === 1 ? " rating" : " ratings") +
+                  " \u00b7 " + (r.total || 0) + " total" });
           }).join("") + "</div>"
         : '<p class="hint">Not counted yet — the timer counts it within ' +
             VOTE_TICK_MINUTES + ' minutes of the deadline. Reload, or press Close it now.</p>') +
