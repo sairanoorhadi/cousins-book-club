@@ -3180,8 +3180,12 @@ function adoptFreshNotes(rawContent){
       v.tied = f.tied;
       if(f.closedAt && !v.closedAt) v.closedAt = f.closedAt;
     });
-    /* a vote the script wrote that this page has never seen */
+    /* A vote the script wrote that this page has never seen. Not one this
+       session has deliberately deleted, though: the repo still has it, and
+       without the second test the delete would be undone by the very save
+       that was meant to carry it out. */
     fresh.votes.forEach(function(f){
+      if(voteDeleted[f.id]) return;
       if(!state.votes.some(function(v){ return v.id === f.id; })) state.votes.push(f);
     });
   }
@@ -8887,6 +8891,9 @@ function voteTouch(id){ if(id) voteTouched[id] = 1; }
    public file, so Admin can still show them. Per vote, for the visit only --
    they are not this page's to keep. */
 var voteResultsSeen = {};
+/* Rounds deleted in this session, so the pre-save take-back does not bring
+   them back from the repo. */
+var voteDeleted = {};
 /* The results email as the script would send it, for the visit only. */
 var voteResPreview = {};
 var VOTE_LASTS = [["6h", "6 hours", 6], ["24h", "24 hours", 24],
@@ -8981,7 +8988,7 @@ function voteResultsBlock(v){
 function voteMailBlock(v){
   if(!voteMailInfo){
     return '<p class="hint" style="margin:0">' +
-      '<button class="btn btn--sm btn--ghost" type="button" id="voteMailGo">' +
+      '<button class="btn btn--sm btn--ghost" type="button" data-mailgo="1">' +
       'Check the timer and the emails</button></p>';
   }
   var f = (voteMailInfo.flags || {})[v.id] || {};
@@ -9030,11 +9037,13 @@ function voteMailBlock(v){
         }).join("<br>") + "</p>"
       : "") +
     '<p class="hint" style="margin:8px 0 0">' +
-      '<button class="btn btn--sm btn--ghost" type="button" id="voteMailGo">Check again</button></p>';
+      '<button class="btn btn--sm btn--ghost" type="button" data-mailgo="1">Check again</button></p>';
 }
 function paneVote(){
-  /* Nominations come before the vote, in the tab as in the calendar. */
-  return paneNomPart() + paneVotePart() + '<hr class="divider">' + paneNomLaunch();
+  /* Nominations come before the vote, in the tab as in the calendar; the
+     finished rounds come after both, out of the way until asked for. */
+  return paneNomPart() + paneVotePart() + '<hr class="divider">' + paneNomLaunch() +
+    panePrevious() + paneArchived();
 }
 function paneVotePart(){
   var v = currentVote(), st = voteStatusOf(v);
@@ -9081,75 +9090,6 @@ function paneVotePart(){
     return out;
   }
 
-  if(v && st === "closed"){
-    var tied = v.tied || [];
-    out += '<div class="adminrow"><div class="adminrow__head"><strong>Closed</strong>' +
-      '<span class="pill">' + esc(v.turnout || 0) + " voted</span>" +
-      (v.test ? '<span class="pill">test — only you</span>' : "") +
-      (tied.length ? '<span class="pill">waiting on you</span>' : "") + "</div>" +
-      /* Whichever way the flag is set, Admin shows the numbers. While they
-         are hidden they are not in the public file any more, so they come
-         from the script's stash instead -- asked for once and kept here. */
-      (function(){
-        var rows = v.totals || (voteResultsSeen[v.id] || {}).totals || null;
-        if(rows) return "";
-        if(!v.resultsHidden) return "";
-        return '<p class="hint" style="margin:0 0 10px">' +
-          (DEV
-            ? "Results are hidden, and the script can\u2019t be reached from the test site, so they can\u2019t be shown here."
-            : '<button class="btn btn--sm btn--ghost" type="button" data-voteseeres="' +
-              esc(v.id) + '">Show me the hidden results</button>') + "</p>";
-      })() +
-      '<div class="field" style="margin-top:12px"><label>Results on the site</label>' +
-        '<p class="hint" style="margin:0 0 8px">' +
-          (v.resultsHidden
-            ? "Hidden. The shortlist tab shows nothing, and the averages are out of the public file."
-            : "Shown on the shortlist tab, averages and all.") + "</p>" +
-        '<button class="btn btn--sm ' + (v.resultsHidden ? "btn--surf" : "btn--ghost") +
-          '" type="button" data-voteres="' + esc(v.id) + '" data-reshide="' +
-          (v.resultsHidden ? "0" : "1") + '">' +
-          (v.resultsHidden ? "Show results again" : "Stop showing results") + "</button></div>" +
-      ((v.totals || (voteResultsSeen[v.id] || {}).totals)
-        ? '<div class="ballot__rows">' + (v.totals || voteResultsSeen[v.id].totals).map(function(r){
-            var c = voteCandidate(v, r.id) || { title: r.title, author: "" };
-            /* The average, because the average is what decides it -- and
-               because the shortlist tab used to be the only place it was
-               shown, so taking that panel away would have taken the number
-               with it. The count of raters goes beside it, since an 8.5
-               from two people and an 8.5 from seven are not the same claim. */
-            return voteRowHTML(v, c, {
-              right: v.kind === "runoff" ? r.total : voteAvg(r).toFixed(1),
-              win: v.winner && String(v.winner) === String(r.id),
-              tied: tied.indexOf(r.id) !== -1,
-              note: v.kind === "runoff"
-                ? (r.total === 1 ? "1 pick" : (r.total || 0) + " picks")
-                : (r.raters || 0) + (r.raters === 1 ? " rating" : " ratings") +
-                  " \u00b7 " + (r.total || 0) + " total" });
-          }).join("") + "</div>"
-        : v.resultsHidden ? ""
-        : '<p class="hint">Not counted yet — the timer counts it within ' +
-            VOTE_TICK_MINUTES + ' minutes of the deadline. Reload, or press Close it now.</p>') +
-      '<div class="field" style="margin-top:12px"><label>Emails and the timer</label>' +
-        voteMailBlock(v) + "</div>" +
-      voteResultsBlock(v) +
-      (v.winner
-        ? '<div style="margin-top:12px"><button class="btn btn--sm btn--surf" type="button" data-votepromote="' +
-          esc(v.winner) + '">Add the winner to Up next</button></div>'
-        : "") +
-      (tied.length
-        ? '<p class="hint" style="margin-top:12px"><strong>' + esc(tied.length) +
-          " books tied at the top.</strong> The timer counted the vote but stopped here — " +
-          "a runoff is a new question for the club, so it is yours to launch or to call.</p>" +
-          '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">' +
-          '<button class="btn btn--sm btn--grape" type="button" data-voterunoff="' + esc(v.id) + '">Launch a runoff</button>' +
-          tied.map(function(id){
-            var c = voteCandidate(v, id);
-            return '<button class="btn btn--sm btn--ghost" type="button" data-votebreak="' + esc(id) +
-              '" data-voteid="' + esc(v.id) + '">Pick ' + esc(c ? c.title : id) + "</button>";
-          }).join("") + "</div>"
-        : "") +
-      "</div>";
-  }
 
   /* the launch form */
   var short = shortlistRecs();
@@ -9395,45 +9335,6 @@ function paneNomPart(){
     return out;
   }
 
-  if(r && st === "closed"){
-    var picks = nomList(r);
-    /* Ticked by default, because the ordinary case is taking all of them. */
-    if(nomPickInit !== r.id){ nomPick = {}; nomPickInit = r.id; }
-    var on = picks.filter(function(x){ return nomPickOn(x.id); });
-    out += '<p class="eyebrow">Before the vote</p>' +
-      '<h3 style="font-size:22px;margin:8px 0 16px">Nominations closed</h3>' +
-      '<div class="adminrow"><div class="adminrow__head"><strong>' + esc(picks.length) +
-        (picks.length === 1 ? " book put forward" : " books put forward") + "</strong>" +
-        '<span class="pill">' + esc(r.turnout || 0) + " nominated</span>" +
-        (r.test ? '<span class="pill">test — only you</span>' : "") + "</div>" +
-      (picks.length
-        ? '<div class="checkgrid" style="margin-top:10px">' +
-            sortedByTitle(picks.map(function(x){
-              var b = recById(x.id);
-              return { id: x.id, title: b ? b.title : x.id, author: b ? b.author : "",
-                       n: x.n || 0, org: x.org, gone: !b };
-            })).map(function(x){
-              return "<label><input type=\"checkbox\" data-nomsel=\"" + esc(x.id) + "\"" +
-                (nomPickOn(x.id) ? " checked" : "") + (x.gone ? " disabled" : "") + "> " +
-                esc(x.title) + ' <span class="hint">' +
-                (x.gone ? "no longer in the recommendations"
-                        : esc(x.n) + (x.n === 1 ? " nomination" : " nominations") +
-                          (x.org ? " · yours" : "")) + "</span></label>";
-            }).join("") + "</div>" +
-          (on.length > NOM_SHORTLIST_EASY
-            ? '<p class="hint" style="margin-top:10px">' + esc(on.length) +
-              " books is a long ballot — everyone has to rate every one of them " +
-              "1–10. Nothing stops you, but turnout usually likes a shorter list.</p>"
-            : "") +
-          '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">' +
-            '<button class="btn btn--sm btn--surf" type="button" id="nomToShort">Add selected to shortlist</button>' +
-            '<button class="btn btn--sm btn--grape" type="button" id="nomToVote">Add them and open the vote form</button>' +
-          "</div>"
-        : '<p class="empty">Nobody put a book forward.</p>') +
-      '<div class="field" style="margin-top:14px"><label>Emails and the timer</label>' +
-        voteMailBlock(r) + "</div>" +
-      "</div><hr class=\"divider\">";
-  }
   return out;
 }
 
@@ -9481,6 +9382,267 @@ function paneNomLaunch(){
       esc(voteNoteFor(opensIsoNow(now), soon.toISOString(), "nomination")) + "</p>" +
     '<div style="margin-top:12px"><button class="btn btn--sm btn--grape" type="button" id="nomLaunch">Open nominations</button></div>' +
     "</div>";
+}
+
+/* A closed vote in full: the result, the tie and what can still be done
+   about it. Lifted out of the live panel unchanged so the history can draw
+   it, and so there is one copy of it rather than two. Every button in here
+   is keyed by the round or the book it acts on, so several of these on the
+   page at once cannot collide. */
+function voteClosedDetail(v){
+    var tied = v.tied || [];
+    return '<div class="adminrow"><div class="adminrow__head"><strong>Closed</strong>' +
+      '<span class="pill">' + esc(v.turnout || 0) + " voted</span>" +
+      (v.test ? '<span class="pill">test — only you</span>' : "") +
+      (tied.length ? '<span class="pill">waiting on you</span>' : "") + "</div>" +
+      /* Whichever way the flag is set, Admin shows the numbers. While they
+         are hidden they are not in the public file any more, so they come
+         from the script's stash instead -- asked for once and kept here. */
+      (function(){
+        var rows = v.totals || (voteResultsSeen[v.id] || {}).totals || null;
+        if(rows) return "";
+        if(!v.resultsHidden) return "";
+        return '<p class="hint" style="margin:0 0 10px">' +
+          (DEV
+            ? "Results are hidden, and the script can\u2019t be reached from the test site, so they can\u2019t be shown here."
+            : '<button class="btn btn--sm btn--ghost" type="button" data-voteseeres="' +
+              esc(v.id) + '">Show me the hidden results</button>') + "</p>";
+      })() +
+      '<div class="field" style="margin-top:12px"><label>Results on the site</label>' +
+        '<p class="hint" style="margin:0 0 8px">' +
+          (v.resultsHidden
+            ? "Hidden. The shortlist tab shows nothing, and the averages are out of the public file."
+            : "Shown on the shortlist tab, averages and all.") + "</p>" +
+        '<button class="btn btn--sm ' + (v.resultsHidden ? "btn--surf" : "btn--ghost") +
+          '" type="button" data-voteres="' + esc(v.id) + '" data-reshide="' +
+          (v.resultsHidden ? "0" : "1") + '">' +
+          (v.resultsHidden ? "Show results again" : "Stop showing results") + "</button></div>" +
+      ((v.totals || (voteResultsSeen[v.id] || {}).totals)
+        ? '<div class="ballot__rows">' + (v.totals || voteResultsSeen[v.id].totals).map(function(r){
+            var c = voteCandidate(v, r.id) || { title: r.title, author: "" };
+            /* The average, because the average is what decides it -- and
+               because the shortlist tab used to be the only place it was
+               shown, so taking that panel away would have taken the number
+               with it. The count of raters goes beside it, since an 8.5
+               from two people and an 8.5 from seven are not the same claim. */
+            return voteRowHTML(v, c, {
+              right: v.kind === "runoff" ? r.total : voteAvg(r).toFixed(1),
+              win: v.winner && String(v.winner) === String(r.id),
+              tied: tied.indexOf(r.id) !== -1,
+              note: v.kind === "runoff"
+                ? (r.total === 1 ? "1 pick" : (r.total || 0) + " picks")
+                : (r.raters || 0) + (r.raters === 1 ? " rating" : " ratings") +
+                  " \u00b7 " + (r.total || 0) + " total" });
+          }).join("") + "</div>"
+        : v.resultsHidden ? ""
+        : '<p class="hint">Not counted yet — the timer counts it within ' +
+            VOTE_TICK_MINUTES + ' minutes of the deadline. Reload, or press Close it now.</p>') +
+      '<div class="field" style="margin-top:12px"><label>Emails and the timer</label>' +
+        voteMailBlock(v) + "</div>" +
+      voteResultsBlock(v) +
+      (v.winner
+        ? '<div style="margin-top:12px"><button class="btn btn--sm btn--surf" type="button" data-votepromote="' +
+          esc(v.winner) + '">Add the winner to Up next</button></div>'
+        : "") +
+      (tied.length
+        ? '<p class="hint" style="margin-top:12px"><strong>' + esc(tied.length) +
+          " books tied at the top.</strong> The timer counted the vote but stopped here — " +
+          "a runoff is a new question for the club, so it is yours to launch or to call.</p>" +
+          '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">' +
+          '<button class="btn btn--sm btn--grape" type="button" data-voterunoff="' + esc(v.id) + '">Launch a runoff</button>' +
+          tied.map(function(id){
+            var c = voteCandidate(v, id);
+            return '<button class="btn btn--sm btn--ghost" type="button" data-votebreak="' + esc(id) +
+              '" data-voteid="' + esc(v.id) + '">Pick ' + esc(c ? c.title : id) + "</button>";
+          }).join("") + "</div>"
+        : "") +
+      "</div>";
+}
+
+/* The same, for a closed nominations round. The shortlist buttons carry
+   fixed ids, so they are drawn only on the newest closed round -- which is
+   also the only one whose books are still waiting to be shortlisted. Older
+   rounds show their numbers and nothing to press. */
+function nomClosedDetail(r, withActions){
+    var picks = nomList(r);
+    /* Ticked by default, because the ordinary case is taking all of them. */
+    if(nomPickInit !== r.id){ nomPick = {}; nomPickInit = r.id; }
+    var on = picks.filter(function(x){ return nomPickOn(x.id); });
+    return '<p class="eyebrow">Before the vote</p>' +
+      '<h3 style="font-size:22px;margin:8px 0 16px">Nominations closed</h3>' +
+      '<div class="adminrow"><div class="adminrow__head"><strong>' + esc(picks.length) +
+        (picks.length === 1 ? " book put forward" : " books put forward") + "</strong>" +
+        '<span class="pill">' + esc(r.turnout || 0) + " nominated</span>" +
+        (r.test ? '<span class="pill">test — only you</span>' : "") + "</div>" +
+      (picks.length
+        ? (withActions ? '<div class="checkgrid" style="margin-top:10px">' : '<div class="tagbank" style="margin-top:10px">') +
+            sortedByTitle(picks.map(function(x){
+              var b = recById(x.id);
+              return { id: x.id, title: b ? b.title : x.id, author: b ? b.author : "",
+                       n: x.n || 0, org: x.org, gone: !b };
+            })).map(function(x){
+              if(!withActions){
+                return '<span class="tag">' + esc(x.title) +
+                  (x.n ? " \u00d7" + esc(x.n) : "") + "</span>";
+              }
+              return "<label><input type=\"checkbox\" data-nomsel=\"" + esc(x.id) + "\"" +
+                (nomPickOn(x.id) ? " checked" : "") + (x.gone ? " disabled" : "") + "> " +
+                esc(x.title) + ' <span class="hint">' +
+                (x.gone ? "no longer in the recommendations"
+                        : esc(x.n) + (x.n === 1 ? " nomination" : " nominations") +
+                          (x.org ? " · yours" : "")) + "</span></label>";
+            }).join("") + "</div>" +
+          (!withActions ? "" : "") +
+          (withActions && on.length > NOM_SHORTLIST_EASY
+            ? '<p class="hint" style="margin-top:10px">' + esc(on.length) +
+              " books is a long ballot — everyone has to rate every one of them " +
+              "1–10. Nothing stops you, but turnout usually likes a shorter list.</p>"
+            : "") +
+          (withActions
+            ? '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">' +
+              '<button class="btn btn--sm btn--surf" type="button" id="nomToShort">Add selected to shortlist</button>' +
+              '<button class="btn btn--sm btn--grape" type="button" id="nomToVote">Add them and open the vote form</button>' +
+              "</div>"
+            : "")
+        : '<p class="empty">Nobody put a book forward.</p>') +
+      '<div class="field" style="margin-top:14px"><label>Emails and the timer</label>' +
+        voteMailBlock(r) + "</div>" +
+      "</div>";
+}
+
+
+/* ---------- Admin: the history ----------
+   Rounds pile up, and all but one of them is finished. The live one and the
+   launch forms stay at the top; everything else goes under Previous rounds,
+   newest first, each a closed row you open when you want it.
+
+   The open/closed state lasts the visit and nothing more. It is a view of
+   the list, not a fact about the club, so it has no business in the file. */
+var prevOpen = {};        /* round id -> expanded */
+var prevSectionOpen = false;
+var archSectionOpen = false;
+
+/* Finished means closed or cancelled, of either kind. */
+function roundFinished(r){
+  var st = voteStatusOf(r);
+  return st === "closed" || st === "cancelled";
+}
+function previousRounds(archived){
+  return allRounds().filter(function(r){
+    if(!roundFinished(r)) return false;
+    if(voteHidden(r)) return false;
+    return archived ? !!r.archived : !r.archived;
+  }).slice().reverse();          /* newest first */
+}
+
+/* What still waits on a person.
+
+   A vote that tied and has no winner: the arithmetic is done, the decision
+   is not, and nothing can follow it until she launches a runoff or picks.
+   That is the whole list. A held results email resolves itself when the tie
+   does, so it is not its own item; and a closed nominations round whose books
+   never reached the shortlist cannot happen, because something always gets
+   shortlisted. */
+function roundNeedsAction(r){
+  return roundTypeOf(r) === "vote" && voteStatusOf(r) === "closed" &&
+    (r.tied || []).length > 0 && !r.winner;
+}
+
+/* The one line that has to tell her what a round was, without opening it. */
+function roundOutcomeLine(r){
+  var st = voteStatusOf(r);
+  if(st === "cancelled") return "Cancelled";
+  if(roundTypeOf(r) === "nomination"){
+    var n = nomList(r).length;
+    return n ? n + (n === 1 ? " book nominated" : " books nominated") +
+      " · " + (r.turnout || 0) + " took part"
+      : "Nothing nominated";
+  }
+  if((r.tied || []).length && !r.winner) return "Tied, no winner yet";
+  if(r.winner){
+    var c = voteCandidate(r, r.winner);
+    var row = (r.totals || []).filter(function(x){ return String(x.id) === String(r.winner); })[0];
+    return (c ? c.title : "A winner") +
+      (row ? " · " + voteAvg(row).toFixed(1) + " out of 10" : "") +
+      (r.tiebreak ? " · your decision" : "");
+  }
+  if(r.resultsHidden) return "Counted · results hidden";
+  return r.totals ? "Counted, no winner" : "Not counted";
+}
+
+function roundRowHTML(r, newestNom){
+  var type = roundTypeOf(r) === "nomination" ? "Nominations" : "Vote";
+  var st = voteStatusOf(r);
+  var needs = roundNeedsAction(r);
+  /* Something waiting on her is not something to go looking for. */
+  var open = needs || !!prevOpen[r.id];
+  var when = voteWhen(r.opensAt) + " – " + voteWhen(r.closesAt);
+  return '<details class="editor"' + (open ? " open" : "") + ">" +
+    '<summary data-roundrow="' + esc(r.id) + '">' +
+      "<strong>" + esc(type) + "</strong> " +
+      '<span class="hint">' + esc(when) + "</span> " +
+      '<span class="pill">' + esc(st) + "</span>" +
+      (needs ? '<span class="pill">needs action</span>' : "") +
+      (r.test ? '<span class="pill">test</span>' : "") +
+      '<span class="hint"> · ' + esc(roundOutcomeLine(r)) + "</span>" +
+      (roundTypeOf(r) === "vote" && st === "closed"
+        ? '<span class="hint"> · Results: ' +
+          (r.resultsHidden ? "hidden" : "shown") + "</span>"
+        : "") +
+    "</summary>" +
+    '<div class="editor__body">' +
+      (open
+        ? (roundTypeOf(r) === "nomination"
+            ? nomClosedDetail(r, newestNom && newestNom.id === r.id)
+            : voteClosedDetail(r))
+        : "") +
+      '<div style="margin-top:12px">' +
+        (r.archived
+          ? '<button class="btn btn--sm btn--surf" type="button" data-roundrestore="' +
+            esc(r.id) + '">Restore</button> ' +
+            '<button class="btn btn--sm btn--flare" type="button" data-rounddelete="' +
+            esc(r.id) + '">Delete permanently</button>'
+          : '<button class="btn btn--sm btn--ghost" type="button" data-roundarchive="' +
+            esc(r.id) + '">Archive</button>') +
+      "</div>" +
+    "</div></details>";
+}
+
+function panePrevious(){
+  var list = previousRounds(false);
+  var newestNom = list.filter(function(r){ return roundTypeOf(r) === "nomination"; })[0] || null;
+  var waiting = list.filter(roundNeedsAction).length;
+  if(!list.length) return "";
+  /* A section that starts collapsed still has to admit it is holding
+     something that needs her, or closing it would hide the one thing she
+     must not miss. */
+  var openSection = prevSectionOpen || waiting > 0;
+  return '<hr class="divider">' +
+    '<details class="editor"' + (openSection ? " open" : "") + ">" +
+    '<summary data-prevsection>Previous rounds <span class="pill">' + esc(list.length) + "</span>" +
+      (waiting ? '<span class="pill">' + esc(waiting) + " needs action</span>" : "") +
+    "</summary>" +
+    '<div class="editor__body">' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">' +
+        '<button class="btn btn--sm btn--ghost" type="button" id="prevAll">Expand all</button>' +
+        '<button class="btn btn--sm btn--ghost" type="button" id="prevNone">Collapse all</button>' +
+      "</div>" +
+      list.map(function(r){ return roundRowHTML(r, newestNom); }).join("") +
+    "</div></details>";
+}
+
+function paneArchived(){
+  var list = previousRounds(true);
+  if(!list.length) return "";
+  var newestNom = list.filter(function(r){ return roundTypeOf(r) === "nomination"; })[0] || null;
+  return '<hr class="divider">' +
+    '<details class="editor"' + (archSectionOpen ? " open" : "") + ">" +
+    '<summary data-archsection>Archived <span class="pill">' + esc(list.length) + "</span></summary>" +
+    '<div class="editor__body">' +
+      '<p class="hint" style="margin:0 0 12px">Out of the way, not deleted. Restore puts one back ' +
+      'in Previous rounds. Deleting is only possible from here, and cannot be undone.</p>' +
+      list.map(function(r){ return roundRowHTML(r, newestNom); }).join("") +
+    "</div></details>";
 }
 
 /* ---------- Admin: the canonical lists themselves ---------- */
@@ -10614,7 +10776,70 @@ document.addEventListener("click", async function(e){
        (sres && sres.error) || "nothing stored"), "bad");
     return;
   }
-  if(t.closest("#voteMailGo")){
+  if((el = t.closest("[data-roundrow]"))){
+    /* <details> opens itself; this only remembers which way for the next
+       render, so the row's detail is built when it is actually wanted. */
+    var rowId = el.getAttribute("data-roundrow");
+    prevOpen[rowId] = !prevOpen[rowId];
+    setTimeout(renderAdmin, 0);
+    return;
+  }
+  if(t.closest("[data-prevsection]")){
+    prevSectionOpen = !prevSectionOpen;
+    return;
+  }
+  if(t.closest("[data-archsection]")){
+    archSectionOpen = !archSectionOpen;
+    return;
+  }
+  if(t.closest("#prevAll") || t.closest("#prevNone")){
+    var openThem = !!t.closest("#prevAll");
+    prevOpen = {};
+    if(openThem){
+      previousRounds(false).concat(previousRounds(true)).forEach(function(r){
+        prevOpen[r.id] = 1;
+      });
+    }
+    prevSectionOpen = true;
+    renderAdmin();
+    return;
+  }
+  if((el = t.closest("[data-roundarchive]")) || (el = t.closest("[data-roundrestore]"))){
+    var toArch = !!el.getAttribute("data-roundarchive");
+    var arId = el.getAttribute(toArch ? "data-roundarchive" : "data-roundrestore");
+    var ar = roundById(arId);
+    if(!ar) return;
+    /* A flag on the round, nothing more -- and saved the way every other
+       round edit is, so the script's own fields are taken back first rather
+       than overwritten with this page's older copy of them. */
+    if(toArch) ar.archived = true; else delete ar.archived;
+    voteTouch(ar.id);
+    if(await save(toArch ? "Archiving the round…" : "Restoring the round…")){
+      say(toArch ? "Archived. It is in the Archived section at the bottom."
+                 : "Back in Previous rounds.", "ok");
+      if(toArch) archSectionOpen = true; else prevSectionOpen = true;
+      renderAll(); renderAdmin();
+    }
+    return;
+  }
+  if((el = t.closest("[data-rounddelete]"))){
+    var delId = el.getAttribute("data-rounddelete");
+    var dr2 = roundById(delId);
+    if(!dr2) return;
+    var what = (roundTypeOf(dr2) === "nomination" ? "the nominations round" : "the vote") +
+      " of " + voteWhen(dr2.opensAt);
+    if(!confirm("Delete " + what + " for good? This cannot be undone, and its " +
+      "ballots or nominations go with it.")) return;
+    state.votes = (state.votes || []).filter(function(x){ return x.id !== delId; });
+    voteDeleted[delId] = 1;
+    voteTouch(delId);
+    if(await save("Deleting the round…")){
+      say("Deleted.", "ok");
+      renderAll(); renderAdmin();
+    }
+    return;
+  }
+  if(t.closest("[data-mailgo]")){
     var mv = currentVote(); if(!mv) return;
     var ids = allVotes().map(function(x){ return x.id; }).slice(-20);
     var mres = await callEndpoint("vote-mail", { token: sessionToken(), voteIds: ids });
