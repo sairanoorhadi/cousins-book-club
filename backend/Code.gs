@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-20d';
+var SCRIPT_VERSION = '2026-10-20e';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -506,6 +506,29 @@ function voteMailCopy(state, v, stage) {
         'You can change or withdraw your nomination until they close.'].join('\n') };
   }
 
+  /* A tie used to hold the results email and say nothing to anybody. That
+     left the club waiting on an announcement that was never coming. It gets
+     its own email instead -- one bcc rather than one each, because unlike the
+     results it carries nothing about any individual's ballot. */
+  if (stage === 'tie') {
+    var tiedNames = (v.tied || []).map(function (id) {
+      var c = voteCandidate2(v, id);
+      return c ? c.title : id;
+    });
+    var at = (v.totals || []).filter(function (r) {
+      return (v.tied || []).indexOf(r.id) !== -1;
+    })[0];
+    return { subject: tag + clubName + ': the vote tied',
+      body: [clubName, '',
+        'The vote ended in a tie' +
+          (tiedNames.length ? ' between ' + voteAndList(tiedNames) : '') +
+          (at ? ', both on ' + Number(at.avg || 0).toFixed(1) + ' out of 10' : '') + '.',
+        '',
+        'There will be a runoff to settle it. You will get another email when ' +
+          'it opens, and it only takes a moment to pick one.',
+        '', voteLink()].join('\n') };
+  }
+
   if (stage === 'remind') {
     return { subject: tag + clubName + ': ' + VOTE_REMIND_HOURS + ' hours left to vote',
       body: [clubName, '',
@@ -834,6 +857,12 @@ function voteResultsCopy(state, v, who) {
     body: lines.join('\n') };
 }
 
+/* "A and B", or "A, B and C". */
+function voteAndList(names) {
+  if (names.length < 2) return names.join('');
+  return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+}
+
 /* The page has a voteCandidate(); the script needs its own. */
 function voteCandidate2(v, id) {
   var hit = (v.candidates || []).filter(function (c) { return String(c.id) === String(id); });
@@ -876,8 +905,19 @@ function voteResultsSendFor(state, v, opts) {
     }
     if (hold === 'tie') {
       rec.resultsHeld = 'tie';
+      /* Told once. The results email itself still waits for the tie to be
+         settled -- this only says that it has not been. */
+      if (!rec.tieTold) {
+        var tieWho = v.test ? voteTestRecipients().list
+          : voteResultsAudience(state, v, v.resultsToAll === true)
+              .map(function (w) { return w.email; });
+        var tieCopy = voteMailCopy(state, v, 'tie');
+        if (voteSendTo(tieWho, tieCopy.subject, tieCopy.body, rec, 'tie')) {
+          rec.tieTold = { at: new Date().toISOString(), n: tieWho.length };
+        }
+      }
       voteMailFlagsWrite(v.id, rec);
-      return { ok: true, held: 'tie' };
+      return { ok: true, held: 'tie', tieTold: rec.tieTold || null };
     }
     return { ok: false, error: hold };
   }
