@@ -3285,7 +3285,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-19b";
+var SCRIPT_WANT = "2026-10-20a";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -3328,6 +3328,10 @@ var ENDPOINT_REPEATABLE = {
      same one twice lands the same result; the other three only read, or
      count a vote that is already over. */
   "vote-cast": 1, "vote-mine": 1, "vote-who": 1, "vote-tally": 1,
+  /* vote-wake only does what the timer would have done anyway, and the
+     script's own stored flags mean it cannot send the same email twice, so a
+     repeat is a no-op. vote-mail only reads. */
+  "vote-wake": 1, "vote-mail": 1,
   /* the page sends the state it wants rather than "flip it", so repeating
      it lands where the first one would have */
   "meet-ready": 1,
@@ -5260,7 +5264,9 @@ function renderVoteCta(){
 function allVotes(){ return (state && state.votes) || []; }
 function currentVote(){
   var list = allVotes();
-  for(var i = list.length - 1; i >= 0; i--) if(!list[i].cancelledAt) return list[i];
+  for(var i = list.length - 1; i >= 0; i--){
+    if(!list[i].cancelledAt && !voteHidden(list[i])) return list[i];
+  }
   return null;
 }
 function voteById(id){
@@ -8631,6 +8637,20 @@ var voteTouched = {};
 function voteTouch(id){ if(id) voteTouched[id] = 1; }
 var VOTE_LASTS = [["6h", "6 hours", 6], ["24h", "24 hours", 24],
                   ["3d", "3 days", 72], ["1w", "1 week", 168]];
+/* What the script's timer does, repeated here only so the launch form can say
+   it. These are the script's numbers — VOTE_TICK_MINUTES and
+   VOTE_REMIND_HOURS in Code.gs — and if they are changed there they have to
+   be changed here, which is why the version check exists. */
+var VOTE_TICK_MINUTES = 5, VOTE_REMIND_HOURS = 6;
+/* The timer's notes, as Admin last asked for them: whether it is installed,
+   how much email is left today, and what went out or failed per vote. Not in
+   state.json — the script keeps it privately and answers for it. */
+var voteMailInfo = null;
+/* A test vote is the organiser rehearsing the emails and the timer, which
+   cannot be rehearsed anywhere but live. Members are not shown it. The page
+   can only hide it — state.json is public — so the script refuses their
+   ballots too. */
+function voteHidden(v){ return !!(v && v.test && !adminUnlocked); }
 /* <input type="datetime-local"> has no timezone of its own: it hands back
    what the clock on the wall says. Stored as a full ISO string with this
    browser's offset on it, so everyone else is shown their own time. */
@@ -8643,6 +8663,63 @@ function isoFromLocal(v){
   var d = new Date(String(v || ""));
   return isNaN(d) ? "" : d.toISOString();
 }
+/* What the timer has done about one vote, in the organiser's words. Asked
+   for rather than polled: it costs a call to the script, and nothing here
+   changes between presses of the button. */
+function voteMailBlock(v){
+  if(!voteMailInfo){
+    return '<p class="hint" style="margin:0">' +
+      '<button class="btn btn--sm btn--ghost" type="button" id="voteMailGo">' +
+      'Check the timer and the emails</button></p>';
+  }
+  var f = (voteMailInfo.flags || {})[v.id] || {};
+  var lines = [];
+
+  lines.push(f.opened === "missed"
+    ? "Opening email: never sent \u2014 the vote had already closed before the timer saw it."
+    : f.opened
+      ? "Opening email: sent " + voteWhen(f.opened) + " to " + (f.openedTo || 0) +
+          (f.openedTo === 1 ? " address." : " addresses.")
+      : "Opening email: not yet.");
+
+  lines.push(f.remindSkipped
+    ? "Reminder: skipped \u2014 the window is " + voteMailInfo.remindHours + " hours or less."
+    : f.remind
+      ? (f.remindTo
+          ? "Reminder: sent " + voteWhen(f.remind) + " to " + f.remindTo + " who hadn\u2019t voted."
+          : "Reminder: nothing to send \u2014 everyone had voted by then.")
+      : "Reminder: due " + voteMailInfo.remindHours + " hours before it closes.");
+
+  if(f.counted) lines.push("Counted by the timer " + voteWhen(f.counted) + ".");
+  if(f.missing && f.missing.length){
+    lines.push("No email on file, so heard nothing: " + f.missing.join(", ") + ".");
+  }
+  lines.push("Email left today: " + (voteMailInfo.quota < 0
+    ? "couldn\u2019t ask"
+    : voteMailInfo.quota + " recipients, keeping " + voteMailInfo.reserve +
+        " back for sign-in codes."));
+
+  var errs = (f.errors || []).slice().reverse();
+  return (voteMailInfo.installed === false
+      ? '<p class="hint" style="margin:0 0 8px"><strong>The timer isn\u2019t installed.</strong> ' +
+        'Nothing opens, nudges or counts by itself until you run ' +
+        '<code>installVoteTrigger()</code> once in the Apps Script editor.</p>'
+      : voteMailInfo.installed === true
+        ? '<p class="hint" style="margin:0 0 8px">Timer installed \u2014 it looks every ' +
+          esc(voteMailInfo.everyMinutes) + ' minutes.</p>'
+        : '<p class="hint" style="margin:0 0 8px">Couldn\u2019t tell whether the timer is installed.</p>') +
+    '<p class="hint" style="margin:0">' + lines.map(esc).join("<br>") + "</p>" +
+    /* A failed send is shown, not swallowed. It never stopped the vote. */
+    (errs.length
+      ? '<p class="hint" style="margin:8px 0 0"><strong>' + esc(errs.length) +
+        (errs.length === 1 ? " email problem" : " email problems") + ":</strong><br>" +
+        errs.map(function(e){
+          return esc(voteWhen(e.at)) + " \u2014 " + esc(e.stage) + ": " + esc(e.why);
+        }).join("<br>") + "</p>"
+      : "") +
+    '<p class="hint" style="margin:8px 0 0">' +
+      '<button class="btn btn--sm btn--ghost" type="button" id="voteMailGo">Check again</button></p>';
+}
 function paneVote(){
   var v = currentVote(), st = voteStatusOf(v);
   var out = '<p class="eyebrow">Next book</p><h3 style="font-size:22px;margin:8px 0 16px">The vote</h3>';
@@ -8654,7 +8731,8 @@ function paneVote(){
       : null;
     out += '<div class="adminrow"><div class="adminrow__head"><strong>' +
       (v.kind === "runoff" ? "Runoff" : "Rate each book 1–10") + "</strong>" +
-      '<span class="pill">' + esc(st) + "</span></div>" +
+      '<span class="pill">' + esc(st) + "</span>" +
+      (v.test ? '<span class="pill">test — only you</span>' : "") + "</div>" +
       '<p class="hint">Opens ' + esc(voteWhen(v.opensAt)) + " · closes " +
         esc(voteWhen(v.closesAt)) + " · " + esc(v.turnout || 0) + " of " +
         esc(mem.length) + " voted</p>" +
@@ -8669,6 +8747,8 @@ function paneVote(){
             ? '<div class="tagbank">' + waiting.map(function(m){
                 return '<span class="tag">' + esc(m.name) + "</span>"; }).join("") + "</div>"
             : '<p class="hint" style="margin:0">Everyone has voted.</p>') + "</div>" +
+      '<div class="field" style="margin-top:12px"><label>Emails and the timer</label>' +
+        voteMailBlock(v) + "</div>" +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">' +
         (st === "scheduled"
           ? '<button class="btn btn--sm btn--ghost" type="button" data-votecancel="' + esc(v.id) + '">Cancel it</button>'
@@ -8688,7 +8768,9 @@ function paneVote(){
   if(v && st === "closed"){
     var tied = v.tied || [];
     out += '<div class="adminrow"><div class="adminrow__head"><strong>Closed</strong>' +
-      '<span class="pill">' + esc(v.turnout || 0) + " voted</span></div>" +
+      '<span class="pill">' + esc(v.turnout || 0) + " voted</span>" +
+      (v.test ? '<span class="pill">test — only you</span>' : "") +
+      (tied.length ? '<span class="pill">waiting on you</span>' : "") + "</div>" +
       (v.totals
         ? '<div class="ballot__rows">' + (v.totals || []).map(function(r){
             var c = voteCandidate(v, r.id) || { title: r.title, author: "" };
@@ -8697,14 +8779,18 @@ function paneVote(){
               tied: tied.indexOf(r.id) !== -1,
               note: v.kind === "runoff" ? r.total + " picks" : r.raters + " rated it" });
           }).join("") + "</div>"
-        : '<p class="hint">Not counted yet — reload, or press Close it now.</p>') +
+        : '<p class="hint">Not counted yet — the timer counts it within ' +
+            VOTE_TICK_MINUTES + ' minutes of the deadline. Reload, or press Close it now.</p>') +
+      '<div class="field" style="margin-top:12px"><label>Emails and the timer</label>' +
+        voteMailBlock(v) + "</div>" +
       (v.winner
         ? '<div style="margin-top:12px"><button class="btn btn--sm btn--surf" type="button" data-votepromote="' +
           esc(v.winner) + '">Add the winner to Up next</button></div>'
         : "") +
       (tied.length
-        ? '<p class="hint" style="margin-top:12px">' + esc(tied.length) +
-          " books tied at the top.</p>" +
+        ? '<p class="hint" style="margin-top:12px"><strong>' + esc(tied.length) +
+          " books tied at the top.</strong> The timer counted the vote but stopped here — " +
+          "a runoff is a new question for the club, so it is yours to launch or to call.</p>" +
           '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">' +
           '<button class="btn btn--sm btn--grape" type="button" data-voterunoff="' + esc(v.id) + '">Launch a runoff</button>' +
           tied.map(function(id){
@@ -8741,25 +8827,108 @@ function paneVote(){
         '<input class="input" type="datetime-local" id="voteClosesAt" value="' +
           esc(localInputValue(soon)) + '"></div>' +
     "</div>" +
+    '<p class="hint" style="margin:6px 0 0">Opening and closing are exact — the clock decides, ' +
+      'so a ballot is taken or refused to the second. The emails and the published result ' +
+      'run on a timer that looks every ' + VOTE_TICK_MINUTES + ' minutes, so those can be up to ' +
+      VOTE_TICK_MINUTES + ' minutes late.</p>' +
     '<div class="field" style="margin-top:12px"><label>Or just say how long it lasts</label>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
         VOTE_LASTS.map(function(l){
           return '<button class="btn btn--sm btn--ghost" type="button" data-votelasts="' + l[2] + '">' +
             esc(l[1]) + "</button>";
         }).join("") + "</div></div>" +
-    '<p class="hint" id="voteLaunchNote" style="margin-top:10px"></p>' +
+    '<div class="field" style="margin-top:12px"><label>' +
+      '<input type="checkbox" id="voteTest"> Test vote: email only me</label>' +
+      '<p class="hint" style="margin:6px 0 0">Nobody else is emailed and members don\u2019t see it. ' +
+      'The only way to try the emails and the timer for real.</p></div>' +
+    '<p class="hint" id="voteLaunchNote" style="margin-top:10px">' +
+      esc(voteNoteFor(opensIsoNow(now), soon.toISOString())) + "</p>" +
     '<div style="margin-top:12px"><button class="btn btn--sm btn--grape" type="button" id="voteLaunch">Launch the vote</button></div>' +
     "</div>";
   return out;
 }
+function opensIsoNow(d){ return (d || new Date()).toISOString(); }
+/* The form's own times, read back out of the pickers. One reader, so the note
+   under the form and the launch itself can never disagree about what window
+   is on screen. */
+function voteFormWindow(){
+  var sel = $("voteOpensWhen"), box = $("voteOpensAt");
+  var opens = (sel && sel.value === "later")
+    ? isoFromLocal(box && box.value)
+    : opensIsoNow();
+  return { opensAt: opens, closesAt: isoFromLocal($("voteClosesAt") && $("voteClosesAt").value) };
+}
+function voteLaunchNote(){
+  var host = $("voteLaunchNote");
+  if(!host) return;
+  var w = voteFormWindow();
+  host.textContent = voteNoteFor(w.opensAt, w.closesAt);
+}
+/* What was just launched, said plainly: who hears about it and when. The
+   timer's lag is named rather than left to be noticed. */
+function voteLaunchedMsg(v){
+  var bits = [];
+  bits.push(v.test ? "Test vote launched \u2014 emails go only to you, and members don\u2019t see it."
+                   : (v.kind === "runoff" ? "Runoff launched." : "Vote launched."));
+  var o = Date.parse(v.opensAt);
+  bits.push(isFinite(o) && o > Date.now() + 60000
+    ? "The opening email goes out at " + voteWhen(v.opensAt) + ", within " +
+        VOTE_TICK_MINUTES + " minutes of it."
+    : "The opening email is going out now.");
+  if((Date.parse(v.closesAt) - o) <= VOTE_REMIND_HOURS * 3600 * 1000){
+    bits.push("No " + VOTE_REMIND_HOURS + "-hour reminder: the window is shorter than that.");
+  }
+  return bits.join(" ");
+}
+/* Ask the script to do its round now rather than on its next tick, so "Now"
+   means now. It does only what a tick would have done, and its own stored
+   flags make a second poke a no-op, so nothing here can double-send. */
+async function voteWake(v){
+  var res = await callEndpoint("vote-wake", { token: sessionToken(), voteId: v && v.id });
+  /* On /dev/ this is blocked by design and there is nothing to report. */
+  if(res && res.error === "dev-blocked") return false;
+  if(!(res && res.ok)){
+    say("Launched, but the script didn\u2019t pick it up yet: " +
+      (endpointTrouble(res && res.error, res && res.detail) || (res && res.error) || "no answer") +
+      " The timer will catch it within " + VOTE_TICK_MINUTES + " minutes.", "bad");
+    return false;
+  }
+  return true;
+}
+/* What a window means, said before it is launched rather than discovered
+   afterwards: when it closes, and whether there is room in it for the
+   6-hour nudge. A window shorter than the gap has nowhere to put one. */
+function voteNoteFor(opensIso, closesIso){
+  var o = Date.parse(opensIso), c = Date.parse(closesIso);
+  if(!isFinite(o) || !isFinite(c) || !(c > o)) return "";
+  var line = "Closes " + voteWhen(closesIso) + ".";
+  /* The boundary counts as no room: at exactly VOTE_REMIND_HOURS the nudge
+     would be due the second it opened, arriving with the start email. The
+     script draws the line in the same place. */
+  return (c - o) <= VOTE_REMIND_HOURS * 3600 * 1000
+    ? line + " That\u2019s " + VOTE_REMIND_HOURS + " hours or less, so there\u2019s no room for the " +
+        VOTE_REMIND_HOURS + "-hour reminder \u2014 only the opening email goes out."
+    : line + " A reminder goes to anyone who hasn\u2019t voted " + VOTE_REMIND_HOURS +
+        " hours before that.";
+}
 /* Both times, checked the same way whether they came from the pickers or the
-   "lasts" buttons: in order, and far enough apart to be worth voting in. */
-function voteWindowFrom(opensIso, closesIso){
+   "lasts" buttons: in order, and far enough apart to be worth voting in.
+
+   A test vote may be much shorter. The whole point of one is to watch the
+   timer open it, nudge and close it while you sit there, and an hour of
+   waiting to find out whether a five-minute timer works is not a test. */
+var VOTE_MIN_MINUTES = 60, VOTE_MIN_TEST_MINUTES = 10;
+function voteWindowFrom(opensIso, closesIso, isTest){
   if(!opensIso) return { error: "That opening time doesn’t look right." };
   if(!closesIso) return { error: "That closing time doesn’t look right." };
   var o = Date.parse(opensIso), c = Date.parse(closesIso);
   if(!(c > o)) return { error: "It has to close after it opens." };
-  if(c - o < 3600 * 1000) return { error: "Give it at least an hour." };
+  var least = isTest ? VOTE_MIN_TEST_MINUTES : VOTE_MIN_MINUTES;
+  if(c - o < least * 60 * 1000){
+    return { error: isTest
+      ? "Give a test vote at least " + VOTE_MIN_TEST_MINUTES + " minutes."
+      : "Give it at least an hour." };
+  }
   return { opensAt: opensIso, closesAt: closesIso };
 }
 
@@ -9507,8 +9676,7 @@ document.addEventListener("click", async function(e){
       ? new Date(fromBox.value) : new Date();
     var till = new Date(from.getTime() + hrs * 3600 * 1000);
     if($("voteClosesAt")) $("voteClosesAt").value = localInputValue(till);
-    if($("voteLaunchNote")) $("voteLaunchNote").textContent =
-      "Closes " + voteWhen(till.toISOString()) + ".";
+    voteLaunchNote();
     return;
   }
   if(t.closest("#voteLaunch")){
@@ -9526,22 +9694,30 @@ document.addEventListener("click", async function(e){
     var opensIso = (openSel && openSel.value === "later")
       ? isoFromLocal($("voteOpensAt") && $("voteOpensAt").value)
       : new Date().toISOString();
-    var win = voteWindowFrom(opensIso, isoFromLocal($("voteClosesAt") && $("voteClosesAt").value));
+    var isTest = !!($("voteTest") && $("voteTest").checked);
+    var win = voteWindowFrom(opensIso,
+      isoFromLocal($("voteClosesAt") && $("voteClosesAt").value), isTest);
     if(win.error){ say(win.error, "bad"); return; }
     if(!state.votes) state.votes = [];
-    state.votes.push({ id: uid("vote"), kind: "rate", candidates: picked,
+    var fresh = { id: uid("vote"), kind: "rate", candidates: picked,
       opensAt: win.opensAt, closesAt: win.closesAt,
       cancelledAt: null, closedAt: null, turnout: 0, totals: null, winner: null, tied: null,
-      parent: null, at: new Date().toISOString() });
+      parent: null, at: new Date().toISOString() };
+    if(isTest) fresh.test = true;
+    state.votes.push(fresh);
     voteLaunchOff = {};
-    if(await save("Launching the vote…")){ renderAll(); renderAdmin(); }
+    if(await save("Launching the vote…")){
+      say(voteLaunchedMsg(fresh), "ok");
+      await voteWake(fresh);   /* says its own piece if the poke didn’t land */
+      renderAll(); renderAdmin();
+    }
     return;
   }
   if((el = t.closest("[data-voteextend]"))){
     var ev = voteById(el.getAttribute("data-voteextend"));
     if(!ev) return;
     var newClose = isoFromLocal($("voteNewClose") && $("voteNewClose").value);
-    var ewin = voteWindowFrom(ev.opensAt, newClose);
+    var ewin = voteWindowFrom(ev.opensAt, newClose, !!ev.test);
     if(ewin.error){ say(ewin.error, "bad"); return; }
     ev.closesAt = ewin.closesAt;
     voteTouch(ev.id);
@@ -9579,6 +9755,16 @@ document.addEventListener("click", async function(e){
     renderAll(); renderAdmin();
     return;
   }
+  if(t.closest("#voteMailGo")){
+    var mv = currentVote(); if(!mv) return;
+    var ids = allVotes().map(function(x){ return x.id; }).slice(-20);
+    var mres = await callEndpoint("vote-mail", { token: sessionToken(), voteIds: ids });
+    if(mres && mres.ok){ voteMailInfo = mres; renderAdmin(); }
+    else say("Couldn\u2019t ask the script about the emails: " +
+      (endpointTrouble(mres && mres.error, mres && mres.detail) || (mres && mres.error) ||
+       "no answer"), "bad");
+    return;
+  }
   if(t.closest("#voteWhoGo")){
     var wv = currentVote(); if(!wv) return;
     var wres = await callEndpoint("vote-who", { token: sessionToken(), voteId: wv.id });
@@ -9593,11 +9779,20 @@ document.addEventListener("click", async function(e){
     var cands = (ov.tied || []).map(function(id){ return voteCandidate(ov, id); }).filter(Boolean);
     if(cands.length < 2) return;
     var rnow = new Date(), rtill = new Date(rnow.getTime() + 24 * 3600 * 1000);
-    state.votes.push({ id: uid("vote"), kind: "runoff", candidates: cands,
+    var ro = { id: uid("vote"), kind: "runoff", candidates: cands,
       opensAt: rnow.toISOString(), closesAt: rtill.toISOString(),
       cancelledAt: null, closedAt: null, turnout: 0, totals: null, winner: null, tied: null,
-      parent: ov.id, at: rnow.toISOString() });
-    if(await save("Launching the runoff…")){ renderAll(); renderAdmin(); }
+      parent: ov.id, at: rnow.toISOString() };
+    /* A runoff opens now. It inherits the tied vote's test flag: a rehearsal
+       that turned into a real email to the whole club would be a nasty
+       surprise at the one moment nobody is watching for it. */
+    if(ov.test) ro.test = true;
+    state.votes.push(ro);
+    if(await save("Launching the runoff…")){
+      say(voteLaunchedMsg(ro), "ok");
+      await voteWake(ro);
+      renderAll(); renderAdmin();
+    }
     return;
   }
   if((el = t.closest("[data-votebreak]"))){
@@ -10636,8 +10831,10 @@ document.addEventListener("change", async function(e){
   }
   if(n && n.id === "voteOpensWhen"){
     var box = $("voteOpensAt"); if(box) box.hidden = n.value !== "later";
+    voteLaunchNote();
     return;
   }
+  if(n && (n.id === "voteOpensAt" || n.id === "voteClosesAt")){ voteLaunchNote(); return; }
   if(n && n.hasAttribute && n.hasAttribute("data-votecand")){
     var cid = n.getAttribute("data-votecand");
     if(n.checked) delete voteLaunchOff[cid]; else voteLaunchOff[cid] = 1;

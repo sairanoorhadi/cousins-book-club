@@ -104,6 +104,34 @@ press **Run**. That schedules `sendMeetingEmails` every five minutes.
 To check the GitHub side is wired up, run `testGitHub` and look at the log —
 it should report reading `state.json`.
 
+## 7. Start the voting timer
+
+Pick `installVoteTrigger` from the function dropdown and press **Run**. That
+schedules `voteTick` every five minutes.
+
+This one asks for a permission the rest of the script does not need —
+*"Allow this application to run when you are not present"* — because that is
+what a time-driven trigger is. Accept it once.
+
+It is safe to run again: it deletes its own trigger before making a new one,
+so you cannot end up with two of them double-sending.
+
+What the timer does, every five minutes:
+
+- emails the club when a vote opens
+- emails anyone who has not voted, six hours before it closes
+- counts a vote whose deadline has passed and publishes the result
+
+**What is exact and what is not.** Opening and closing are worked out from the
+clock on every read, so a ballot is accepted or refused to the second whether
+or not the timer has run. The emails and the published result are what the
+timer does, so those can be up to five minutes late, plus whatever drift
+Apps Script adds on a busy day.
+
+To read the emails without sending any, run `previewVoteEmails` and look at
+the log. It prints both messages for whatever vote is current, who would get
+each one, and how much daily email allowance is left.
+
 ## Already set this up? Update the script
 
 Signing in was added after the first version. To switch it on:
@@ -265,7 +293,11 @@ Settings**. If that isn't your timezone, change it there.
 ## Costs and limits
 
 - Apps Script: free. A consumer Google account can send 100 emails a day, which
-  is far more than a book club needs.
+  is far more than a book club needs. The allowance counts *recipients*, not
+  messages, so one club-wide bcc of seven people costs seven. Sign-in codes
+  come out of the same pot, which is why the voting emails keep 20 back: if
+  fewer than that remain, the send is logged in Admin and retried on the next
+  tick rather than squeezed out.
 - GitHub API: free.
 - Anthropic API: only used when someone presses **Write one for me**. A blurb is
   a fraction of a cent.

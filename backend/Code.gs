@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-19b';
+var SCRIPT_VERSION = '2026-10-20a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -117,6 +117,11 @@ function voteCast(payload) {
   if (st === 'scheduled') return { ok: false, error: 'not open yet' };
   if (st === 'closed') return { ok: false, error: 'voting has closed' };
   if (st === 'cancelled') return { ok: false, error: 'vote cancelled' };
+  /* A test vote is the organiser rehearsing. The site hides it from everyone
+     else, but state.json is a public file and the site is not the only way to
+     reach this URL, so the refusal lives here too. */
+  if (v.test && normEmail(email) !== normEmail(propEmail('ORGANISER_EMAIL')))
+    return { ok: false, error: 'that is a test vote' };
 
   var ballot;
   if (v.kind === 'runoff') {
@@ -254,6 +259,323 @@ function voteForget(id) {
   PropertiesService.getScriptProperties().deleteProperty(ballotKeyFor(id));
 }
 
+/* -------------------------------------------------- voting: the timer and
+   the emails that go with it
+
+   Three things happen with nobody on the site: the start email goes out when
+   a vote opens, a nudge goes out VOTE_REMIND_HOURS before the deadline, and a
+   vote past its deadline is counted and its result published.
+
+   Opening and closing need no timer at all. voteStatus() works the status out
+   from the clock, so a vote is open the instant opensAt passes and shut the
+   instant closesAt does, whether or not anything ran. What the timer adds is
+   the email, the count and the published result -- so the lag below is a lag
+   on those, never on whether a ballot is taken.
+
+   What the timer has already done is remembered in Script Properties rather
+   than in state.json. The organiser's saves rewrite that file wholesale, and
+   a flag a save can erase is a flag that can double-send. */
+var VOTE_TICK_MINUTES = 5;
+var VOTE_REMIND_HOURS = 6;
+/* Recipients held back for sign-in codes. MailApp counts its daily allowance
+   per recipient, so one club-wide bcc of a dozen people is a dozen off a
+   personal Gmail's small ration -- the same ration the six-digit codes come
+   out of. Nobody should be locked out of signing in because a nudge went. */
+var VOTE_MAIL_RESERVE = 20;
+var VOTE_MAIL_KEY = 'votemail:';
+var VOTE_MAIL_ERRORS = 12;
+/* The club's own clock. The times are stored as ISO strings with an offset,
+   so every member's browser shows them their own time -- but an email has no
+   browser to ask, and the club's hours are Eastern. */
+var VOTE_TZ = 'America/New_York';
+
+function voteMailKeyFor(id) { return VOTE_MAIL_KEY + String(id || ''); }
+function voteMailFlags(id) {
+  try { return JSON.parse(PropertiesService.getScriptProperties()
+    .getProperty(voteMailKeyFor(id)) || '{}'); }
+  catch (err) { return {}; }
+}
+function voteMailFlagsWrite(id, rec) {
+  PropertiesService.getScriptProperties()
+    .setProperty(voteMailKeyFor(id), JSON.stringify(rec));
+}
+/* A failure is written down and shown in Admin rather than thrown. An email
+   that did not go is worth knowing about; it is not worth stopping a vote. */
+function voteMailNote(rec, stage, why) {
+  rec.errors = (rec.errors || []).concat([{ at: new Date().toISOString(),
+    stage: stage, why: String(why).slice(0, 300) }]).slice(-VOTE_MAIL_ERRORS);
+  Logger.log('vote mail [' + stage + ']: ' + why);
+}
+
+/* Every member with an address, whatever their notification preferences say.
+   A vote is club business rather than a subscription: somebody who turned
+   meeting reminders off still gets told the club is choosing its next book.
+
+   People waiting to be approved are not here at all. A join request sits
+   unhandled in the inbox and never reaches state.members, so excluding them
+   is the shape of the data rather than a filter that could be forgotten. */
+function voteAddresses(state) {
+  var seen = {}, list = [], missing = [];
+  (state.members || []).forEach(function (m) {
+    if (!m || m.pending) return;
+    var address = normEmail(lookupEmail(m.notifyRef) || m.email || '');
+    if (!address || address.indexOf('@') === -1) { missing.push(m.name || m.id); return; }
+    if (seen[address]) return;
+    seen[address] = 1;
+    list.push(address);
+  });
+  return { list: list, missing: missing };
+}
+
+/* A test vote reaches the organiser and nobody else. It is the only way to
+   rehearse this: the emails, the timer and the automatic count cannot be
+   tried anywhere but live. */
+function voteTestRecipients() {
+  var mine = propEmail('ORGANISER_EMAIL');
+  return { list: mine ? [mine] : [],
+           missing: mine ? [] : ['ORGANISER_EMAIL is not set in Script Properties'] };
+}
+
+/* Who the nudge goes to: members who have not voted. A nudge has no business
+   reaching somebody who already did the thing, and leaving them out tells
+   nobody anything -- no recipient learns who else got it. Addresses only;
+   which member each belongs to is not returned. */
+function voteStillToVote(state, v) {
+  var all = ballotsRead(v.id), out = [], seen = {};
+  (state.members || []).forEach(function (m) {
+    if (!m || m.pending || all[m.id]) return;
+    var address = normEmail(lookupEmail(m.notifyRef) || m.email || '');
+    if (!address || address.indexOf('@') === -1 || seen[address]) return;
+    seen[address] = 1;
+    out.push(address);
+  });
+  return out;
+}
+
+function voteEastern(iso) {
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return Utilities.formatDate(d, VOTE_TZ, "EEEE d MMMM 'at' h:mm a z");
+}
+/* The same deep link the landing banner uses, so the email and the site
+   agree about where voting happens. */
+function voteLink() {
+  return 'https://' + REPO_OWNER + '.github.io/' + REPO_NAME + '/#recs-shortlist';
+}
+
+/* Both emails, in one place, so what goes out can be read without sending
+   it -- previewVoteEmails() does exactly that. */
+function voteMailCopy(state, v, stage) {
+  var clubName = (state.club && state.club.name) || 'Book club';
+  var titles = (v.candidates || []).map(function (c) {
+    return '  • ' + c.title + (c.author ? ' by ' + c.author : '');
+  }).join('\n');
+  var closes = voteEastern(v.closesAt);
+  var runoff = v.kind === 'runoff';
+  var tag = v.test ? '[TEST] ' : '';
+
+  if (stage === 'remind') {
+    return { subject: tag + clubName + ': ' + VOTE_REMIND_HOURS + ' hours left to vote',
+      body: [clubName, '',
+        'Voting closes ' + closes + ', and you have not voted yet.', '',
+        runoff ? 'Pick one:' : 'Rate each one from 1 to 10:',
+        titles, '',
+        voteLink(), '',
+        runoff ? 'Most picks wins.' : 'It takes a minute. The highest average wins.'
+      ].join('\n') };
+  }
+  return { subject: tag + clubName + ': ' +
+      (runoff ? 'a runoff — the vote tied' : 'voting is open for the next book'),
+    body: [clubName, '',
+      runoff
+        ? 'The vote ended in a tie, so there is a runoff between the books that tied. Pick one:'
+        : 'Voting is open for the book we read next. Rate each one from 1 to 10 — ten being "I am dying to read this", one being "throw it in the bin".',
+      '', titles, '',
+      'Voting closes ' + closes + '.', '',
+      voteLink(), '',
+      runoff
+        ? 'Most picks wins. You can change your pick until it closes.'
+        : 'The highest average wins. You can change your ratings until it closes.'
+    ].join('\n') };
+}
+
+/* One message to exactly the addresses handed over, once each, with everyone
+   but the one in To hidden from everyone else.
+
+   This does not go through send(), and the reason matters. send() puts
+   ORGANISER_EMAIL in To whatever list it is given, which is right for a
+   meeting notice -- the organiser wants every one of those -- but wrong here:
+   the nudge says "you have not voted yet", and she would get it after
+   voting. The bcc discipline is send()'s, and so is the one MailApp call;
+   what is dropped is the extra recipient it adds. */
+function voteSendMail(to, subject, body) {
+  var organiser = normEmail(propEmail('ORGANISER_EMAIL'));
+  /* The organiser goes in To when she is one of the recipients, since a
+     message with her in To looks like what it is. Otherwise the first
+     address does, because a bcc needs something in To. */
+  var head = to.filter(function (a) { return normEmail(a) === organiser; })[0] || to[0];
+  var rest = to.filter(function (a) { return a !== head; });
+  if (!rest.length) { MailApp.sendEmail({ to: head, subject: subject, body: body }); return; }
+  MailApp.sendEmail({ to: head, bcc: rest.join(','), subject: subject, body: body });
+}
+
+/* One send, after checking there is enough allowance left to cover it.
+   The flag is written only on success, so a send skipped for want of quota
+   is tried again on the next tick -- once the allowance rolls over, it goes. */
+function voteSendTo(to, subject, body, rec, stage) {
+  if (!to.length) { voteMailNote(rec, stage, 'nobody to send to'); return false; }
+  var left = -1;
+  try { left = MailApp.getRemainingDailyQuota(); } catch (err) { left = -1; }
+  if (left >= 0 && left < to.length + VOTE_MAIL_RESERVE) {
+    voteMailNote(rec, stage, 'not enough email left today: ' + left + ' recipients for ' +
+      to.length + ' to send, keeping ' + VOTE_MAIL_RESERVE + ' back for sign-in codes');
+    return false;
+  }
+  try {
+    voteSendMail(to, subject, body);
+    return true;
+  } catch (err) {
+    voteMailNote(rec, stage, String((err && err.message) || err));
+    return false;
+  }
+}
+
+/* The timer. Does only what is due, so a quiet tick does nothing at all, and
+   it is safe to run twice in the same minute -- which is what lets the site
+   poke it the moment a vote is launched rather than waiting for the clock. */
+function voteTick() {
+  stateForget();
+  var state;
+  try { state = JSON.parse(stateRead().content || '{}'); }
+  catch (err) { Logger.log('voteTick: could not read state.json: ' + err); return; }
+  var now = Date.now();
+  (state.votes || []).forEach(function (v) {
+    try { voteTickOne(state, v, now); }
+    catch (err) { Logger.log('voteTick: ' + ((v && v.id) || '?') + ': ' + err); }
+  });
+}
+
+function voteTickOne(state, v, now) {
+  if (!v || !v.id || v.cancelledAt) return;
+  var st = voteStatus(v, now);
+  if (st === 'scheduled' || st === 'cancelled') return;
+
+  var rec = voteMailFlags(v.id), changed = false;
+
+  /* Too short to nudge in: VOTE_REMIND_HOURS or less of voting leaves no room
+     between the start email and the deadline, so the reminder is written off
+     here rather than fired late. The launch form says so before you launch.
+
+     At exactly VOTE_REMIND_HOURS the nudge would be due the second the vote
+     opened and arrive in the same minute as the start email, which is why
+     the boundary counts as no room -- and the "6 hours" button on the launch
+     form makes exactly that window, so it is the ordinary case, not a corner. */
+  if (!rec.remind && !rec.remindSkipped) {
+    var span = Date.parse(v.closesAt) - Date.parse(v.opensAt);
+    if (isFinite(span) && span <= VOTE_REMIND_HOURS * 3600000) {
+      rec.remindSkipped = true;
+      changed = true;
+    }
+  }
+
+  if (st === 'open' && !rec.opened) {
+    var who = v.test ? voteTestRecipients() : voteAddresses(state);
+    var copy = voteMailCopy(state, v, 'open');
+    /* Not a failure, but the organiser should be able to see who has no
+       address on file and so heard nothing. */
+    if (who.missing.length) rec.missing = who.missing;
+    if (voteSendTo(who.list, copy.subject, copy.body, rec, 'open')) {
+      rec.opened = new Date().toISOString();
+      rec.openedTo = who.list.length;
+    }
+    changed = true;
+  } else if (st === 'closed' && !rec.opened) {
+    /* The whole window went by without a tick -- no trigger installed, or a
+       test vote shorter than the interval. Nothing is sent after the fact:
+       "voting is open" about a vote that is over is worse than silence. */
+    rec.opened = 'missed';
+    voteMailNote(rec, 'open', 'the vote had already closed before the timer saw it, ' +
+      'so no start email went out');
+    changed = true;
+  }
+
+  if (st === 'open' && !rec.remind && !rec.remindSkipped) {
+    var left = Date.parse(v.closesAt) - now;
+    if (isFinite(left) && left <= VOTE_REMIND_HOURS * 3600000) {
+      var to = v.test ? voteTestRecipients().list : voteStillToVote(state, v);
+      if (!to.length) {
+        /* Everyone has voted. The flag goes down anyway: there is nobody to
+           nudge, and leaving it up would fire the moment somebody joined. */
+        rec.remind = new Date().toISOString();
+        rec.remindTo = 0;
+      } else {
+        var nudge = voteMailCopy(state, v, 'remind');
+        if (voteSendTo(to, nudge.subject, nudge.body, rec, 'remind')) {
+          rec.remind = new Date().toISOString();
+          rec.remindTo = to.length;
+        }
+      }
+      changed = true;
+    }
+  }
+
+  if (st === 'closed' && !v.totals) {
+    var out = voteTally({ voteId: v.id });
+    if (out && out.ok) {
+      rec.counted = new Date().toISOString();
+      /* A tie is left standing. The runoff is a new question put to the club,
+         not arithmetic, so Admin shows it waiting and this picks nothing. */
+      rec.tied = out.tied || null;
+    } else {
+      voteMailNote(rec, 'count', (out && out.error) || 'the count failed');
+    }
+    changed = true;
+  }
+
+  if (changed) voteMailFlagsWrite(v.id, rec);
+}
+
+/* The site pokes this the moment a vote is launched, so "Now" means now
+   instead of within VOTE_TICK_MINUTES. It does exactly what a tick does and
+   nothing a tick would not have done by itself, which is what makes it safe
+   to expose: the stored flags mean no poke can send anything twice. */
+function voteWake(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  if (!memberFor(email)) return { ok: false, error: 'not a member yet' };
+  try { voteTick(); } catch (err) { return { ok: false, error: String(err) }; }
+  return { ok: true };
+}
+
+/* What the timer has done, for the Admin tab: whether it is installed, how
+   much email allowance is left, and every send that failed. Organiser only --
+   not because the answers are sensitive, since they say nothing about who
+   voted, but because nobody else has a reason to ask. */
+function voteMailStatus(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var mine = propEmail('ORGANISER_EMAIL');
+  if (!mine) return { ok: false, error: 'ORGANISER_EMAIL is not set' };
+  if (normEmail(email) !== normEmail(mine)) return { ok: false, error: 'organiser only' };
+
+  var quota = -1;
+  try { quota = MailApp.getRemainingDailyQuota(); } catch (err) { quota = -1; }
+  var installed = null;
+  try { installed = voteTriggerInstalled(); } catch (err) { installed = null; }
+  var flags = {};
+  [].concat(payload.voteIds || []).slice(0, 20).forEach(function (id) {
+    flags[String(id)] = voteMailFlags(String(id));
+  });
+  return { ok: true, installed: installed, everyMinutes: VOTE_TICK_MINUTES,
+           remindHours: VOTE_REMIND_HOURS, quota: quota, reserve: VOTE_MAIL_RESERVE,
+           flags: flags };
+}
+
+/* Nothing keeps the timer's notes for a vote that is gone. */
+function voteMailForget(id) {
+  PropertiesService.getScriptProperties().deleteProperty(voteMailKeyFor(id));
+}
+
 function prop(name) {
   return PropertiesService.getScriptProperties().getProperty(name) || '';
 }
@@ -312,6 +634,8 @@ function doPost(e) {
   if (kind === 'vote-mine') return json(voteMine(payload));
   if (kind === 'vote-who') return json(voteWho(payload));
   if (kind === 'vote-tally') return json(voteTally(payload));
+  if (kind === 'vote-wake') return json(voteWake(payload));
+  if (kind === 'vote-mail') return json(voteMailStatus(payload));
   if (kind === 'photo-add') return json(photoAdd(payload));
   if (kind === 'photo-list') return json(photoList(payload));
   if (kind === 'photo-delete') return json(photoDelete(payload));
@@ -2208,6 +2532,100 @@ function digestInstalled() {
   return ScriptApp.getProjectTriggers().some(function (t) {
     return t.getHandlerFunction() === 'weeklyDigest';
   });
+}
+
+/**
+ * Run ONCE from the editor to start the voting timer.
+ *
+ * Safe to run again: it removes its own trigger before making a new one, so
+ * it cannot end up with two of them double-ticking.
+ *
+ * It asks for one permission the rest of the script does not need --
+ * "Allow this application to run when you are not present" -- because that
+ * is what a time-driven trigger is.
+ *
+ * Kept apart from setUpTrigger() on purpose. Two triggers that fail
+ * independently are better than one that stops meeting reminders when a vote
+ * goes wrong, or the other way round.
+ */
+function installVoteTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'voteTick') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('voteTick').timeBased().everyMinutes(VOTE_TICK_MINUTES).create();
+  Logger.log([
+    'Voting timer installed: every ' + VOTE_TICK_MINUTES + ' minutes.',
+    '',
+    'Exact, with no lag at all:',
+    '  a vote opening at opensAt and shutting at closesAt. Both are worked',
+    '  out from the clock on every read, so a ballot is accepted or refused',
+    '  to the second whether or not the timer has run.',
+    '',
+    'Up to ' + VOTE_TICK_MINUTES + ' minutes late:',
+    '  the start email',
+    '  the ' + VOTE_REMIND_HOURS + '-hour nudge',
+    '  the result appearing on the site after the deadline',
+    '',
+    'Apps Script schedules "every ' + VOTE_TICK_MINUTES + ' minutes" loosely, so add a',
+    'minute or so of its own drift on a busy day.'
+  ].join('\n'));
+}
+
+function voteTriggerInstalled() {
+  return ScriptApp.getProjectTriggers().some(function (t) {
+    return t.getHandlerFunction() === 'voteTick';
+  });
+}
+
+/**
+ * Run from the editor to READ the vote emails without sending anything.
+ *
+ * Prints the start email and the nudge for the vote currently in state.json,
+ * exactly as they would go out, plus who would get each one and how much
+ * email allowance is left today.
+ */
+function previewVoteEmails() {
+  stateForget();
+  var state;
+  try { state = JSON.parse(stateRead().content || '{}'); }
+  catch (err) { Logger.log('Could not read state.json: ' + err); return; }
+  var v = voteOf(state, '');
+  if (!v) { Logger.log('No vote in state.json to preview.'); return; }
+
+  var who = v.test ? voteTestRecipients() : voteAddresses(state);
+  var nudge = voteStillToVote(state, v);
+  var quota = -1;
+  try { quota = MailApp.getRemainingDailyQuota(); } catch (err) {}
+  var open = voteMailCopy(state, v, 'open');
+  var remind = voteMailCopy(state, v, 'remind');
+  var span = Date.parse(v.closesAt) - Date.parse(v.opensAt);
+
+  Logger.log([
+    'Vote ' + v.id + ' (' + (v.kind || 'rate') + ')' + (v.test ? ' -- A TEST VOTE' : ''),
+    'Status now: ' + voteStatus(v),
+    'Opens:  ' + voteEastern(v.opensAt),
+    'Closes: ' + voteEastern(v.closesAt),
+    'Timer:  ' + (voteTriggerInstalled() ? 'installed' : 'NOT INSTALLED -- run installVoteTrigger()'),
+    'Email allowance left today: ' + quota + ' recipients (' + VOTE_MAIL_RESERVE +
+      ' held back for sign-in codes)',
+    '',
+    '--- START EMAIL -> ' + who.list.length + ' recipient(s)' +
+      (who.missing.length ? ', no address on file for: ' + who.missing.join(', ') : ''),
+    'Subject: ' + open.subject,
+    '',
+    open.body,
+    '',
+    '--- ' + VOTE_REMIND_HOURS + '-HOUR NUDGE -> ' +
+      (v.test ? who.list.length : nudge.length) + ' recipient(s) who have not voted',
+    (isFinite(span) && span <= VOTE_REMIND_HOURS * 3600000
+      ? '(SKIPPED: the window is ' + VOTE_REMIND_HOURS + ' hours or less)' : ''),
+    'Subject: ' + remind.subject,
+    '',
+    remind.body,
+    '',
+    '--- what the timer has done so far',
+    JSON.stringify(voteMailFlags(v.id), null, 2)
+  ].join('\n'));
 }
 
 /** Run once from the editor to check the GitHub token works. */
