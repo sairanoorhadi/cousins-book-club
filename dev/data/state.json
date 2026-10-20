@@ -1891,6 +1891,76 @@
       "tied": null,
       "parent": null,
       "at": "2026-10-19T23:39:05.870Z"
+    },
+    {
+      "id": "vote-seed-closed",
+      "kind": "rate",
+      "candidates": [
+        {
+          "id": "rc-elevator",
+          "title": "The Elevator Ghost",
+          "author": "Glen Huser",
+          "cover": ""
+        },
+        {
+          "id": "suggest-f70a1c8e-a89",
+          "title": "The First Stone",
+          "author": "Don Aker",
+          "cover": ""
+        },
+        {
+          "id": "suggest-9430b520-ce4",
+          "title": "Heaven",
+          "author": "Mieko Kawakami",
+          "cover": ""
+        },
+        {
+          "id": "suggest-5b4bab6f-ca1",
+          "title": "Red Queen",
+          "author": "Victoria Aveyard",
+          "cover": ""
+        }
+      ],
+      "opensAt": "2026-10-17T14:00:00.000Z",
+      "closesAt": "2026-10-19T14:00:00.000Z",
+      "cancelledAt": null,
+      "closedAt": "2026-10-19T14:00:00.000Z",
+      "turnout": 2,
+      "totals": [
+        {
+          "id": "rc-elevator",
+          "title": "The Elevator Ghost",
+          "total": 17.0,
+          "raters": 2,
+          "avg": 8.5
+        },
+        {
+          "id": "suggest-f70a1c8e-a89",
+          "title": "The First Stone",
+          "total": 14.0,
+          "raters": 2,
+          "avg": 7.0
+        },
+        {
+          "id": "suggest-9430b520-ce4",
+          "title": "Heaven",
+          "total": 13.0,
+          "raters": 2,
+          "avg": 6.5
+        },
+        {
+          "id": "suggest-5b4bab6f-ca1",
+          "title": "Red Queen",
+          "total": 10.0,
+          "raters": 2,
+          "avg": 5.0
+        }
+      ],
+      "winner": "rc-elevator",
+      "tied": null,
+      "parent": null,
+      "at": "2026-10-17T14:00:00.000Z",
+      "seededForChecking": "remove this whole entry to get the open vote back"
     }
   ]
 }

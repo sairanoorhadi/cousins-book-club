@@ -5205,12 +5205,13 @@ function voteCountdown(iso){
   var days = Math.round(hrs / 24);
   return days + (days === 1 ? " day" : " days") + " left";
 }
-var VOTE_RESULT_DAYS = 3;
 function renderVoteCta(){
   var host = $("voteCta");
   if(!host) return;
   var v = currentVote(), st = voteStatusOf(v);
-  if(!v || st === "cancelled"){ host.innerHTML = ""; return; }
+  /* Closed is as silent as cancelled. The result lives on the shortlist tab
+     and the winner lives under Up next; the top of the page says nothing. */
+  if(!v || st === "cancelled" || st === "closed"){ host.innerHTML = ""; return; }
   var mem = myMember(), total = voteMembers().length;
   var covers = '<div class="votecta__covers">' + (v.candidates || []).slice(0, 10).map(function(c){
     return '<span class="cover-wrap"><span class="cover">' +
@@ -5218,18 +5219,6 @@ function renderVoteCta(){
         esc(c.title) + "</span>") + "</span></span>";
   }).join("") + "</div>";
 
-  if(st === "closed"){
-    /* The result stands at the top for a few days, then gets out of the way. */
-    var since = Date.now() - Date.parse(v.closedAt || v.closesAt);
-    if(!v.totals || !(since < VOTE_RESULT_DAYS * 86400000)){ host.innerHTML = ""; return; }
-    var win = v.winner ? voteCandidate(v, v.winner) : null;
-    host.innerHTML = '<a class="votecta votecta--quiet" href="#recs-shortlist">' +
-      '<span class="votecta__head"><h2>' +
-        (win ? "The club voted for " + esc(win.title) : "The vote is in") + "</h2>" +
-        '<span class="votecta__when">' + esc(v.turnout || 0) + " of " + esc(total) + " voted</span></span>" +
-      covers + '<span class="votecta__go">See the result →</span></a>';
-    return;
-  }
   if(st === "scheduled"){
     host.innerHTML = '<a class="votecta votecta--quiet" href="#recs-shortlist">' +
       '<span class="votecta__head"><h2>Voting opens soon</h2>' +
