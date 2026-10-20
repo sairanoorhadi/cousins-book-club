@@ -985,6 +985,97 @@ a.getrow:hover{background:var(--sunk)}
 .pending__also{margin-top:10px;border-left:3px solid var(--hairline);padding:2px 0 2px 12px}
 .pending__also p{margin:0 0 4px;font-size:14.5px;color:var(--muted)}
 
+/* ============ the ballot ============ */
+/* Named .ballot, not .vote. There is already a .vote on this page — the
+   endorse pill on a recommendation card — and calling this one the same
+   thing put two rules with that selector in one sheet. The later of them
+   won each clash, so the pill took this block's padding and became a circle
+   over the cover, and this block took the pill's position:absolute and
+   border-radius:999px and became an oval floating over the hero. One
+   collision, both of the things that looked broken. */
+.ballot{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);
+  box-shadow:var(--shadow-sm);padding:18px 20px;margin-bottom:24px}
+.ballot__head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.ballot__head h3{font-size:20px}
+/* The top bar is sticky, so an anchor scrolled to the very top lands
+   underneath it. This is the room it needs. */
+#recs-vote{scroll-margin-top:96px}
+/* The ballot follows the row of covers, so the space between them belongs to
+   it. Empty on a tab with no vote, where it must take up nothing at all. */
+#voteBox:not(:empty){margin-top:26px}
+.ballot__pill{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+  padding:3px 10px;border-radius:999px;border:1.5px solid currentColor}
+.ballot__pill--open{color:var(--surf)}
+.ballot__pill--scheduled{color:var(--sky)}
+.ballot__pill--closed{color:var(--muted)}
+.ballot__when{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.ballot__rows{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.voterow{display:grid;grid-template-columns:1fr auto;gap:4px 14px;align-items:center;
+  padding:10px 12px;border-radius:8px;background:color-mix(in srgb, var(--ink) 4%, transparent)}
+.voterow__t{font-family:var(--f-display);font-weight:700;font-size:15.5px;min-width:0}
+.voterow__a{font-size:13.5px;color:var(--muted);grid-column:1;grid-row:2}
+.voterow__n{font-family:var(--f-mono);font-size:19px;grid-column:2;grid-row:1/3;
+  min-width:2.4em;text-align:right;font-variant-numeric:tabular-nums}
+.voterow__s{grid-column:1/3;grid-row:3}
+.voterow__s input[type=range]{width:100%;margin:6px 0 0}
+.voterow--win{background:color-mix(in srgb, var(--zest) 26%, transparent);
+  outline:2px solid var(--zest)}
+.voterow--tied{outline:2px dashed var(--flare)}
+.ballot__foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px}
+.ballot__turn{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);margin-left:auto}
+.ballot__pick{display:flex;gap:10px;flex-wrap:wrap}
+.votepick{flex:1 1 180px;text-align:left;padding:12px 14px;border:2px solid var(--edge);
+  border-radius:var(--r);background:var(--surface);cursor:pointer;font-family:var(--f-display);
+  font-weight:700;font-size:15.5px;color:var(--ink)}
+.votepick[aria-pressed="true"]{background:var(--grape);color:var(--on-grape)}
+
+/* Ten buttons rather than a slider. A slider always holds a value, so there
+   is no way for it to say "not rated yet" — and the ballot is not allowed to
+   send until every book has been rated on purpose. Buttons can be genuinely
+   empty. Five to a row on a phone, ten across on a desktop. */
+.rate{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin-top:8px}
+.rate__b{font-family:var(--f-mono);font-size:14px;padding:10px 0;min-height:44px;
+  border:1.5px solid var(--hairline);border-radius:8px;background:var(--surface);
+  color:var(--muted);cursor:pointer}
+.rate__b:hover{border-color:var(--edge);color:var(--ink)}
+.rate__b[aria-pressed="true"]{background:var(--grape);color:var(--on-grape);border-color:var(--edge)}
+.rate__b:focus-visible{outline:2px solid var(--grape);outline-offset:2px}
+.rate__b[disabled]{opacity:.45;cursor:default}
+@media (max-width:620px){ .rate{grid-template-columns:repeat(5,1fr)} }
+.ratecard{padding:12px 0;border-top:1.5px solid var(--hairline)}
+.ratecard:first-child{border-top:0}
+.ratecard__t{font-family:var(--f-display);font-weight:700;font-size:16px}
+.ratecard__a{font-size:13.5px;color:var(--muted)}
+.ratecard__mine{font-family:var(--f-mono);font-size:13px;color:var(--muted);margin-left:auto}
+.ratecard__head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ratehint{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:11px;
+  color:var(--muted);margin-top:5px}
+
+/* ============ the landing call to vote ============ */
+/* A section in the ordinary flow at the top of the page, so it pushes the
+   hero down rather than sitting over it. The whole thing is one link. */
+#voteCta:not(:empty){padding-top:26px}
+.votecta{display:block;text-decoration:none;color:inherit;border:2px solid var(--edge);
+  border-radius:var(--r);background:color-mix(in srgb, var(--grape) 12%, var(--surface));
+  box-shadow:var(--shadow-sm);padding:20px 22px;margin:0 0 26px}
+.votecta:hover{background:color-mix(in srgb, var(--grape) 20%, var(--surface))}
+.votecta:focus-visible{outline:3px solid var(--grape);outline-offset:3px}
+.votecta--quiet{background:var(--surface)}
+.votecta__head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.votecta__head h2{font-size:23px}
+.votecta__when{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+/* Left, with the heading and the call to action above and below them. The
+   point of the box is that its left edge is the hero's left edge; centring
+   the covers inside it would set up a second alignment arguing with the
+   first. max-width keeps five covers a sensible size in a wide box rather
+   than stretching them across it. */
+.votecta__covers{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0 14px;
+  max-width:560px;justify-items:start}
+@media (max-width:620px){ .votecta__covers{grid-template-columns:repeat(3,1fr)} }
+.votecta__go{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-display);
+  font-weight:800;font-size:16px;color:var(--grape)}
+.votecta__foot{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+
 /* ============ Compare, and the vocabulary lists ============ */
 /* The panel opens inline, under the tag it was pressed from, rather than over
    the page: Admin is already inside a modal, and a second layer on top of it
@@ -1741,6 +1832,10 @@ a.getrow:hover{background:var(--sunk)}
 </div>
 
 <main>
+  <!-- .wrap is the hero's own container, reused rather than reinvented, so
+       the banner's edges are the hero's edges at every width by construction
+       instead of by two numbers that have to be kept equal. -->
+  <div class="wrap" id="voteCta"></div>
   <!-- ===== NOW READING ===== -->
   <section class="hero" id="now">
     <div class="wrap">
@@ -1817,6 +1912,7 @@ a.getrow:hover{background:var(--sunk)}
       <div class="tabpanel" role="tabpanel" id="panel-short" aria-labelledby="tab-short" hidden>
         <p class="focusnote" style="margin-bottom:18px">The books in the running for the next read. The organiser shortlists them from the recommendations.</p>
         <div class="recgrid" id="shortGrid"></div>
+        <div id="voteBox"></div>
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-suggest" aria-labelledby="tab-suggest" hidden>
         <form class="suggestform" id="suggestForm" novalidate>
@@ -2690,6 +2786,7 @@ function migrate(s){
   if(!Array.isArray(s.meetings)) s.meetings = [];
   if(!Array.isArray(s.recs)) s.recs = [];
   if(!Array.isArray(s.inbox)) s.inbox = [];
+  if(!Array.isArray(s.votes)) s.votes = [];
   delete s.adminPin;   /* the PIN is meaningless in a public repo; the GitHub token is the real gate */
   if(!Array.isArray(s.members)) s.members = [];
   s.members.forEach(function(m){
@@ -2990,6 +3087,7 @@ async function save(label){
     tokenRefused = false;
     paintTokenWarning();
     baseRev = Number(state.rev || 0);
+    voteTouched = {};
     /* Said plainly because the old wording — "the live site catches up" —
        reads as somebody else's problem when you are standing on the test
        site, and the page you are on is exactly the one that will show the
@@ -3033,6 +3131,35 @@ function adoptFreshNotes(rawContent){
     if(Array.isArray(f.predictions)) m.predictions = f.predictions;
     if(Array.isArray(f.points)) m.points = f.points;
   });
+  /* The same hazard, for votes. Turnout, the totals and the winner are
+     written by the script as ballots arrive; this page may have been open
+     since before any of that. Saving the copy it loaded with would undo
+     them, so the fresh ones are taken back first. The vote's own setup —
+     candidates, the dates, cancelled and closed — stays as Admin has it,
+     because Admin is what edits those. */
+  if(Array.isArray(fresh.votes) && Array.isArray(state.votes)){
+    state.votes.forEach(function(v){
+      var f = fresh.votes.filter(function(x){ return x.id === v.id; })[0];
+      if(!f) return;
+      /* A vote this session has deliberately changed is left alone. Taking
+         the repo's copy back over the top is right for a page that has
+         merely been open a while, and wrong the moment Admin has just set
+         something: closing early, or naming a winner to break a tie, both
+         write exactly the fields the script also writes, and this would
+         quietly undo them. The test that caught it had the organiser pick a
+         winner and watched it come back null. */
+      if(voteTouched[v.id]) return;
+      v.turnout = f.turnout;
+      v.totals = f.totals;
+      v.winner = f.winner;
+      v.tied = f.tied;
+      if(f.closedAt && !v.closedAt) v.closedAt = f.closedAt;
+    });
+    /* a vote the script wrote that this page has never seen */
+    fresh.votes.forEach(function(f){
+      if(!state.votes.some(function(v){ return v.id === f.id; })) state.votes.push(f);
+    });
+  }
 }
 function downloadState(){
   var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
@@ -3157,7 +3284,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-14b";
+var SCRIPT_WANT = "2026-10-20a";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -3196,6 +3323,14 @@ var ENDPOINT_REPEATABLE = {
   /* sets three fields to what it was handed, so a second go lands the same
      values — unlike photo-add, which appends */
   "photo-edit": 1,
+  /* Voting. Casting replaces a ballot rather than adding one, so sending the
+     same one twice lands the same result; the other three only read, or
+     count a vote that is already over. */
+  "vote-cast": 1, "vote-mine": 1, "vote-who": 1, "vote-tally": 1,
+  /* vote-wake only does what the timer would have done anyway, and the
+     script's own stored flags mean it cannot send the same email twice, so a
+     repeat is a no-op. vote-mail only reads. */
+  "vote-wake": 1, "vote-mail": 1,
   /* the page sends the state it wants rather than "flip it", so repeating
      it lands where the first one would have */
   "meet-ready": 1,
@@ -4791,7 +4926,8 @@ function dualApply(n, v){
 }
 document.addEventListener("input", function(e){
   var n = e.target;
-  if(!n || !n.getAttribute || !n.getAttribute("data-dual")) return;
+  if(!n || !n.getAttribute) return;
+  if(!n.getAttribute("data-dual")) return;
   dualApply(n, n.value);
 });
 /* An arrow key already walks the scale's own step, a tenth of a star on the
@@ -4894,6 +5030,271 @@ function sortRecs(list){
     return (recScore(b) - recScore(a)) || byTitle(a, b);
   });
 }
+
+
+
+/* Your own ballot, and who has voted, both come from the script — neither
+   is in the public file. Asked for once when there is a vote to ask about. */
+async function voteLoadMine(){
+  var v = currentVote();
+  voteMine = null; voteDraft = null;
+  if(!v || !myMember() || voteStatusOf(v) !== "open") { renderVote(); renderVoteCta(); return; }
+  var res = await callEndpoint("vote-mine", { token: sessionToken(), voteId: v.id });
+  if(res && res.ok && res.mine){
+    voteMine = res.mine;
+    voteDraft = JSON.parse(JSON.stringify(res.mine));
+  }
+  renderVote(); renderVoteCta();
+}
+/* A vote whose deadline has gone but whose count has not been published yet.
+   Anyone signed in can ask for it to be counted — the script refuses until
+   the vote is genuinely over, so there is nothing to gain by asking early.
+   This is what stands in for the timer until the timer exists. */
+async function voteTallyIfDue(){
+  var v = currentVote();
+  if(!v || v.totals || v.cancelledAt) return;
+  if(voteStatusOf(v) !== "closed") return;
+  var res = await callEndpoint("vote-tally", { voteId: v.id });
+  if(res && res.ok && res.totals){
+    v.totals = res.totals; v.winner = res.winner || null;
+    v.tied = res.tied || null; v.turnout = res.turnout;
+    if(!v.closedAt) v.closedAt = new Date().toISOString();
+    renderVote(); renderAdmin();
+  }
+}
+
+/* ---------- the vote, as a member sees it ---------- */
+var voteMine = null;        /* this member's own ballot, from the script */
+var voteDraft = null;       /* what has been rated so far, before sending */
+var voteEditing = false;    /* pressed Edit on a ballot already sent */
+var voteWhoVoted = null;    /* member ids, for the nudge list */
+
+/* One line per book, for every view that is not the ballot itself: the
+   signed-out list, your own ratings read back, and the result. */
+function voteRowHTML(v, c, opts){
+  opts = opts || {};
+  return '<div class="voterow' + (opts.win ? " voterow--win" : "") +
+      (opts.tied ? " voterow--tied" : "") + '">' +
+    '<span class="voterow__t">' + esc(c.title) + (opts.win ? " \u2605" : "") + "</span>" +
+    '<span class="voterow__a">' + esc(c.author || "") +
+      (opts.note ? " \u00b7 " + esc(opts.note) : "") + "</span>" +
+    '<span class="voterow__n">' + esc(opts.right) + "</span>" +
+    "</div>";
+}
+function voteAvg(r){
+  var n = Number(r && r.raters) || 0;
+  return n ? Math.round((Number(r.total) / n) * 10) / 10 : 0;
+}
+/* The ten buttons for one book. Nothing is pressed until the reader presses
+   it: there is no default rating, because a default is an opinion nobody
+   held. */
+function rateRowHTML(c, mine, disabled){
+  var b = "";
+  for(var i = 1; i <= 10; i++){
+    b += '<button class="rate__b" type="button" data-rateid="' + esc(c.id) + '" data-raten="' + i +
+      '" aria-pressed="' + (Number(mine) === i) + '"' + (disabled ? " disabled" : "") +
+      ' aria-label="' + esc(c.title) + ": " + i + ' out of 10">' + i + "</button>";
+  }
+  return '<div class="ratecard"><div class="ratecard__head">' +
+      '<span class="ratecard__t">' + esc(c.title) + "</span>" +
+      '<span class="ratecard__a">' + esc(c.author || "") + "</span>" +
+      '<span class="ratecard__mine" data-ratemine="' + esc(c.id) + '">' +
+        (mine ? esc(mine) + " / 10" : "not rated") + "</span></div>" +
+    '<div class="rate">' + b + "</div>" +
+    '<p class="ratehint"><span>1 — throw it in the bin</span><span>10 — dying to read it</span></p>' +
+    "</div>";
+}
+function voteAllRated(v){
+  if(!voteDraft || !voteDraft.ratings) return false;
+  return (v.candidates || []).every(function(c){ return Number(voteDraft.ratings[c.id]) >= 1; });
+}
+function renderVote(){
+  var host = $("voteBox");
+  if(!host) return;
+  var v = currentVote();
+  if(!v){ host.innerHTML = ""; return; }
+  var st = voteStatusOf(v), mem = myMember();
+  var total = voteMembers().length;
+  var pill = '<span class="ballot__pill ballot__pill--' + st + '">' +
+    (st === "open" ? "Voting open" : st === "scheduled" ? "Opens soon" : "Closed") + "</span>";
+  var head = '<div class="ballot__head"><h3 id="recs-vote">' +
+    (v.kind === "runoff" ? "Runoff — pick one" : "Vote now") + "</h3>" + pill + "</div>";
+  var turn = '<span class="ballot__turn">' + esc(v.turnout || 0) + " of " + esc(total) +
+    " members have voted</span>";
+
+  if(st === "closed"){
+    var rows = (v.totals || []).slice();
+    var byId = {};
+    rows.forEach(function(r){ byId[r.id] = r; });
+    var tied = v.tied || [];
+    host.innerHTML = '<div class="ballot">' + head +
+      '<p class="ballot__when">' + (v.totals
+        ? "Closed " + esc(voteWhen(v.closedAt || v.closesAt)) + " · " +
+          esc(v.turnout || 0) + " of " + esc(total) + " voted"
+        : "Closed " + esc(voteWhen(v.closedAt || v.closesAt)) +
+          " — the count has not been published yet.") + "</p>" +
+      '<div class="ballot__rows">' + (v.candidates || []).map(function(c){
+        var r = byId[c.id] || {};
+        return voteRowHTML(v, c, {
+          right: v.totals ? (v.kind === "runoff" ? r.total : voteAvg(r).toFixed(1)) : "–",
+          win: v.winner && String(v.winner) === String(c.id),
+          tied: tied.indexOf(c.id) !== -1,
+          note: v.totals ? (v.kind === "runoff"
+            ? (r.total === 1 ? "1 pick" : (r.total || 0) + " picks")
+            : (r.raters || 0) + (r.raters === 1 ? " rating" : " ratings")) : "" });
+      }).join("") + "</div>" +
+      (tied.length ? '<p class="hint">Tied at the top. The organiser decides what happens next.</p>' : "") +
+      "</div>";
+    return;
+  }
+
+  var scheduled = st === "scheduled";
+  var body, foot = "";
+  if(!mem){
+    body = '<div class="ballot__rows">' + (v.candidates || []).map(function(c){
+      return voteRowHTML(v, c, { right: "–" }); }).join("") + "</div>";
+    foot = '<button class="btn btn--sm btn--grape" type="button" id="voteSignIn">Sign in to vote</button>' + turn;
+  }
+  else if(v.kind === "runoff"){
+    var picked = voteDraft && voteDraft.pick;
+    body = '<div class="ballot__pick">' + (v.candidates || []).map(function(c){
+      return '<button class="votepick" type="button" data-votepick="' + esc(c.id) + '" aria-pressed="' +
+        (String(picked) === String(c.id)) + '"' + (scheduled ? " disabled" : "") + ">" +
+        esc(c.title) + "</button>";
+    }).join("") + "</div>";
+    foot = '<button class="btn btn--sm btn--surf" type="button" id="voteSend"' +
+      (scheduled || !picked ? " disabled" : "") + ">Submit</button>" + turn;
+  }
+  else if(voteMine && !voteEditing && !scheduled){
+    /* Sent. What they chose, read back, and a way to change it. */
+    body = '<div class="ballot__rows">' + (v.candidates || []).map(function(c){
+      var n = (voteMine.ratings || {})[c.id];
+      return voteRowHTML(v, c, { right: n ? n + " / 10" : "–" });
+    }).join("") + "</div>";
+    foot = '<button class="btn btn--sm btn--ghost" type="button" id="voteEdit">Edit my vote</button>' +
+      '<span class="hint">You can change it until it closes.</span>' + turn;
+  }
+  else {
+    body = (v.candidates || []).map(function(c){
+      var n = voteDraft && voteDraft.ratings ? voteDraft.ratings[c.id] : null;
+      return rateRowHTML(c, n, scheduled);
+    }).join("");
+    foot = '<button class="btn btn--sm btn--surf" type="button" id="voteSend"' +
+      (scheduled || !voteAllRated(v) ? " disabled" : "") + ">Submit</button>" +
+      (scheduled ? "" : '<span class="hint" id="voteNote">' +
+        (voteAllRated(v) ? "Ready to send." : "Rate every book to send it.") + "</span>") + turn;
+  }
+
+  host.innerHTML = '<div class="ballot">' + head +
+    '<p class="ballot__when">' + (scheduled
+      ? "Voting opens " + esc(voteWhen(v.opensAt)) + "."
+      : "Closes " + esc(voteWhen(v.closesAt)) + ".") + "</p>" +
+    body + '<div class="ballot__foot">' + foot + "</div></div>";
+}
+
+/* ---------- the call to vote, at the top of the landing page ---------- */
+/* In the flow, not over it: the hero and everything under it move down. */
+function voteCountdown(iso){
+  var ms = Date.parse(iso) - Date.now();
+  if(!isFinite(ms) || ms <= 0) return "any moment";
+  var mins = Math.round(ms / 60000);
+  if(mins < 60) return mins + (mins === 1 ? " minute" : " minutes") + " left";
+  var hrs = Math.round(mins / 60);
+  if(hrs < 48) return hrs + (hrs === 1 ? " hour" : " hours") + " left";
+  var days = Math.round(hrs / 24);
+  return days + (days === 1 ? " day" : " days") + " left";
+}
+var VOTE_RESULT_DAYS = 3;
+function renderVoteCta(){
+  var host = $("voteCta");
+  if(!host) return;
+  var v = currentVote(), st = voteStatusOf(v);
+  if(!v || st === "cancelled"){ host.innerHTML = ""; return; }
+  var mem = myMember(), total = voteMembers().length;
+  var covers = '<div class="votecta__covers">' + (v.candidates || []).slice(0, 10).map(function(c){
+    return '<span class="cover-wrap"><span class="cover">' +
+      (c.cover ? '<img src="' + esc(c.cover) + '" alt="">' : '<span class="cover__none">' +
+        esc(c.title) + "</span>") + "</span></span>";
+  }).join("") + "</div>";
+
+  if(st === "closed"){
+    /* The result stands at the top for a few days, then gets out of the way. */
+    var since = Date.now() - Date.parse(v.closedAt || v.closesAt);
+    if(!v.totals || !(since < VOTE_RESULT_DAYS * 86400000)){ host.innerHTML = ""; return; }
+    var win = v.winner ? voteCandidate(v, v.winner) : null;
+    host.innerHTML = '<a class="votecta votecta--quiet" href="#recs-shortlist">' +
+      '<span class="votecta__head"><h2>' +
+        (win ? "The club voted for " + esc(win.title) : "The vote is in") + "</h2>" +
+        '<span class="votecta__when">' + esc(v.turnout || 0) + " of " + esc(total) + " voted</span></span>" +
+      covers + '<span class="votecta__go">See the result →</span></a>';
+    return;
+  }
+  if(st === "scheduled"){
+    host.innerHTML = '<a class="votecta votecta--quiet" href="#recs-shortlist">' +
+      '<span class="votecta__head"><h2>Voting opens soon</h2>' +
+        '<span class="votecta__when">' + esc(voteWhen(v.opensAt)) + "</span></span>" +
+      covers + '<span class="votecta__go">See who is standing →</span></a>';
+    return;
+  }
+  var voted = !!voteMine;
+  host.innerHTML = '<a class="votecta' + (voted ? " votecta--quiet" : "") + '" href="#recs-shortlist">' +
+    '<span class="votecta__head"><h2>' +
+      (voted ? "Thanks — your vote is in" : "Voting is open") + "</h2>" +
+      '<span class="votecta__when">' +
+        (voted ? "Edit until " + esc(voteWhen(v.closesAt))
+               : "Closes " + esc(voteWhen(v.closesAt)) + " · " + esc(voteCountdown(v.closesAt))) +
+      "</span></span>" +
+    covers +
+    '<span class="votecta__foot"><span class="votecta__go">' +
+      (mem ? (voted ? "Change my vote →" : "Click here to vote →") : "Sign in to vote →") +
+    '</span><span class="votecta__when">' + esc(v.turnout || 0) + " of " + esc(total) +
+      " have voted</span></span></a>";
+}
+/* ---------- the vote for the next book ----------
+   The ballots are not here and never will be: they live in the script's own
+   private store, because data/state.json is a public file in a public
+   repository. What this side has is the arithmetic — who is standing, when
+   it opens and closes, how many have voted, and once it is over the totals.
+
+   Status is worked out from the clock every time rather than stored, so a
+   vote opens and closes on time whether or not anything happened to write to
+   the file at that moment. The script works it out the same way, and its
+   answer is the one that decides whether a ballot is taken. */
+function allVotes(){ return (state && state.votes) || []; }
+function currentVote(){
+  var list = allVotes();
+  for(var i = list.length - 1; i >= 0; i--){
+    if(!list[i].cancelledAt && !voteHidden(list[i])) return list[i];
+  }
+  return null;
+}
+function voteById(id){
+  return allVotes().filter(function(v){ return v.id === id; })[0] || null;
+}
+function voteStatusOf(v){
+  if(!v) return "none";
+  if(v.cancelledAt) return "cancelled";
+  if(v.closedAt) return "closed";
+  var now = Date.now(), o = Date.parse(v.opensAt), c = Date.parse(v.closesAt);
+  if(isFinite(o) && now < o) return "scheduled";
+  if(isFinite(c) && now >= c) return "closed";
+  return "open";
+}
+/* Stored with its offset, shown in whatever the reader's own clock says —
+   the club is not all in one place. */
+function voteWhen(iso){
+  var d = new Date(iso);
+  if(isNaN(d)) return "";
+  return d.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric",
+    hour: "numeric", minute: "2-digit" });
+}
+function voteMembers(){
+  return (state.members || []).filter(function(m){ return !m.pending; });
+}
+function voteCandidate(v, id){
+  return (v.candidates || []).filter(function(c){ return String(c.id) === String(id); })[0] || null;
+}
+
 /* ---------- a tag list's window ---------- */
 /* How tall each tag list is, and whether it is showing everything. Kept per
    kind, so opening the genres does not open the tropes, and kept here and
@@ -5174,7 +5575,7 @@ function renderShortlist(){
     ? list.map(recCardHTML).join("")
     : '<p class="empty">Nothing shortlisted yet. The organiser marks contenders under Organiser tools → Recommendations.</p>';
 }
-function renderRecs(){ renderRecFilters(); renderRecGrid(); renderShortlist(); }
+function renderRecs(){ renderRecFilters(); renderRecGrid(); renderShortlist(); renderVote(); renderVoteCta(); }
 
 /* ---------- render: badges ---------- */
 /* Focus is a set, not one name: two or more picked shows only the books all of
@@ -7522,7 +7923,7 @@ function renderAdmin(){
   var waiting = inbox.filter(function(i){ return i && !i.handled && i.kind !== "suggest"; }).length;
   var tabs = [["shelf","Reading list"],["recs","Recommendations" + (pend ? " (" + pend + ")" : "")],
               ["meetings","Meetings"],["members","Members"],
-              ["tags","Genres & tropes"],
+              ["tags","Genres & tropes"],["vote","Vote"],
               ["inbox","Inbox" + (waiting ? " (" + waiting + ")" : "")],["settings","Settings"]];
   $("adminModalBody").innerHTML =
     /* the Reading list tab carries its own, more specific version of this */
@@ -7539,6 +7940,7 @@ function renderAdminPane(){
     : adminTab === "meetings" ? paneMeetings()
     : adminTab === "members" ? paneMembers()
     : adminTab === "tags" ? paneTags()
+    : adminTab === "vote" ? paneVote()
     : adminTab === "inbox" ? paneInbox()
     : paneSettings();
 }
@@ -8219,6 +8621,314 @@ async function tagMove(kind, owner, id, i, all){
   else moveTagOn(obj, kind, term);
   compareAt = null;
   if(await save("Moving the tag…")){ renderAll(); renderAdmin(); }
+}
+
+
+/* ---------- Admin: running the vote ---------- */
+/* The ballot is snapshotted at launch. The shortlist goes on changing —
+   books get added and dropped — and a ballot that changed under the people
+   voting on it would not be a vote. */
+var voteLaunchOff = {};   /* candidates unticked before launching */
+/* Votes this session has changed by hand, so a save does not take the
+   repo's older copy of them back. Cleared once the save has landed, which
+   is the moment the repo agrees with us again. */
+var voteTouched = {};
+function voteTouch(id){ if(id) voteTouched[id] = 1; }
+var VOTE_LASTS = [["6h", "6 hours", 6], ["24h", "24 hours", 24],
+                  ["3d", "3 days", 72], ["1w", "1 week", 168]];
+/* What the script's timer does, repeated here only so the launch form can say
+   it. These are the script's numbers — VOTE_TICK_MINUTES and
+   VOTE_REMIND_HOURS in Code.gs — and if they are changed there they have to
+   be changed here, which is why the version check exists. */
+var VOTE_TICK_MINUTES = 5, VOTE_REMIND_HOURS = 6;
+/* The timer's notes, as Admin last asked for them: whether it is installed,
+   how much email is left today, and what went out or failed per vote. Not in
+   state.json — the script keeps it privately and answers for it. */
+var voteMailInfo = null;
+/* A test vote is the organiser rehearsing the emails and the timer, which
+   cannot be rehearsed anywhere but live. Members are not shown it. The page
+   can only hide it — state.json is public — so the script refuses their
+   ballots too. */
+function voteHidden(v){ return !!(v && v.test && !adminUnlocked); }
+/* <input type="datetime-local"> has no timezone of its own: it hands back
+   what the clock on the wall says. Stored as a full ISO string with this
+   browser's offset on it, so everyone else is shown their own time. */
+function localInputValue(d){
+  var pad = function(n){ return (n < 10 ? "0" : "") + n; };
+  return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+    "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+function isoFromLocal(v){
+  var d = new Date(String(v || ""));
+  return isNaN(d) ? "" : d.toISOString();
+}
+/* What the timer has done about one vote, in the organiser's words. Asked
+   for rather than polled: it costs a call to the script, and nothing here
+   changes between presses of the button. */
+function voteMailBlock(v){
+  if(!voteMailInfo){
+    return '<p class="hint" style="margin:0">' +
+      '<button class="btn btn--sm btn--ghost" type="button" id="voteMailGo">' +
+      'Check the timer and the emails</button></p>';
+  }
+  var f = (voteMailInfo.flags || {})[v.id] || {};
+  var lines = [];
+
+  lines.push(f.opened === "missed"
+    ? "Opening email: never sent \u2014 the vote had already closed before the timer saw it."
+    : f.opened
+      ? "Opening email: sent " + voteWhen(f.opened) + " to " + (f.openedTo || 0) +
+          (f.openedTo === 1 ? " address." : " addresses.")
+      : "Opening email: not yet.");
+
+  lines.push(f.remindSkipped
+    ? "Reminder: skipped \u2014 the window is " + voteMailInfo.remindHours + " hours or less."
+    : f.remind
+      ? (f.remindTo
+          ? "Reminder: sent " + voteWhen(f.remind) + " to " + f.remindTo + " who hadn\u2019t voted."
+          : "Reminder: nothing to send \u2014 everyone had voted by then.")
+      : "Reminder: due " + voteMailInfo.remindHours + " hours before it closes.");
+
+  if(f.counted) lines.push("Counted by the timer " + voteWhen(f.counted) + ".");
+  if(f.missing && f.missing.length){
+    lines.push("No email on file, so heard nothing: " + f.missing.join(", ") + ".");
+  }
+  lines.push("Email left today: " + (voteMailInfo.quota < 0
+    ? "couldn\u2019t ask"
+    : voteMailInfo.quota + " recipients, keeping " + voteMailInfo.reserve +
+        " back for sign-in codes."));
+
+  var errs = (f.errors || []).slice().reverse();
+  return (voteMailInfo.installed === false
+      ? '<p class="hint" style="margin:0 0 8px"><strong>The timer isn\u2019t installed.</strong> ' +
+        'Nothing opens, nudges or counts by itself until you run ' +
+        '<code>installVoteTrigger()</code> once in the Apps Script editor.</p>'
+      : voteMailInfo.installed === true
+        ? '<p class="hint" style="margin:0 0 8px">Timer installed \u2014 it looks every ' +
+          esc(voteMailInfo.everyMinutes) + ' minutes.</p>'
+        : '<p class="hint" style="margin:0 0 8px">Couldn\u2019t tell whether the timer is installed.</p>') +
+    '<p class="hint" style="margin:0">' + lines.map(esc).join("<br>") + "</p>" +
+    /* A failed send is shown, not swallowed. It never stopped the vote. */
+    (errs.length
+      ? '<p class="hint" style="margin:8px 0 0"><strong>' + esc(errs.length) +
+        (errs.length === 1 ? " email problem" : " email problems") + ":</strong><br>" +
+        errs.map(function(e){
+          return esc(voteWhen(e.at)) + " \u2014 " + esc(e.stage) + ": " + esc(e.why);
+        }).join("<br>") + "</p>"
+      : "") +
+    '<p class="hint" style="margin:8px 0 0">' +
+      '<button class="btn btn--sm btn--ghost" type="button" id="voteMailGo">Check again</button></p>';
+}
+function paneVote(){
+  var v = currentVote(), st = voteStatusOf(v);
+  var out = '<p class="eyebrow">Next book</p><h3 style="font-size:22px;margin:8px 0 16px">The vote</h3>';
+
+  if(v && st !== "closed" && st !== "cancelled"){
+    var mem = voteMembers();
+    var waiting = voteWhoVoted
+      ? mem.filter(function(m){ return voteWhoVoted.indexOf(m.id) === -1; })
+      : null;
+    out += '<div class="adminrow"><div class="adminrow__head"><strong>' +
+      (v.kind === "runoff" ? "Runoff" : "Rate each book 1–10") + "</strong>" +
+      '<span class="pill">' + esc(st) + "</span>" +
+      (v.test ? '<span class="pill">test — only you</span>' : "") + "</div>" +
+      '<p class="hint">Opens ' + esc(voteWhen(v.opensAt)) + " · closes " +
+        esc(voteWhen(v.closesAt)) + " · " + esc(v.turnout || 0) + " of " +
+        esc(mem.length) + " voted</p>" +
+      '<div class="tagbank" style="margin:10px 0">' + (v.candidates || []).map(function(c){
+        return '<span class="tag">' + esc(c.title) + "</span>"; }).join("") + "</div>" +
+      /* Who has not voted, so they can be chased. What they voted is not here
+         and cannot be: the script will not answer that question for anyone. */
+      '<div class="field" style="margin-top:12px"><label>Still to vote</label>' +
+        (waiting === null
+          ? '<p class="hint" style="margin:0"><button class="btn btn--sm btn--ghost" type="button" id="voteWhoGo">Show who hasn’t voted</button></p>'
+          : waiting.length
+            ? '<div class="tagbank">' + waiting.map(function(m){
+                return '<span class="tag">' + esc(m.name) + "</span>"; }).join("") + "</div>"
+            : '<p class="hint" style="margin:0">Everyone has voted.</p>') + "</div>" +
+      '<div class="field" style="margin-top:12px"><label>Emails and the timer</label>' +
+        voteMailBlock(v) + "</div>" +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">' +
+        (st === "scheduled"
+          ? '<button class="btn btn--sm btn--ghost" type="button" data-votecancel="' + esc(v.id) + '">Cancel it</button>'
+          : '<button class="btn btn--sm btn--flare" type="button" data-voteclose="' + esc(v.id) + '">Close it now</button>' +
+            '<button class="btn btn--sm btn--ghost" type="button" data-votecancel="' + esc(v.id) + '">Cancel it</button>') +
+      "</div>" +
+      '<div class="field" style="margin-top:14px"><label for="voteNewClose">' +
+        (st === "scheduled" ? "Change the closing time" : "Extend the closing time") + "</label>" +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">' +
+        '<input class="input" type="datetime-local" id="voteNewClose" style="max-width:240px" value="' +
+          esc(localInputValue(new Date(v.closesAt))) + '">' +
+        '<button class="btn btn--sm btn--surf" type="button" data-voteextend="' + esc(v.id) + '">Save</button>' +
+        "</div></div></div>";
+    return out;
+  }
+
+  if(v && st === "closed"){
+    var tied = v.tied || [];
+    out += '<div class="adminrow"><div class="adminrow__head"><strong>Closed</strong>' +
+      '<span class="pill">' + esc(v.turnout || 0) + " voted</span>" +
+      (v.test ? '<span class="pill">test — only you</span>' : "") +
+      (tied.length ? '<span class="pill">waiting on you</span>' : "") + "</div>" +
+      (v.totals
+        ? '<div class="ballot__rows">' + (v.totals || []).map(function(r){
+            var c = voteCandidate(v, r.id) || { title: r.title, author: "" };
+            return voteRowHTML(v, c, { right: r.total,
+              win: v.winner && String(v.winner) === String(r.id),
+              tied: tied.indexOf(r.id) !== -1,
+              note: v.kind === "runoff" ? r.total + " picks" : r.raters + " rated it" });
+          }).join("") + "</div>"
+        : '<p class="hint">Not counted yet — the timer counts it within ' +
+            VOTE_TICK_MINUTES + ' minutes of the deadline. Reload, or press Close it now.</p>') +
+      '<div class="field" style="margin-top:12px"><label>Emails and the timer</label>' +
+        voteMailBlock(v) + "</div>" +
+      (v.winner
+        ? '<div style="margin-top:12px"><button class="btn btn--sm btn--surf" type="button" data-votepromote="' +
+          esc(v.winner) + '">Add the winner to Up next</button></div>'
+        : "") +
+      (tied.length
+        ? '<p class="hint" style="margin-top:12px"><strong>' + esc(tied.length) +
+          " books tied at the top.</strong> The timer counted the vote but stopped here — " +
+          "a runoff is a new question for the club, so it is yours to launch or to call.</p>" +
+          '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">' +
+          '<button class="btn btn--sm btn--grape" type="button" data-voterunoff="' + esc(v.id) + '">Launch a runoff</button>' +
+          tied.map(function(id){
+            var c = voteCandidate(v, id);
+            return '<button class="btn btn--sm btn--ghost" type="button" data-votebreak="' + esc(id) +
+              '" data-voteid="' + esc(v.id) + '">Pick ' + esc(c ? c.title : id) + "</button>";
+          }).join("") + "</div>"
+        : "") +
+      "</div>";
+  }
+
+  /* the launch form */
+  var short = shortlistRecs();
+  out += '<hr class="divider"><p class="eyebrow">Or</p><h3 style="font-size:20px;margin:8px 0 14px">Launch a vote</h3>';
+  if(short.length < 2){
+    out += '<p class="empty">Shortlist at least two books first — Recommendations → Add to shortlist.</p>';
+    return out;
+  }
+  var now = new Date(), soon = new Date(now.getTime() + 24 * 3600 * 1000);
+  out += '<div class="adminrow">' +
+    '<div class="field"><label>Who is standing</label><div class="checkgrid">' +
+      sortedByTitle(short).map(function(r){
+        return "<label><input type=\"checkbox\" data-votecand=\"" + esc(r.id) + "\"" +
+          (voteLaunchOff[r.id] ? "" : " checked") + "> " + esc(r.title) + "</label>";
+      }).join("") + "</div></div>" +
+    '<div class="formgrid" style="margin-top:14px">' +
+      '<div class="field"><label for="voteOpensWhen">Opens</label>' +
+        '<select class="select" id="voteOpensWhen">' +
+          '<option value="now" selected>Now</option>' +
+          '<option value="later">At a time I choose</option></select>' +
+        '<input class="input" type="datetime-local" id="voteOpensAt" style="margin-top:8px" hidden value="' +
+          esc(localInputValue(now)) + '"></div>' +
+      '<div class="field"><label for="voteClosesAt">Closes</label>' +
+        '<input class="input" type="datetime-local" id="voteClosesAt" value="' +
+          esc(localInputValue(soon)) + '"></div>' +
+    "</div>" +
+    '<p class="hint" style="margin:6px 0 0">Opening and closing are exact — the clock decides, ' +
+      'so a ballot is taken or refused to the second. The emails and the published result ' +
+      'run on a timer that looks every ' + VOTE_TICK_MINUTES + ' minutes, so those can be up to ' +
+      VOTE_TICK_MINUTES + ' minutes late.</p>' +
+    '<div class="field" style="margin-top:12px"><label>Or just say how long it lasts</label>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        VOTE_LASTS.map(function(l){
+          return '<button class="btn btn--sm btn--ghost" type="button" data-votelasts="' + l[2] + '">' +
+            esc(l[1]) + "</button>";
+        }).join("") + "</div></div>" +
+    '<div class="field" style="margin-top:12px"><label>' +
+      '<input type="checkbox" id="voteTest"> Test vote: email only me</label>' +
+      '<p class="hint" style="margin:6px 0 0">Nobody else is emailed and members don\u2019t see it. ' +
+      'The only way to try the emails and the timer for real.</p></div>' +
+    '<p class="hint" id="voteLaunchNote" style="margin-top:10px">' +
+      esc(voteNoteFor(opensIsoNow(now), soon.toISOString())) + "</p>" +
+    '<div style="margin-top:12px"><button class="btn btn--sm btn--grape" type="button" id="voteLaunch">Launch the vote</button></div>' +
+    "</div>";
+  return out;
+}
+function opensIsoNow(d){ return (d || new Date()).toISOString(); }
+/* The form's own times, read back out of the pickers. One reader, so the note
+   under the form and the launch itself can never disagree about what window
+   is on screen. */
+function voteFormWindow(){
+  var sel = $("voteOpensWhen"), box = $("voteOpensAt");
+  var opens = (sel && sel.value === "later")
+    ? isoFromLocal(box && box.value)
+    : opensIsoNow();
+  return { opensAt: opens, closesAt: isoFromLocal($("voteClosesAt") && $("voteClosesAt").value) };
+}
+function voteLaunchNote(){
+  var host = $("voteLaunchNote");
+  if(!host) return;
+  var w = voteFormWindow();
+  host.textContent = voteNoteFor(w.opensAt, w.closesAt);
+}
+/* What was just launched, said plainly: who hears about it and when. The
+   timer's lag is named rather than left to be noticed. */
+function voteLaunchedMsg(v){
+  var bits = [];
+  bits.push(v.test ? "Test vote launched \u2014 emails go only to you, and members don\u2019t see it."
+                   : (v.kind === "runoff" ? "Runoff launched." : "Vote launched."));
+  var o = Date.parse(v.opensAt);
+  bits.push(isFinite(o) && o > Date.now() + 60000
+    ? "The opening email goes out at " + voteWhen(v.opensAt) + ", within " +
+        VOTE_TICK_MINUTES + " minutes of it."
+    : "The opening email is going out now.");
+  if((Date.parse(v.closesAt) - o) <= VOTE_REMIND_HOURS * 3600 * 1000){
+    bits.push("No " + VOTE_REMIND_HOURS + "-hour reminder: the window is shorter than that.");
+  }
+  return bits.join(" ");
+}
+/* Ask the script to do its round now rather than on its next tick, so "Now"
+   means now. It does only what a tick would have done, and its own stored
+   flags make a second poke a no-op, so nothing here can double-send. */
+async function voteWake(v){
+  var res = await callEndpoint("vote-wake", { token: sessionToken(), voteId: v && v.id });
+  /* On /dev/ this is blocked by design and there is nothing to report. */
+  if(res && res.error === "dev-blocked") return false;
+  if(!(res && res.ok)){
+    say("Launched, but the script didn\u2019t pick it up yet: " +
+      (endpointTrouble(res && res.error, res && res.detail) || (res && res.error) || "no answer") +
+      " The timer will catch it within " + VOTE_TICK_MINUTES + " minutes.", "bad");
+    return false;
+  }
+  return true;
+}
+/* What a window means, said before it is launched rather than discovered
+   afterwards: when it closes, and whether there is room in it for the
+   6-hour nudge. A window shorter than the gap has nowhere to put one. */
+function voteNoteFor(opensIso, closesIso){
+  var o = Date.parse(opensIso), c = Date.parse(closesIso);
+  if(!isFinite(o) || !isFinite(c) || !(c > o)) return "";
+  var line = "Closes " + voteWhen(closesIso) + ".";
+  /* The boundary counts as no room: at exactly VOTE_REMIND_HOURS the nudge
+     would be due the second it opened, arriving with the start email. The
+     script draws the line in the same place. */
+  return (c - o) <= VOTE_REMIND_HOURS * 3600 * 1000
+    ? line + " That\u2019s " + VOTE_REMIND_HOURS + " hours or less, so there\u2019s no room for the " +
+        VOTE_REMIND_HOURS + "-hour reminder \u2014 only the opening email goes out."
+    : line + " A reminder goes to anyone who hasn\u2019t voted " + VOTE_REMIND_HOURS +
+        " hours before that.";
+}
+/* Both times, checked the same way whether they came from the pickers or the
+   "lasts" buttons: in order, and far enough apart to be worth voting in.
+
+   A test vote may be much shorter. The whole point of one is to watch the
+   timer open it, nudge and close it while you sit there, and an hour of
+   waiting to find out whether a five-minute timer works is not a test. */
+var VOTE_MIN_MINUTES = 60, VOTE_MIN_TEST_MINUTES = 10;
+function voteWindowFrom(opensIso, closesIso, isTest){
+  if(!opensIso) return { error: "That opening time doesn’t look right." };
+  if(!closesIso) return { error: "That closing time doesn’t look right." };
+  var o = Date.parse(opensIso), c = Date.parse(closesIso);
+  if(!(c > o)) return { error: "It has to close after it opens." };
+  var least = isTest ? VOTE_MIN_TEST_MINUTES : VOTE_MIN_MINUTES;
+  if(c - o < least * 60 * 1000){
+    return { error: isTest
+      ? "Give a test vote at least " + VOTE_MIN_TEST_MINUTES + " minutes."
+      : "Give it at least an hour." };
+  }
+  return { opensAt: opensIso, closesAt: closesIso };
 }
 
 /* ---------- Admin: the canonical lists themselves ---------- */
@@ -8952,6 +9662,211 @@ document.addEventListener("click", async function(e){
        but it refuses a repeat of the same side, so clear that first */
     if(myName() && myVote(er) === (down ? "down" : "up")) return;
     if(await castVote(er, down, nm0)) openBookDetail(er, "rec");
+    return;
+  }
+
+
+  /* ---- running the vote ---- */
+  if((el = t.closest("[data-votecand]"))) return;    /* a tickbox, nothing to do until launch */
+  if((el = t.closest("[data-votelasts]"))){
+    var hrs = Number(el.getAttribute("data-votelasts"));
+    var fromSel = $("voteOpensWhen"), fromBox = $("voteOpensAt");
+    var from = (fromSel && fromSel.value === "later" && fromBox && fromBox.value)
+      ? new Date(fromBox.value) : new Date();
+    var till = new Date(from.getTime() + hrs * 3600 * 1000);
+    if($("voteClosesAt")) $("voteClosesAt").value = localInputValue(till);
+    voteLaunchNote();
+    return;
+  }
+  if(t.closest("#voteLaunch")){
+    var picked = [];
+    [].forEach.call(document.querySelectorAll("[data-votecand]"), function(c){
+      if(c.checked){
+        var r = recById(c.getAttribute("data-votecand"));
+        if(r) picked.push({ id: r.id, title: r.title, author: r.author || "", cover: r.cover || "" });
+      }
+    });
+    if(picked.length < 2){
+      say("A vote needs at least two books.", "bad"); return;
+    }
+    var openSel = $("voteOpensWhen");
+    var opensIso = (openSel && openSel.value === "later")
+      ? isoFromLocal($("voteOpensAt") && $("voteOpensAt").value)
+      : new Date().toISOString();
+    var isTest = !!($("voteTest") && $("voteTest").checked);
+    var win = voteWindowFrom(opensIso,
+      isoFromLocal($("voteClosesAt") && $("voteClosesAt").value), isTest);
+    if(win.error){ say(win.error, "bad"); return; }
+    if(!state.votes) state.votes = [];
+    var fresh = { id: uid("vote"), kind: "rate", candidates: picked,
+      opensAt: win.opensAt, closesAt: win.closesAt,
+      cancelledAt: null, closedAt: null, turnout: 0, totals: null, winner: null, tied: null,
+      parent: null, at: new Date().toISOString() };
+    if(isTest) fresh.test = true;
+    state.votes.push(fresh);
+    voteLaunchOff = {};
+    if(await save("Launching the vote…")){
+      say(voteLaunchedMsg(fresh), "ok");
+      await voteWake(fresh);   /* says its own piece if the poke didn’t land */
+      renderAll(); renderAdmin();
+    }
+    return;
+  }
+  if((el = t.closest("[data-voteextend]"))){
+    var ev = voteById(el.getAttribute("data-voteextend"));
+    if(!ev) return;
+    var newClose = isoFromLocal($("voteNewClose") && $("voteNewClose").value);
+    var ewin = voteWindowFrom(ev.opensAt, newClose, !!ev.test);
+    if(ewin.error){ say(ewin.error, "bad"); return; }
+    ev.closesAt = ewin.closesAt;
+    voteTouch(ev.id);
+    if(await save("Saving the closing time…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-votecancel]"))){
+    var cv2 = voteById(el.getAttribute("data-votecancel"));
+    if(!cv2) return;
+    if(!confirm("Cancel this vote? Any ballots already cast are discarded.")) return;
+    cv2.cancelledAt = new Date().toISOString();
+    voteTouch(cv2.id);
+    if(await save("Cancelling the vote…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-voteclose]"))){
+    var kv = voteById(el.getAttribute("data-voteclose"));
+    if(!kv) return;
+    if(!confirm("Close the vote now? Nobody will be able to change their ballot.")) return;
+    kv.closedAt = new Date().toISOString();
+    voteTouch(kv.id);
+    /* Written first, because the count has to come from the script — the
+       ballots are not in this page and never were. */
+    if(!await save("Closing the vote…")) return;
+    var tres = await callEndpoint("vote-tally", { voteId: kv.id });
+    if(tres && tres.ok){
+      kv.totals = tres.totals; kv.winner = tres.winner || null;
+      kv.tied = tres.tied || null; kv.turnout = tres.turnout;
+      say("Closed and counted.", "ok");
+    }else{
+      say("Closed, but the count didn’t come back: " +
+        (endpointTrouble(tres && tres.error, tres && tres.detail) || (tres && tres.error) ||
+         "no answer") + " Reload to try again.", "bad");
+    }
+    renderAll(); renderAdmin();
+    return;
+  }
+  if(t.closest("#voteMailGo")){
+    var mv = currentVote(); if(!mv) return;
+    var ids = allVotes().map(function(x){ return x.id; }).slice(-20);
+    var mres = await callEndpoint("vote-mail", { token: sessionToken(), voteIds: ids });
+    if(mres && mres.ok){ voteMailInfo = mres; renderAdmin(); }
+    else say("Couldn\u2019t ask the script about the emails: " +
+      (endpointTrouble(mres && mres.error, mres && mres.detail) || (mres && mres.error) ||
+       "no answer"), "bad");
+    return;
+  }
+  if(t.closest("#voteWhoGo")){
+    var wv = currentVote(); if(!wv) return;
+    var wres = await callEndpoint("vote-who", { token: sessionToken(), voteId: wv.id });
+    if(wres && wres.ok){ voteWhoVoted = wres.voted || []; renderAdmin(); }
+    else say("Couldn’t ask who has voted: " +
+      (endpointTrouble(wres && wres.error, wres && wres.detail) || (wres && wres.error) || "no answer"), "bad");
+    return;
+  }
+  if((el = t.closest("[data-voterunoff]"))){
+    var ov = voteById(el.getAttribute("data-voterunoff"));
+    if(!ov || !(ov.tied || []).length) return;
+    var cands = (ov.tied || []).map(function(id){ return voteCandidate(ov, id); }).filter(Boolean);
+    if(cands.length < 2) return;
+    var rnow = new Date(), rtill = new Date(rnow.getTime() + 24 * 3600 * 1000);
+    var ro = { id: uid("vote"), kind: "runoff", candidates: cands,
+      opensAt: rnow.toISOString(), closesAt: rtill.toISOString(),
+      cancelledAt: null, closedAt: null, turnout: 0, totals: null, winner: null, tied: null,
+      parent: ov.id, at: rnow.toISOString() };
+    /* A runoff opens now. It inherits the tied vote's test flag: a rehearsal
+       that turned into a real email to the whole club would be a nasty
+       surprise at the one moment nobody is watching for it. */
+    if(ov.test) ro.test = true;
+    state.votes.push(ro);
+    if(await save("Launching the runoff…")){
+      say(voteLaunchedMsg(ro), "ok");
+      await voteWake(ro);
+      renderAll(); renderAdmin();
+    }
+    return;
+  }
+  if((el = t.closest("[data-votebreak]"))){
+    var bv = voteById(el.getAttribute("data-voteid"));
+    var bid = el.getAttribute("data-votebreak");
+    if(!bv) return;
+    var bc = voteCandidate(bv, bid);
+    if(!confirm("Make “" + (bc ? bc.title : bid) + "” the winner? This is recorded as your decision, not the vote’s.")) return;
+    bv.winner = bid;
+    bv.tiebreak = { by: myName() || "the organiser", at: new Date().toISOString() };
+    bv.tied = null;
+    voteTouch(bv.id);
+    if(await save("Recording the tiebreak…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-votepromote]"))){
+    var wid = el.getAttribute("data-votepromote");
+    var wrec = recById(wid);
+    if(!wrec){ say("That book isn’t in the recommendations any more.", "bad"); return; }
+    if(!confirm("Add “" + wrec.title + "” to Up next? It leaves the recommendations.")) return;
+    adoptRec(wrec, "next");
+    if(await save("Adding the winner…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+
+  if(t.closest("#voteSignIn")){
+    var lo = $("loginOpen");
+    if(lo) lo.click();
+    return;
+  }
+  if((el = t.closest("[data-rateid]"))){
+    if(el.disabled) return;
+    if(!voteDraft || !voteDraft.ratings) voteDraft = { ratings: {} };
+    voteDraft.ratings[el.getAttribute("data-rateid")] = Number(el.getAttribute("data-raten"));
+    renderVote();
+    return;
+  }
+  if(t.closest("#voteEdit")){
+    voteEditing = true;
+    voteDraft = voteMine ? JSON.parse(JSON.stringify(voteMine)) : null;
+    renderVote();
+    var h = $("recs-vote");
+    if(h) h.scrollIntoView({ block: "center" });
+    return;
+  }
+  if((el = t.closest("[data-votepick]"))){
+    voteDraft = { pick: el.getAttribute("data-votepick") };
+    renderVote();
+    return;
+  }
+  if(t.closest("#voteSend")){
+    var sv = currentVote();
+    if(!sv) return;
+    if(!myMember()){ say("Sign in first.", "bad"); return; }
+    var payload = { token: sessionToken(), voteId: sv.id };
+    if(sv.kind === "runoff"){
+      if(!voteDraft || !voteDraft.pick){ say("Pick one of them first.", "bad"); return; }
+      payload.pick = voteDraft.pick;
+    }else{
+      if(!voteAllRated(sv)){ say("Rate every book first.", "bad"); return; }
+      payload.ratings = JSON.parse(JSON.stringify(voteDraft.ratings));
+    }
+    say("Sending your vote\u2026", "busy", true);
+    var vres = await callEndpoint("vote-cast", payload);
+    if(!vres || !vres.ok){
+      say(endpointTrouble(vres && vres.error, vres && vres.detail) ||
+        ("Your vote wasn\u2019t taken: " + ((vres && vres.error) || "no answer") + "."), "bad");
+      return;
+    }
+    voteMine = vres.mine; voteDraft = JSON.parse(JSON.stringify(vres.mine));
+    voteEditing = false;
+    var cv = currentVote();
+    if(cv) cv.turnout = vres.turnout;
+    say("Vote counted. You can change it until it closes.", "ok");
+    renderVote(); renderVoteCta();
     return;
   }
 
@@ -9911,6 +10826,17 @@ document.addEventListener("change", async function(e){
     }
     openEditors["vocab:" + pk] = true;
     if(await save("Saving the parent\u2026")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if(n && n.id === "voteOpensWhen"){
+    var box = $("voteOpensAt"); if(box) box.hidden = n.value !== "later";
+    voteLaunchNote();
+    return;
+  }
+  if(n && (n.id === "voteOpensAt" || n.id === "voteClosesAt")){ voteLaunchNote(); return; }
+  if(n && n.hasAttribute && n.hasAttribute("data-votecand")){
+    var cid = n.getAttribute("data-votecand");
+    if(n.checked) delete voteLaunchOff[cid]; else voteLaunchOff[cid] = 1;
     return;
   }
   if(n && n.id === "profRemind"){
@@ -11582,6 +12508,19 @@ function devAsSetup(){
   });
 }
 
+/* #recs-shortlist opens the Recommendations section on the shortlist tab and
+   puts the ballot in view. The landing section is one big link to it. */
+function voteJumpIfAsked(){
+  if(location.hash !== "#recs-shortlist") return;
+  var tab = $("tab-short");
+  if(tab) tab.click();
+  setTimeout(function(){
+    var h = $("recs-vote") || $("panel-short");
+    if(h) h.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, 120);
+}
+window.addEventListener("hashchange", voteJumpIfAsked);
+
 (async function boot(){
   if(DEV) $("devBar").hidden = false;
   await loadState();
@@ -11592,6 +12531,11 @@ function devAsSetup(){
   inbox.forEach(function(it){ if(it && handled[it.id]) it.handled = true; });
   applyInbox();
   await restoreSession();
+  /* The ballot and the count both come from the script, so they are asked
+     for once the session is known rather than drawn from the file. */
+  voteTallyIfDue();
+  await voteLoadMine();
+  voteJumpIfAsked();
   refreshWriteMode();
   initSuggestForm();
   renderAll();
