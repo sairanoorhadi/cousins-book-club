@@ -1629,6 +1629,38 @@
           }
         ]
       }
+    },
+    {
+      "id": "suggest-89fb2798-340",
+      "kind": "suggest",
+      "at": "2026-10-20T20:06:31.941Z",
+      "payload": {
+        "title": "Lord of the Flies",
+        "author": "William Golding",
+        "pages": 243,
+        "ageMin": 13,
+        "ageMax": 16,
+        "level": "Ages 13-16",
+        "genres": [
+          "Adventure",
+          "Survival",
+          "Childhood",
+          "Ethics",
+          "Literary Fiction"
+        ],
+        "tropes": [],
+        "blurb": "A plane crashes on an uninhabited island and the only survivors, a group of schoolboys, assemble on the beach and wait to be rescued. By day they inhabit a land of bright fantastic birds and dark blue seas, but at night their dreams are haunted by the image of a terrifying beast.\n\nIn this, his first novel, William Golding gave the traditional adventure story an ironic, devastating twist. The boys' delicate sense of order fades, and their childish fears are transformed into something deeper and more primitive. Their games take on a horrible significance, and before long the well-behaved party of schoolboys has turned into a tribe of faceless, murderous savages.",
+        "summarySource": "own",
+        "cover": "https://covers.openlibrary.org/b/id/8684447-L.jpg",
+        "by": "Saira",
+        "byId": "",
+        "ratings": [
+          {
+            "score": 3.67,
+            "source": "Open Library"
+          }
+        ]
+      }
     }
   ]
 }
