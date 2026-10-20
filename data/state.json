@@ -1,5 +1,5 @@
 {
-  "rev": 1575,
+  "rev": 1576,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2632,7 +2632,7 @@
       "opensAt": "2026-10-20T04:21:27.160Z",
       "closesAt": "2026-10-21T04:21:00.000Z",
       "cancelledAt": null,
-      "closedAt": null,
+      "closedAt": "2026-10-20T04:26:47.918Z",
       "turnout": 1,
       "totals": null,
       "winner": null,
