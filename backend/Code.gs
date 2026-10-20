@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-20c';
+var SCRIPT_VERSION = '2026-10-20d';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -673,6 +673,29 @@ function voteTickOne(state, v, now) {
     changed = true;
   }
 
+  /* The results email. Written before the send so the flags are on disk if
+     the send throws, and read back after so Admin sees what happened.
+
+     This runs on every tick of a closed vote, not only the one that counted
+     it: a vote held back for a tie has nothing to announce until the tie is
+     settled, and the tick after the tiebreak is when it becomes sendable. */
+  if (st === 'closed' && roundTypeOf(v) === 'vote') {
+    var flags = voteMailFlags(v.id);
+    if (!flags.results && flags.resultsHeld !== 'runoff') {
+      voteMailFlagsWrite(v.id, rec);
+      /* Read the state again rather than reusing the copy this tick started
+         with. voteTally() has just written the totals to the repo, and the
+         copy in hand predates that -- so building the email from it finds no
+         totals, decides the vote has not been counted, and sends nothing. The
+         first run of this did exactly that. */
+      stateForget();
+      var res = voteResultsSend({ voteId: v.id }, {});
+      rec = voteMailFlags(v.id);
+      if (res && res.ok && res.sent) Logger.log('results email: ' + res.sent + ' sent');
+      changed = true;
+    }
+  }
+
   if (changed) voteMailFlagsWrite(v.id, rec);
 }
 
@@ -710,6 +733,249 @@ function voteMailStatus(payload) {
   return { ok: true, installed: installed, everyMinutes: VOTE_TICK_MINUTES,
            remindHours: VOTE_REMIND_HOURS, quota: quota, reserve: VOTE_MAIL_RESERVE,
            flags: flags };
+}
+
+
+/* ------------------------------------------------- the results email
+
+   Sent once a vote has closed and been counted. It extends the two emails
+   above rather than standing beside them: the same quota floor, the same
+   per-vote flag record, the same test mode, the same Eastern times, the same
+   failure log that Admin reads.
+
+   One thing it cannot share is the send itself. The other two are one
+   message bcc'd to everybody; this one tells each member what THEY rated
+   each book, so it is one message per recipient. That costs one unit of the
+   daily allowance per member rather than one per club, which is why the
+   quota is checked against the whole list before any of it goes.
+
+   Nobody is told anything about anybody else. The body is built here, from
+   ballots that only this script can read, and the only ballot in each
+   message is the reader's own. */
+
+/* Members who cast a ballot, as {memberId: address}. Addresses come from the
+   same email-reference lookup every other email uses. */
+function voteResultsAudience(state, v, toAll) {
+  var ballots = ballotsRead(v.id), out = [], seen = {};
+  (state.members || []).forEach(function (m) {
+    if (!m || m.pending) return;
+    if (!toAll && !ballots[m.id]) return;
+    var address = normEmail(lookupEmail(m.notifyRef) || m.email || '');
+    if (!address || address.indexOf('@') === -1 || seen[address]) return;
+    seen[address] = 1;
+    out.push({ id: m.id, email: address, ballot: ballots[m.id] || null });
+  });
+  return out;
+}
+
+/* Why a result is not being announced yet, or '' if it is ready. */
+function voteResultsHold(v) {
+  if (roundTypeOf(v) !== 'vote') return 'not a vote';
+  if (v.cancelledAt) return 'cancelled';
+  if (voteStatus(v) !== 'closed') return 'still open';
+  if (!v.totals) return 'not counted yet';
+  if ((v.tied || []).length && !v.winner) return 'tie';
+  return '';
+}
+
+/* A vote whose tie was settled by launching a runoff has nothing left to
+   announce: the runoff is the answer, and its own results email carries it.
+   Sending both would be two emails about one question. */
+function voteSupersededByRunoff(state, v) {
+  return (state.votes || []).some(function (x) {
+    return x && x.parent === v.id && x.kind === 'runoff' && !x.cancelledAt;
+  });
+}
+
+function voteResultsCopy(state, v, who) {
+  var clubName = (state.club && state.club.name) || 'Book club';
+  var runoff = v.kind === 'runoff';
+  var tag = v.test ? '[TEST] ' : '';
+  var rows = (v.totals || []).slice();
+  var win = v.winner ? (voteCandidate2(v, v.winner) || {}) : null;
+  var byHand = v.tiebreak && v.tiebreak.by;
+  var mine = (who && who.ballot) || null;
+
+  var lines = [clubName, ''];
+  if (win && win.title) {
+    lines.push(byHand
+      ? 'The vote tied, so ' + win.title + ' was chosen by the organiser.'
+      : 'The club is reading ' + win.title + '.');
+  } else {
+    lines.push('The vote has closed.');
+  }
+  lines.push('');
+  lines.push(runoff ? 'How the runoff went:' : 'How every book did, best first:');
+  rows.forEach(function (r) {
+    var c = voteCandidate2(v, r.id) || { title: r.title };
+    var mark = (v.winner && String(v.winner) === String(r.id)) ? ' <- the winner' : '';
+    if (runoff) {
+      var picked = mine && String(mine.pick) === String(r.id);
+      lines.push('  ' + c.title + ' - ' + (r.total || 0) +
+        ((r.total === 1) ? ' pick' : ' picks') + (picked ? ' (your pick)' : '') + mark);
+    } else {
+      var yours = mine && mine.ratings ? mine.ratings[r.id] : null;
+      lines.push('  ' + c.title + ' - ' + Number(r.avg || 0).toFixed(1) + ' out of 10 from ' +
+        (r.raters || 0) + ((r.raters === 1) ? ' rating' : ' ratings') +
+        (yours ? '   (you gave it ' + yours + ')' : '') + mark);
+    }
+  });
+  lines.push('');
+  if (!mine) lines.push('You did not vote in this one.', '');
+  lines.push('Closed ' + voteEastern(v.closedAt || v.closesAt) + '. ' +
+    (v.turnout || 0) + ' of ' + voteMemberCount(state) + ' voted.');
+  lines.push('', voteLink());
+  lines.push('', 'Nobody sees anybody else\'s ratings, including the organiser.');
+
+  return { subject: tag + clubName + ': ' +
+      (win && win.title
+        ? (runoff ? 'the runoff went to ' + win.title : 'we are reading ' + win.title)
+        : 'the vote has closed'),
+    body: lines.join('\n') };
+}
+
+/* The page has a voteCandidate(); the script needs its own. */
+function voteCandidate2(v, id) {
+  var hit = (v.candidates || []).filter(function (c) { return String(c.id) === String(id); });
+  return hit[0] || null;
+}
+function voteMemberCount(state) {
+  return (state.members || []).filter(function (m) { return m && !m.pending; }).length;
+}
+
+/* Send it, once. The flag lives in the same record as the other two emails,
+   so a second tick, an early close and the Admin button cannot between them
+   produce two. Returns the flag record so Admin can say what happened. */
+function voteResultsSend(payload, opts) {
+  opts = opts || {};
+  var state;
+  try { state = JSON.parse(stateRead().content || '{}'); }
+  catch (err) { return { ok: false, error: 'unreadable state' }; }
+  var v = voteOf(state, String(payload.voteId || ''));
+  if (!v) return { ok: false, error: 'no such vote' };
+  return voteResultsSendFor(state, v, opts);
+}
+
+function voteResultsSendFor(state, v, opts) {
+  opts = opts || {};
+  var rec = voteMailFlags(v.id);
+
+  if (!opts.meOnly && rec.results) {
+    return { ok: true, already: true, results: rec.results };
+  }
+  if (v.resultsEmail === false && !opts.force && !opts.meOnly) {
+    return { ok: true, skipped: 'switched off for this vote' };
+  }
+
+  var hold = voteResultsHold(v);
+  if (hold && !opts.meOnly) {
+    if (hold === 'tie' && voteSupersededByRunoff(state, v)) {
+      rec.resultsHeld = 'runoff';
+      voteMailFlagsWrite(v.id, rec);
+      return { ok: true, skipped: 'a runoff is answering this one instead' };
+    }
+    if (hold === 'tie') {
+      rec.resultsHeld = 'tie';
+      voteMailFlagsWrite(v.id, rec);
+      return { ok: true, held: 'tie' };
+    }
+    return { ok: false, error: hold };
+  }
+
+  var organiser = propEmail('ORGANISER_EMAIL');
+  var audience;
+  if (opts.meOnly || v.test) {
+    if (!organiser) return { ok: false, error: 'ORGANISER_EMAIL is not set' };
+    /* Her own ballot, if she cast one, so the preview shows a real row. */
+    var meMember = memberFor(organiser);
+    var ballots = ballotsRead(v.id);
+    audience = [{ id: meMember ? meMember.id : '', email: organiser,
+                  ballot: meMember ? (ballots[meMember.id] || null) : null }];
+  } else {
+    audience = voteResultsAudience(state, v, v.resultsToAll === true);
+  }
+  if (!audience.length) {
+    voteMailNote(rec, 'results', 'nobody to send to');
+    voteMailFlagsWrite(v.id, rec);
+    return { ok: false, error: 'nobody to send to' };
+  }
+
+  /* One message each, so the allowance is checked against the whole list. */
+  var left = -1;
+  try { left = MailApp.getRemainingDailyQuota(); } catch (err) { left = -1; }
+  if (left >= 0 && left < audience.length + VOTE_MAIL_RESERVE) {
+    voteMailNote(rec, 'results', 'not enough email left today: ' + left +
+      ' recipients for ' + audience.length + ' to send, keeping ' +
+      VOTE_MAIL_RESERVE + ' back for sign-in codes');
+    voteMailFlagsWrite(v.id, rec);
+    return { ok: false, error: 'not enough email quota' };
+  }
+
+  var sent = 0, failed = 0;
+  audience.forEach(function (who) {
+    var copy = voteResultsCopy(state, v, who);
+    try {
+      MailApp.sendEmail({ to: who.email, subject: copy.subject, body: copy.body });
+      sent++;
+    } catch (err) {
+      failed++;
+      /* The address is logged, never the ballot. */
+      voteMailNote(rec, 'results', 'to ' + maskEmail(who.email) + ': ' +
+        String((err && err.message) || err));
+    }
+  });
+
+  if (opts.meOnly) {
+    voteMailFlagsWrite(v.id, rec);
+    return { ok: sent > 0, meOnly: true, sent: sent, failed: failed };
+  }
+  if (sent) {
+    rec.results = { at: new Date().toISOString(), n: sent,
+                    failed: failed || 0, test: !!v.test };
+    delete rec.resultsHeld;
+  }
+  voteMailFlagsWrite(v.id, rec);
+  return { ok: sent > 0, sent: sent, failed: failed, results: rec.results || null };
+}
+
+/* The two Admin buttons: send it now, or send a copy to me only for
+   checking the wording. Organiser only, both of them. */
+function voteResultsGo(payload, meOnly) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var mine = propEmail('ORGANISER_EMAIL');
+  if (!mine) return { ok: false, error: 'ORGANISER_EMAIL is not set' };
+  if (normEmail(email) !== normEmail(mine)) return { ok: false, error: 'organiser only' };
+  return voteResultsSend(payload, meOnly ? { meOnly: true } : { force: true });
+}
+
+/* What the email will say, without sending it. Organiser only. */
+function voteResultsPreview(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var mine = propEmail('ORGANISER_EMAIL');
+  if (!mine) return { ok: false, error: 'ORGANISER_EMAIL is not set' };
+  if (normEmail(email) !== normEmail(mine)) return { ok: false, error: 'organiser only' };
+
+  var state;
+  try { state = JSON.parse(stateRead().content || '{}'); }
+  catch (err) { return { ok: false, error: 'unreadable state' }; }
+  var v = voteOf(state, String(payload.voteId || ''));
+  if (!v) return { ok: false, error: 'no such vote' };
+
+  var meMember = memberFor(mine);
+  var ballots = ballotsRead(v.id);
+  var who = { id: meMember ? meMember.id : '', email: mine,
+              ballot: meMember ? (ballots[meMember.id] || null) : null };
+  var copy = voteResultsCopy(state, v, who);
+  var rec = voteMailFlags(v.id);
+  var aud = voteResultsAudience(state, v, v.resultsToAll === true);
+  return { ok: true, subject: copy.subject, body: copy.body,
+           hold: voteResultsHold(v), held: rec.resultsHeld || '',
+           sentAt: (rec.results || {}).at || '', sentTo: (rec.results || {}).n || 0,
+           would: v.test ? 1 : aud.length, test: !!v.test,
+           quota: (function(){ try { return MailApp.getRemainingDailyQuota(); }
+                               catch (e) { return -1; } })() };
 }
 
 /* Nothing keeps the timer's notes for a vote that is gone. */
@@ -1048,6 +1314,9 @@ function doPost(e) {
   if (kind === 'vote-hide') return json(voteResultsVisible(payload, true));
   if (kind === 'vote-show') return json(voteResultsVisible(payload, false));
   if (kind === 'vote-results') return json(voteResultsRead(payload));
+  if (kind === 'vote-res-preview') return json(voteResultsPreview(payload));
+  if (kind === 'vote-res-send') return json(voteResultsGo(payload, false));
+  if (kind === 'vote-res-me') return json(voteResultsGo(payload, true));
   if (kind === 'photo-add') return json(photoAdd(payload));
   if (kind === 'photo-list') return json(photoList(payload));
   if (kind === 'photo-delete') return json(photoDelete(payload));
