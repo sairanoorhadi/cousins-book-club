@@ -1000,9 +1000,10 @@ a.getrow:hover{background:var(--sunk)}
 /* The top bar is sticky, so an anchor scrolled to the very top lands
    underneath it. This is the room it needs. */
 #recs-vote{scroll-margin-top:96px}
-/* Same reason: the nominations banner is one big link to the grid, and the
-   sticky bar would otherwise sit over the top of it. */
-#recs,#recGrid{scroll-margin-top:96px}
+/* Same reason: the nominations banner is one big link to the recommendations,
+   and the sticky bar would otherwise sit over the top of them. On #recs alone
+   — the browser does the scrolling, so this is the only element it lands on. */
+#recs{scroll-margin-top:96px}
 /* The ballot follows the row of covers, so the space between them belongs to
    it. Empty on a tab with no vote, where it must take up nothing at all. */
 #voteBox:not(:empty){margin-top:26px}
@@ -13197,16 +13198,20 @@ function devAsSetup(){
 /* #recs-shortlist opens the Recommendations section on the shortlist tab and
    puts the ballot in view. The landing section is one big link to it. */
 function voteJumpIfAsked(){
-  /* #recs is a real section id, so the browser would scroll there by itself —
-     but not onto the right tab. If the shortlist is showing, the grid the
-     nominations banner is pointing at is hidden. */
+  /* #recs is a real section id, so the browser scrolls there by itself and
+     scroll-margin-top keeps it clear of the sticky bar. All this adds is the
+     right tab: if the shortlist is showing, the grid the nominations banner
+     points at is hidden.
+
+     It deliberately does NOT scrollIntoView. #recs is the menu's own
+     Recommendations link and has been since long before nominations, and
+     taking the scroll over from the browser moved the page out from under
+     whatever the reader was doing — the author picker's Confirm button shifted
+     27px between one pick and the next, which is the exact misclick the
+     okcheck, okbook and authok suites exist to catch. They caught it. */
   if(location.hash === "#recs"){
     var rt = $("tab-recs");
     if(rt) rt.click();
-    setTimeout(function(){
-      var g = $("recGrid") || $("recs");
-      if(g) g.scrollIntoView({ block: "start", behavior: "smooth" });
-    }, 120);
     return;
   }
   if(location.hash !== "#recs-shortlist") return;
