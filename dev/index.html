@@ -1010,6 +1010,7 @@ a.getrow:hover{background:var(--sunk)}
 .ballot__pill{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
   padding:3px 10px;border-radius:999px;border:1.5px solid currentColor}
 .ballot__pill--open{color:var(--surf)}
+.ballot__pill--closed{color:var(--muted)}
 .ballot__pill--scheduled{color:var(--sky)}
 .ballot__when{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
 .ballot__rows{display:flex;flex-direction:column;gap:10px;margin:16px 0}
@@ -3172,6 +3173,9 @@ function adoptFreshNotes(rawContent){
          page loaded. */
       v.nominated = f.nominated;
       v.totals = f.totals;
+      /* Written by the script when results are hidden or shown again, and it
+         is the thing that decides whether the shortlist tab draws them. */
+      v.resultsHidden = f.resultsHidden;
       v.winner = f.winner;
       v.tied = f.tied;
       if(f.closedAt && !v.closedAt) v.closedAt = f.closedAt;
@@ -3305,7 +3309,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-20b";
+var SCRIPT_WANT = "2026-10-20c";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -3352,6 +3356,9 @@ var ENDPOINT_REPEATABLE = {
      script's own stored flags mean it cannot send the same email twice, so a
      repeat is a no-op. vote-mail only reads. */
   "vote-wake": 1, "vote-mail": 1,
+  /* Showing and hiding set a flag to a value rather than toggling it, so a
+     repeat lands where the first would have; reading only reads. */
+  "vote-hide": 1, "vote-show": 1, "vote-results": 1,
   /* Nominations. Casting replaces one member's single nomination rather than
      adding to it, and clearing, adding and removing are all "make it so"
      rather than "change it by one", so a second go lands exactly where the
@@ -5233,19 +5240,48 @@ function renderVote(){
   var v = currentVote();
   if(!v){ host.innerHTML = ""; return; }
   var st = voteStatusOf(v), mem = myMember();
-  /* A closed vote is not news this tab breaks. The result is announced in
-     Discord, the book turns up under Up next, and the full arithmetic is in
-     Admin — so the tab goes back to being the row of shortlisted covers it
-     was before voting existed. Checked before the panel is built rather than
-     inside it, so there is no pill, no heading and no empty box. */
-  if(st === "closed" || st === "cancelled"){ host.innerHTML = ""; return; }
+  /* A cancelled vote never happened, so there is nothing to show. A closed
+     one shows its results until the organiser puts them away -- and when she
+     does, the tab goes back to being the row of covers it was before voting
+     existed: no pill, no heading, no empty box. */
+  if(st === "cancelled" || (st === "closed" && v.resultsHidden)){
+    host.innerHTML = ""; return;
+  }
   var total = voteMembers().length;
   var pill = '<span class="ballot__pill ballot__pill--' + st + '">' +
-    (st === "scheduled" ? "Opens soon" : "Voting open") + "</span>";
+    (st === "closed" ? "Closed" : st === "scheduled" ? "Opens soon" : "Voting open") + "</span>";
+  /* "Vote now" is an instruction, and once it has closed there is nothing to
+     do -- so the heading says what the panel is instead of what to do. */
   var head = '<div class="ballot__head"><h3 id="recs-vote">' +
-    (v.kind === "runoff" ? "Runoff — pick one" : "Vote now") + "</h3>" + pill + "</div>";
+    (st === "closed" ? "Vote results"
+      : v.kind === "runoff" ? "Runoff — pick one" : "Vote now") + "</h3>" + pill + "</div>";
   var turn = '<span class="ballot__turn">' + esc(v.turnout || 0) + " of " + esc(total) +
     " members have voted</span>";
+
+  if(st === "closed"){
+    var byId = {};
+    (v.totals || []).forEach(function(r){ byId[r.id] = r; });
+    var tiedIds = v.tied || [];
+    host.innerHTML = '<div class="ballot">' + head +
+      '<p class="ballot__when">' + (v.totals
+        ? "Closed " + esc(voteWhen(v.closedAt || v.closesAt)) + " · " +
+          esc(v.turnout || 0) + " of " + esc(total) + " voted"
+        : "Closed " + esc(voteWhen(v.closedAt || v.closesAt)) +
+          " — the count has not been published yet.") + "</p>" +
+      '<div class="ballot__rows">' + (v.candidates || []).map(function(c){
+        var r = byId[c.id] || {};
+        return voteRowHTML(v, c, {
+          right: v.totals ? (v.kind === "runoff" ? r.total : voteAvg(r).toFixed(1)) : "–",
+          win: v.winner && String(v.winner) === String(c.id),
+          tied: tiedIds.indexOf(c.id) !== -1,
+          note: v.totals ? (v.kind === "runoff"
+            ? (r.total === 1 ? "1 pick" : (r.total || 0) + " picks")
+            : (r.raters || 0) + (r.raters === 1 ? " rating" : " ratings")) : "" });
+      }).join("") + "</div>" +
+      (tiedIds.length ? '<p class="hint">Tied at the top. The organiser decides what happens next.</p>' : "") +
+      "</div>";
+    return;
+  }
 
   var scheduled = st === "scheduled";
   var body, foot = "";
@@ -8843,6 +8879,10 @@ var voteLaunchOff = {};   /* candidates unticked before launching */
    is the moment the repo agrees with us again. */
 var voteTouched = {};
 function voteTouch(id){ if(id) voteTouched[id] = 1; }
+/* Results read back from the script's stash while they are hidden from the
+   public file, so Admin can still show them. Per vote, for the visit only --
+   they are not this page's to keep. */
+var voteResultsSeen = {};
 var VOTE_LASTS = [["6h", "6 hours", 6], ["24h", "24 hours", 24],
                   ["3d", "3 days", 72], ["1w", "1 week", 168]];
 /* What the script's timer does, repeated here only so the launch form can say
@@ -8983,8 +9023,30 @@ function paneVotePart(){
       '<span class="pill">' + esc(v.turnout || 0) + " voted</span>" +
       (v.test ? '<span class="pill">test — only you</span>' : "") +
       (tied.length ? '<span class="pill">waiting on you</span>' : "") + "</div>" +
-      (v.totals
-        ? '<div class="ballot__rows">' + (v.totals || []).map(function(r){
+      /* Whichever way the flag is set, Admin shows the numbers. While they
+         are hidden they are not in the public file any more, so they come
+         from the script's stash instead -- asked for once and kept here. */
+      (function(){
+        var rows = v.totals || (voteResultsSeen[v.id] || {}).totals || null;
+        if(rows) return "";
+        if(!v.resultsHidden) return "";
+        return '<p class="hint" style="margin:0 0 10px">' +
+          (DEV
+            ? "Results are hidden, and the script can\u2019t be reached from the test site, so they can\u2019t be shown here."
+            : '<button class="btn btn--sm btn--ghost" type="button" data-voteseeres="' +
+              esc(v.id) + '">Show me the hidden results</button>') + "</p>";
+      })() +
+      '<div class="field" style="margin-top:12px"><label>Results on the site</label>' +
+        '<p class="hint" style="margin:0 0 8px">' +
+          (v.resultsHidden
+            ? "Hidden. The shortlist tab shows nothing, and the averages are out of the public file."
+            : "Shown on the shortlist tab, averages and all.") + "</p>" +
+        '<button class="btn btn--sm ' + (v.resultsHidden ? "btn--surf" : "btn--ghost") +
+          '" type="button" data-voteres="' + esc(v.id) + '" data-reshide="' +
+          (v.resultsHidden ? "0" : "1") + '">' +
+          (v.resultsHidden ? "Show results again" : "Stop showing results") + "</button></div>" +
+      ((v.totals || (voteResultsSeen[v.id] || {}).totals)
+        ? '<div class="ballot__rows">' + (v.totals || voteResultsSeen[v.id].totals).map(function(r){
             var c = voteCandidate(v, r.id) || { title: r.title, author: "" };
             /* The average, because the average is what decides it -- and
                because the shortlist tab used to be the only place it was
@@ -9000,6 +9062,7 @@ function paneVotePart(){
                 : (r.raters || 0) + (r.raters === 1 ? " rating" : " ratings") +
                   " \u00b7 " + (r.total || 0) + " total" });
           }).join("") + "</div>"
+        : v.resultsHidden ? ""
         : '<p class="hint">Not counted yet — the timer counts it within ' +
             VOTE_TICK_MINUTES + ' minutes of the deadline. Reload, or press Close it now.</p>') +
       '<div class="field" style="margin-top:12px"><label>Emails and the timer</label>' +
@@ -10385,6 +10448,51 @@ document.addEventListener("click", async function(e){
          "no answer") + " Reload to try again.", "bad");
     }
     renderAll(); renderAdmin();
+    return;
+  }
+  if((el = t.closest("[data-voteres]"))){
+    var resId = el.getAttribute("data-voteres");
+    var wantHide = el.getAttribute("data-reshide") === "1";
+    if(wantHide && !confirm("Stop showing the results on the site? Members will no longer see the averages.")) return;
+    var rres = await callEndpoint(wantHide ? "vote-hide" : "vote-show",
+      { token: sessionToken(), voteId: resId });
+    if(!(rres && rres.ok)){
+      say("Couldn\u2019t change that: " +
+        (endpointTrouble(rres && rres.error, rres && rres.detail) ||
+         (rres && rres.error) || "no answer"), "bad");
+      return;
+    }
+    var rv = roundById(resId);
+    if(rv){
+      rv.resultsHidden = !!rres.hidden;
+      /* The script has just rewritten the public file either way: cleared the
+         totals, or put them back. Follow it rather than keeping this page's
+         older idea of them, and remember the stash so Admin keeps its numbers
+         while they are hidden. */
+      if(rres.hidden){
+        if(rres.results) voteResultsSeen[resId] = rres.results;
+        rv.totals = null;
+      }else{
+        voteResultsSeen[resId] = null;
+        if(rres.results && rres.results.totals){
+          rv.totals = rres.results.totals;
+          if(rres.results.winner) rv.winner = rres.results.winner;
+          rv.tied = rres.results.tied || null;
+        }
+      }
+    }
+    say(rres.hidden ? "Results are off the site and out of the public file."
+                    : "Results are back on the shortlist tab.", "ok");
+    renderAll(); renderAdmin();
+    return;
+  }
+  if((el = t.closest("[data-voteseeres]"))){
+    var seeId = el.getAttribute("data-voteseeres");
+    var sres = await callEndpoint("vote-results", { token: sessionToken(), voteId: seeId });
+    if(sres && sres.ok && sres.results){ voteResultsSeen[seeId] = sres.results; renderAdmin(); }
+    else say("Couldn\u2019t read the hidden results: " +
+      (endpointTrouble(sres && sres.error, sres && sres.detail) ||
+       (sres && sres.error) || "nothing stored"), "bad");
     return;
   }
   if(t.closest("#voteMailGo")){

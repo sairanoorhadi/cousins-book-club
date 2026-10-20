@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-20b';
+var SCRIPT_VERSION = '2026-10-20c';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -203,6 +203,10 @@ function voteTally(payload) {
   if (!v) return { ok: false, error: 'no such vote' };
   if (v.cancelledAt) return { ok: false, error: 'vote cancelled' };
   if (voteStatus(v) !== 'closed') return { ok: false, error: 'still open' };
+  /* Hidden results read as "no totals in the file", which is exactly what a
+     fresh count looks like -- so without this, counting again would put them
+     straight back into the public file and quietly unhide them. */
+  if (v.resultsHidden) return { ok: true, hidden: true, already: true };
   if (v.totals) return { ok: true, already: true, totals: v.totals, winner: v.winner };
 
   var all = ballotsRead(v.id);
@@ -260,6 +264,91 @@ function voteTally(payload) {
   return { ok: true, totals: rows, winner: top.length === 1 ? top[0].id : null,
            tied: top.length > 1 ? top.map(function (r) { return r.id; }) : null,
            turnout: ids.length, ignored: ignored };
+}
+
+/* ---------------------------------------------- hiding a result
+
+   The shortlist tab shows a closed vote's results until the organiser is
+   done with them. "Done" has to mean gone from data/state.json too, not just
+   undrawn: the file is public, and a result nobody is shown but anybody can
+   read is not hidden.
+
+   So the totals are MOVED rather than deleted -- stashed here, where only the
+   script can read them, and written back when results are shown again. Delete
+   them and "Show results again" would have nothing to restore. */
+var RESULTS_KEY = 'results:';
+
+function resultsKeyFor(id) { return RESULTS_KEY + String(id || ''); }
+function resultsStash(id) {
+  try { return JSON.parse(PropertiesService.getScriptProperties()
+    .getProperty(resultsKeyFor(id)) || 'null'); }
+  catch (err) { return null; }
+}
+function resultsStashWrite(id, rec) {
+  PropertiesService.getScriptProperties()
+    .setProperty(resultsKeyFor(id), JSON.stringify(rec));
+}
+
+/* Organiser only, and only for a vote that is actually over. */
+function voteResultsVisible(payload, hide) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var mine = propEmail('ORGANISER_EMAIL');
+  if (!mine) return { ok: false, error: 'ORGANISER_EMAIL is not set' };
+  if (normEmail(email) !== normEmail(mine)) return { ok: false, error: 'organiser only' };
+
+  var state;
+  try { state = JSON.parse(stateRead().content || '{}'); }
+  catch (err) { return { ok: false, error: 'unreadable state' }; }
+  var v = voteOf(state, String(payload.voteId || ''));
+  if (!v) return { ok: false, error: 'no such vote' };
+  if (roundTypeOf(v) !== 'vote') return { ok: false, error: 'that round is not a vote' };
+  if (voteStatus(v) !== 'closed') return { ok: false, error: 'that vote is not closed yet' };
+
+  if (hide) {
+    /* Stash first, publish second. If the write to the repo fails, the
+       totals are still safe here and nothing has been lost. */
+    if (v.totals) {
+      resultsStashWrite(v.id, { totals: v.totals, winner: v.winner || null,
+        tied: v.tied || null, at: new Date().toISOString() });
+    }
+    var hid = withState('Results hidden from the site', function (st) {
+      var vv = voteOf(st, v.id);
+      if (!vv) return { error: 'no such vote' };
+      vv.resultsHidden = true;
+      vv.totals = null;
+      return {};
+    });
+    if (!hid.ok) return hid;
+    return { ok: true, hidden: true, results: resultsStash(v.id) };
+  }
+
+  var keep = resultsStash(v.id);
+  var shown = withState('Results shown on the site', function (st) {
+    var vv = voteOf(st, v.id);
+    if (!vv) return { error: 'no such vote' };
+    vv.resultsHidden = false;
+    if (keep && keep.totals) {
+      vv.totals = keep.totals;
+      if (keep.winner) vv.winner = keep.winner;
+      vv.tied = keep.tied || null;
+    }
+    return {};
+  });
+  if (!shown.ok) return shown;
+  return { ok: true, hidden: false, results: keep };
+}
+
+/* The stashed results, for Admin to show while they are hidden from the site.
+   Organiser only. Nothing here is per-member: it is the same arithmetic that
+   was public a moment ago. */
+function voteResultsRead(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var mine = propEmail('ORGANISER_EMAIL');
+  if (!mine) return { ok: false, error: 'ORGANISER_EMAIL is not set' };
+  if (normEmail(email) !== normEmail(mine)) return { ok: false, error: 'organiser only' };
+  return { ok: true, results: resultsStash(String(payload.voteId || '')) };
 }
 
 /* Nothing keeps ballots for a vote that was cancelled or whose result is
@@ -571,7 +660,7 @@ function voteTickOne(state, v, now) {
     changed = true;
   }
 
-  if (st === 'closed' && roundTypeOf(v) === 'vote' && !v.totals) {
+  if (st === 'closed' && roundTypeOf(v) === 'vote' && !v.totals && !v.resultsHidden) {
     var out = voteTally({ voteId: v.id });
     if (out && out.ok) {
       rec.counted = new Date().toISOString();
@@ -956,6 +1045,9 @@ function doPost(e) {
   if (kind === 'nom-add') return json(nomOrganiserEdit(payload, true));
   if (kind === 'nom-del') return json(nomOrganiserEdit(payload, false));
   if (kind === 'vote-mail') return json(voteMailStatus(payload));
+  if (kind === 'vote-hide') return json(voteResultsVisible(payload, true));
+  if (kind === 'vote-show') return json(voteResultsVisible(payload, false));
+  if (kind === 'vote-results') return json(voteResultsRead(payload));
   if (kind === 'photo-add') return json(photoAdd(payload));
   if (kind === 'photo-list') return json(photoList(payload));
   if (kind === 'photo-delete') return json(photoDelete(payload));

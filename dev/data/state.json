@@ -1948,7 +1948,8 @@
       "tied": null,
       "parent": null,
       "at": "2026-10-15T14:00:00.000Z",
-      "seededForChecking": "THE CLOSED VOTE: shortlist tab and landing page must both show nothing. Admin keeps the averages, the winner and Add winner to Up next."
+      "seededForChecking": "THE CLOSED VOTE: the shortlist tab shows the \"Vote results\" panel with the averages. Admin -> vote tab -> \"Stop showing results\" empties the tab and clears the totals from this file; \"Show results again\" puts both back. Delete vote-seed-open and vote-seed-runoff to reach this one.",
+      "resultsHidden": false
     },
     {
       "id": "vote-seed-open",
