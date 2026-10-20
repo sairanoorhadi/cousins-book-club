@@ -1598,6 +1598,37 @@
           }
         ]
       }
+    },
+    {
+      "id": "suggest-1a451d9b-60a",
+      "kind": "suggest",
+      "at": "2026-10-20T03:15:44.595Z",
+      "payload": {
+        "title": "The Martian",
+        "author": "Andy Weir",
+        "pages": 407,
+        "ageMin": 15,
+        "ageMax": 100,
+        "level": "Ages 15+",
+        "genres": [
+          "Science Fiction",
+          "Thriller",
+          "Astronauts",
+          "Survival"
+        ],
+        "tropes": [],
+        "blurb": "Six days ago, astronaut Mark Watney became one of the first people to walk on Mars.\n\nNow, he’s sure he’ll be the first person to die there.\n\nAfter a dust storm nearly kills him and forces his crew to evacuate while thinking him dead, Mark finds himself stranded and completely alone with no way to even signal Earth that he’s alive—and even if he could get word out, his supplies would be gone long before a rescue could arrive.\n\nChances are, though, he won’t have time to starve to death. The damaged machinery, unforgiving environment, or plain-old “human error” are much more likely to kill him first.\n\nBut Mark isn’t ready to give up yet. Drawing on his ingenuity, his engineering skills — and a relentless, dogged refusal to quit — he steadfastly confronts one seemingly insurmountable obstacle after the next. Will his resourcefulness be enough to overcome the impossible odds against him?",
+        "summarySource": "fetched",
+        "cover": "https://covers.openlibrary.org/b/olid/OL60319902M-L.jpg",
+        "by": "Saira",
+        "byId": "mb-saira",
+        "ratings": [
+          {
+            "score": 4.4,
+            "source": "Open Library"
+          }
+        ]
+      }
     }
   ]
 }
