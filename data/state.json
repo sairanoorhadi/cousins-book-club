@@ -1,5 +1,5 @@
 {
-  "rev": 1571,
+  "rev": 1572,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1523,7 +1523,7 @@
       "cover": "https://covers.openlibrary.org/b/id/8361789-L.jpg",
       "blurb": "Jude and her two sisters are taken to the High Court of Faerie as children, after the fae knight Madoc kills their parents and claims them as his own. Ten years on, Jude is seventeen and mortal in a world that treats humans as pets or amusements, and she wants a place at court badly enough to bleed for it. Standing in her way is Prince Cardan, the youngest son of the High King, who makes her humiliation something close to a hobby. The court runs on old rules about lying, debts, and hospitality, and Jude learns quickly that the rules are the only weapon a human gets.",
       "summarySource": "ai",
-      "shortlist": false,
+      "shortlist": true,
       "reviews": [],
       "endorsements": [],
       "dislikes": [],
