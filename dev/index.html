@@ -3309,7 +3309,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-20c";
+var SCRIPT_WANT = "2026-10-20d";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -3359,6 +3359,10 @@ var ENDPOINT_REPEATABLE = {
   /* Showing and hiding set a flag to a value rather than toggling it, so a
      repeat lands where the first would have; reading only reads. */
   "vote-hide": 1, "vote-show": 1, "vote-results": 1,
+  /* The preview only reads. The two sends are guarded by a stored flag in the
+     script, so a repeat cannot produce a second email -- and the me-only one
+     is for checking wording, which is a thing you do more than once. */
+  "vote-res-preview": 1, "vote-res-send": 1, "vote-res-me": 1,
   /* Nominations. Casting replaces one member's single nomination rather than
      adding to it, and clearing, adding and removing are all "make it so"
      rather than "change it by one", so a second go lands exactly where the
@@ -8883,6 +8887,8 @@ function voteTouch(id){ if(id) voteTouched[id] = 1; }
    public file, so Admin can still show them. Per vote, for the visit only --
    they are not this page's to keep. */
 var voteResultsSeen = {};
+/* The results email as the script would send it, for the visit only. */
+var voteResPreview = {};
 var VOTE_LASTS = [["6h", "6 hours", 6], ["24h", "24 hours", 24],
                   ["3d", "3 days", 72], ["1w", "1 week", 168]];
 /* What the script's timer does, repeated here only so the launch form can say
@@ -8911,6 +8917,64 @@ function isoFromLocal(v){
   var d = new Date(String(v || ""));
   return isNaN(d) ? "" : d.toISOString();
 }
+/* Everything about the results email for one closed vote: whether it is
+   switched on, whether it went, whether it is being held for a tie, and the
+   three buttons. The sent/held facts come from the timer's own flag record,
+   which the script keeps privately -- so this needs voteMailInfo, and says so
+   when it has not been asked for yet. */
+function voteResultsBlock(v){
+  if(voteStatusOf(v) !== "closed") return "";
+  var f = voteMailInfo ? ((voteMailInfo.flags || {})[v.id] || {}) : null;
+  var on = v.resultsEmail !== false;
+  var sent = f && f.results;
+  var held = f && f.resultsHeld;
+
+  var state_line;
+  if(!f){
+    state_line = "Press \u201cCheck the timer and the emails\u201d above to see whether it went.";
+  }else if(sent){
+    state_line = "Results email sent " + voteWhen(sent.at) + " to " + (sent.n || 0) +
+      ((sent.n === 1) ? " member." : " members.") +
+      (sent.failed ? " " + sent.failed + " failed \u2014 see the problems above." : "");
+  }else if(held === "tie"){
+    state_line = "Results email held: tie. It goes out once you launch a runoff " +
+      "or record a tiebreak.";
+  }else if(held === "runoff"){
+    state_line = "Results email held: a runoff is answering this one instead, " +
+      "and carries its own result.";
+  }else if(!on){
+    state_line = "Not sent \u2014 switched off for this vote.";
+  }else{
+    state_line = "Not sent yet.";
+  }
+
+  return '<div class="field" style="margin-top:12px"><label>The results email</label>' +
+    '<p class="hint" style="margin:0 0 8px">' + esc(state_line) + "</p>" +
+    '<label style="display:block;margin-bottom:4px"><input type="checkbox" data-resend="' +
+      esc(v.id) + '"' + (on ? " checked" : "") +
+      "> Email the results when it closes</label>" +
+    '<label style="display:block;margin-bottom:8px"><input type="checkbox" data-resall="' +
+      esc(v.id) + '"' + (v.resultsToAll === true ? " checked" : "") +
+      "> Also send to members who didn\u2019t vote</label>" +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+      '<button class="btn btn--sm btn--ghost" type="button" data-respreview="' + esc(v.id) +
+        '">Preview it</button>' +
+      (sent ? "" : '<button class="btn btn--sm btn--surf" type="button" data-resgo="' +
+        esc(v.id) + '">Send results email now</button>') +
+      '<button class="btn btn--sm btn--ghost" type="button" data-resme="' + esc(v.id) +
+        '">Resend to me only</button>' +
+    "</div>" +
+    (voteResPreview[v.id]
+      ? '<div class="editor__body" style="margin-top:10px"><p class="hint" style="margin:0 0 6px">' +
+        "<strong>Subject:</strong> " + esc(voteResPreview[v.id].subject) + "</p>" +
+        '<pre style="white-space:pre-wrap;font-family:var(--f-mono);font-size:12px;margin:0">' +
+        esc(voteResPreview[v.id].body) + "</pre>" +
+        '<p class="hint" style="margin:8px 0 0">It would go to ' +
+          esc(voteResPreview[v.id].would) + " recipient" +
+          (voteResPreview[v.id].would === 1 ? "" : "s") + ".</p></div>"
+      : "") + "</div>";
+}
+
 /* What the timer has done about one vote, in the organiser's words. Asked
    for rather than polled: it costs a call to the script, and nothing here
    changes between presses of the button. */
@@ -9067,6 +9131,7 @@ function paneVotePart(){
             VOTE_TICK_MINUTES + ' minutes of the deadline. Reload, or press Close it now.</p>') +
       '<div class="field" style="margin-top:12px"><label>Emails and the timer</label>' +
         voteMailBlock(v) + "</div>" +
+      voteResultsBlock(v) +
       (v.winner
         ? '<div style="margin-top:12px"><button class="btn btn--sm btn--surf" type="button" data-votepromote="' +
           esc(v.winner) + '">Add the winner to Up next</button></div>'
@@ -9128,6 +9193,12 @@ function paneVotePart(){
           return '<button class="btn btn--sm btn--ghost" type="button" data-votelasts="' + l[2] + '">' +
             esc(l[1]) + "</button>";
         }).join("") + "</div></div>" +
+    '<div class="field" style="margin-top:12px"><label>' +
+      '<input type="checkbox" id="voteResOn" checked> Email the results when it closes</label>' +
+      '<label style="display:block;margin-top:4px">' +
+      '<input type="checkbox" id="voteResAll"> Also send to members who didn\u2019t vote</label>' +
+      '<p class="hint" style="margin:6px 0 0">Each member\u2019s copy shows their own ratings and ' +
+      'nobody else\u2019s. One message each, so it costs one email per member.</p></div>' +
     '<div class="field" style="margin-top:12px"><label>' +
       '<input type="checkbox" id="voteTest"> Test vote: email only me</label>' +
       '<p class="hint" style="margin:6px 0 0">Nobody else is emailed and members don\u2019t see it. ' +
@@ -10399,6 +10470,10 @@ document.addEventListener("click", async function(e){
       cancelledAt: null, closedAt: null, turnout: 0, totals: null, winner: null, tied: null,
       parent: null, at: new Date().toISOString() };
     if(isTest) fresh.test = true;
+    /* Stored on the round, like its window and its test flag, so the script
+       reads them when the time comes rather than being told twice. */
+    if($("voteResOn") && !$("voteResOn").checked) fresh.resultsEmail = false;
+    if($("voteResAll") && $("voteResAll").checked) fresh.resultsToAll = true;
     state.votes.push(fresh);
     voteLaunchOff = {};
     if(await save("Launching the vote…")){
@@ -10448,6 +10523,50 @@ document.addEventListener("click", async function(e){
          "no answer") + " Reload to try again.", "bad");
     }
     renderAll(); renderAdmin();
+    return;
+  }
+  if((el = t.closest("[data-respreview]"))){
+    var pvId = el.getAttribute("data-respreview");
+    var pres = await callEndpoint("vote-res-preview", { token: sessionToken(), voteId: pvId });
+    if(pres && pres.ok){ voteResPreview[pvId] = pres; renderAdmin(); }
+    else say("Couldn\u2019t build the preview: " +
+      (endpointTrouble(pres && pres.error, pres && pres.detail) ||
+       (pres && pres.error) || "no answer"), "bad");
+    return;
+  }
+  if((el = t.closest("[data-resgo]"))){
+    var sgId = el.getAttribute("data-resgo");
+    var sgv = roundById(sgId);
+    var howMany = (voteResPreview[sgId] || {}).would;
+    if(!confirm("Send the results email now" +
+      (howMany ? " to " + howMany + (howMany === 1 ? " recipient" : " recipients") : "") +
+      "? It can only go once.")) return;
+    var gres = await callEndpoint("vote-res-send", { token: sessionToken(), voteId: sgId });
+    if(!(gres && gres.ok)){
+      say("Couldn\u2019t send it: " +
+        (endpointTrouble(gres && gres.error, gres && gres.detail) ||
+         (gres && gres.error) || "no answer"), "bad");
+      return;
+    }
+    if(gres.already) say("It had already gone \u2014 nothing sent twice.", "ok");
+    else if(gres.held) say("Held: the vote is tied. Break the tie or launch a runoff first.", "bad");
+    else say("Sent to " + (gres.sent || 0) + (gres.sent === 1 ? " member." : " members.") +
+      (gres.failed ? " " + gres.failed + " failed." : ""), "ok");
+    /* the flag record has changed, so it is asked for again rather than
+       left showing what it said before the send */
+    voteMailInfo = null;
+    renderAdmin();
+    return;
+  }
+  if((el = t.closest("[data-resme]"))){
+    var meId = el.getAttribute("data-resme");
+    var mres = await callEndpoint("vote-res-me", { token: sessionToken(), voteId: meId });
+    say(mres && mres.ok
+      ? "A copy is on its way to you. It doesn\u2019t count as the real send."
+      : "Couldn\u2019t send you a copy: " +
+        (endpointTrouble(mres && mres.error, mres && mres.detail) ||
+         (mres && mres.error) || "no answer"),
+      mres && mres.ok ? "ok" : "bad");
     return;
   }
   if((el = t.closest("[data-voteres]"))){
@@ -11567,6 +11686,22 @@ document.addEventListener("change", async function(e){
     }
     openEditors["vocab:" + pk] = true;
     if(await save("Saving the parent\u2026")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  /* The two per-vote email settings. Saved through the same path every other
+     round edit uses -- voteTouch then save -- so a stale copy of the script's
+     own fields cannot ride along with them. */
+  if(n && n.hasAttribute && (n.hasAttribute("data-resend") || n.hasAttribute("data-resall"))){
+    var whichAll = n.hasAttribute("data-resall");
+    var rvId = n.getAttribute(whichAll ? "data-resall" : "data-resend");
+    var rv = roundById(rvId);
+    if(!rv) return;
+    if(whichAll) rv.resultsToAll = !!n.checked;
+    else rv.resultsEmail = !!n.checked;
+    voteTouch(rv.id);
+    if(await save(whichAll ? "Saving who gets the results…" : "Saving the results email…")){
+      renderAdmin();
+    }
     return;
   }
   if(n && n.id === "nomOpensWhen"){
