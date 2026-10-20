@@ -985,18 +985,25 @@ a.getrow:hover{background:var(--sunk)}
 .pending__also{margin-top:10px;border-left:3px solid var(--hairline);padding:2px 0 2px 12px}
 .pending__also p{margin:0 0 4px;font-size:14.5px;color:var(--muted)}
 
-/* ============ the vote ============ */
-.vote{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);
+/* ============ the ballot ============ */
+/* Named .ballot, not .vote. There is already a .vote on this page — the
+   endorse pill on a recommendation card — and calling this one the same
+   thing put two rules with that selector in one sheet. The later of them
+   won each clash, so the pill took this block's padding and became a circle
+   over the cover, and this block took the pill's position:absolute and
+   border-radius:999px and became an oval floating over the hero. One
+   collision, both of the things that looked broken. */
+.ballot{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);
   box-shadow:var(--shadow-sm);padding:18px 20px;margin-bottom:24px}
-.vote__head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
-.vote__head h3{font-size:20px}
-.vote__pill{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+.ballot__head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.ballot__head h3{font-size:20px}
+.ballot__pill{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
   padding:3px 10px;border-radius:999px;border:1.5px solid currentColor}
-.vote__pill--open{color:var(--surf)}
-.vote__pill--scheduled{color:var(--sky)}
-.vote__pill--closed{color:var(--muted)}
-.vote__when{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
-.vote__rows{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.ballot__pill--open{color:var(--surf)}
+.ballot__pill--scheduled{color:var(--sky)}
+.ballot__pill--closed{color:var(--muted)}
+.ballot__when{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.ballot__rows{display:flex;flex-direction:column;gap:10px;margin:16px 0}
 .voterow{display:grid;grid-template-columns:1fr auto;gap:4px 14px;align-items:center;
   padding:10px 12px;border-radius:8px;background:color-mix(in srgb, var(--ink) 4%, transparent)}
 .voterow__t{font-family:var(--f-display);font-weight:700;font-size:15.5px;min-width:0}
@@ -1008,13 +1015,54 @@ a.getrow:hover{background:var(--sunk)}
 .voterow--win{background:color-mix(in srgb, var(--zest) 26%, transparent);
   outline:2px solid var(--zest)}
 .voterow--tied{outline:2px dashed var(--flare)}
-.vote__foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px}
-.vote__turn{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);margin-left:auto}
-.vote__pick{display:flex;gap:10px;flex-wrap:wrap}
+.ballot__foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px}
+.ballot__turn{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);margin-left:auto}
+.ballot__pick{display:flex;gap:10px;flex-wrap:wrap}
 .votepick{flex:1 1 180px;text-align:left;padding:12px 14px;border:2px solid var(--edge);
   border-radius:var(--r);background:var(--surface);cursor:pointer;font-family:var(--f-display);
   font-weight:700;font-size:15.5px;color:var(--ink)}
 .votepick[aria-pressed="true"]{background:var(--grape);color:var(--on-grape)}
+
+/* Ten buttons rather than a slider. A slider always holds a value, so there
+   is no way for it to say "not rated yet" — and the ballot is not allowed to
+   send until every book has been rated on purpose. Buttons can be genuinely
+   empty. Five to a row on a phone, ten across on a desktop. */
+.rate{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin-top:8px}
+.rate__b{font-family:var(--f-mono);font-size:14px;padding:10px 0;min-height:44px;
+  border:1.5px solid var(--hairline);border-radius:8px;background:var(--surface);
+  color:var(--muted);cursor:pointer}
+.rate__b:hover{border-color:var(--edge);color:var(--ink)}
+.rate__b[aria-pressed="true"]{background:var(--grape);color:var(--on-grape);border-color:var(--edge)}
+.rate__b:focus-visible{outline:2px solid var(--grape);outline-offset:2px}
+.rate__b[disabled]{opacity:.45;cursor:default}
+@media (max-width:620px){ .rate{grid-template-columns:repeat(5,1fr)} }
+.ratecard{padding:12px 0;border-top:1.5px solid var(--hairline)}
+.ratecard:first-child{border-top:0}
+.ratecard__t{font-family:var(--f-display);font-weight:700;font-size:16px}
+.ratecard__a{font-size:13.5px;color:var(--muted)}
+.ratecard__mine{font-family:var(--f-mono);font-size:13px;color:var(--muted);margin-left:auto}
+.ratecard__head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ratehint{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:11px;
+  color:var(--muted);margin-top:5px}
+
+/* ============ the landing call to vote ============ */
+/* A section in the ordinary flow at the top of the page, so it pushes the
+   hero down rather than sitting over it. The whole thing is one link. */
+.votecta{display:block;text-decoration:none;color:inherit;border:2px solid var(--edge);
+  border-radius:var(--r);background:color-mix(in srgb, var(--grape) 12%, var(--surface));
+  box-shadow:var(--shadow-sm);padding:20px 22px;margin:0 0 26px}
+.votecta:hover{background:color-mix(in srgb, var(--grape) 20%, var(--surface))}
+.votecta:focus-visible{outline:3px solid var(--grape);outline-offset:3px}
+.votecta--quiet{background:var(--surface)}
+.votecta__head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.votecta__head h2{font-size:23px}
+.votecta__when{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.votecta__covers{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0 14px;
+  max-width:560px}
+@media (max-width:620px){ .votecta__covers{grid-template-columns:repeat(3,1fr)} }
+.votecta__go{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-display);
+  font-weight:800;font-size:16px;color:var(--grape)}
+.votecta__foot{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
 
 /* ============ Compare, and the vocabulary lists ============ */
 /* The panel opens inline, under the tag it was pressed from, rather than over
@@ -1772,6 +1820,7 @@ a.getrow:hover{background:var(--sunk)}
 </div>
 
 <main>
+  <div id="voteCta"></div>
   <!-- ===== NOW READING ===== -->
   <section class="hero" id="now">
     <div class="wrap">
@@ -3221,7 +3270,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-19a";
+var SCRIPT_WANT = "2026-10-19b";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -4860,14 +4909,6 @@ function dualApply(n, v){
 document.addEventListener("input", function(e){
   var n = e.target;
   if(!n || !n.getAttribute) return;
-  var rate = n.getAttribute("data-voterate");
-  if(rate){
-    var out = document.querySelector('[data-votenum="' + rate + '"]');
-    if(out) out.textContent = n.value;
-    if(!voteDraft || !voteDraft.ratings) voteDraft = { ratings: {} };
-    voteDraft.ratings[rate] = Number(n.value);
-    return;
-  }
   if(!n.getAttribute("data-dual")) return;
   dualApply(n, n.value);
 });
@@ -4979,13 +5020,13 @@ function sortRecs(list){
 async function voteLoadMine(){
   var v = currentVote();
   voteMine = null; voteDraft = null;
-  if(!v || !myMember() || voteStatusOf(v) !== "open") { renderVote(); return; }
+  if(!v || !myMember() || voteStatusOf(v) !== "open") { renderVote(); renderVoteCta(); return; }
   var res = await callEndpoint("vote-mine", { token: sessionToken(), voteId: v.id });
   if(res && res.ok && res.mine){
     voteMine = res.mine;
     voteDraft = JSON.parse(JSON.stringify(res.mine));
   }
-  renderVote();
+  renderVote(); renderVoteCta();
 }
 /* A vote whose deadline has gone but whose count has not been published yet.
    Anyone signed in can ask for it to be counted — the script refuses until
@@ -5006,23 +5047,48 @@ async function voteTallyIfDue(){
 
 /* ---------- the vote, as a member sees it ---------- */
 var voteMine = null;        /* this member's own ballot, from the script */
-var voteDraft = null;       /* what the sliders say right now */
+var voteDraft = null;       /* what has been rated so far, before sending */
+var voteEditing = false;    /* pressed Edit on a ballot already sent */
 var voteWhoVoted = null;    /* member ids, for the nudge list */
 
+/* One line per book, for every view that is not the ballot itself: the
+   signed-out list, your own ratings read back, and the result. */
 function voteRowHTML(v, c, opts){
   opts = opts || {};
-  var n = opts.value;
   return '<div class="voterow' + (opts.win ? " voterow--win" : "") +
       (opts.tied ? " voterow--tied" : "") + '">' +
-    '<span class="voterow__t">' + esc(c.title) + (opts.win ? " ★" : "") + "</span>" +
+    '<span class="voterow__t">' + esc(c.title) + (opts.win ? " \u2605" : "") + "</span>" +
     '<span class="voterow__a">' + esc(c.author || "") +
-      (opts.note ? " · " + esc(opts.note) : "") + "</span>" +
-    '<span class="voterow__n" data-votenum="' + esc(c.id) + '">' + esc(opts.right) + "</span>" +
-    (opts.slider
-      ? '<span class="voterow__s"><input type="range" min="1" max="10" step="1" value="' + (n || 5) +
-        '" data-voterate="' + esc(c.id) + '" aria-label="How much you want to read ' + esc(c.title) + '"></span>'
-      : "") +
+      (opts.note ? " \u00b7 " + esc(opts.note) : "") + "</span>" +
+    '<span class="voterow__n">' + esc(opts.right) + "</span>" +
     "</div>";
+}
+function voteAvg(r){
+  var n = Number(r && r.raters) || 0;
+  return n ? Math.round((Number(r.total) / n) * 10) / 10 : 0;
+}
+/* The ten buttons for one book. Nothing is pressed until the reader presses
+   it: there is no default rating, because a default is an opinion nobody
+   held. */
+function rateRowHTML(c, mine, disabled){
+  var b = "";
+  for(var i = 1; i <= 10; i++){
+    b += '<button class="rate__b" type="button" data-rateid="' + esc(c.id) + '" data-raten="' + i +
+      '" aria-pressed="' + (Number(mine) === i) + '"' + (disabled ? " disabled" : "") +
+      ' aria-label="' + esc(c.title) + ": " + i + ' out of 10">' + i + "</button>";
+  }
+  return '<div class="ratecard"><div class="ratecard__head">' +
+      '<span class="ratecard__t">' + esc(c.title) + "</span>" +
+      '<span class="ratecard__a">' + esc(c.author || "") + "</span>" +
+      '<span class="ratecard__mine" data-ratemine="' + esc(c.id) + '">' +
+        (mine ? esc(mine) + " / 10" : "not rated") + "</span></div>" +
+    '<div class="rate">' + b + "</div>" +
+    '<p class="ratehint"><span>1 — throw it in the bin</span><span>10 — dying to read it</span></p>' +
+    "</div>";
+}
+function voteAllRated(v){
+  if(!voteDraft || !voteDraft.ratings) return false;
+  return (v.candidates || []).every(function(c){ return Number(voteDraft.ratings[c.id]) >= 1; });
 }
 function renderVote(){
   var host = $("voteBox");
@@ -5031,88 +5097,141 @@ function renderVote(){
   if(!v){ host.innerHTML = ""; return; }
   var st = voteStatusOf(v), mem = myMember();
   var total = voteMembers().length;
-  var pill = '<span class="vote__pill vote__pill--' + st + '">' +
+  var pill = '<span class="ballot__pill ballot__pill--' + st + '">' +
     (st === "open" ? "Voting open" : st === "scheduled" ? "Opens soon" : "Closed") + "</span>";
-  var head = '<div class="vote__head"><h3>' +
-    (v.kind === "runoff" ? "Runoff — pick one" : "Which book next?") + "</h3>" + pill + "</div>";
-
-  if(st === "scheduled"){
-    /* The candidates are shown, because knowing what is coming is the point
-       of scheduling it. Nothing here can be filled in. */
-    host.innerHTML = '<div class="vote">' + head +
-      '<p class="vote__when">Voting opens ' + esc(voteWhen(v.opensAt)) +
-        " and closes " + esc(voteWhen(v.closesAt)) + ".</p>" +
-      '<div class="vote__rows">' + (v.candidates || []).map(function(c){
-        return voteRowHTML(v, c, { right: "–" });
-      }).join("") + "</div></div>";
-    return;
-  }
+  var head = '<div class="ballot__head"><h3 id="recs-vote">' +
+    (v.kind === "runoff" ? "Runoff — pick one" : "Vote now") + "</h3>" + pill + "</div>";
+  var turn = '<span class="ballot__turn">' + esc(v.turnout || 0) + " of " + esc(total) +
+    " members have voted</span>";
 
   if(st === "closed"){
-    var rows = v.totals || [];
+    var rows = (v.totals || []).slice();
     var byId = {};
     rows.forEach(function(r){ byId[r.id] = r; });
     var tied = v.tied || [];
-    host.innerHTML = '<div class="vote">' + head +
-      '<p class="vote__when">' + (v.totals
+    host.innerHTML = '<div class="ballot">' + head +
+      '<p class="ballot__when">' + (v.totals
         ? "Closed " + esc(voteWhen(v.closedAt || v.closesAt)) + " · " +
           esc(v.turnout || 0) + " of " + esc(total) + " voted"
         : "Closed " + esc(voteWhen(v.closedAt || v.closesAt)) +
           " — the count has not been published yet.") + "</p>" +
-      '<div class="vote__rows">' + (v.candidates || []).map(function(c){
+      '<div class="ballot__rows">' + (v.candidates || []).map(function(c){
         var r = byId[c.id] || {};
-        var isWin = v.winner && String(v.winner) === String(c.id);
-        return voteRowHTML(v, c, { right: v.totals ? r.total : "–", win: isWin,
+        return voteRowHTML(v, c, {
+          right: v.totals ? (v.kind === "runoff" ? r.total : voteAvg(r).toFixed(1)) : "–",
+          win: v.winner && String(v.winner) === String(c.id),
           tied: tied.indexOf(c.id) !== -1,
           note: v.totals ? (v.kind === "runoff"
             ? (r.total === 1 ? "1 pick" : (r.total || 0) + " picks")
-            : (r.raters || 0) + " rated it") : "" });
+            : (r.raters || 0) + (r.raters === 1 ? " rating" : " ratings")) : "" });
       }).join("") + "</div>" +
       (tied.length ? '<p class="hint">Tied at the top. The organiser decides what happens next.</p>' : "") +
       "</div>";
     return;
   }
 
-  /* open */
-  var signedIn = !!mem;
-  var mine = voteMine;
-  var body;
-  if(!signedIn){
-    body = '<p class="hint" style="margin:14px 0 0">' +
-      '<button class="btn btn--sm btn--grape" type="button" id="voteSignIn">Sign in to vote</button>' +
-      "</p>" +
-      '<div class="vote__rows">' + (v.candidates || []).map(function(c){
-        return voteRowHTML(v, c, { right: "–" });
-      }).join("") + "</div>";
+  var scheduled = st === "scheduled";
+  var body, foot = "";
+  if(!mem){
+    body = '<div class="ballot__rows">' + (v.candidates || []).map(function(c){
+      return voteRowHTML(v, c, { right: "–" }); }).join("") + "</div>";
+    foot = '<button class="btn btn--sm btn--grape" type="button" id="voteSignIn">Sign in to vote</button>' + turn;
   }
   else if(v.kind === "runoff"){
     var picked = voteDraft && voteDraft.pick;
-    body = '<div class="vote__pick">' + (v.candidates || []).map(function(c){
+    body = '<div class="ballot__pick">' + (v.candidates || []).map(function(c){
       return '<button class="votepick" type="button" data-votepick="' + esc(c.id) + '" aria-pressed="' +
-        (String(picked) === String(c.id)) + '">' + esc(c.title) + "</button>";
+        (String(picked) === String(c.id)) + '"' + (scheduled ? " disabled" : "") + ">" +
+        esc(c.title) + "</button>";
     }).join("") + "</div>";
+    foot = '<button class="btn btn--sm btn--surf" type="button" id="voteSend"' +
+      (scheduled || !picked ? " disabled" : "") + ">Submit</button>" + turn;
+  }
+  else if(voteMine && !voteEditing && !scheduled){
+    /* Sent. What they chose, read back, and a way to change it. */
+    body = '<div class="ballot__rows">' + (v.candidates || []).map(function(c){
+      var n = (voteMine.ratings || {})[c.id];
+      return voteRowHTML(v, c, { right: n ? n + " / 10" : "–" });
+    }).join("") + "</div>";
+    foot = '<button class="btn btn--sm btn--ghost" type="button" id="voteEdit">Edit my vote</button>' +
+      '<span class="hint">You can change it until it closes.</span>' + turn;
   }
   else {
-    body = '<div class="vote__rows">' + (v.candidates || []).map(function(c){
-      var n = (voteDraft && voteDraft.ratings && voteDraft.ratings[c.id]) || 5;
-      return voteRowHTML(v, c, { right: n, slider: true, value: n });
-    }).join("") + "</div>" +
-    '<p class="hint" style="margin:0">10 means you are dying to read it, 1 means throw it in the bin. ' +
-      "Every book needs a number.</p>";
+    body = (v.candidates || []).map(function(c){
+      var n = voteDraft && voteDraft.ratings ? voteDraft.ratings[c.id] : null;
+      return rateRowHTML(c, n, scheduled);
+    }).join("");
+    foot = '<button class="btn btn--sm btn--surf" type="button" id="voteSend"' +
+      (scheduled || !voteAllRated(v) ? " disabled" : "") + ">Submit</button>" +
+      (scheduled ? "" : '<span class="hint" id="voteNote">' +
+        (voteAllRated(v) ? "Ready to send." : "Rate every book to send it.") + "</span>") + turn;
   }
-  host.innerHTML = '<div class="vote">' + head +
-    '<p class="vote__when">Closes ' + esc(voteWhen(v.closesAt)) + ".</p>" + body +
-    '<div class="vote__foot">' +
-      (signedIn
-        ? '<button class="btn btn--sm btn--surf" type="button" id="voteSend">' +
-          (mine ? "Change my vote" : "Send my vote") + "</button>" +
-          (mine ? '<span class="hint">You have voted. You can change it until it closes.</span>' : "")
-        : "") +
-      '<span class="vote__turn">' + esc(v.turnout || 0) + " of " + esc(total) +
-        " members have voted</span>" +
-    "</div></div>";
+
+  host.innerHTML = '<div class="ballot">' + head +
+    '<p class="ballot__when">' + (scheduled
+      ? "Voting opens " + esc(voteWhen(v.opensAt)) + "."
+      : "Closes " + esc(voteWhen(v.closesAt)) + ".") + "</p>" +
+    body + '<div class="ballot__foot">' + foot + "</div></div>";
 }
 
+/* ---------- the call to vote, at the top of the landing page ---------- */
+/* In the flow, not over it: the hero and everything under it move down. */
+function voteCountdown(iso){
+  var ms = Date.parse(iso) - Date.now();
+  if(!isFinite(ms) || ms <= 0) return "any moment";
+  var mins = Math.round(ms / 60000);
+  if(mins < 60) return mins + (mins === 1 ? " minute" : " minutes") + " left";
+  var hrs = Math.round(mins / 60);
+  if(hrs < 48) return hrs + (hrs === 1 ? " hour" : " hours") + " left";
+  var days = Math.round(hrs / 24);
+  return days + (days === 1 ? " day" : " days") + " left";
+}
+var VOTE_RESULT_DAYS = 3;
+function renderVoteCta(){
+  var host = $("voteCta");
+  if(!host) return;
+  var v = currentVote(), st = voteStatusOf(v);
+  if(!v || st === "cancelled"){ host.innerHTML = ""; return; }
+  var mem = myMember(), total = voteMembers().length;
+  var covers = '<div class="votecta__covers">' + (v.candidates || []).slice(0, 10).map(function(c){
+    return '<span class="cover-wrap"><span class="cover">' +
+      (c.cover ? '<img src="' + esc(c.cover) + '" alt="">' : '<span class="cover__none">' +
+        esc(c.title) + "</span>") + "</span></span>";
+  }).join("") + "</div>";
+
+  if(st === "closed"){
+    /* The result stands at the top for a few days, then gets out of the way. */
+    var since = Date.now() - Date.parse(v.closedAt || v.closesAt);
+    if(!v.totals || !(since < VOTE_RESULT_DAYS * 86400000)){ host.innerHTML = ""; return; }
+    var win = v.winner ? voteCandidate(v, v.winner) : null;
+    host.innerHTML = '<a class="votecta votecta--quiet" href="#recs-shortlist">' +
+      '<span class="votecta__head"><h2>' +
+        (win ? "The club voted for " + esc(win.title) : "The vote is in") + "</h2>" +
+        '<span class="votecta__when">' + esc(v.turnout || 0) + " of " + esc(total) + " voted</span></span>" +
+      covers + '<span class="votecta__go">See the result →</span></a>';
+    return;
+  }
+  if(st === "scheduled"){
+    host.innerHTML = '<a class="votecta votecta--quiet" href="#recs-shortlist">' +
+      '<span class="votecta__head"><h2>Voting opens soon</h2>' +
+        '<span class="votecta__when">' + esc(voteWhen(v.opensAt)) + "</span></span>" +
+      covers + '<span class="votecta__go">See who is standing →</span></a>';
+    return;
+  }
+  var voted = !!voteMine;
+  host.innerHTML = '<a class="votecta' + (voted ? " votecta--quiet" : "") + '" href="#recs-shortlist">' +
+    '<span class="votecta__head"><h2>' +
+      (voted ? "Thanks — your vote is in" : "Voting is open") + "</h2>" +
+      '<span class="votecta__when">' +
+        (voted ? "Edit until " + esc(voteWhen(v.closesAt))
+               : "Closes " + esc(voteWhen(v.closesAt)) + " · " + esc(voteCountdown(v.closesAt))) +
+      "</span></span>" +
+    covers +
+    '<span class="votecta__foot"><span class="votecta__go">' +
+      (mem ? (voted ? "Change my vote →" : "Click here to vote →") : "Sign in to vote →") +
+    '</span><span class="votecta__when">' + esc(v.turnout || 0) + " of " + esc(total) +
+      " have voted</span></span></a>";
+}
 /* ---------- the vote for the next book ----------
    The ballots are not here and never will be: they live in the script's own
    private store, because data/state.json is a public file in a public
@@ -5436,7 +5555,7 @@ function renderShortlist(){
     ? list.map(recCardHTML).join("")
     : '<p class="empty">Nothing shortlisted yet. The organiser marks contenders under Organiser tools → Recommendations.</p>';
 }
-function renderRecs(){ renderRecFilters(); renderRecGrid(); renderShortlist(); renderVote(); }
+function renderRecs(){ renderRecFilters(); renderRecGrid(); renderShortlist(); renderVote(); renderVoteCta(); }
 
 /* ---------- render: badges ---------- */
 /* Focus is a set, not one name: two or more picked shows only the books all of
@@ -8556,7 +8675,7 @@ function paneVote(){
     out += '<div class="adminrow"><div class="adminrow__head"><strong>Closed</strong>' +
       '<span class="pill">' + esc(v.turnout || 0) + " voted</span></div>" +
       (v.totals
-        ? '<div class="vote__rows">' + (v.totals || []).map(function(r){
+        ? '<div class="ballot__rows">' + (v.totals || []).map(function(r){
             var c = voteCandidate(v, r.id) || { title: r.title, author: "" };
             return voteRowHTML(v, c, { right: r.total,
               win: v.winner && String(v.winner) === String(r.id),
@@ -9494,6 +9613,21 @@ document.addEventListener("click", async function(e){
     if(lo) lo.click();
     return;
   }
+  if((el = t.closest("[data-rateid]"))){
+    if(el.disabled) return;
+    if(!voteDraft || !voteDraft.ratings) voteDraft = { ratings: {} };
+    voteDraft.ratings[el.getAttribute("data-rateid")] = Number(el.getAttribute("data-raten"));
+    renderVote();
+    return;
+  }
+  if(t.closest("#voteEdit")){
+    voteEditing = true;
+    voteDraft = voteMine ? JSON.parse(JSON.stringify(voteMine)) : null;
+    renderVote();
+    var h = $("recs-vote");
+    if(h) h.scrollIntoView({ block: "center" });
+    return;
+  }
   if((el = t.closest("[data-votepick]"))){
     voteDraft = { pick: el.getAttribute("data-votepick") };
     renderVote();
@@ -9508,12 +9642,8 @@ document.addEventListener("click", async function(e){
       if(!voteDraft || !voteDraft.pick){ say("Pick one of them first.", "bad"); return; }
       payload.pick = voteDraft.pick;
     }else{
-      var rr = {};
-      (sv.candidates || []).forEach(function(c){
-        var n = document.querySelector('[data-voterate="' + c.id + '"]');
-        rr[c.id] = n ? Number(n.value) : 5;
-      });
-      payload.ratings = rr;
+      if(!voteAllRated(sv)){ say("Rate every book first.", "bad"); return; }
+      payload.ratings = JSON.parse(JSON.stringify(voteDraft.ratings));
     }
     say("Sending your vote\u2026", "busy", true);
     var vres = await callEndpoint("vote-cast", payload);
@@ -9523,10 +9653,11 @@ document.addEventListener("click", async function(e){
       return;
     }
     voteMine = vres.mine; voteDraft = JSON.parse(JSON.stringify(vres.mine));
+    voteEditing = false;
     var cv = currentVote();
     if(cv) cv.turnout = vres.turnout;
     say("Vote counted. You can change it until it closes.", "ok");
-    renderVote();
+    renderVote(); renderVoteCta();
     return;
   }
 
@@ -12166,6 +12297,19 @@ function devAsSetup(){
   });
 }
 
+/* #recs-shortlist opens the Recommendations section on the shortlist tab and
+   puts the ballot in view. The landing section is one big link to it. */
+function voteJumpIfAsked(){
+  if(location.hash !== "#recs-shortlist") return;
+  var tab = $("tab-short");
+  if(tab) tab.click();
+  setTimeout(function(){
+    var h = $("recs-vote") || $("panel-short");
+    if(h) h.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, 120);
+}
+window.addEventListener("hashchange", voteJumpIfAsked);
+
 (async function boot(){
   if(DEV) $("devBar").hidden = false;
   await loadState();
@@ -12179,7 +12323,8 @@ function devAsSetup(){
   /* The ballot and the count both come from the script, so they are asked
      for once the session is known rather than drawn from the file. */
   voteTallyIfDue();
-  voteLoadMine();
+  await voteLoadMine();
+  voteJumpIfAsked();
   refreshWriteMode();
   initSuggestForm();
   renderAll();

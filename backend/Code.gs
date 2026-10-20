@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-19a';
+var SCRIPT_VERSION = '2026-10-19b';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -193,6 +193,18 @@ function voteTally(payload) {
 
   var all = ballotsRead(v.id);
   var ids = Object.keys(all);
+  /* A ballot in a shape this code does not understand is counted as nothing
+     and reported, rather than being read as a pile of zeroes. Nothing should
+     ever be in the old most-liked/least-liked shape — the rated ballot is
+     what shipped — but a ballot that silently scored every book zero would
+     be a hard thing to notice afterwards. */
+  var ignored = 0;
+  ids.forEach(function (mid) {
+    var b = all[mid] || {};
+    var usable = v.kind === 'runoff' ? !!b.pick
+      : (b.ratings && typeof b.ratings === 'object' && Object.keys(b.ratings).length);
+    if (!usable) ignored++;
+  });
   var rows = (v.candidates || []).map(function (c) {
     var total = 0, raters = 0, picks = 0;
     ids.forEach(function (mid) {
@@ -203,13 +215,20 @@ function voteTally(payload) {
         if (isFinite(n) && n) { total += n; raters++; }
       }
     });
-    return { id: c.id, title: c.title, total: v.kind === 'runoff' ? picks : total,
-             raters: v.kind === 'runoff' ? picks : raters };
+    /* The average decides it, to one decimal — the same number the site
+       shows, so what is displayed and what won cannot disagree. Every member
+       rates every book, so this ranks the same as the running total; it is
+       the average because that is what the result claims to be. */
+    var avg = raters ? Math.round((total / raters) * 10) / 10 : 0;
+    return { id: c.id, title: c.title,
+             total: v.kind === 'runoff' ? picks : total,
+             raters: v.kind === 'runoff' ? picks : raters,
+             avg: v.kind === 'runoff' ? picks : avg };
   });
   var best = -1;
-  rows.forEach(function (r) { if (r.total > best) best = r.total; });
-  var top = rows.filter(function (r) { return r.total === best; });
-  rows.sort(function (a, b) { return b.total - a.total; });
+  rows.forEach(function (r) { if (r.avg > best) best = r.avg; });
+  var top = rows.filter(function (r) { return r.avg === best && r.raters > 0; });
+  rows.sort(function (a, b) { return b.avg - a.avg; });
 
   var out = withState('Vote counted', function (st2) {
     var vv = voteOf(st2, v.id);
@@ -226,7 +245,7 @@ function voteTally(payload) {
   if (!out.ok) return out;
   return { ok: true, totals: rows, winner: top.length === 1 ? top[0].id : null,
            tied: top.length > 1 ? top.map(function (r) { return r.id; }) : null,
-           turnout: ids.length };
+           turnout: ids.length, ignored: ignored };
 }
 
 /* Nothing keeps ballots for a vote that was cancelled or whose result is
