@@ -1961,6 +1961,40 @@
       "parent": null,
       "at": "2026-10-17T14:00:00.000Z",
       "seededForChecking": "remove this whole entry to get the open vote back"
+    },
+    {
+      "id": "nom-seed-open",
+      "type": "nomination",
+      "kind": "nominate",
+      "candidates": [],
+      "opensAt": "2026-10-19T14:00:00.000Z",
+      "closesAt": "2026-10-24T22:00:00.000Z",
+      "cancelledAt": null,
+      "closedAt": null,
+      "turnout": 3,
+      "nominated": [
+        {
+          "id": "rc-thief",
+          "n": 2,
+          "org": false
+        },
+        {
+          "id": "rc-1984",
+          "n": 1,
+          "org": false
+        },
+        {
+          "id": "rc-kite",
+          "n": 0,
+          "org": true
+        }
+      ],
+      "totals": null,
+      "winner": null,
+      "tied": null,
+      "parent": null,
+      "at": "2026-10-19T14:00:00.000Z",
+      "seededForChecking": "remove this whole entry to get the vote banner back; set closedAt to a past time for the closed banner; set opensAt to a future time for the scheduled one"
     }
   ]
 }

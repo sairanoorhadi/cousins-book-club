@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-20a';
+var SCRIPT_VERSION = '2026-10-20b';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -90,6 +90,9 @@ function ballotsWrite(id, all) {
    refused — a half-filled ballot would quietly count as low scores. */
 function voteRatings(v, raw) {
   var want = (v.candidates || []).map(function (c) { return String(c.id); });
+  /* Nothing to rate is not a complete ballot. Without this, "every candidate
+     carries a number" is trivially true of a vote with no candidates. */
+  if (!want.length) return null;
   var out = {}, got = 0;
   want.forEach(function (id) {
     var n = Math.round(Number((raw || {})[id]));
@@ -110,6 +113,12 @@ function voteCast(payload) {
   catch (err) { return { ok: false, error: 'unreadable state' }; }
   var v = voteOf(state, String(payload.voteId || ''));
   if (!v) return { ok: false, error: 'no such vote' };
+  /* A nomination round is not something you can cast a ballot in. Worth a
+     line of its own because the failure was silent: a nomination round
+     carries no candidates, so voteRatings() found nothing missing from an
+     empty ballot, accepted it, and counted the sender in the turnout. */
+  if (roundTypeOf(v) !== 'vote')
+    return { ok: false, error: 'that round is nominations, not a vote' };
 
   /* The window is enforced here, not by hiding a button. A ballot posted
      before it opens or after it closes is refused whatever the page thinks. */
@@ -341,7 +350,13 @@ function voteTestRecipients() {
    nobody anything -- no recipient learns who else got it. Addresses only;
    which member each belongs to is not returned. */
 function voteStillToVote(state, v) {
-  var all = ballotsRead(v.id), out = [], seen = {};
+  /* "Has not done it yet" means no ballot in a vote and no book put forward
+     in a nomination round. One function, because the question the nudge asks
+     is the same either way. */
+  var all = roundTypeOf(v) === 'nomination'
+    ? nomsRead(v.id).members
+    : ballotsRead(v.id);
+  var out = [], seen = {};
   (state.members || []).forEach(function (m) {
     if (!m || m.pending || all[m.id]) return;
     var address = normEmail(lookupEmail(m.notifyRef) || m.email || '');
@@ -362,6 +377,10 @@ function voteEastern(iso) {
 function voteLink() {
   return 'https://' + REPO_OWNER + '.github.io/' + REPO_NAME + '/#recs-shortlist';
 }
+/* Nominations happen on the recommendations grid, so the email points there. */
+function nomLink() {
+  return 'https://' + REPO_OWNER + '.github.io/' + REPO_NAME + '/#recs';
+}
 
 /* Both emails, in one place, so what goes out can be read without sending
    it -- previewVoteEmails() does exactly that. */
@@ -373,6 +392,30 @@ function voteMailCopy(state, v, stage) {
   var closes = voteEastern(v.closesAt);
   var runoff = v.kind === 'runoff';
   var tag = v.test ? '[TEST] ' : '';
+
+  /* A nomination round asks for something else and points somewhere else, so
+     it has its own words -- but the same two stages, the same tag, the same
+     closing time and the same once-only flags around it. */
+  if (roundTypeOf(v) === 'nomination') {
+    if (stage === 'remind') {
+      return { subject: tag + clubName + ': ' + VOTE_REMIND_HOURS +
+          ' hours left to put a book forward',
+        body: [clubName, '',
+          'Nominations close ' + closes + ', and you have not put a book forward yet.', '',
+          'Pick any book from the recommendations \u2014 one each. You can change it ' +
+            'until nominations close.', '',
+          nomLink(), '',
+          'Whatever is nominated becomes the shortlist we vote on.'].join('\n') };
+    }
+    return { subject: tag + clubName + ': nominations are now open',
+      body: [clubName, '',
+        'Nominations are now open for the book we read next.', '',
+        'Put one book forward from the recommendations \u2014 one each. Whatever is ' +
+          'nominated becomes the shortlist we then vote on.', '',
+        'Nominations close ' + closes + '.', '',
+        nomLink(), '',
+        'You can change or withdraw your nomination until they close.'].join('\n') };
+  }
 
   if (stage === 'remind') {
     return { subject: tag + clubName + ': ' + VOTE_REMIND_HOURS + ' hours left to vote',
@@ -519,7 +562,16 @@ function voteTickOne(state, v, now) {
     }
   }
 
-  if (st === 'closed' && !v.totals) {
+  if (st === 'closed' && roundTypeOf(v) === 'nomination' && !v.closedAt) {
+    /* Nothing to count: the counts were published on every nomination. What
+       closing adds is the stamp, so the record stops depending on the clock. */
+    var done = nomSettle(v);
+    if (done && done.ok) rec.counted = new Date().toISOString();
+    else voteMailNote(rec, 'count', (done && done.error) || 'could not settle the round');
+    changed = true;
+  }
+
+  if (st === 'closed' && roundTypeOf(v) === 'vote' && !v.totals) {
     var out = voteTally({ voteId: v.id });
     if (out && out.ok) {
       rec.counted = new Date().toISOString();
@@ -574,6 +626,268 @@ function voteMailStatus(payload) {
 /* Nothing keeps the timer's notes for a vote that is gone. */
 function voteMailForget(id) {
   PropertiesService.getScriptProperties().deleteProperty(voteMailKeyFor(id));
+}
+
+/* ------------------------------------------------------- nominations
+
+   The round before the vote: members put books forward, one each, and what
+   comes out of it becomes the shortlist the vote runs on.
+
+   This shares the vote's machinery rather than copying it. A nomination round
+   and a vote are both ROUNDS -- the same window, the same four statuses, the
+   same timer, the same emails, the same slot on the landing page -- and the
+   record carries a `type` saying which it is. A record with no type is a
+   vote, which is what every record written before today is, so the migration
+   is nothing at all. voteStatus() already works the status out from the clock
+   and touches no vote-specific field, so it is the round's status function
+   too and is called that way below.
+
+   What is NOT shared is what each round collects: a vote collects a ballot
+   per member, a nomination round collects one book id per member. Those are
+   different enough to keep apart, and both live in this script's private
+   store rather than in the public file.
+
+   Nominations are stored exactly as ballots are, and for the same reason:
+   data/state.json is the public face of a public repository, so who put a
+   book forward is nobody's business but the organiser's. What is published
+   is the arithmetic -- which books, how many each, who added them (a member
+   or the organiser), and how many members have taken part. Never a name. */
+var NOM_KEY = 'noms:';
+
+function roundTypeOf(r) { return (r && r.type === 'nomination') ? 'nomination' : 'vote'; }
+function nomKeyFor(id) { return NOM_KEY + String(id || ''); }
+
+/* { members: { memberId: {recId, at} }, organiser: [recId, ...] }
+   The organiser's extras are kept apart from the members' so that adding one
+   cannot be mistaken for somebody's nomination, and so that turnout counts
+   members and only members. */
+function nomsRead(id) {
+  var rec;
+  try { rec = JSON.parse(PropertiesService.getScriptProperties()
+    .getProperty(nomKeyFor(id)) || '{}'); }
+  catch (err) { rec = {}; }
+  if (!rec || typeof rec !== 'object') rec = {};
+  if (!rec.members || typeof rec.members !== 'object') rec.members = {};
+  if (!Array.isArray(rec.organiser)) rec.organiser = [];
+  return rec;
+}
+function nomsWrite(id, rec) {
+  PropertiesService.getScriptProperties().setProperty(nomKeyFor(id), JSON.stringify(rec));
+}
+function nomsForget(id) {
+  PropertiesService.getScriptProperties().deleteProperty(nomKeyFor(id));
+}
+
+/* What gets published: one entry per book, however many members chose it, with
+   the count and whether the organiser put it there. Several members
+   nominating the same book is one entry with n: 2, which is what the Admin
+   list and the shortlist step both want. */
+function nomCounts(rec) {
+  var byRec = {}, order = [];
+  Object.keys(rec.members).forEach(function (mid) {
+    var rid = String((rec.members[mid] || {}).recId || '');
+    if (!rid) return;
+    if (!byRec[rid]) { byRec[rid] = { id: rid, n: 0, org: false }; order.push(rid); }
+    byRec[rid].n++;
+  });
+  rec.organiser.forEach(function (rid) {
+    rid = String(rid || '');
+    if (!rid) return;
+    if (!byRec[rid]) { byRec[rid] = { id: rid, n: 0, org: true }; order.push(rid); }
+    else byRec[rid].org = true;
+  });
+  return order.map(function (rid) { return byRec[rid]; });
+}
+
+/* Published back to state.json after every change, so the landing banner and
+   the Admin list can be drawn without asking the script. Only ids, counts and
+   a flag -- the member ids stay here. */
+function nomPublish(roundId, rec, message) {
+  var counts = nomCounts(rec), turnout = Object.keys(rec.members).length;
+  var out = withState(message, function (st) {
+    var rr = voteOf(st, roundId);
+    if (!rr) return { error: 'no such round' };
+    rr.nominated = counts;
+    rr.turnout = turnout;
+    return {};
+  });
+  return { counts: counts, turnout: turnout, published: !!out.ok };
+}
+
+/* The round this is about, with the window enforced here rather than by what
+   the page chose to show. Returns a string on refusal. */
+function nomRoundFor(roundId) {
+  var state;
+  try { state = JSON.parse(stateRead().content || '{}'); }
+  catch (err) { return 'unreadable state'; }
+  var r = voteOf(state, String(roundId || ''));
+  if (!r) return 'no such round';
+  if (roundTypeOf(r) !== 'nomination') return 'that round is a vote, not nominations';
+  return { state: state, round: r };
+}
+function nomOpenRoundFor(roundId) {
+  var got = nomRoundFor(roundId);
+  if (typeof got === 'string') return got;
+  var st = voteStatus(got.round);
+  if (st === 'scheduled') return 'nominations have not opened yet';
+  if (st === 'closed') return 'nominations have closed';
+  if (st === 'cancelled') return 'that round was cancelled';
+  return got;
+}
+
+/* A member and the round they are acting on, or the reason not to. */
+function nomActor(payload, needOpen) {
+  var email = whoIs(payload.token);
+  if (!email) return 'signed out';
+  var member = memberFor(email);
+  if (!member) return 'not a member yet';
+  var got = needOpen ? nomOpenRoundFor(payload.roundId) : nomRoundFor(payload.roundId);
+  if (typeof got === 'string') return got;
+  /* A test round is the organiser rehearsing. The site hides it, but
+     state.json is public and the site is not the only way to reach this URL. */
+  if (got.round.test && normEmail(email) !== normEmail(propEmail('ORGANISER_EMAIL')))
+    return 'that is a test round';
+  got.member = member;
+  got.email = email;
+  return got;
+}
+
+/* One member, one book. A second nomination replaces the first rather than
+   adding to it -- which is what lets anyone change their mind, and what makes
+   "at most one active nomination" true by construction instead of by a check
+   that could be skipped. */
+function nomCast(payload) {
+  var got = nomActor(payload, true);
+  if (typeof got === 'string') return { ok: false, error: got };
+
+  var recId = String(payload.recId || '');
+  var elig = (got.state.recs || []).filter(function (x) {
+    return String(x.id) === recId && x.status === 'approved';
+  })[0];
+  /* Approved recommendations only. A book promoted to the reading list has
+     left state.recs altogether, so it is excluded by not being there. */
+  if (!elig) return { ok: false, error: 'that book is not up for nomination' };
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  var rec, had;
+  try {
+    rec = nomsRead(got.round.id);
+    had = (rec.members[got.member.id] || {}).recId || null;
+    rec.members[got.member.id] = { recId: recId, at: new Date().toISOString() };
+    nomsWrite(got.round.id, rec);
+  } finally {
+    lock.releaseLock();
+  }
+  var pub = nomPublish(got.round.id, rec, 'A member nominated a book');
+  return { ok: true, mine: recId, replaced: (had && had !== recId) ? had : null,
+           counts: pub.counts, turnout: pub.turnout, published: pub.published };
+}
+
+function nomClear(payload) {
+  var got = nomActor(payload, true);
+  if (typeof got === 'string') return { ok: false, error: got };
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  var rec;
+  try {
+    rec = nomsRead(got.round.id);
+    delete rec.members[got.member.id];
+    nomsWrite(got.round.id, rec);
+  } finally {
+    lock.releaseLock();
+  }
+  var pub = nomPublish(got.round.id, rec, 'A member took back a nomination');
+  return { ok: true, mine: null, counts: pub.counts, turnout: pub.turnout,
+           published: pub.published };
+}
+
+/* Your own nomination, and nobody else's. */
+function nomMine(payload) {
+  var got = nomActor(payload, false);
+  if (typeof got === 'string') return { ok: false, error: got };
+  var rec = nomsRead(got.round.id);
+  return { ok: true, mine: (rec.members[got.member.id] || {}).recId || null };
+}
+
+/* Who nominated what. Organiser only, and member IDS rather than names -- the
+   page already knows which id is which member, and no name need ever leave
+   this script. */
+function nomWho(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var mine = propEmail('ORGANISER_EMAIL');
+  if (!mine) return { ok: false, error: 'ORGANISER_EMAIL is not set' };
+  if (normEmail(email) !== normEmail(mine)) return { ok: false, error: 'organiser only' };
+  var got = nomRoundFor(payload.roundId);
+  if (typeof got === 'string') return { ok: false, error: got };
+  var rec = nomsRead(got.round.id), byRec = {};
+  Object.keys(rec.members).forEach(function (mid) {
+    var rid = String((rec.members[mid] || {}).recId || '');
+    if (!rid) return;
+    (byRec[rid] || (byRec[rid] = [])).push(mid);
+  });
+  return { ok: true, byRec: byRec, nominated: Object.keys(rec.members),
+           organiser: rec.organiser.slice() };
+}
+
+/* The organiser's own additions. They do not touch anyone's one-each limit,
+   because they are not kept in the members map at all. */
+function nomOrganiserEdit(payload, add) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
+  var mine = propEmail('ORGANISER_EMAIL');
+  if (!mine) return { ok: false, error: 'ORGANISER_EMAIL is not set' };
+  if (normEmail(email) !== normEmail(mine)) return { ok: false, error: 'organiser only' };
+  var got = nomRoundFor(payload.roundId);
+  if (typeof got === 'string') return { ok: false, error: got };
+
+  var recId = String(payload.recId || '');
+  if (add) {
+    var elig = (got.state.recs || []).filter(function (x) {
+      return String(x.id) === recId && x.status === 'approved';
+    })[0];
+    if (!elig) return { ok: false, error: 'that book is not up for nomination' };
+  }
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  var rec;
+  try {
+    rec = nomsRead(got.round.id);
+    if (add) {
+      if (rec.organiser.indexOf(recId) === -1) rec.organiser.push(recId);
+    } else {
+      var who = String(payload.memberId || '');
+      if (who) {
+        /* one member's nomination, named from the Admin list */
+        if ((rec.members[who] || {}).recId === recId) delete rec.members[who];
+      } else {
+        rec.organiser = rec.organiser.filter(function (x) { return x !== recId; });
+      }
+    }
+    nomsWrite(got.round.id, rec);
+  } finally {
+    lock.releaseLock();
+  }
+  var pub = nomPublish(got.round.id, rec,
+    add ? 'The organiser added a nomination' : 'The organiser removed a nomination');
+  return { ok: true, counts: pub.counts, turnout: pub.turnout, published: pub.published };
+}
+
+/* Settling a closed round: the final counts and a closedAt, so the record
+   stops depending on the clock. Called by the timer; safe to call twice. */
+function nomSettle(round) {
+  var rec = nomsRead(round.id);
+  var counts = nomCounts(rec), turnout = Object.keys(rec.members).length;
+  return withState('Nominations closed', function (st) {
+    var rr = voteOf(st, round.id);
+    if (!rr) return { error: 'no such round' };
+    rr.nominated = counts;
+    rr.turnout = turnout;
+    if (!rr.closedAt) rr.closedAt = new Date().toISOString();
+    return {};
+  });
 }
 
 function prop(name) {
@@ -635,6 +949,12 @@ function doPost(e) {
   if (kind === 'vote-who') return json(voteWho(payload));
   if (kind === 'vote-tally') return json(voteTally(payload));
   if (kind === 'vote-wake') return json(voteWake(payload));
+  if (kind === 'nom-cast') return json(nomCast(payload));
+  if (kind === 'nom-clear') return json(nomClear(payload));
+  if (kind === 'nom-mine') return json(nomMine(payload));
+  if (kind === 'nom-who') return json(nomWho(payload));
+  if (kind === 'nom-add') return json(nomOrganiserEdit(payload, true));
+  if (kind === 'nom-del') return json(nomOrganiserEdit(payload, false));
   if (kind === 'vote-mail') return json(voteMailStatus(payload));
   if (kind === 'photo-add') return json(photoAdd(payload));
   if (kind === 'photo-list') return json(photoList(payload));

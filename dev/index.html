@@ -1000,6 +1000,9 @@ a.getrow:hover{background:var(--sunk)}
 /* The top bar is sticky, so an anchor scrolled to the very top lands
    underneath it. This is the room it needs. */
 #recs-vote{scroll-margin-top:96px}
+/* Same reason: the nominations banner is one big link to the grid, and the
+   sticky bar would otherwise sit over the top of it. */
+#recs,#recGrid{scroll-margin-top:96px}
 /* The ballot follows the row of covers, so the space between them belongs to
    it. Empty on a tab with no vote, where it must take up nothing at all. */
 #voteBox:not(:empty){margin-top:26px}
@@ -1168,6 +1171,18 @@ a.getrow:hover{background:var(--sunk)}
 .endorse[data-lean="down"]{border-color:var(--flare)}
 .endorse[data-lean="up"]{border-color:var(--surf)}
 .partytag{display:inline-block;background:var(--grape);color:var(--on-grape);border:2px solid var(--edge);border-radius:999px;padding:3px 12px;font-family:var(--f-display);font-weight:700;font-size:12.5px}
+/* Deliberately NOT at top right: .vote sits there, and the two must not
+   crowd each other. --under drops it below the Shortlist badge on a card
+   that carries both. */
+.reccard__nom{position:absolute;top:7px;left:7px;z-index:2;pointer-events:none;
+  background:var(--grape);color:#fff;border:2px solid var(--edge);border-radius:999px;
+  padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
+.reccard__nom--under{top:34px}
+/* The nominate prompt sits under the endorse row and reads as its own
+   question rather than more of the same one. */
+.endorse--nom{margin-top:10px}
+.nomq{font-family:var(--f-display);font-weight:700;font-size:14px}
 .reccard__short{position:absolute;top:7px;left:7px;background:var(--flare);color:var(--on-flare);border:2px solid var(--edge);border-radius:999px;padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
 .seconds{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
 .secondchip{font-family:var(--f-mono);font-size:11.5px;padding:3px 10px;border:1.5px solid var(--edge);border-radius:999px;background:var(--sunk);color:var(--ink)}
@@ -3151,6 +3166,11 @@ function adoptFreshNotes(rawContent){
          winner and watched it come back null. */
       if(voteTouched[v.id]) return;
       v.turnout = f.turnout;
+      /* Nominations arrive the same way ballots do and are published the same
+         way turnout is, so they belong on this list. Without it, opening
+         Admin and pressing Save would undo every nomination made since the
+         page loaded. */
+      v.nominated = f.nominated;
       v.totals = f.totals;
       v.winner = f.winner;
       v.tied = f.tied;
@@ -3285,7 +3305,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-20a";
+var SCRIPT_WANT = "2026-10-20b";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -3332,6 +3352,12 @@ var ENDPOINT_REPEATABLE = {
      script's own stored flags mean it cannot send the same email twice, so a
      repeat is a no-op. vote-mail only reads. */
   "vote-wake": 1, "vote-mail": 1,
+  /* Nominations. Casting replaces one member's single nomination rather than
+     adding to it, and clearing, adding and removing are all "make it so"
+     rather than "change it by one", so a second go lands exactly where the
+     first would have. The other two only read. */
+  "nom-cast": 1, "nom-clear": 1, "nom-mine": 1, "nom-who": 1,
+  "nom-add": 1, "nom-del": 1,
   /* the page sends the state it wants rather than "flip it", so repeating
      it lands where the first one would have */
   "meet-ready": 1,
@@ -4973,7 +4999,8 @@ function ratelessCount(){
   return approvedRecs().filter(function(r){ return recRating(r) === null; }).length;
 }
 var recFilter = { by: "", sort: "top", genres: [], tropes: [], ageMin: 0, ageMax: AGE_TOP,
-                  pagesMin: 0, pagesMax: PAGE_TOP, rateMin: 0, rateMax: RATE_TOP };
+                  pagesMin: 0, pagesMax: PAGE_TOP, rateMin: 0, rateMax: RATE_TOP,
+                  nomOnly: false };
 var filtersOpen = false;
 /* One rule for both vocabularies: compare on the merged names, so picking
    "Humour" also finds "comedy"; every picked tag, not any one, so two tags
@@ -4987,6 +5014,12 @@ function tagFilterOk(kind, r){
 }
 function recMatches(r){
   if(recFilter.by && r.by !== recFilter.by) return false;
+  /* Nominated only. Shown as a filter rather than a sort because it answers
+     "which books are in the running", and it disappears with the round. */
+  if(recFilter.nomOnly){
+    var nround = currentNom();
+    if(!nround || !nomHas(nround, r.id)) return false;
+  }
   if(!tagFilterOk("genre", r)) return false;
   if(!tagFilterOk("trope", r)) return false;
   /* keep anything whose age band overlaps the band being asked for */
@@ -5036,7 +5069,92 @@ function sortRecs(list){
 
 /* Your own ballot, and who has voted, both come from the script — neither
    is in the public file. Asked for once when there is a vote to ask about. */
+/* ---------- nominating, as a member ---------- */
+var nomMine = null;        /* the rec id this member put forward, from the script */
+var nomWhoBy = null;       /* Admin only: member ids per rec, asked for on demand */
+/* Prompts closed with "No". Kept for the visit and nowhere else: saying no to
+   one book is not a decision worth remembering past a reload. */
+var nomAsked = {};
+/* Where to go back to once somebody has signed in. Set just before the card
+   is opened, run once afterwards. */
+var afterSignIn = null;
+
+async function nomLoadMine(){
+  var r = currentNom();
+  nomMine = null;
+  if(!r || !myMember() || voteStatusOf(r) !== "open"){ renderVoteCta(); return; }
+  var res = await callEndpoint("nom-mine", { token: sessionToken(), roundId: r.id });
+  if(res && res.ok) nomMine = res.mine || null;
+  renderVoteCta(); renderRecGrid();
+}
+
+/* The count on a nominated cover. Top LEFT, because the endorse pill owns
+   top right and she asked for them kept apart; stepped down when the
+   Shortlist badge is already there. pointer-events:none so the card
+   underneath stays one big button, and nothing about the cover changes. */
+function nomBadgeHTML(r){
+  var round = currentNom();
+  if(!round || voteStatusOf(round) !== "open") return "";
+  var n = nomCountFor(round, r.id);
+  var org = nomList(round).filter(function(x){ return String(x.id) === String(r.id); })[0];
+  if(!n && !(org && org.org)) return "";
+  return '<span class="reccard__nom' + (r.shortlist ? " reccard__nom--under" : "") + '">' +
+    "Nominated" + (n > 1 ? " \u00d7" + n : "") + "</span>";
+}
+
+/* The prompt under Endorse / Not for me in a recommendation's modal. Every
+   state the round can be in has something true to say except closed, which
+   has nothing to say at all. */
+function nomBlockHTML(o){
+  var r = currentNom();
+  if(!r) return "";
+  var st = voteStatusOf(r);
+  if(st === "closed" || st === "cancelled") return "";
+
+  if(st === "scheduled"){
+    return '<div class="endorse endorse--nom">' +
+      '<span class="nomq">Nominations open ' + esc(voteWhen(r.opensAt)) + "</span>" +
+      '<button class="btn btn--sm btn--ghost" type="button" disabled>Nominate this book</button>' +
+      "</div>";
+  }
+  if(!myMember()){
+    return '<div class="endorse endorse--nom">' +
+      '<span class="nomq">Nominations are open \u2014 one book each.</span>' +
+      '<button class="btn btn--sm btn--grape" type="button" data-nomsignin="' + esc(o.id) +
+        '">Sign in to nominate</button></div>';
+  }
+  /* Only approved recommendations stand. A book promoted to the reading list
+     has left state.recs, so it never reaches here. */
+  if(o.status !== "approved") return "";
+
+  if(String(nomMine) === String(o.id)){
+    return '<div class="endorse endorse--nom" data-lean="up">' +
+      '<span class="nomq">You\u2019ve nominated this book.</span>' +
+      '<span class="hint" style="flex:1 1 180px">Change or remove it until ' +
+        esc(voteWhen(r.closesAt)) + ".</span>" +
+      '<button class="btn btn--sm btn--ghost" type="button" data-nomdrop="' + esc(o.id) +
+        '">Remove my nomination</button></div>';
+  }
+  if(nomAsked[o.id]){
+    return '<div class="endorse endorse--nom">' +
+      '<button class="btn btn--sm btn--ghost" type="button" data-nomopen="' + esc(o.id) +
+        '">Nominate this book</button></div>';
+  }
+  var held = nomMine ? recById(nomMine) : null;
+  return '<div class="endorse endorse--nom">' +
+    '<span class="nomq">' +
+      (held
+        ? "You\u2019ve nominated " + esc(held.title) + ". Nominate this book instead?"
+        : "Nominate this book?") + "</span>" +
+    '<button class="btn btn--sm btn--zest" type="button" data-nomyes="' + esc(o.id) + '">Yes</button>' +
+    '<button class="btn btn--sm btn--ghost" type="button" data-nomno="' + esc(o.id) + '">No</button>' +
+    "</div>";
+}
+
 async function voteLoadMine(){
+  /* The two rounds are loaded together: only one can be live, so this costs
+     one call either way and neither caller has to know which it is. */
+  nomLoadMine();
   var v = currentVote();
   voteMine = null; voteDraft = null;
   if(!v || !myMember() || voteStatusOf(v) !== "open") { renderVote(); renderVoteCta(); return; }
@@ -5205,9 +5323,25 @@ function voteCountdown(iso){
   var days = Math.round(hrs / 24);
   return days + (days === 1 ? " day" : " days") + " left";
 }
+/* How long a finished nominations round stays up, and the one thing that
+   takes it down sooner. Unlike a vote's result, which belongs on the
+   shortlist tab, "nominations closed" is news with nowhere else to live --
+   until the vote it was leading to exists, which says the same thing better. */
+var NOM_CLOSED_DAYS = 3;
+function nomRoundSuperseded(r){
+  var list = allRounds(), seen = false;
+  for(var i = 0; i < list.length; i++){
+    if(list[i].id === r.id){ seen = true; continue; }
+    /* a vote launched after this round is the thing it was leading to */
+    if(seen && roundTypeOf(list[i]) === "vote" && !list[i].cancelledAt) return true;
+  }
+  return false;
+}
 function renderVoteCta(){
   var host = $("voteCta");
   if(!host) return;
+  var r = currentRound();
+  if(r && roundTypeOf(r) === "nomination"){ renderNomCta(host, r); return; }
   var v = currentVote(), st = voteStatusOf(v);
   /* Closed is as silent as cancelled. The result lives on the shortlist tab
      and the winner lives under Up next; the top of the page says nothing. */
@@ -5240,6 +5374,61 @@ function renderVoteCta(){
     '</span><span class="votecta__when">' + esc(v.turnout || 0) + " of " + esc(total) +
       " have voted</span></span></a>";
 }
+/* The same box, the same slot, the same classes as the vote's banner — the
+   only differences are the words, the covers it shows and where it goes. */
+function renderNomCta(host, r){
+  var st = voteStatusOf(r);
+  if(st === "cancelled"){ host.innerHTML = ""; return; }
+  if(st === "closed"){
+    var since = Date.now() - Date.parse(r.closedAt || r.closesAt);
+    if(nomRoundSuperseded(r) || !(since < NOM_CLOSED_DAYS * 86400000)){
+      host.innerHTML = ""; return;
+    }
+    host.innerHTML = '<a class="votecta votecta--quiet" href="#recs">' +
+      '<span class="votecta__head"><h2>Nominations closed</h2>' +
+        '<span class="votecta__when">' + esc(nomList(r).length) +
+          (nomList(r).length === 1 ? " book was put forward" : " books were put forward") +
+        "</span></span>" +
+      nomCoversHTML(r) + '<span class="votecta__go">See the recommendations \u2192</span></a>';
+    return;
+  }
+  if(st === "scheduled"){
+    host.innerHTML = '<a class="votecta votecta--quiet" href="#recs">' +
+      '<span class="votecta__head"><h2>Nominations open soon</h2>' +
+        '<span class="votecta__when">' + esc(voteWhen(r.opensAt)) + "</span></span>" +
+      '<span class="votecta__go">See the recommendations \u2192</span></a>';
+    return;
+  }
+  var mem = myMember(), total = voteMembers().length;
+  var mineRec = nomMine ? recById(nomMine) : null;
+  var done = !!mineRec;
+  host.innerHTML = '<a class="votecta' + (done ? " votecta--quiet" : "") + '" href="#recs">' +
+    '<span class="votecta__head"><h2>' +
+      (done ? "You nominated " + esc(mineRec.title) : "Nominations are open") + "</h2>" +
+      '<span class="votecta__when">' +
+        (done ? "Change until " + esc(voteWhen(r.closesAt))
+              : "Closes " + esc(voteWhen(r.closesAt)) + " \u00b7 " + esc(voteCountdown(r.closesAt))) +
+      "</span></span>" +
+    nomCoversHTML(r) +
+    '<span class="votecta__foot"><span class="votecta__go">' +
+      (mem ? (done ? "Change my nomination \u2192" : "Click here to nominate \u2192")
+           : "Sign in to nominate \u2192") +
+    '</span><span class="votecta__when">' + esc(r.turnout || 0) + " of " + esc(total) +
+      " have nominated</span></span></a>";
+}
+/* The books put forward so far. Nothing at all when none have been, rather
+   than an empty row holding space open. */
+function nomCoversHTML(r){
+  var picks = nomList(r).map(function(x){ return recById(x.id); }).filter(Boolean);
+  if(!picks.length) return "";
+  return '<div class="votecta__covers">' + picks.slice(0, 10).map(function(b){
+    return '<span class="cover-wrap"><span class="cover">' +
+      (b.cover ? '<img src="' + esc(b.cover) + '" alt="">'
+               : '<span class="cover__none">' + esc(b.title) + "</span>") +
+      "</span></span>";
+  }).join("") + "</div>";
+}
+
 /* ---------- the vote for the next book ----------
    The ballots are not here and never will be: they live in the script's own
    private store, because data/state.json is a public file in a public
@@ -5250,16 +5439,79 @@ function renderVoteCta(){
    vote opens and closes on time whether or not anything happened to write to
    the file at that moment. The script works it out the same way, and its
    answer is the one that decides whether a ballot is taken. */
-function allVotes(){ return (state && state.votes) || []; }
-function currentVote(){
-  var list = allVotes();
+/* ---------- rounds ----------
+   A nomination round and a vote are the same kind of thing: a window with
+   four statuses, a timer, two emails, a slot on the landing page and a test
+   mode. So they are one record with a `type`, kept in one list, and every
+   piece of machinery above works on either. A record with no type at all is
+   a vote — which is what every record written before nominations existed is,
+   so nothing had to be migrated.
+
+   The list is still called `votes` in state.json. Renaming it would mean
+   migrating a live file for the sake of a word, and the cost of not renaming
+   it is this paragraph. */
+function allRounds(){ return (state && state.votes) || []; }
+function roundTypeOf(r){ return (r && r.type === "nomination") ? "nomination" : "vote"; }
+function roundById(id){
+  return allRounds().filter(function(r){ return r.id === id; })[0] || null;
+}
+/* The latest round of a given type that is worth showing anyone: not
+   cancelled, and not somebody else's test. Type null means either. */
+function currentRoundOf(type){
+  var list = allRounds();
   for(var i = list.length - 1; i >= 0; i--){
-    if(!list[i].cancelledAt && !voteHidden(list[i])) return list[i];
+    var r = list[i];
+    if(r.cancelledAt || voteHidden(r)) continue;
+    if(type && roundTypeOf(r) !== type) continue;
+    return r;
   }
   return null;
 }
+/* Whichever round is current, of either kind. The landing page has one slot
+   and this is what goes in it. */
+function currentRound(){ return currentRoundOf(null); }
+function currentNom(){ return currentRoundOf("nomination"); }
+
+/* Votes only, so everything written before nominations existed — the ballot,
+   the result, the Admin vote panel — goes on meaning exactly what it did. */
+function allVotes(){
+  return allRounds().filter(function(r){ return roundTypeOf(r) === "vote"; });
+}
+function currentVote(){ return currentRoundOf("vote"); }
 function voteById(id){
   return allVotes().filter(function(v){ return v.id === id; })[0] || null;
+}
+
+/* One round at a time. Two open at once would have members nominating into a
+   list the vote has already been launched from, and the landing page has one
+   slot to say so in. Reported with the reason rather than refused silently. */
+function roundInTheWay(){
+  var list = allRounds();
+  for(var i = list.length - 1; i >= 0; i--){
+    var r = list[i], st = voteStatusOf(r);
+    if(r.cancelledAt) continue;
+    if(st === "open" || st === "scheduled") return r;
+  }
+  return null;
+}
+function roundBusyNote(r){
+  var what = roundTypeOf(r) === "nomination" ? "A nominations round" : "A vote";
+  var st = voteStatusOf(r);
+  return what + (st === "open"
+    ? " is open until " + voteWhen(r.closesAt) + "."
+    : " is scheduled for " + voteWhen(r.opensAt) + ".") +
+    " Only one round runs at a time \u2014 close or cancel that one first.";
+}
+
+/* What was nominated, as published: one entry per book with its count and
+   whether the organiser put it there. Names are never in here. */
+function nomList(r){ return (r && r.nominated) || []; }
+function nomCountFor(r, recId){
+  var hit = nomList(r).filter(function(x){ return String(x.id) === String(recId); })[0];
+  return hit ? (hit.n || 0) : 0;
+}
+function nomHas(r, recId){
+  return nomList(r).some(function(x){ return String(x.id) === String(recId); });
 }
 function voteStatusOf(v){
   if(!v) return "none";
@@ -5426,6 +5678,14 @@ function renderRecFilters(){
     "</div>" +
     tagFilterHTML("genre") +
     tagFilterHTML("trope") +
+    (function(){
+      var nround = currentNom();
+      if(!nround || voteStatusOf(nround) === "cancelled") return "";
+      var n = nomList(nround).length;
+      return '<div class="field"><label><input type="checkbox" id="fNomOnly"' +
+        (recFilter.nomOnly ? " checked" : "") + "> Nominated only" +
+        (n ? ' <span class="filters__count">' + esc(n) + "</span>" : "") + "</label></div>";
+    })() +
     '<div class="filters__foot">' +
       '<button class="btn btn--sm btn--ghost" type="button" id="fReset">Clear filters</button>' +
       '<span class="filters__count" id="recCount">' + esc(countLine()) + "</span>" +
@@ -5445,7 +5705,8 @@ function countLine(){
 function activeFilters(){
   return (recFilter.by ? 1 : 0) + recFilter.genres.length + recFilter.tropes.length +
     (recFilter.ageMin > 0 || recFilter.ageMax < AGE_TOP ? 1 : 0) +
-    (pagesNarrowed() ? 1 : 0) + (ratingNarrowed() ? 1 : 0);
+    (pagesNarrowed() ? 1 : 0) + (ratingNarrowed() ? 1 : 0) +
+    (recFilter.nomOnly ? 1 : 0);
 }
 function activeLabel(){ var n = activeFilters(); return n ? " \u00b7 " + n + " active" : ""; }
 /* Redraw the shelf and both count lines without re-rendering the panel — that
@@ -5476,6 +5737,7 @@ function recCardHTML(r){
         '<span class="k">Endorsed</span><span class="v">' + (up || "none yet") + (down ? " · " + down + " against" : "") + "</span>" +
       "</span>" +
     "</button>" +
+    nomBadgeHTML(r) +
     '<span class="vote' + (score > 0 ? " vote--up" : score < 0 ? " vote--down" : "") + '">' +
       '<span class="vote__score">' + esc(score === 0 ? "±" : scoreLabel(r)) + "</span>" +
       (mineToo
@@ -6540,7 +6802,7 @@ function openBookDetail(o, kind, focus){
                 '" type="button" data-dislike="' + esc(o.id) + '">' +
                 (standing === "down" ? "Not for me" : "Change to not for me") + "</button>" +
               '<button class="btn btn--sm btn--ghost" type="button" data-takeback="' + esc(o.id) + '">Take it back</button>' +
-            "</div>";
+            "</div>" + nomBlockHTML(o);
           }
           var own = !!myName() && isOwnRec(o, myName());
           return '<div class="endorse">' +
@@ -6554,7 +6816,7 @@ function openBookDetail(o, kind, focus){
                 '<button class="btn btn--sm btn--zest" type="button" data-endorse="' + esc(o.id) + '">Endorse it</button>' +
                 '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Not for me</button>') +
           "</div>";
-        })()
+        })() + nomBlockHTML(o)
       : "") +
     /* A recommendation has no shelf entry behind it, so there is nowhere for
        the organiser to have put these; only a real book gets the block. */
@@ -8710,6 +8972,10 @@ function voteMailBlock(v){
       '<button class="btn btn--sm btn--ghost" type="button" id="voteMailGo">Check again</button></p>';
 }
 function paneVote(){
+  /* Nominations come before the vote, in the tab as in the calendar. */
+  return paneNomPart() + paneVotePart() + '<hr class="divider">' + paneNomLaunch();
+}
+function paneVotePart(){
   var v = currentVote(), st = voteStatusOf(v);
   var out = '<p class="eyebrow">Next book</p><h3 style="font-size:22px;margin:8px 0 16px">The vote</h3>';
 
@@ -8794,6 +9060,13 @@ function paneVote(){
   /* the launch form */
   var short = shortlistRecs();
   out += '<hr class="divider"><p class="eyebrow">Or</p><h3 style="font-size:20px;margin:8px 0 14px">Launch a vote</h3>';
+  /* One round at a time, in both directions: nominations in flight block a
+     vote exactly as a vote blocks nominations. */
+  var busyNow = roundInTheWay();
+  if(busyNow){
+    out += '<p class="empty">' + esc(roundBusyNote(busyNow)) + "</p>";
+    return out;
+  }
   if(short.length < 2){
     out += '<p class="empty">Shortlist at least two books first — Recommendations → Add to shortlist.</p>';
     return out;
@@ -8839,26 +9112,34 @@ function paneVote(){
 function opensIsoNow(d){ return (d || new Date()).toISOString(); }
 /* The form's own times, read back out of the pickers. One reader, so the note
    under the form and the launch itself can never disagree about what window
-   is on screen. */
-function voteFormWindow(){
-  var sel = $("voteOpensWhen"), box = $("voteOpensAt");
+   is on screen -- and one reader for both forms, told which it is looking at,
+   rather than a second copy for nominations. */
+function roundFormWindow(p){
+  var sel = $(p + "OpensWhen"), box = $(p + "OpensAt");
   var opens = (sel && sel.value === "later")
     ? isoFromLocal(box && box.value)
     : opensIsoNow();
-  return { opensAt: opens, closesAt: isoFromLocal($("voteClosesAt") && $("voteClosesAt").value) };
+  return { opensAt: opens, closesAt: isoFromLocal($(p + "ClosesAt") && $(p + "ClosesAt").value) };
 }
-function voteLaunchNote(){
-  var host = $("voteLaunchNote");
+function roundLaunchNote(p){
+  var host = $(p + "LaunchNote");
   if(!host) return;
-  var w = voteFormWindow();
-  host.textContent = voteNoteFor(w.opensAt, w.closesAt);
+  var w = roundFormWindow(p);
+  host.textContent = voteNoteFor(w.opensAt, w.closesAt,
+    p === "nom" ? "nomination" : "vote");
 }
+function voteFormWindow(){ return roundFormWindow("vote"); }
+function voteLaunchNote(){ roundLaunchNote("vote"); }
 /* What was just launched, said plainly: who hears about it and when. The
    timer's lag is named rather than left to be noticed. */
 function voteLaunchedMsg(v){
   var bits = [];
-  bits.push(v.test ? "Test vote launched \u2014 emails go only to you, and members don\u2019t see it."
-                   : (v.kind === "runoff" ? "Runoff launched." : "Vote launched."));
+  var nom = roundTypeOf(v) === "nomination";
+  bits.push(v.test
+    ? "Test " + (nom ? "nominations round" : "vote") +
+        " launched \u2014 emails go only to you, and members don\u2019t see it."
+    : nom ? "Nominations launched."
+          : (v.kind === "runoff" ? "Runoff launched." : "Vote launched."));
   var o = Date.parse(v.opensAt);
   bits.push(isFinite(o) && o > Date.now() + 60000
     ? "The opening email goes out at " + voteWhen(v.opensAt) + ", within " +
@@ -8887,9 +9168,10 @@ async function voteWake(v){
 /* What a window means, said before it is launched rather than discovered
    afterwards: when it closes, and whether there is room in it for the
    6-hour nudge. A window shorter than the gap has nowhere to put one. */
-function voteNoteFor(opensIso, closesIso){
+function voteNoteFor(opensIso, closesIso, type){
   var o = Date.parse(opensIso), c = Date.parse(closesIso);
   if(!isFinite(o) || !isFinite(c) || !(c > o)) return "";
+  var did = type === "nomination" ? "nominated" : "voted";
   var line = "Closes " + voteWhen(closesIso) + ".";
   /* The boundary counts as no room: at exactly VOTE_REMIND_HOURS the nudge
      would be due the second it opened, arriving with the start email. The
@@ -8897,7 +9179,7 @@ function voteNoteFor(opensIso, closesIso){
   return (c - o) <= VOTE_REMIND_HOURS * 3600 * 1000
     ? line + " That\u2019s " + VOTE_REMIND_HOURS + " hours or less, so there\u2019s no room for the " +
         VOTE_REMIND_HOURS + "-hour reminder \u2014 only the opening email goes out."
-    : line + " A reminder goes to anyone who hasn\u2019t voted " + VOTE_REMIND_HOURS +
+    : line + " A reminder goes to anyone who hasn\u2019t " + did + " " + VOTE_REMIND_HOURS +
         " hours before that.";
 }
 /* Both times, checked the same way whether they came from the pickers or the
@@ -8919,6 +9201,186 @@ function voteWindowFrom(opensIso, closesIso, isTest){
       : "Give it at least an hour." };
   }
   return { opensAt: opensIso, closesAt: closesIso };
+}
+
+/* ---------- Admin: the nominations round ---------- */
+/* Books ticked for the shortlist after a round closes, and the organiser's
+   picker for an extra nomination. Both last the visit only. */
+var nomPick = {}, nomPickInit = "";
+/* A shortlist much longer than this makes a ballot that asks every member to
+   rate every book 1-10 into a chore, and turnout is the thing a vote cannot
+   do without. Not a cap -- it is her club -- but it says so. */
+var NOM_SHORTLIST_EASY = 8;
+
+function nomPickOn(id){ return nomPick[id] !== false; }
+
+function paneNomPart(){
+  var r = currentNom(), st = voteStatusOf(r);
+  var out = "";
+
+  if(r && (st === "open" || st === "scheduled")){
+    var mem = voteMembers();
+    var waiting = nomWhoBy
+      ? mem.filter(function(m){ return (nomWhoBy.nominated || []).indexOf(m.id) === -1; })
+      : null;
+    out += '<p class="eyebrow">Before the vote</p>' +
+      '<h3 style="font-size:22px;margin:8px 0 16px">Nominations</h3>' +
+      '<div class="adminrow"><div class="adminrow__head"><strong>One book each</strong>' +
+        '<span class="pill">' + esc(st) + "</span>" +
+        (r.test ? '<span class="pill">test — only you</span>' : "") + "</div>" +
+      '<p class="hint">Opens ' + esc(voteWhen(r.opensAt)) + " · closes " +
+        esc(voteWhen(r.closesAt)) + " · " + esc(r.turnout || 0) + " of " +
+        esc(mem.length) + " have nominated</p>" +
+      /* Who put what forward. Names come from this page's own members list —
+         the script answers with member ids and never with a name. */
+      '<div class="field" style="margin-top:12px"><label>Put forward so far</label>' +
+        (nomList(r).length
+          ? '<div class="vocablist">' + nomList(r).map(function(x){
+              var b = recById(x.id);
+              var who = nomWhoBy ? ((nomWhoBy.byRec || {})[x.id] || []) : null;
+              return '<div class="vocabitem"><div class="vocabrow">' +
+                '<span class="tag">' + esc(b ? b.title : x.id) + "</span>" +
+                '<span class="vocabrow__n">' + esc(x.n || 0) +
+                  ((x.n || 0) === 1 ? " nomination" : " nominations") +
+                  (x.org ? " · added by you" : "") + "</span>" +
+                (who
+                  ? who.map(function(mid){
+                      var m = (state.members || []).filter(function(y){ return y.id === mid; })[0];
+                      return '<button class="btn btn--sm btn--ghost" type="button" data-nomkill="' +
+                        esc(x.id) + '" data-nomwho="' + esc(mid) + '">Remove ' +
+                        esc(m ? m.name : mid) + "</button>";
+                    }).join("")
+                  : "") +
+                (x.org
+                  ? '<button class="btn btn--sm btn--ghost" type="button" data-nomkill="' +
+                    esc(x.id) + '" data-nomwho="">Remove mine</button>'
+                  : "") +
+                "</div></div>";
+            }).join("") + "</div>"
+          : '<p class="hint" style="margin:0">Nothing yet.</p>') + "</div>" +
+      '<div class="field" style="margin-top:12px"><label>Still to nominate</label>' +
+        (waiting === null
+          ? '<p class="hint" style="margin:0"><button class="btn btn--sm btn--ghost" type="button" id="nomWhoGo">Show who hasn’t nominated</button></p>'
+          : waiting.length
+            ? '<div class="tagbank">' + waiting.map(function(m){
+                return '<span class="tag">' + esc(m.name) + "</span>"; }).join("") + "</div>"
+            : '<p class="hint" style="margin:0">Everyone has nominated.</p>') + "</div>" +
+      /* The organiser's own additions. Alphabetised ignoring leading
+         articles, by the same helper the book lists use. */
+      '<div class="field" style="margin-top:12px"><label for="nomAddPick">Add a book yourself</label>' +
+        '<p class="hint" style="margin:0 0 8px">Doesn’t count against anyone’s one each.</p>' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">' +
+        '<select class="select" id="nomAddPick" style="max-width:280px">' +
+          sortedByTitle(approvedRecs().filter(function(b){ return !nomHas(r, b.id); }))
+            .map(function(b){
+              return '<option value="' + esc(b.id) + '">' + esc(b.title) + "</option>";
+            }).join("") + "</select>" +
+        '<button class="btn btn--sm btn--surf" type="button" id="nomAddGo">Add it</button>' +
+        "</div></div>" +
+      '<div class="field" style="margin-top:12px"><label>Emails and the timer</label>' +
+        voteMailBlock(r) + "</div>" +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">' +
+        (st === "scheduled"
+          ? '<button class="btn btn--sm btn--ghost" type="button" data-votecancel="' + esc(r.id) + '">Cancel it</button>'
+          : '<button class="btn btn--sm btn--flare" type="button" data-nomclose="' + esc(r.id) + '">Close it now</button>' +
+            '<button class="btn btn--sm btn--ghost" type="button" data-votecancel="' + esc(r.id) + '">Cancel it</button>') +
+      "</div>" +
+      '<div class="field" style="margin-top:14px"><label for="nomNewClose">' +
+        (st === "scheduled" ? "Change the closing time" : "Extend the closing time") + "</label>" +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">' +
+        '<input class="input" type="datetime-local" id="nomNewClose" style="max-width:240px" value="' +
+          esc(localInputValue(new Date(r.closesAt))) + '">' +
+        '<button class="btn btn--sm btn--surf" type="button" data-nomextend="' + esc(r.id) + '">Save</button>' +
+        "</div></div></div><hr class=\"divider\">";
+    return out;
+  }
+
+  if(r && st === "closed"){
+    var picks = nomList(r);
+    /* Ticked by default, because the ordinary case is taking all of them. */
+    if(nomPickInit !== r.id){ nomPick = {}; nomPickInit = r.id; }
+    var on = picks.filter(function(x){ return nomPickOn(x.id); });
+    out += '<p class="eyebrow">Before the vote</p>' +
+      '<h3 style="font-size:22px;margin:8px 0 16px">Nominations closed</h3>' +
+      '<div class="adminrow"><div class="adminrow__head"><strong>' + esc(picks.length) +
+        (picks.length === 1 ? " book put forward" : " books put forward") + "</strong>" +
+        '<span class="pill">' + esc(r.turnout || 0) + " nominated</span>" +
+        (r.test ? '<span class="pill">test — only you</span>' : "") + "</div>" +
+      (picks.length
+        ? '<div class="checkgrid" style="margin-top:10px">' +
+            sortedByTitle(picks.map(function(x){
+              var b = recById(x.id);
+              return { id: x.id, title: b ? b.title : x.id, author: b ? b.author : "",
+                       n: x.n || 0, org: x.org, gone: !b };
+            })).map(function(x){
+              return "<label><input type=\"checkbox\" data-nomsel=\"" + esc(x.id) + "\"" +
+                (nomPickOn(x.id) ? " checked" : "") + (x.gone ? " disabled" : "") + "> " +
+                esc(x.title) + ' <span class="hint">' +
+                (x.gone ? "no longer in the recommendations"
+                        : esc(x.n) + (x.n === 1 ? " nomination" : " nominations") +
+                          (x.org ? " · yours" : "")) + "</span></label>";
+            }).join("") + "</div>" +
+          (on.length > NOM_SHORTLIST_EASY
+            ? '<p class="hint" style="margin-top:10px">' + esc(on.length) +
+              " books is a long ballot — everyone has to rate every one of them " +
+              "1–10. Nothing stops you, but turnout usually likes a shorter list.</p>"
+            : "") +
+          '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">' +
+            '<button class="btn btn--sm btn--surf" type="button" id="nomToShort">Add selected to shortlist</button>' +
+            '<button class="btn btn--sm btn--grape" type="button" id="nomToVote">Add them and open the vote form</button>' +
+          "</div>"
+        : '<p class="empty">Nobody put a book forward.</p>') +
+      '<div class="field" style="margin-top:14px"><label>Emails and the timer</label>' +
+        voteMailBlock(r) + "</div>" +
+      "</div><hr class=\"divider\">";
+  }
+  return out;
+}
+
+/* The launch form, which is the vote's form with different words. Refused,
+   with the reason, while any other round is open or scheduled. */
+function paneNomLaunch(){
+  var busy = roundInTheWay();
+  var pool = approvedRecs();
+  var out = '<p class="eyebrow">Or</p>' +
+    '<h3 style="font-size:20px;margin:8px 0 14px">Open nominations</h3>';
+  if(busy){
+    return out + '<p class="empty">' + esc(roundBusyNote(busy)) + "</p>";
+  }
+  if(!pool.length){
+    return out + '<p class="empty">There are no approved recommendations to nominate from yet.</p>';
+  }
+  var now = new Date(), soon = new Date(now.getTime() + 24 * 3600 * 1000);
+  return out + '<div class="adminrow">' +
+    '<p class="hint" style="margin:0 0 12px">Every member puts one book forward from the ' +
+      esc(pool.length) + ' approved recommendations. What comes out becomes the shortlist.</p>' +
+    '<div class="formgrid">' +
+      '<div class="field"><label for="nomOpensWhen">Opens</label>' +
+        '<select class="select" id="nomOpensWhen">' +
+          '<option value="now" selected>Now</option>' +
+          '<option value="later">At a time I choose</option></select>' +
+        '<input class="input" type="datetime-local" id="nomOpensAt" style="margin-top:8px" hidden value="' +
+          esc(localInputValue(now)) + '"></div>' +
+      '<div class="field"><label for="nomClosesAt">Closes</label>' +
+        '<input class="input" type="datetime-local" id="nomClosesAt" value="' +
+          esc(localInputValue(soon)) + '"></div>' +
+    "</div>" +
+    '<p class="hint" style="margin:6px 0 0">Opening and closing are exact — the clock decides. ' +
+      'The emails run on a timer that looks every ' + VOTE_TICK_MINUTES +
+      ' minutes, so those can be up to ' + VOTE_TICK_MINUTES + ' minutes late.</p>' +
+    '<div class="field" style="margin-top:12px"><label>Or just say how long it lasts</label>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        VOTE_LASTS.map(function(l){
+          return '<button class="btn btn--sm btn--ghost" type="button" data-nomlasts="' + l[2] + '">' +
+            esc(l[1]) + "</button>";
+        }).join("") + "</div></div>" +
+    '<div class="field" style="margin-top:12px"><label>' +
+      '<input type="checkbox" id="nomTest"> Test: email only me</label>' +
+      '<p class="hint" style="margin:6px 0 0">Nobody else is emailed and members don’t see it.</p></div>' +
+    '<p class="hint" id="nomLaunchNote" style="margin-top:10px">' +
+      esc(voteNoteFor(opensIsoNow(now), soon.toISOString(), "nomination")) + "</p>" +
+    '<div style="margin-top:12px"><button class="btn btn--sm btn--grape" type="button" id="nomLaunch">Open nominations</button></div>' +
+    "</div>";
 }
 
 /* ---------- Admin: the canonical lists themselves ---------- */
@@ -9491,6 +9953,9 @@ document.addEventListener("click", async function(e){
     closeScrim("loginScrim");
     renderAll();
     say("Signed in as " + (myName() || me.emailHint) + ".", "ok");
+    /* Somebody who was sent here from a book goes back to it, rather than
+       being left on the landing page to find it again. Run once. */
+    if(afterSignIn){ var go = afterSignIn; afterSignIn = null; try{ go(); }catch(e){} }
     return;
   }
   if(t.closest("#meNotifySave") || t.closest("#meNotifyNone")){
@@ -9603,7 +10068,8 @@ document.addEventListener("click", async function(e){
   }
   if(t.closest("#fReset")){
     recFilter = { by: "", sort: "top", genres: [], tropes: [], ageMin: 0, ageMax: AGE_TOP,
-                  pagesMin: 0, pagesMax: PAGE_TOP, rateMin: 0, rateMax: RATE_TOP };
+                  pagesMin: 0, pagesMax: PAGE_TOP, rateMin: 0, rateMax: RATE_TOP,
+                  nomOnly: false };
     filtersOpen = true;
     recPage = 0;          /* a wider list starts at its own first page */
     renderRecs();
@@ -9655,6 +10121,217 @@ document.addEventListener("click", async function(e){
     return;
   }
 
+
+  /* ---- nominating ---- */
+  if((el = t.closest("[data-nomsignin]"))){
+    var nsId = el.getAttribute("data-nomsignin");
+    /* Back to this book once they are in, with the prompt redrawn as the
+       signed-in version of itself. */
+    afterSignIn = function(){
+      var back = recById(nsId);
+      if(back) openBookDetail(back, "rec");
+    };
+    openLogin();
+    return;
+  }
+  if((el = t.closest("[data-nomno]"))){
+    nomAsked[el.getAttribute("data-nomno")] = 1;
+    var keep = nomMine ? recById(nomMine) : null;
+    say(keep ? "Left as it is \u2014 " + keep.title + " is still your nomination."
+             : "No problem.", "ok");
+    var nn = recById(el.getAttribute("data-nomno"));
+    if(nn) openBookDetail(nn, "rec");
+    return;
+  }
+  if((el = t.closest("[data-nomopen]"))){
+    delete nomAsked[el.getAttribute("data-nomopen")];
+    var no2 = recById(el.getAttribute("data-nomopen"));
+    if(no2) openBookDetail(no2, "rec");
+    return;
+  }
+  if((el = t.closest("[data-nomyes]"))){
+    var nyId = el.getAttribute("data-nomyes");
+    var nr = currentNom();
+    if(!nr) return;
+    var was = nomMine ? recById(nomMine) : null;
+    var nres = await callEndpoint("nom-cast",
+      { token: sessionToken(), roundId: nr.id, recId: nyId });
+    if(!(nres && nres.ok)){
+      say("Couldn\u2019t record that: " +
+        (endpointTrouble(nres && nres.error, nres && nres.detail) ||
+         (nres && nres.error) || "no answer"), "bad");
+      return;
+    }
+    nomMine = nres.mine || null;
+    nr.nominated = nres.counts || nr.nominated;
+    nr.turnout = nres.turnout;
+    var now2 = recById(nyId);
+    say(was && was.id !== nyId
+      ? (now2 ? now2.title : "That book") + " is your nomination now, instead of " + was.title + "."
+      : (now2 ? now2.title : "That book") + " is your nomination.", "ok");
+    renderAll();
+    if(now2) openBookDetail(now2, "rec");
+    return;
+  }
+  if((el = t.closest("[data-nomdrop]"))){
+    var ndId = el.getAttribute("data-nomdrop");
+    var dr = currentNom();
+    if(!dr) return;
+    var dres = await callEndpoint("nom-clear", { token: sessionToken(), roundId: dr.id });
+    if(!(dres && dres.ok)){
+      say("Couldn\u2019t remove it: " +
+        (endpointTrouble(dres && dres.error, dres && dres.detail) ||
+         (dres && dres.error) || "no answer"), "bad");
+      return;
+    }
+    nomMine = null;
+    dr.nominated = dres.counts || dr.nominated;
+    dr.turnout = dres.turnout;
+    say("Your nomination is removed. You can put another book forward.", "ok");
+    renderAll();
+    var nd = recById(ndId);
+    if(nd) openBookDetail(nd, "rec");
+    return;
+  }
+
+  /* ---- running the nominations round ---- */
+  if((el = t.closest("[data-nomlasts]"))){
+    var nhrs = Number(el.getAttribute("data-nomlasts"));
+    var nsel = $("nomOpensWhen"), nbox = $("nomOpensAt");
+    var nfrom = (nsel && nsel.value === "later" && nbox && nbox.value)
+      ? new Date(nbox.value) : new Date();
+    var ntill = new Date(nfrom.getTime() + nhrs * 3600 * 1000);
+    if($("nomClosesAt")) $("nomClosesAt").value = localInputValue(ntill);
+    roundLaunchNote("nom");
+    return;
+  }
+  if(t.closest("#nomLaunch")){
+    /* Checked again here and not only when the form was drawn: the pane may
+       have been sitting open while something else was launched. */
+    var inWay = roundInTheWay();
+    if(inWay){ say(roundBusyNote(inWay), "bad"); renderAdmin(); return; }
+    var nIsTest = !!($("nomTest") && $("nomTest").checked);
+    var nw = roundFormWindow("nom");
+    var nwin = voteWindowFrom(nw.opensAt, nw.closesAt, nIsTest);
+    if(nwin.error){ say(nwin.error, "bad"); return; }
+    if(!state.votes) state.votes = [];
+    var nfresh = { id: uid("nom"), type: "nomination", kind: "nominate", candidates: [],
+      opensAt: nwin.opensAt, closesAt: nwin.closesAt,
+      cancelledAt: null, closedAt: null, turnout: 0, nominated: [],
+      totals: null, winner: null, tied: null, parent: null, at: new Date().toISOString() };
+    if(nIsTest) nfresh.test = true;
+    state.votes.push(nfresh);
+    if(await save("Opening nominations…")){
+      say(voteLaunchedMsg(nfresh), "ok");
+      await voteWake(nfresh);
+      renderAll(); renderAdmin();
+    }
+    return;
+  }
+  if(t.closest("#nomWhoGo")){
+    var nwr = currentNom(); if(!nwr) return;
+    var nwres = await callEndpoint("nom-who", { token: sessionToken(), roundId: nwr.id });
+    if(nwres && nwres.ok){ nomWhoBy = nwres; renderAdmin(); }
+    else say("Couldn’t ask who has nominated: " +
+      (endpointTrouble(nwres && nwres.error, nwres && nwres.detail) ||
+       (nwres && nwres.error) || "no answer"), "bad");
+    return;
+  }
+  if(t.closest("#nomAddGo")){
+    var nar = currentNom(); if(!nar) return;
+    var pickId = $("nomAddPick") && $("nomAddPick").value;
+    if(!pickId){ say("Pick a book first.", "bad"); return; }
+    var nares = await callEndpoint("nom-add",
+      { token: sessionToken(), roundId: nar.id, recId: pickId });
+    if(!(nares && nares.ok)){
+      say("Couldn’t add it: " +
+        (endpointTrouble(nares && nares.error, nares && nares.detail) ||
+         (nares && nares.error) || "no answer"), "bad");
+      return;
+    }
+    nar.nominated = nares.counts || nar.nominated;
+    nar.turnout = nares.turnout;
+    var addedBook = recById(pickId);
+    say((addedBook ? addedBook.title : "That book") +
+      " is in the nominations. It doesn’t count against anyone’s one each.", "ok");
+    renderAll(); renderAdmin();
+    return;
+  }
+  if((el = t.closest("[data-nomkill]"))){
+    var killRec = el.getAttribute("data-nomkill");
+    var killWho = el.getAttribute("data-nomwho") || "";
+    var kr = currentNom(); if(!kr) return;
+    if(!confirm("Remove this nomination?")) return;
+    var kres = await callEndpoint("nom-del",
+      { token: sessionToken(), roundId: kr.id, recId: killRec, memberId: killWho });
+    if(!(kres && kres.ok)){
+      say("Couldn’t remove it: " +
+        (endpointTrouble(kres && kres.error, kres && kres.detail) ||
+         (kres && kres.error) || "no answer"), "bad");
+      return;
+    }
+    kr.nominated = kres.counts || kr.nominated;
+    kr.turnout = kres.turnout;
+    /* the who-list is now out of date, so it is asked for again rather than
+       shown stale */
+    nomWhoBy = null;
+    say("Removed.", "ok");
+    renderAll(); renderAdmin();
+    return;
+  }
+  if((el = t.closest("[data-nomextend]"))){
+    var xr = roundById(el.getAttribute("data-nomextend"));
+    if(!xr) return;
+    var xwin = voteWindowFrom(xr.opensAt,
+      isoFromLocal($("nomNewClose") && $("nomNewClose").value), !!xr.test);
+    if(xwin.error){ say(xwin.error, "bad"); return; }
+    xr.closesAt = xwin.closesAt;
+    voteTouch(xr.id);
+    if(await save("Saving the closing time…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-nomclose]"))){
+    var cr = roundById(el.getAttribute("data-nomclose"));
+    if(!cr) return;
+    if(!confirm("Close nominations now? Nobody will be able to change what they put forward.")) return;
+    cr.closedAt = new Date().toISOString();
+    voteTouch(cr.id);
+    if(await save("Closing nominations…")){
+      say("Nominations closed.", "ok");
+      renderAll(); renderAdmin();
+    }
+    return;
+  }
+  if((el = t.closest("[data-nomsel]"))) return;   /* a tickbox; read at the button */
+  if(t.closest("#nomToShort") || t.closest("#nomToVote")){
+    var toVote = !!t.closest("#nomToVote");
+    var sr = currentNom(); if(!sr) return;
+    var chosen = nomList(sr).map(function(x){ return recById(x.id); })
+      .filter(function(b){ return b && nomPickOn(b.id); });
+    if(!chosen.length){ say("Nothing is ticked.", "bad"); return; }
+    if(toVote && chosen.length < 2){
+      say("A vote needs at least two books.", "bad"); return;
+    }
+    if(!confirm("Add " + chosen.length + (chosen.length === 1 ? " book" : " books") +
+      " to the shortlist?" + (toVote ? " The vote form opens with them as the candidates." : ""))) return;
+    chosen.forEach(function(b){ b.shortlist = true; });
+    if(!await save("Adding to the shortlist…")) return;
+    if(toVote){
+      /* Candidates are read off the shortlist by the vote form, so the
+         prefill IS the shortlist — nothing is carried separately and the two
+         cannot disagree. Everything not nominated is unticked for you. */
+      voteLaunchOff = {};
+      shortlistRecs().forEach(function(b){
+        if(!chosen.some(function(c){ return c.id === b.id; })) voteLaunchOff[b.id] = 1;
+      });
+      say("On the shortlist, and the vote form is ready below with " +
+        chosen.length + " candidates ticked.", "ok");
+    } else {
+      say(chosen.length + (chosen.length === 1 ? " book" : " books") + " on the shortlist.", "ok");
+    }
+    renderAll(); renderAdmin();
+    return;
+  }
 
   /* ---- running the vote ---- */
   if((el = t.closest("[data-votecand]"))) return;    /* a tickbox, nothing to do until launch */
@@ -9714,7 +10391,7 @@ document.addEventListener("click", async function(e){
     return;
   }
   if((el = t.closest("[data-votecancel]"))){
-    var cv2 = voteById(el.getAttribute("data-votecancel"));
+    var cv2 = roundById(el.getAttribute("data-votecancel"));
     if(!cv2) return;
     if(!confirm("Cancel this vote? Any ballots already cast are discarded.")) return;
     cv2.cancelledAt = new Date().toISOString();
@@ -10816,6 +11493,25 @@ document.addEventListener("change", async function(e){
     }
     openEditors["vocab:" + pk] = true;
     if(await save("Saving the parent\u2026")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if(n && n.id === "nomOpensWhen"){
+    var nbx = document.getElementById("nomOpensAt");
+    if(nbx) nbx.hidden = n.value !== "later";
+    roundLaunchNote("nom");
+    return;
+  }
+  if(n && (n.id === "nomOpensAt" || n.id === "nomClosesAt")){ roundLaunchNote("nom"); return; }
+  if(n && n.hasAttribute && n.hasAttribute("data-nomsel")){
+    nomPick[n.getAttribute("data-nomsel")] = !!n.checked;
+    renderAdmin();
+    return;
+  }
+  if(n && n.id === "fNomOnly"){
+    recFilter.nomOnly = !!n.checked;
+    recPage = 0;
+    liveCount();
+    var a = document.getElementById("fActive"); if(a) a.textContent = activeLabel();
     return;
   }
   if(n && n.id === "voteOpensWhen"){
@@ -12501,6 +13197,18 @@ function devAsSetup(){
 /* #recs-shortlist opens the Recommendations section on the shortlist tab and
    puts the ballot in view. The landing section is one big link to it. */
 function voteJumpIfAsked(){
+  /* #recs is a real section id, so the browser would scroll there by itself —
+     but not onto the right tab. If the shortlist is showing, the grid the
+     nominations banner is pointing at is hidden. */
+  if(location.hash === "#recs"){
+    var rt = $("tab-recs");
+    if(rt) rt.click();
+    setTimeout(function(){
+      var g = $("recGrid") || $("recs");
+      if(g) g.scrollIntoView({ block: "start", behavior: "smooth" });
+    }, 120);
+    return;
+  }
   if(location.hash !== "#recs-shortlist") return;
   var tab = $("tab-short");
   if(tab) tab.click();
