@@ -1,5 +1,5 @@
 {
-  "rev": 1611,
+  "rev": 1612,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1973,7 +1973,12 @@
       "shortlist": false,
       "reviews": [],
       "endorsements": [],
-      "dislikes": [],
+      "dislikes": [
+        {
+          "name": "Saira",
+          "at": "2026-10-21T19:01:00.410Z"
+        }
+      ],
       "ratings": [],
       "level": "Ages 12-18",
       "tropes": [],
@@ -2059,7 +2064,12 @@
       "shortlist": false,
       "reviews": [],
       "endorsements": [],
-      "dislikes": [],
+      "dislikes": [
+        {
+          "name": "Saira",
+          "at": "2026-10-21T19:01:12.490Z"
+        }
+      ],
       "ratings": [],
       "level": "Ages 8-12",
       "tropes": [],
@@ -2690,7 +2700,9 @@
     "join-4a77a46d-4f2",
     "join-9698360b-3a7",
     "join-9d7efa0d-90f",
-    "endorse-97d8f248-8f4"
+    "endorse-97d8f248-8f4",
+    "endorse-a92fcda1-d1e",
+    "endorse-04b52ddd-768"
   ],
   "vocab": {
     "genre": {
