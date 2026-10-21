@@ -203,14 +203,17 @@ function voteWho(payload) {
    own because it refuses to run until the vote is actually over: there is
    nothing here an organiser can do early that anyone else could not do
    honestly once the clock ran out. */
+/* The session check for counting a vote lives on the endpoint, not here: the
+   five-minute timer calls this function directly, with nobody signed in,
+   which is how a vote closes and counts itself at the deadline. Checking in
+   here broke that -- the timer counts as a stranger. */
+function voteTallyEndpoint(payload) {
+  var who = whoIs(payload.token);
+  if (!who) return { ok: false, error: 'signed out' };
+  if (!memberFor(who)) return { ok: false, error: 'not a member yet' };
+  return voteTally(payload);
+}
 function voteTally(payload) {
-  /* The only endpoint that wrote to the public state file without asking who
-     was calling. It cannot invent a result -- it refuses an open vote and one
-     already counted -- but counting the club's vote is not a stranger's to
-     trigger. */
-  var tallyWho = whoIs(payload.token);
-  if (!tallyWho) return { ok: false, error: 'signed out' };
-  if (!memberFor(tallyWho)) return { ok: false, error: 'not a member yet' };
   var state;
   try { state = JSON.parse(stateRead().content || '{}'); }
   catch (err) { return { ok: false, error: 'unreadable state' }; }
@@ -1357,7 +1360,7 @@ function doPost(e) {
   if (kind === 'vote-cast') return json(voteCast(payload));
   if (kind === 'vote-mine') return json(voteMine(payload));
   if (kind === 'vote-who') return json(voteWho(payload));
-  if (kind === 'vote-tally') return json(voteTally(payload));
+  if (kind === 'vote-tally') return json(voteTallyEndpoint(payload));
   if (kind === 'vote-wake') return json(voteWake(payload));
   if (kind === 'nom-cast') return json(nomCast(payload));
   if (kind === 'nom-clear') return json(nomClear(payload));

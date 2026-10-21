@@ -1571,6 +1571,10 @@ a.getrow:hover{background:var(--sunk)}
     <strong>Test site</strong>
     <span>Its own copy of the data &mdash; nothing here reaches the real one. Lookups work; submissions and sign-in are switched off.</span>
     <label class="devbar__as">Look around as <select id="devAs"><option value="">nobody</option></select></label>
+    <!-- The real session knows whether the caller is the organiser; there is
+         no ORGANISER_EMAIL to compare against here, so the test site asks. It
+         only changes what this page allows -- the script decides for real. -->
+    <label class="devbar__as"><input type="checkbox" id="devOrg"> as the organiser</label>
     <a href="../">Go to the real site &rarr;</a>
   </div>
 
@@ -1978,7 +1982,7 @@ a.getrow:hover{background:var(--sunk)}
       <div class="section__head">
         <p class="eyebrow">The pile</p>
         <h2>Recommendations</h2>
-        <p>Hover a cover for genres and reading level, click it for the summary, and second the ones you want the club to read next. Anyone can put a book forward &mdash; no account needed.</p>
+        <p>Hover a cover for genres and reading level, click it for the summary, and second the ones you want the club to read next. Sign in to put a book forward or endorse one.</p>
       </div>
       <div class="tabbar" role="tablist" aria-label="Recommendations">
         <button class="tabbtn" role="tab" id="tab-recs" aria-controls="panel-recs" aria-selected="true" type="button">Recommendations</button>
@@ -2012,6 +2016,15 @@ a.getrow:hover{background:var(--sunk)}
         <div id="voteBox"></div>
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-suggest" aria-labelledby="tab-suggest" hidden>
+        <!-- Shown in place of the form when nobody is signed in. The form is
+             left in the document rather than removed: it is bound to by id in
+             a dozen places and half the page would have to learn it might not
+             be there. -->
+        <div id="suggestLocked" hidden>
+          <h3 style="font-size:22px">Put a book forward</h3>
+          <p class="hint" style="margin:8px 0 16px">Putting a book forward is for club members, so the organiser knows who suggested what.</p>
+          <button class="btn btn--grape" type="button" id="suggestSignIn">Sign in to suggest a book</button>
+        </div>
         <form class="suggestform" id="suggestForm" novalidate>
           <div>
             <h3 style="font-size:22px">Put a book forward</h3>
@@ -3475,6 +3488,13 @@ function submitFailMsg(res){
   res = res || {};
   var why = res.error || res.reason;
   if(why === "dev-blocked") return "This is the test site, so nothing is actually sent. Submit on the real site.";
+  /* What the submission gate sends back. Worded as the instruction rather
+     than the condition: "signed out" is the script's word for it, not
+     something to show a reader. */
+  if(why === "signed out") return "Please sign in \u2014 endorsing and putting a book forward are for club members.";
+  if(why === "not a member yet") return "Your account is still waiting for the organiser to approve it.";
+  if(why === "already endorsements") return "You\u2019ve already endorsed this one.";
+  if(why === "already dislikes") return "You\u2019ve already passed on this one.";
   if(why === "unconfigured") return "Submissions aren’t switched on yet — the organiser needs to add an endpoint under Settings.";
   if(res.reason === "network") return "Couldn’t reach the club’s inbox. Check your connection and try again.";
   /* endpointTrouble already knows how to word a timeout, an unreachable
@@ -3516,7 +3536,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-21a";
+var SCRIPT_WANT = "2026-10-21b";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -3812,6 +3832,11 @@ function notesLockedReason(m){
   return "";
 }
 function myName(){ return (me && (me.name || "")) || ""; }
+/* Saira's own account, as the script sees it -- not the Admin password, which
+   is a different thing and can be typed by whoever is sitting at her laptop.
+   Only this unlocks a name box, because only this is what the script honours
+   when it decides whose endorsement a submission is. */
+function isOrganiser(){ return !!(me && me.isOrganiser); }
 
 var loginStep = "email", loginEmail = "";
 /* One sign-in call at a time. Neither button had a guard, and a double click
@@ -7370,10 +7395,20 @@ function openBookDetail(o, kind, focus){
             (own
               ? '<span class="hint" style="flex:1 1 200px">Putting it forward counts as your endorsement, so you can\u2019t add another.</span>' +
                 '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Changed my mind</button>'
-              : (me && myName() ? "" :
-                  '<input class="input" type="text" id="endorseName" placeholder="Your name" maxlength="60" autocomplete="name">') +
-                '<button class="btn btn--sm btn--zest" type="button" data-endorse="' + esc(o.id) + '">Endorse it</button>' +
-                '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Not for me</button>') +
+              : (me && myName()
+                  /* The name is the account's and cannot be retyped -- the
+                     script takes it from the session anyway, so an editable
+                     box would only promise something it would not honour.
+                     The organiser keeps hers editable: she enters
+                     endorsements for cousins who tell her in person, and the
+                     script honours a name from her account alone. */
+                  ? '<input class="input" type="text" id="endorseName" value="' + esc(myName()) +
+                    '" maxlength="60" autocomplete="name" aria-label="Your name"' +
+                    (isOrganiser() ? "" : " readonly") + ">" +
+                    '<button class="btn btn--sm btn--zest" type="button" data-endorse="' + esc(o.id) + '">Endorse it</button>' +
+                    '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Not for me</button>'
+                  : '<button class="btn btn--sm btn--grape" type="button" data-endorsesignin="' + esc(o.id) +
+                    '">Sign in to endorse</button>')) +
           "</div>";
         })() + nomBlockHTML(o)
       : "") +
@@ -8002,7 +8037,8 @@ async function castVote(rec, down, name){
   }
   if(endpoint()){
     say("Sending…", "busy", true);
-    var res = await submitPublic("endorse", { recId: rec.id, title: rec.title, name: name, vote: down ? "down" : "up" });
+    var res = await submitPublic("endorse", { token: sessionToken(), recId: rec.id,
+      title: rec.title, name: name, vote: down ? "down" : "up" });
     if(!res.ok){ say(submitFailMsg(res), "bad"); return false; }
   }else if(readOnly){
     say(submitFailMsg({ reason: "unconfigured" }), "bad");
@@ -8014,6 +8050,22 @@ async function castVote(rec, down, name){
   else if(!await save(down ? "Saving…" : "Endorsing…")) return false;
   renderRecs();
   return true;
+}
+
+/* Signed out, the Suggest tab offers a way in instead of a form. The name box
+   is filled from the account and locked for everyone but the organiser --
+   the script takes the name from the session either way, so an editable box
+   would be offering something it would not honour. */
+function renderSuggestGate(){
+  var inAsMember = !!(me && me.isMember);
+  var lock = $("suggestLocked"), form = $("suggestForm");
+  if(lock) lock.hidden = inAsMember;
+  if(form) form.hidden = !inAsMember;
+  var by = $("sBy");
+  if(by && inAsMember){
+    if(!by.value || by.readOnly) by.value = myName();
+    by.readOnly = !isOrganiser();
+  }
 }
 
 /* ---------- your account ---------- */
@@ -11204,6 +11256,24 @@ document.addEventListener("click", async function(e){
 
 
   /* ---- nominating ---- */
+  if(t.closest("#suggestSignIn")){
+    afterSignIn = function(){
+      var st = $("tab-suggest"); if(st) st.click();
+    };
+    openLogin();
+    return;
+  }
+  if((el = t.closest("[data-endorsesignin]"))){
+    var esId = el.getAttribute("data-endorsesignin");
+    /* Back to the same book once they are in, the way nominating already
+       does it. */
+    afterSignIn = function(){
+      var back = recById(esId);
+      if(back) openBookDetail(back, "rec");
+    };
+    openLogin();
+    return;
+  }
   if((el = t.closest("[data-nomsignin]"))){
     var nsId = el.getAttribute("data-nomsignin");
     /* Back to this book once they are in, with the prompt redrawn as the
@@ -14435,6 +14505,7 @@ $("suggestForm").addEventListener("submit", async function(e){
        aliased into another category travels in the right field. */
     var subRoute = tagFormRoute();
     var res = await submitPublic("suggest", {
+      token: sessionToken(),
       title: title, author: author, pages: Number(el.pages.value) || null,
       ageMin: age.lo, ageMax: age.hi, level: levelText({ ageMin: age.lo, ageMax: age.hi }),
       genres: subRoute.genres, subgenres: subRoute.subgenres, tropes: subRoute.tropes,
@@ -14531,6 +14602,7 @@ function renderAll(){
     focusIds = [me.memberId]; focusAuto = true;
   }
   renderWhoami();
+  renderSuggestGate();
   renderHero(); renderShelf(); renderRecs(); renderMembers();
   renderFocus(); renderTree(); renderTimeline();
 }
@@ -14545,9 +14617,23 @@ function devAsSetup(){
   sel.innerHTML = '<option value="">nobody</option>' + state.members.map(function(m){
     return '<option value="' + esc(m.id) + '">' + esc(m.name) + "</option>";
   }).join("");
+  var org = $("devOrg");
+  if(org) org.addEventListener("change", function(){
+    if(me) me.isOrganiser = !!org.checked;
+    renderAll();
+  });
   sel.addEventListener("change", function(){
     var mem = memberById(sel.value);
-    me = mem ? { memberId: mem.id, name: mem.name, emailHint: "test", dev: true } : null;
+    /* isMember and isOrganiser are what the real session carries, so the test
+       harness has to carry them too -- without isMember the Suggest tab would
+       be locked on the test site no matter who was picked.
+
+       There is no ORGANISER_EMAIL to compare against here and the club record
+       does not name an organiser, so the dev bar offers it as a choice of its
+       own rather than guessing from a name. */
+    var asOrg = $("devOrg");
+    me = mem ? { memberId: mem.id, name: mem.name, emailHint: "test", dev: true,
+                 isMember: true, isOrganiser: !!(asOrg && asOrg.checked) } : null;
     notePick = { pred: [], disc: [] };
     renderWhoami();
     renderAll();
