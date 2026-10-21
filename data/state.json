@@ -1,5 +1,5 @@
 {
-  "rev": 1604,
+  "rev": 1605,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -242,6 +242,18 @@
       "fable": "",
       "goodreads": "",
       "hue": ""
+    },
+    {
+      "id": "mb-mvigvee4wre17",
+      "name": "Aroush",
+      "joined": "2026-10-21",
+      "avatar": "",
+      "email": "",
+      "notifyRef": "sub-6840946d-9ce",
+      "emailHint": "a••••@gmail.com",
+      "notify": [],
+      "fable": "",
+      "goodreads": ""
     }
   ],
   "books": [
@@ -1739,7 +1751,12 @@
       "summarySource": "fetched",
       "shortlist": false,
       "reviews": [],
-      "endorsements": [],
+      "endorsements": [
+        {
+          "name": "Saira",
+          "at": "2026-10-21T18:36:18.463Z"
+        }
+      ],
       "dislikes": [],
       "ratings": [],
       "level": "Ages 13+",
@@ -2650,7 +2667,8 @@
     "endorse-6c329807-9fc",
     "endorse-6a962f85-edf",
     "endorse-c8cfcae9-d00",
-    "endorse-c8cfcae9-d00"
+    "endorse-c8cfcae9-d00",
+    "join-ec461707-0a5"
   ],
   "vocab": {
     "genre": {
