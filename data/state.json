@@ -1,5 +1,5 @@
 {
-  "rev": 1610,
+  "rev": 1611,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -255,7 +255,8 @@
         "*"
       ],
       "fable": "",
-      "goodreads": ""
+      "goodreads": "",
+      "hue": ""
     },
     {
       "id": "mb-mvigwe1tpr4cx",
@@ -269,7 +270,8 @@
         "*"
       ],
       "fable": "",
-      "goodreads": ""
+      "goodreads": "",
+      "hue": ""
     }
   ],
   "books": [
@@ -2687,7 +2689,8 @@
     "join-ec461707-0a5",
     "join-4a77a46d-4f2",
     "join-9698360b-3a7",
-    "join-9d7efa0d-90f"
+    "join-9d7efa0d-90f",
+    "endorse-97d8f248-8f4"
   ],
   "vocab": {
     "genre": {
