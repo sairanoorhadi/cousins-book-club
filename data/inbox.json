@@ -1687,6 +1687,17 @@
         "emailRef": "sub-da987c6a-53a",
         "emailHint": "z••••@gmail.com"
       }
+    },
+    {
+      "id": "endorse-0aaecd3c-7d0",
+      "kind": "endorse",
+      "at": "2026-10-21T18:00:10.738Z",
+      "payload": {
+        "recId": "suggest-2603dba6-457",
+        "title": "The Cruel Prince",
+        "name": "Aroush",
+        "vote": "up"
+      }
     }
   ]
 }
