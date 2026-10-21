@@ -1211,8 +1211,7 @@
       "ageMax": 100,
       "genres": [
         "Fantasy",
-        "Romance",
-        "Dark Fantasy"
+        "Romance"
       ],
       "by": "Filza",
       "status": "approved",
