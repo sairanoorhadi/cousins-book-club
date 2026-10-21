@@ -1753,6 +1753,19 @@
         "name": "Aroush",
         "vote": "up"
       }
+    },
+    {
+      "id": "join-9698360b-3a7",
+      "kind": "join",
+      "at": "2026-10-21T18:35:40.840Z",
+      "payload": {
+        "name": "Aroush",
+        "fable": "",
+        "goodreads": "",
+        "note": "",
+        "emailRef": "sub-b30c7711-280",
+        "emailHint": "a••••@gmail.com"
+      }
     }
   ]
 }
