@@ -1,0 +1,143 @@
+{
+  "items": [
+    {
+      "id": "join-devsample01",
+      "kind": "join",
+      "at": "2026-10-18T09:12:00.000Z",
+      "payload": {
+        "name": "Nadia Rahman",
+        "emailRef": "sub-devsample01",
+        "emailHint": "n••••@example.com",
+        "goodreads": "https://www.goodreads.com/user/show/000000"
+      }
+    },
+    {
+      "id": "join-devsample02",
+      "kind": "join",
+      "at": "2026-10-19T17:40:00.000Z",
+      "payload": {
+        "name": "Omar Siddiqui",
+        "emailRef": "sub-devsample02",
+        "emailHint": "o••••@example.com"
+      }
+    },
+    {
+      "id": "notify-devsample01",
+      "kind": "notify",
+      "at": "2026-10-19T20:05:00.000Z",
+      "payload": {
+        "name": "Nadia Rahman",
+        "emailRef": "sub-devsample03",
+        "emailHint": "n••••@example.com",
+        "books": [
+          "meetings"
+        ]
+      }
+    },
+    {
+      "id": "profile-devsample01",
+      "kind": "profile",
+      "at": "2026-10-20T08:30:00.000Z",
+      "payload": {
+        "name": "Eliza",
+        "genres": [
+          "Fantasy",
+          "Mystery",
+          "Classic"
+        ],
+        "fable": "https://fable.co/u/example"
+      }
+    },
+    {
+      "id": "endorse-devsample01",
+      "kind": "endorse",
+      "at": "2026-10-20T11:15:00.000Z",
+      "payload": {
+        "name": "Pareesa",
+        "recId": "rc-heartless",
+        "title": "Heartless"
+      }
+    },
+    {
+      "id": "endorse-devsample02",
+      "kind": "endorse",
+      "at": "2026-10-20T11:22:00.000Z",
+      "payload": {
+        "name": "Haala",
+        "recId": "rc-1984",
+        "title": "1984"
+      }
+    },
+    {
+      "id": "suggest-devsample01",
+      "kind": "suggest",
+      "at": "2026-10-20T14:02:00.000Z",
+      "payload": {
+        "title": "The Lightning Thief",
+        "author": "Rick Riordan",
+        "pages": 377,
+        "ageMin": 10,
+        "ageMax": 14,
+        "genres": [
+          "Fantasy"
+        ],
+        "subgenres": [
+          "Portal fantasy"
+        ],
+        "tropes": [
+          "Chosen one"
+        ],
+        "by": "Nadia Rahman",
+        "blurb": "A boy finds out who his father is and goes to camp about it.",
+        "summarySource": "own",
+        "ratings": [
+          {
+            "score": 4.3,
+            "source": "Goodreads"
+          }
+        ]
+      }
+    },
+    {
+      "id": "suggest-devsample02",
+      "kind": "suggest",
+      "at": "2026-10-21T07:48:00.000Z",
+      "payload": {
+        "title": "Blood Over Bright Haven",
+        "author": "M.L. Wang",
+        "pages": 464,
+        "ageMin": 14,
+        "ageMax": 18,
+        "genres": [
+          "Fantasy"
+        ],
+        "subgenres": [
+          "Dark fantasy"
+        ],
+        "tropes": [],
+        "by": "Omar Siddiqui",
+        "blurb": "A mage earns her place in a shining city and learns what it cost.",
+        "summarySource": "own",
+        "ratings": [
+          {
+            "score": 4.5,
+            "source": "Goodreads"
+          }
+        ]
+      }
+    },
+    {
+      "id": "notedelete-devsample01",
+      "kind": "notedelete",
+      "at": "2026-10-17T19:00:00.000Z",
+      "handled": true,
+      "payload": {
+        "meetingId": "mt-sample",
+        "field": "notes",
+        "text": "An old note.",
+        "by": "Saira",
+        "deletedBy": "Saira"
+      }
+    }
+  ]
+}

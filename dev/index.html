@@ -1420,6 +1420,26 @@ a.getrow:hover{background:var(--sunk)}
 .loginrow__note:empty{display:none}
 
 /* ============ inbox ============ */
+/* ---- bulk dismiss ----
+   A thin row of its own above the first item, right-aligned, and it stays a
+   row on a phone: the two controls are small and sit together rather than
+   stacking into a block the width of the panel. */
+.inboxbulk{display:flex;justify-content:flex-end;align-items:flex-start;gap:0;margin:0 0 14px;position:relative}
+.inboxbulk__pair{display:flex;align-items:stretch}
+.inboxbulk__go{border-top-right-radius:0;border-bottom-right-radius:0}
+.inboxbulk__arw{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:-2px;padding-left:9px;padding-right:9px}
+.inboxbulk__arw[aria-expanded="true"]{background:var(--sunk)}
+/* The menu is positioned, so it does not push the first item down when it
+   opens; right-anchored so it cannot run off the edge of a narrow screen. */
+.inboxbulk__menu{position:absolute;top:100%;right:0;margin-top:6px;z-index:5;min-width:250px;
+  border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);
+  box-shadow:var(--shadow-sm);padding:10px 12px;text-align:left}
+.inboxbulk__opt{display:flex;align-items:center;gap:9px;padding:6px 2px;font-size:13.5px;cursor:pointer}
+.inboxbulk__opt input{flex:none}
+.inboxbulk__opt .filters__count{margin-left:auto}
+.inboxbulk__opt--off{color:var(--muted);cursor:default}
+.inboxundo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px;
+  border:1.5px solid var(--hairline);border-radius:var(--r);padding:9px 13px;font-size:13.5px}
 .inboxrow{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:16px 18px;box-shadow:var(--shadow-sm)}
 .inboxrow + .inboxrow{margin-top:12px}
 .inboxrow__head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
@@ -2212,6 +2232,21 @@ a.getrow:hover{background:var(--sunk)}
       <div class="askrow">
         <button class="btn btn--flare" type="button" id="dropYes">Remove Book</button>
         <button class="btn" type="button" id="dropNo">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="scrim" id="bulkScrim" hidden>
+  <div class="modal modal--ask" role="alertdialog" aria-modal="true" aria-labelledby="bulkTitle" aria-describedby="bulkWhat">
+    <div class="modal__bar"><h2 id="bulkTitle">Dismiss these?</h2>
+      <button class="xbtn" type="button" data-close="bulkScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body">
+      <p id="bulkWhat"></p>
+      <p class="hint" id="bulkNote" style="margin-top:-4px"></p>
+      <div class="lookbar" id="bulkBar" role="status" aria-label="Dismissing them" hidden><span></span></div>
+      <div class="askrow">
+        <button class="btn btn--flare" type="button" id="bulkYes">Dismiss them</button>
+        <button class="btn" type="button" id="bulkNo">Cancel</button>
       </div>
     </div>
   </div>
@@ -6792,7 +6827,7 @@ function openScrim(id){
   document.body.style.overflow = "hidden";
   var f = $(id).querySelector(".xbtn"); if(f) f.focus();
 }
-var SCRIMS = ["rateScrim","dropScrim","lightbox","loginScrim","meScrim","memberScrim","getScrim","bookScrim","meetScrim","badgeScrim","adminScrim"];
+var SCRIMS = ["rateScrim","dropScrim","bulkScrim","lightbox","loginScrim","meScrim","memberScrim","getScrim","bookScrim","meetScrim","badgeScrim","adminScrim"];
 function closeScrim(id){
   $(id).hidden = true;
   /* The book form is on loan to the profile while a place is being edited, and
@@ -10527,11 +10562,203 @@ function paneSettings(){
       '<div style="margin-top:14px"><a class="btn btn--sm btn--sky" href="https://github.com/' + esc(GH.owner + "/" + GH.repo) + '/issues?q=is%3Aissue+is%3Aopen" target="_blank" rel="noopener noreferrer">Open suggestions on GitHub</a></div></div>';
 }
 
+/* ---------- dismissing a pile at once ----------
+   Dismissing anything, here or on a single item, means listing its id in
+   state.inbox. Nothing is ever removed from data/inbox.json -- the page only
+   ever reads that file, and only the script appends to it. So every dismissal
+   is reversible by dropping the id again, which is what Undo and Restore do,
+   and a submission arriving while the dialog is open cannot be lost: it lands
+   in a file this never writes. */
+var BULK_GROUPS = [
+  { key:"recs",  label:"recommendations",
+    one:"recommendation", many:"recommendations" },
+  { key:"other", label:"other messages",
+    one:"other message", many:"other messages" },
+  { key:"join",  label:"join requests",
+    one:"join request", many:"join requests" }
+];
+/* Only "other messages" starts ticked. Clearing the two that need a decision
+   -- a book someone put forward, a person asking to join -- takes a
+   deliberate tick every time the menu is opened. */
+var bulkPick = { recs:false, other:true, join:false };
+var bulkOpen = false;
+var bulkUndo = null;        /* { ids:[...], at:ms } while the offer stands */
+var bulkUndoTimer = null;
+var dismissedOpen = false;
+
+/* The waiting items of each group. Recommendations are the ones on the
+   Recommendations tab -- they are not listed on this tab, but Saira asked for
+   them in the menu, so the menu reaches across and the confirmation says so
+   in as many words. */
+function bulkItems(key){
+  if(key === "recs") return inboxSuggestions();
+  return inbox.filter(function(i){
+    if(!i || i.handled || i.kind === "suggest") return false;
+    return key === "join" ? i.kind === "join" : i.kind !== "join";
+  });
+}
+function bulkChosen(){
+  var out = [];
+  BULK_GROUPS.forEach(function(g){
+    if(bulkPick[g.key]) out = out.concat(bulkItems(g.key));
+  });
+  return out;
+}
+function bulkAnything(){
+  return BULK_GROUPS.some(function(g){ return bulkItems(g.key).length; });
+}
+/* "3 join requests, 2 recommendations" -- only the groups with something in
+   them, each named singular or plural as it falls. */
+function bulkBreakdown(){
+  return BULK_GROUPS.filter(function(g){ return bulkPick[g.key] && bulkItems(g.key).length; })
+    .map(function(g){
+      var n = bulkItems(g.key).length;
+      return n + " " + (n === 1 ? g.one : g.many);
+    });
+}
+function bulkBarHTML(){
+  if(!bulkAnything()) return "";
+  var n = bulkChosen().length;
+  return '<div class="inboxbulk">' +
+    '<div class="inboxbulk__pair">' +
+      '<button class="btn btn--sm btn--ghost inboxbulk__go" type="button" id="inboxBulkGo"' +
+        (n ? "" : " disabled") + ">Dismiss all (" + n + ")</button>" +
+      '<button class="btn btn--sm btn--ghost inboxbulk__arw" type="button" id="inboxBulkArw"' +
+        ' aria-expanded="' + (bulkOpen ? "true" : "false") + '" aria-controls="inboxBulkMenu"' +
+        ' aria-label="Choose what Dismiss all covers">' + (bulkOpen ? "\u25b4" : "\u25be") + "</button>" +
+    "</div>" +
+    (bulkOpen
+      ? '<div class="inboxbulk__menu" id="inboxBulkMenu">' +
+          BULK_GROUPS.map(function(g){
+            var items = bulkItems(g.key), none = !items.length;
+            return '<label class="inboxbulk__opt' + (none ? " inboxbulk__opt--off" : "") + '">' +
+              '<input type="checkbox" data-bulkpick="' + esc(g.key) + '"' +
+                (bulkPick[g.key] ? " checked" : "") + (none ? " disabled" : "") + ">" +
+              "Dismiss all " + esc(g.label) +
+              '<span class="filters__count">' + items.length + "</span></label>";
+          }).join("") +
+        "</div>"
+      : "") +
+  "</div>";
+}
+/* The offer to put it back, for about ten seconds. */
+function bulkUndoHTML(){
+  if(!bulkUndo || !bulkUndo.ids.length) return "";
+  return '<div class="inboxundo"><span>Dismissed ' + bulkUndo.ids.length + "</span>" +
+    '<button class="btn btn--sm btn--ghost" type="button" id="inboxUndo">Undo</button></div>';
+}
+/* Everything ever dismissed, newest first. Nothing was deleted to get here,
+   so this can show the lot rather than only the last bulk action -- capped,
+   because the list is years long and nobody scrolls it. */
+var DISMISSED_SHOWN = 30;
+function dismissedItems(){
+  var done = {};
+  (state.inbox || []).forEach(function(id, i){ done[id] = i; });
+  return inbox.filter(function(i){ return i && done[i.id] !== undefined; })
+    .sort(function(a, b){ return done[b.id] - done[a.id]; });
+}
+function dismissedHTML(){
+  var all = dismissedItems();
+  if(!all.length) return "";
+  var shown = all.slice(0, DISMISSED_SHOWN);
+  return '<details class="editor" style="margin-top:22px"' + (dismissedOpen ? " open" : "") + ">" +
+    '<summary data-dismissfold>Recently dismissed ' +
+      '<span class="filters__count">' + all.length + "</span></summary>" +
+    '<div class="editor__body">' +
+    '<p class="hint" style="margin:0 0 12px">Nothing here was deleted \u2014 dismissing only marks it dealt with. ' +
+      "Restore puts it back in the list above." +
+      (all.length > shown.length
+        ? " Showing the " + shown.length + " most recent of " + all.length + "." : "") + "</p>" +
+    shown.map(function(it){
+      var p = it.payload || {};
+      var who = String(p.name || p.title || p.by || "").trim();
+      return '<div class="vocabitem"><div class="vocabrow">' +
+        '<span class="kind">' + esc(INBOX_LABELS[it.kind] || it.kind) + "</span>" +
+        "<span>" + esc(who || "\u2014") + "</span>" +
+        '<span class="vocabrow__n">' + esc(it.at ? shortDate(String(it.at).slice(0, 10)) : "") + "</span>" +
+        '<button class="btn btn--sm btn--ghost" type="button" style="margin-left:auto" ' +
+          'data-inrestore="' + esc(it.id) + '">Restore</button>' +
+      "</div></div>";
+    }).join("") +
+    "</div></details>";
+}
+var INBOX_LABELS = { join:"Waiting for approval", profile:"Profile change", endorse:"Endorsement",
+                     notify:"Meeting emails", suggest:"Book put forward", notedelete:"Note deleted" };
+
+/* The confirmation. Same shape as Remove book: the destructive action on the
+   left, Cancel on the right. It names the breakdown of what is actually
+   ticked, so pressing it can hold no surprises. */
+function bulkAsk(){
+  var parts = bulkBreakdown();
+  if(!parts.length) return;
+  $("bulkWhat").textContent = "This dismisses " + andList(parts) +
+    ". They stay in the file and can be put back.";
+  /* Recommendations are reviewed on another tab, so say where they are going
+     from rather than letting them vanish from a page they were never on. */
+  $("bulkNote").textContent = bulkPick.recs && bulkItems("recs").length
+    ? "The recommendations are the ones waiting on the Recommendations tab."
+    : "";
+  var yes = $("bulkYes");
+  if(yes) yes.textContent = "Dismiss " + bulkChosen().length;
+  openScrim("bulkScrim");
+}
+/* The write. The ids go into state.inbox and state.json is saved by the one
+   save() every other admin change uses -- which reads the repo's head first
+   and refuses if someone has saved since this page loaded, rather than
+   writing this page's copy over theirs. */
+async function bulkDoIt(){
+  var picked = bulkChosen();
+  if(!picked.length){ closeScrim("bulkScrim"); return; }
+  var ids = picked.map(function(x){ return x.id; });
+  var yes = $("bulkYes");
+  busyOn("bulkBar", yes, "Dismissing\u2026");
+  state.inbox = (state.inbox || []).concat(ids);
+  var ok = await save("Dismissing " + ids.length + "\u2026");
+  busyOff("bulkBar", yes, "Dismiss " + picked.length);
+  if(!ok){
+    /* nothing was written, so nothing is marked */
+    state.inbox = (state.inbox || []).filter(function(id){ return ids.indexOf(id) === -1; });
+    return;
+  }
+  closeScrim("bulkScrim");
+  inbox.forEach(function(x){ if(x && ids.indexOf(x.id) !== -1) x.handled = true; });
+  ids.forEach(function(id){ delete recDrafts[id]; });
+  bulkOpen = false;
+  bulkUndo = { ids: ids };
+  if(bulkUndoTimer) clearTimeout(bulkUndoTimer);
+  bulkUndoTimer = setTimeout(function(){
+    bulkUndoTimer = null; bulkUndo = null;
+    if(adminTab === "inbox") renderAdmin();
+  }, 10000);
+  renderAll(); renderAdmin();
+  say("Dismissed " + ids.length + ".", "ok");
+}
+async function bulkUndoIt(){
+  if(!bulkUndo) return;
+  var ids = bulkUndo.ids.slice();
+  if(bulkUndoTimer){ clearTimeout(bulkUndoTimer); bulkUndoTimer = null; }
+  bulkUndo = null;
+  await inboxRestore(ids, "Putting them back\u2026");
+}
+/* Restoring is dismissing in reverse: drop the ids from state.inbox. One
+   path for Undo and for the Restore button in Recently dismissed. */
+async function inboxRestore(ids, label){
+  var was = (state.inbox || []).slice();
+  state.inbox = was.filter(function(id){ return ids.indexOf(id) === -1; });
+  if(state.inbox.length === was.length){ renderAdmin(); return; }
+  if(!(await save(label || "Restoring\u2026"))){
+    state.inbox = was;
+    return;
+  }
+  inbox.forEach(function(x){ if(x && ids.indexOf(x.id) !== -1) x.handled = false; });
+  renderAll(); renderAdmin();
+  say(ids.length === 1 ? "Put back." : "Put " + ids.length + " back.", "ok");
+}
 function paneInbox(){
   /* book suggestions live on the Recommendations tab so a submission is only
      ever approved in one place */
   var waiting = inbox.filter(function(i){ return i && !i.handled && i.kind !== "suggest"; });
-  var labels = { join:"Waiting for approval", profile:"Profile change", endorse:"Endorsement", notify:"Meeting emails" };
+  var labels = INBOX_LABELS;
   var out = '<p class="eyebrow">From the site</p><h3 style="font-size:22px;margin:8px 0 6px">' +
     (waiting.length ? waiting.length + " waiting" : "Nothing waiting") + "</h3>" +
     '<p class="hint" style="margin-bottom:18px">People waiting to be approved, profile changes and reminder signups. ' +
@@ -10541,7 +10768,12 @@ function paneInbox(){
   if(!endpoint()){
     return out + '<p class="empty">No submissions endpoint set yet — add one under Settings and the inbox starts filling up.</p>';
   }
-  if(!waiting.length) return out + '<p class="empty">The inbox is empty. New submissions show up here within a minute of being sent.</p>';
+  if(!waiting.length){
+    return out + bulkUndoHTML() + bulkBarHTML() +
+      '<p class="empty">The inbox is empty. New submissions show up here within a minute of being sent.</p>' +
+      dismissedHTML();
+  }
+  out += bulkUndoHTML() + bulkBarHTML();
   out += waiting.map(function(it){
     var p = it.payload || {};
     var rows = Object.keys(p).filter(function(k){ return p[k] !== "" && p[k] != null; }).map(function(k){
@@ -10561,7 +10793,7 @@ function paneInbox(){
       "</span></div>" +
       '<div class="kv">' + rows + "</div></div>";
   }).join("");
-  return out;
+  return out + dismissedHTML();
 }
 
 /* one review per line, "the quote — who said it" */
@@ -11670,6 +11902,25 @@ document.addEventListener("click", async function(e){
     }
     return;
   }
+  /* ---- bulk dismiss ---- */
+  if(t.closest("#inboxBulkArw")){ bulkOpen = !bulkOpen; renderAdminPane(); return; }
+  if(t.closest("#inboxBulkGo")){
+    if(!bulkChosen().length) return;
+    bulkAsk();
+    return;
+  }
+  if(t.closest("#bulkNo")){ closeScrim("bulkScrim"); return; }
+  if(t.closest("#bulkYes")){ await bulkDoIt(); return; }
+  if(t.closest("#inboxUndo")){ await bulkUndoIt(); return; }
+  if((el = t.closest("[data-dismissfold]"))){
+    var dfd = el.closest("details");
+    dismissedOpen = !(dfd && dfd.open);
+    return;
+  }
+  if((el = t.closest("[data-inrestore]"))){
+    await inboxRestore([el.getAttribute("data-inrestore")], "Restoring\u2026");
+    return;
+  }
   if((el = t.closest("[data-indismiss]"))){
     var iid1 = el.getAttribute("data-indismiss");
     state.inbox.push(iid1);
@@ -12571,6 +12822,11 @@ document.addEventListener("change", async function(e){
        obeyed the picker. */
     if(compareAt) compareRefresh(compareAt.kind, compareAt.owner, compareAt.id);
     vocabMoveRefresh();
+    return;
+  }
+  if(n && n.hasAttribute && n.hasAttribute("data-bulkpick")){
+    bulkPick[n.getAttribute("data-bulkpick")] = !!n.checked;
+    renderAdminPane();     /* the count on the button follows the ticks */
     return;
   }
   if(n && n.id === "recSearchSum"){
