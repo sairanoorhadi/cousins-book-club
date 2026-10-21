@@ -2596,6 +2596,13 @@ function withTags(o, from){
   VOCAB_ORDER.forEach(function(k){ o[VOCAB_KINDS[k].field] = r[VOCAB_KINDS[k].field]; });
   return o;
 }
+/* The reduced copy of a book that a tile is drawn from. Named fields here
+   meant a tile showed genres but not tropes in one place and not subgenres in
+   another; the categories travel together instead. */
+function copyTags(to, from){
+  VOCAB_ORDER.forEach(function(k){ to[VOCAB_KINDS[k].field] = (from || {})[VOCAB_KINDS[k].field] || []; });
+  return to;
+}
 /* A record built out of a submission's payload takes its tags from that
    payload and routes them. Both callers -- the waiting draft and the record
    written on Approve -- go through here, so a fourth category is carried by
@@ -2995,7 +3002,6 @@ function migrate(s){
     if(!r.by) r.by = REC_BY[String(r.title||"").toLowerCase().trim()] || "";
     if(typeof r.at !== "string") r.at = "";
     if(typeof r.shortlist !== "boolean") r.shortlist = false;
-    r.genres = normaliseGenres(r.genres);
     if(typeof r.summarySource !== "string") r.summarySource = "own";
     if(!Array.isArray(r.reviews)) r.reviews = [];
     if(!Array.isArray(r.endorsements)) r.endorsements = [];
@@ -6352,10 +6358,10 @@ function topGenresHTML(m){
 function top5HTML(m){
   var picks = (m.top5 || []).slice(0, 5);
   var out = picks.map(function(p, i){
-    return bookTileHTML({ id: p.id || "", title: p.title || "", author: p.author || "",
-      cover: p.cover || "", pages: p.pages || "", genres: p.genres || [],
+    return bookTileHTML(copyTags({ id: p.id || "", title: p.title || "", author: p.author || "",
+      cover: p.cover || "", pages: p.pages || "",
       ageMin: p.ageMin, ageMax: p.ageMax, level: p.level,
-      finished: "", started: "" }, { five: i, member: m.id });
+      finished: "", started: "" }, p), { five: i, member: m.id });
   });
   for(var n = picks.length; n < 5; n++) out.push(tileSlotHTML(n + 1));
   return out.join("");
@@ -8071,10 +8077,10 @@ function profFiveHTML(five){
   for(var i = 0; i < 5; i++){
     var b = five[i];
     var inner = b
-      ? bookTileHTML({ id: b.id || "", title: b.title || "", author: b.author || "", cover: b.cover || "",
-                       pages: b.pages || "", genres: b.genres || [], tropes: b.tropes || [],
+      ? bookTileHTML(copyTags({ id: b.id || "", title: b.title || "", author: b.author || "", cover: b.cover || "",
+                       pages: b.pages || "",
                        ageMin: b.ageMin, ageMax: b.ageMax,
-                       level: b.level, finished: "", started: "" }, { five: i })
+                       level: b.level, finished: "", started: "" }, b), { five: i })
       : (profEditing ? emptySlotHTML(i) : tileSlotHTML(i + 1));
     out.push('<div class="prof__slot" data-profslot="' + i + '"' +
       (profEditing ? ' draggable="true"' : "") + ">" + inner +
