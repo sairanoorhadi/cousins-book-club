@@ -1674,6 +1674,19 @@
         "emailRef": "sub-6840946d-9ce",
         "emailHint": "a••••@gmail.com"
       }
+    },
+    {
+      "id": "join-4a77a46d-4f2",
+      "kind": "join",
+      "at": "2026-10-21T17:58:51.686Z",
+      "payload": {
+        "name": "Zainah",
+        "fable": "asdfghj",
+        "goodreads": "asdfg",
+        "note": "I am Aroush, I like reading books.",
+        "emailRef": "sub-da987c6a-53a",
+        "emailHint": "z••••@gmail.com"
+      }
     }
   ]
 }
