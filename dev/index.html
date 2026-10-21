@@ -427,6 +427,9 @@ a.getrow:hover{background:var(--sunk)}
 
 /* ============ recommendations ============ */
 .recgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:20px}
+/* An empty state is a sentence, not a book: it takes the whole row rather than
+   being squeezed into the first column's width. */
+.recgrid > .empty{grid-column:1 / -1}
 /* width:100% matters — a <button> sizes itself to its contents even at
    display:block, and the cover inside has no intrinsic width. It used to be a
    grid item, which stretched it; inside the vote wrapper it has to be told. */
@@ -931,6 +934,23 @@ a.getrow:hover{background:var(--sunk)}
 /* ============ rec filters ============ */
 .filters{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-sm);padding:14px 18px;margin-bottom:24px}
 .filters__box{margin:0}
+/* ---- the search bar ----
+   Above the panel rather than inside it: the panel is a <details> that folds
+   shut, and a search field nobody can see while the filters are folded is a
+   search field nobody uses. The row is a wrapping flex line and the field is
+   the part that grows, so it is full width on a phone by construction. */
+.recsearch{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.recsearch__box{position:relative;display:flex;align-items:center;flex:1 1 260px;min-width:0}
+.recsearch__ico{position:absolute;left:11px;color:var(--muted);pointer-events:none}
+.recsearch__in{width:100%;padding-left:34px;padding-right:36px}
+.recsearch__x{position:absolute;right:6px;width:25px;height:25px;line-height:1;border:0;border-radius:50%;
+  background:transparent;color:var(--muted);cursor:pointer;font-size:18px;padding:0}
+.recsearch__x:hover{background:var(--sunk);color:var(--ink)}
+.recsearch__also{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.recsearch__note{margin:0 0 14px;font-size:13.5px;color:var(--muted);font-style:italic}
+@media (max-width:620px){
+  .recsearch__box,.recsearch__also{flex:1 1 100%}
+}
 .filters__box > summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .filters__box > summary .filters__count{margin-left:auto}
 .filters__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}
@@ -5115,6 +5135,26 @@ document.addEventListener("input", function(e){
   if(!n.getAttribute("data-dual")) return;
   dualApply(n, n.value);
 });
+/* Search as you type, but not on every keystroke: the shelf is re-sorted and
+   re-laid-out on each pass, and a fast typist would queue a dozen of those up
+   behind the word they are still writing. One redraw, 150ms after they stop. */
+document.addEventListener("input", function(e){
+  var n = e.target;
+  if(!n || n.id !== "recSearchIn") return;
+  recSearch.q = n.value;
+  var x = $("recSearchX"); if(x) x.hidden = !recSearch.q;
+  if(recSearchTimer) clearTimeout(recSearchTimer);
+  recSearchTimer = setTimeout(function(){ recSearchTimer = null; searchLive(); }, 150);
+});
+document.addEventListener("keydown", function(e){
+  if(e.key !== "Escape") return;
+  var n = e.target;
+  if(!n || n.id !== "recSearchIn" || !n.value) return;
+  /* Stopped here so Escape does not also shut whatever is behind the field on
+     its way past. */
+  e.preventDefault(); e.stopPropagation();
+  searchClear();
+});
 /* An arrow key already walks the scale's own step, a tenth of a star on the
    rating. Shift takes five of those at once so you can cross the scale without
    holding the key down: the browser has no larger step of its own here, so
@@ -5160,6 +5200,127 @@ var recFilter = { by: "", sort: "top", genres: [], subgenres: [], tropes: [], ag
                   pagesMin: 0, pagesMax: PAGE_TOP, rateMin: 0, rateMax: RATE_TOP,
                   nomOnly: false };
 var filtersOpen = false;
+
+/* ---------- searching the shelf ----------
+   Session only, as asked: plain variables. They survive opening a book,
+   closing it and switching tabs, because none of that reloads the page, and
+   they are gone on a reload. Nothing goes in the URL or in localStorage. */
+var recSearch = { q: "", summaries: false };
+var recSearchTimer = null;
+var MAGNIFIER = '<svg class="recsearch__ico" viewBox="0 0 16 16" width="15" height="15" ' +
+  'aria-hidden="true" focusable="false">' +
+  '<circle cx="6.9" cy="6.9" r="4.6" fill="none" stroke="currentColor" stroke-width="1.7"></circle>' +
+  '<path d="M10.3 10.3 L14 14" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+  'stroke-linecap="round"></path></svg>';
+
+/* normTitle is the normaliser, as asked. It lowercases, drops punctuation, and
+   strips a leading "the", "a" or "an" only when a word follows -- so a query
+   of just "the" stays the word "the" and does not match everything, which is
+   the edge case wanted, already handled, with no new rule needed.
+
+   The one thing it does not do is accents: it turns them into spaces rather
+   than their base letters, so "Amelie" would not find "Amelie" spelt with an
+   accent. Folding them off is the only rule added, and it is added out here
+   rather than inside normTitle, because normTitle also decides whether two
+   titles are the SAME book for the duplicate check and the typo correction,
+   and widening it would quietly change both. */
+function foldAccents(s){
+  var t = String(s == null ? "" : s);
+  return t.normalize ? t.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : t;
+}
+function searchNorm(s){ return normTitle(foldAccents(s)); }
+function searchWords(){
+  var q = searchNorm(recSearch.q);
+  return q ? q.split(" ").filter(Boolean) : [];
+}
+function searchActive(){ return searchWords().length > 0; }
+function searchTyped(){ return String(recSearch.q || "").trim(); }
+/* Everything a book can be found by. Every tag category, so a fourth is
+   searchable the day it is registered. The summary stays out unless it is
+   asked for: "war" is in a good many blurbs and in no title, and a search
+   that handed back half the shelf would be no help at all. */
+function recHaystack(r){
+  var parts = [r.title, r.author, r.by];
+  VOCAB_ORDER.forEach(function(k){ parts = parts.concat(r[VOCAB_KINDS[k].field] || []); });
+  if(recSearch.summaries) parts.push(r.blurb);
+  return searchNorm(parts.filter(Boolean).join(" "));
+}
+/* Every word has to be found in those fields, in any order.
+
+   A word is found when some word in the fields STARTS with it, rather than
+   merely contains it anywhere. Typing part of a word still works, which is
+   what search-as-you-type needs -- "light" finds Lightning -- but a word no
+   longer turns up inside the middle of an unrelated one. Plain substring
+   matching had "war" returning Heart of a Champion, because its author is
+   Ellen SchWARtz, and a search that answers like that stops being trusted. */
+function searchHit(r, words, near){
+  var hayWords = recHaystack(r).split(" ").filter(Boolean);
+  if(!hayWords.length) return false;
+  return words.every(function(w){
+    for(var i = 0; i < hayWords.length; i++) if(hayWords[i].indexOf(w) === 0) return true;
+    return !!near && hayWords.some(function(h){ return searchClose(w, h); });
+  });
+}
+/* The fallback leans on titleCloseness -- the same closeness the title "Did
+   you mean" check uses, against the same 1.5 ceiling -- with one guard on top
+   of it, because that function was tuned for comparing whole titles and this
+   compares single words.
+
+   Its divisor has a floor of 9, which on a long title works out to about two
+   edits. On a four-letter word two edits is half the word, and searching the
+   real shelf for "wang" came back with The Cruel Prince, The Outsiders and
+   That was then, this is now -- offered, in writing, as close matches. So a
+   word has to be long enough to hold a typo at all, and the correction has to
+   be small in absolute terms as well as proportional. */
+function searchClose(word, hay){
+  if(word.length < 4) return false;
+  var cap = word.length >= 7 ? 2 : 1;
+  return editDistance(word, hay) <= cap && titleCloseness(word, hay) < 1.5;
+}
+/* Exact first. Only when nothing at all matches does it widen to close ones,
+   so a search that works is never diluted by approximate answers. It runs
+   over the books that already passed the filters, so the close matches it
+   offers are books the reader could actually be shown. */
+function searchOver(list){
+  var words = searchWords();
+  if(!words.length) return { mode: "off", list: list };
+  var exact = list.filter(function(r){ return searchHit(r, words, false); });
+  if(exact.length) return { mode: "exact", list: exact };
+  var near = list.filter(function(r){ return searchHit(r, words, true); });
+  return near.length ? { mode: "close", list: near } : { mode: "none", list: [] };
+}
+/* The whole bar. Rendered by the one filter panel, so the Pile and the
+   Nominations tab share it rather than owning a copy each. */
+function searchBarHTML(){
+  var q = recSearch.q;
+  return '<div class="recsearch">' +
+    '<div class="recsearch__box">' + MAGNIFIER +
+      '<input class="input recsearch__in" type="text" id="recSearchIn" autocomplete="off"' +
+        ' placeholder="Search title, author, genre\u2026" aria-label="Search the books"' +
+        ' value="' + esc(q) + '" maxlength="120">' +
+      '<button class="recsearch__x" type="button" id="recSearchX" data-searchclear' +
+        ' aria-label="Clear the search"' + (q ? "" : " hidden") + ">\u00d7</button>" +
+    "</div>" +
+    '<label class="recsearch__also"><input type="checkbox" id="recSearchSum"' +
+      (recSearch.summaries ? " checked" : "") + "> Also search summaries</label>" +
+  "</div>";
+}
+/* Typing redraws the shelf and the counts, never the panel: re-rendering the
+   panel would tear the field out from under the caret. */
+function searchLive(){
+  gridPage.recs = 0; gridPage.noms = 0;
+  liveCount();
+  var x = $("recSearchX"); if(x) x.hidden = !recSearch.q;
+}
+/* Clearing does redraw the panel, so the field comes back empty, and puts the
+   caret back where it was. */
+function searchClear(){
+  if(recSearchTimer){ clearTimeout(recSearchTimer); recSearchTimer = null; }
+  recSearch.q = "";
+  gridPage.recs = 0; gridPage.noms = 0;
+  renderRecs();
+  var n = $("recSearchIn"); if(n) n.focus();
+}
 /* One rule for both vocabularies: compare on the merged names, so picking
    "Humour" also finds "comedy"; every picked tag, not any one, so two tags
    means books that are both; and each comparison is parent-aware, so picking
@@ -5913,6 +6074,7 @@ function renderRecFilters(){
   /* press-to-open, like the editors on the admin side; stays open once you've
      set something, so the filters you applied don't hide themselves */
   host.innerHTML =
+    searchBarHTML() +
     '<details class="editor filters__box"' + (filtersOpen || active ? " open" : "") + '>' +
     '<summary data-filtertoggle>Filter &amp; sort' +
       '<span id="fActive">' + esc(activeLabel()) + "</span>" +
@@ -5980,7 +6142,9 @@ function renderRecFilters(){
 /* one wording for both the summary line and the foot, so they can't disagree */
 function countLine(){
   var total = approvedRecs().length;
-  var line = sortRecs(approvedRecs().filter(recMatches)).length + " of " + total + " shown";
+  /* The search narrows the same list the filters narrowed, so one number
+     answers both and the two can never disagree. */
+  var line = searchOver(approvedRecs().filter(recMatches)).list.length + " of " + total + " shown";
   var noPages = pagesNarrowed() ? pagelessCount() : 0;
   if(noPages) line += " \u00b7 " + noPages + " with no page count hidden";
   var noRate = ratingNarrowed() ? ratelessCount() : 0;
@@ -6000,7 +6164,9 @@ function activeLabel(){ var n = activeFilters(); return n ? " \u00b7 " + n + " a
 /* Redraw the shelf and both count lines without re-rendering the panel — that
    would tear out the slider mid-drag. */
 function liveCount(){
-  renderRecGrid();
+  /* Both shelves: the panel and its search field serve whichever tab is in
+     front, and redrawing the hidden one costs nothing. */
+  renderRecGrid(); renderNomGrid();
   var line = countLine();
   ["recCount", "recCountTop"].forEach(function(id){ var c = $(id); if(c) c.textContent = line; });
   var a = $("fActive"); if(a) a.textContent = activeLabel();
@@ -6097,12 +6263,23 @@ function renderGridFor(which, all){
     host.innerHTML = '<p class="empty">' + esc(G.emptyAll) + "</p>";
     return;
   }
-  var list = sortRecs(all.filter(recMatches), which);
+  var found = searchOver(all.filter(recMatches));
+  var list = sortRecs(found.list, which);
   if(!list.length){
     clear();
-    host.innerHTML = '<p class="empty">Nothing matches those filters. Try clearing them.</p>';
+    host.innerHTML = found.mode === "none"
+      ? '<p class="empty">No books match \u201c' + esc(searchTyped()) + "\u201d. " +
+        '<button class="btn btn--sm btn--ghost" type="button" data-searchclear ' +
+        'style="margin-left:8px">Clear search</button></p>'
+      : '<p class="empty">Nothing matches those filters. Try clearing them.</p>';
     return;
   }
+  /* The note goes above the grid rather than in it -- the grid is a CSS grid
+     and a sentence dropped into it becomes a cell one book wide. */
+  var note = found.mode === "close"
+    ? '<p class="recsearch__note">No exact matches. Showing close matches for \u201c' +
+      esc(searchTyped()) + "\u201d</p>"
+    : "";
   var per = recPerPage(host), pages = recPageCount(list.length, per);
   /* clamped, not reset: a vote or an edit re-renders this, and being thrown
      back to the first page for it would be its own small annoyance. Narrowing
@@ -6111,7 +6288,7 @@ function renderGridFor(which, all){
   if(gridPage[which] < 0) gridPage[which] = 0;
   var from = gridPage[which] * per;
   host.innerHTML = list.slice(from, from + per).map(recCardHTML).join("");
-  if(top) top.innerHTML = recPagerHTML(gridPage[which], pages, "head", which);
+  if(top) top.innerHTML = note + recPagerHTML(gridPage[which], pages, "head", which);
   if(bot) bot.innerHTML = recPagerHTML(gridPage[which], pages, "foot", which);
 }
 function renderRecGrid(){ renderGridFor("recs", approvedRecs()); }
@@ -10695,6 +10872,9 @@ document.addEventListener("click", async function(e){
   }
 
   /* recommendation filters */
+  /* The x in the field and the Clear search button in the empty state are the
+     same control in two places. */
+  if(t.closest("[data-searchclear]")){ searchClear(); return; }
   if((el = t.closest("[data-tagfold]"))){
     /* The browser does the toggling; this only writes down which way it went,
        so the next re-render leaves the fold as the reader left it. At click
@@ -10730,6 +10910,11 @@ document.addEventListener("click", async function(e){
     recFilter = { by: "", sort: "top", genres: [], subgenres: [], tropes: [], ageMin: 0, ageMax: AGE_TOP,
                   pagesMin: 0, pagesMax: PAGE_TOP, rateMin: 0, rateMax: RATE_TOP,
                   nomOnly: false };
+    /* "Clear filters" means the shelf comes back whole, so the search goes
+       with them -- including the summaries box, which is a search setting. */
+    if(recSearchTimer){ clearTimeout(recSearchTimer); recSearchTimer = null; }
+    recSearch.q = ""; recSearch.summaries = false;
+    gridPage.noms = 0;
     filtersOpen = true;
     gridPage.recs = 0;          /* a wider list starts at its own first page */
     renderRecs();
@@ -12386,6 +12571,13 @@ document.addEventListener("change", async function(e){
        obeyed the picker. */
     if(compareAt) compareRefresh(compareAt.kind, compareAt.owner, compareAt.id);
     vocabMoveRefresh();
+    return;
+  }
+  if(n && n.id === "recSearchSum"){
+    recSearch.summaries = !!n.checked;
+    /* Not a panel re-render: the box sits beside the field, and redrawing
+       would take the caret out of it. */
+    searchLive();
     return;
   }
   if(n && n.id === "fNomOnly"){
