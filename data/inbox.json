@@ -1790,6 +1790,17 @@
         "emailRef": "sub-778e8b2b-c31",
         "emailHint": "z••••@gmail.com"
       }
+    },
+    {
+      "id": "endorse-a92fcda1-d1e",
+      "kind": "endorse",
+      "at": "2026-10-21T19:01:00.410Z",
+      "payload": {
+        "recId": "suggest-f70a1c8e-a89",
+        "title": "The First Stone",
+        "name": "Saira",
+        "vote": "down"
+      }
     }
   ]
 }
