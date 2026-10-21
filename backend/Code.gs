@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-20e';
+var SCRIPT_VERSION = '2026-10-21a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -2214,6 +2214,13 @@ function cleanTop5(b) {
     genres: (Array.isArray(b.genres) ? b.genres : [])
       .map(function (g) { return String(g || '').trim().slice(0, 40); })
       .filter(function (g) { return g; }).slice(0, 8),
+    /* A narrower shelf than a genre. Named here for the same reason as the
+       tropes below it: a field this whitelist does not mention is stripped on
+       the way through without a word, which is how the summary, the score and
+       the review each went missing before anyone noticed. */
+    subgenres: (Array.isArray(b.subgenres) ? b.subgenres : [])
+      .map(function (g) { return String(g || '').trim().slice(0, 40); })
+      .filter(function (g) { return g; }).slice(0, 12),
     /* What the book does, as against what shelf it sits on. Named here or it
        is stripped on the way through, which is how the summary, the score and
        the review each went missing before anyone noticed. */
