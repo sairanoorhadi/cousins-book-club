@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-21a';
+var SCRIPT_VERSION = '2026-10-21b';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -33,7 +33,15 @@ var REMIND_DAYS    = 5;
 var REMIND_MINUTES = 30;
 
 /* Submissions the web app will accept. Anything else is rejected. */
-var KINDS = ['suggest', 'join', 'profile', 'endorse', 'notify'];
+/* 'profile' used to be here. Nothing has sent it since profile changes moved
+   to the signed-in profile-set endpoint, and nothing acts on one either --
+   acceptSubmission has no branch for it. All it could still do was let a
+   stranger append entries to data/inbox.json for ever. */
+var KINDS = ['suggest', 'join', 'endorse', 'notify'];
+/* The two that now need a signed-in, approved member behind them. 'join' is
+   the sign-up itself and 'notify' is the reminder signup, so both stay open
+   -- there is nobody to be signed in as yet. */
+var KINDS_SIGNED_IN = ['suggest', 'endorse'];
 
 /* ------------------------------------------------------------ voting
    Which book the club reads next. Every member rates every candidate from 1
@@ -196,6 +204,13 @@ function voteWho(payload) {
    nothing here an organiser can do early that anyone else could not do
    honestly once the clock ran out. */
 function voteTally(payload) {
+  /* The only endpoint that wrote to the public state file without asking who
+     was calling. It cannot invent a result -- it refuses an open vote and one
+     already counted -- but counting the club's vote is not a stranger's to
+     trigger. */
+  var tallyWho = whoIs(payload.token);
+  if (!tallyWho) return { ok: false, error: 'signed out' };
+  if (!memberFor(tallyWho)) return { ok: false, error: 'not a member yet' };
   var state;
   try { state = JSON.parse(stateRead().content || '{}'); }
   catch (err) { return { ok: false, error: 'unreadable state' }; }
@@ -1376,12 +1391,54 @@ function doPost(e) {
 
   if (KINDS.indexOf(kind) === -1) return json({ ok: false, error: 'unknown kind' });
 
+  /* Endorsing and putting a book forward are for approved members now. The
+     page hides the buttons, but the page is not the only way to reach this
+     URL -- it is in the source of every visit -- so the refusal has to live
+     here. */
+  var actor = null;
+  if (KINDS_SIGNED_IN.indexOf(kind) !== -1) {
+    /* The token rides inside the payload, the way every other signed-in call
+       on this script sends it. */
+    var who = whoIs(payload.token);
+    if (!who) return json({ ok: false, error: 'signed out' });
+    actor = memberFor(who);
+    if (!actor) return json({ ok: false, error: 'not a member yet' });
+    actor.email = who;
+  }
+
   var item = {
     id: kind + '-' + Utilities.getUuid().slice(0, 12),
     kind: kind,
     at: new Date().toISOString(),
     payload: withheldEmail(clean(body.payload || {}))
   };
+  /* Never written down. data/inbox.json is a public file in the repo, and the
+     token is the whole of someone's sign-in -- filing it there would publish
+     the key along with the thing it unlocked. */
+  delete item.payload.token;
+
+  /* Whose submission this is, decided here and not by the sender. A member
+     could otherwise endorse or put a book forward under a cousin's name by
+     posting it themselves. The organiser is the exception: she enters books
+     and endorsements for people who tell her in person, so a name she sends
+     is honoured. */
+  if (actor) {
+    var isOrganiser = normEmail(actor.email) === normEmail(propEmail('ORGANISER_EMAIL'));
+    var typed = String(item.payload.name || item.payload.by || '').trim();
+    var named = (isOrganiser && typed) ? typed : String(actor.name || '').trim();
+    if (kind === 'endorse') {
+      item.payload.name = named;
+      item.payload.memberId = actor.id;          /* the part that cannot be typed */
+    } else {
+      item.payload.by = named;
+      item.payload.byId = actor.id;
+    }
+  }
+
+  if (kind === 'endorse') {
+    var dup = endorseAlready(item, actor);
+    if (dup) return json({ ok: false, error: dup });
+  }
 
   try {
     /* A suggestion is the one kind that can already exist. Everything else
@@ -1689,7 +1746,12 @@ function profileFor(email) {
     books: entry.books || [],
     memberId: member ? member.id : (entry.memberId || ''),
     hue: member ? (member.hue || '') : '',
-    isMember: !!member
+    isMember: !!member,
+    /* The page locks the endorse and submit name boxes for everyone but the
+       organiser. It is told the same fact the submission gate decides on, so
+       the two cannot drift: a box the page leaves editable is one the script
+       will honour. */
+    isOrganiser: !!email && normEmail(email) === normEmail(propEmail('ORGANISER_EMAIL'))
   };
 }
 
@@ -2598,7 +2660,8 @@ function fileSuggestion(item) {
       }
       if (!Array.isArray(q.preEndorsements)) q.preEndorsements = [];
       var already = q.preEndorsements.some(function (e) { return sameNameGS(e && e.name, who); });
-      if (!already && who) q.preEndorsements.push({ name: who, at: new Date().toISOString() });
+      if (!already && who) q.preEndorsements.push({ name: who, memberId: String(p.byId || ''),
+                                                    at: new Date().toISOString() });
       /* What they wrote is worth keeping even though their entry is not: the
          organiser may prefer their summary or their rating to the first
          sender's, and otherwise it is simply thrown away. */
@@ -2624,6 +2687,47 @@ function fileSuggestion(item) {
   }
 }
 
+/* One endorsement per person per book, decided here rather than in the page.
+   Changing your mind is still allowed -- an endorsement replacing a "not for
+   me" is a different side, not a repeat -- so only the same side again is
+   refused.
+
+   Two places have to be looked at: the endorsements already folded into the
+   club's file, and the ones still sitting unhandled in the inbox waiting for
+   the organiser. Older rows carry only a name, so the match is on member id
+   where there is one and on the name otherwise. */
+function endorseAlready(item, actor) {
+  var p = item.payload || {};
+  var recId = String(p.recId || '');
+  var side = String(p.vote || '') === 'down' ? 'dislikes' : 'endorsements';
+  if (!recId || !actor) return '';
+  var mine = function (row) {
+    if (!row) return false;
+    if (row.memberId && actor.id) return String(row.memberId) === String(actor.id);
+    return sameNameGS(row.name, p.name);
+  };
+
+  var state;
+  try { state = JSON.parse(stateRead().content || '{}'); }
+  catch (err) { return ''; }          /* unreadable: let the organiser sort it out */
+  var rec = (state.recs || []).filter(function (r) { return String(r.id) === recId; })[0];
+  if (rec && (rec[side] || []).some(mine)) return 'already ' + side;
+
+  var items;
+  try { items = JSON.parse(ghGetFile(INBOX_PATH).content || '{"items":[]}').items || []; }
+  catch (err2) { return ''; }
+  var done = {};
+  (Array.isArray(state.inbox) ? state.inbox : []).forEach(function (id) { done[id] = 1; });
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    if (!it || it.kind !== 'endorse' || it.handled || done[it.id]) continue;
+    var q = it.payload || {};
+    if (String(q.recId || '') !== recId) continue;
+    var sameSide = (String(q.vote || '') === 'down' ? 'dislikes' : 'endorsements') === side;
+    if (sameSide && mine(q)) return 'already ' + side;
+  }
+  return '';
+}
 function appendToInbox(item) {
   /* Two people submitting at once would otherwise clobber each other. */
   var lock = LockService.getScriptLock();
