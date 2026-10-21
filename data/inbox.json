@@ -1661,6 +1661,19 @@
           }
         ]
       }
+    },
+    {
+      "id": "join-ec461707-0a5",
+      "kind": "join",
+      "at": "2026-10-21T17:58:22.646Z",
+      "payload": {
+        "name": "Aroush",
+        "fable": "",
+        "goodreads": "",
+        "note": "I am Zainah",
+        "emailRef": "sub-6840946d-9ce",
+        "emailHint": "a••••@gmail.com"
+      }
     }
   ]
 }
