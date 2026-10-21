@@ -1853,6 +1853,377 @@
   },
   "votes": [
     {
+      "id": "hist-01",
+      "type": "vote",
+      "kind": "rate",
+      "candidates": [
+        {
+          "id": "rc-thief",
+          "title": "The Book Thief",
+          "author": "Markus Zusak",
+          "cover": ""
+        },
+        {
+          "id": "rc-1984",
+          "title": "1984",
+          "author": "George Orwell",
+          "cover": ""
+        },
+        {
+          "id": "rc-kite",
+          "title": "The Kite Runner",
+          "author": "Khaled Hosseini",
+          "cover": ""
+        }
+      ],
+      "opensAt": "2026-06-01T14:00:00.000Z",
+      "closesAt": "2026-06-03T14:00:00.000Z",
+      "cancelledAt": null,
+      "closedAt": "2026-06-03T14:00:00.000Z",
+      "turnout": 3,
+      "nominated": [],
+      "totals": [
+        {
+          "id": "rc-thief",
+          "title": "The Book Thief",
+          "total": 17,
+          "raters": 2,
+          "avg": 8.5
+        },
+        {
+          "id": "rc-1984",
+          "title": "1984",
+          "total": 12,
+          "raters": 2,
+          "avg": 6.0
+        },
+        {
+          "id": "rc-kite",
+          "title": "The Kite Runner",
+          "total": 9,
+          "raters": 2,
+          "avg": 4.5
+        }
+      ],
+      "winner": "rc-thief",
+      "tied": null,
+      "resultsHidden": false,
+      "parent": null,
+      "at": "2026-06-01T14:00:00.000Z",
+      "seededForChecking": "one of eight seeded past rounds, for the Admin history view"
+    },
+    {
+      "id": "hist-02",
+      "type": "nomination",
+      "kind": "nominate",
+      "candidates": [],
+      "opensAt": "2026-06-15T14:00:00.000Z",
+      "closesAt": "2026-06-17T14:00:00.000Z",
+      "cancelledAt": null,
+      "closedAt": "2026-06-17T14:00:00.000Z",
+      "turnout": 3,
+      "nominated": [
+        {
+          "id": "rc-thief",
+          "n": 2,
+          "org": false
+        },
+        {
+          "id": "rc-1984",
+          "n": 1,
+          "org": false
+        }
+      ],
+      "totals": null,
+      "winner": null,
+      "tied": null,
+      "nomTabHidden": true,
+      "parent": null,
+      "at": "2026-06-15T14:00:00.000Z",
+      "seededForChecking": "one of eight seeded past rounds, for the Admin history view"
+    },
+    {
+      "id": "hist-03",
+      "type": "vote",
+      "kind": "rate",
+      "candidates": [
+        {
+          "id": "rc-thief",
+          "title": "The Book Thief",
+          "author": "Markus Zusak",
+          "cover": ""
+        },
+        {
+          "id": "rc-1984",
+          "title": "1984",
+          "author": "George Orwell",
+          "cover": ""
+        },
+        {
+          "id": "rc-kite",
+          "title": "The Kite Runner",
+          "author": "Khaled Hosseini",
+          "cover": ""
+        }
+      ],
+      "opensAt": "2026-06-29T14:00:00.000Z",
+      "closesAt": "2026-07-01T14:00:00.000Z",
+      "cancelledAt": null,
+      "closedAt": "2026-07-01T14:00:00.000Z",
+      "turnout": 3,
+      "nominated": [],
+      "totals": [
+        {
+          "id": "rc-thief",
+          "title": "The Book Thief",
+          "total": 18,
+          "raters": 2,
+          "avg": 9.0
+        },
+        {
+          "id": "rc-1984",
+          "title": "1984",
+          "total": 15,
+          "raters": 2,
+          "avg": 7.5
+        },
+        {
+          "id": "rc-kite",
+          "title": "The Kite Runner",
+          "total": 10,
+          "raters": 2,
+          "avg": 5.0
+        }
+      ],
+      "winner": "rc-thief",
+      "tied": null,
+      "resultsHidden": false,
+      "parent": null,
+      "at": "2026-06-29T14:00:00.000Z",
+      "seededForChecking": "one of eight seeded past rounds, for the Admin history view"
+    },
+    {
+      "id": "hist-04",
+      "type": "nomination",
+      "kind": "nominate",
+      "candidates": [],
+      "opensAt": "2026-07-13T14:00:00.000Z",
+      "closesAt": "2026-07-15T14:00:00.000Z",
+      "cancelledAt": null,
+      "closedAt": "2026-07-15T14:00:00.000Z",
+      "turnout": 3,
+      "nominated": [
+        {
+          "id": "rc-thief",
+          "n": 2,
+          "org": false
+        },
+        {
+          "id": "rc-1984",
+          "n": 1,
+          "org": false
+        }
+      ],
+      "totals": null,
+      "winner": null,
+      "tied": null,
+      "nomTabHidden": true,
+      "parent": null,
+      "at": "2026-07-13T14:00:00.000Z",
+      "seededForChecking": "one of eight seeded past rounds, for the Admin history view"
+    },
+    {
+      "id": "hist-05",
+      "type": "vote",
+      "kind": "rate",
+      "candidates": [
+        {
+          "id": "rc-thief",
+          "title": "The Book Thief",
+          "author": "Markus Zusak",
+          "cover": ""
+        },
+        {
+          "id": "rc-1984",
+          "title": "1984",
+          "author": "George Orwell",
+          "cover": ""
+        },
+        {
+          "id": "rc-kite",
+          "title": "The Kite Runner",
+          "author": "Khaled Hosseini",
+          "cover": ""
+        }
+      ],
+      "opensAt": "2026-07-27T14:00:00.000Z",
+      "closesAt": "2026-07-29T14:00:00.000Z",
+      "cancelledAt": "2026-07-29T14:00:00.000Z",
+      "closedAt": null,
+      "turnout": 3,
+      "nominated": [],
+      "totals": null,
+      "winner": null,
+      "tied": null,
+      "resultsHidden": false,
+      "parent": null,
+      "at": "2026-07-27T14:00:00.000Z",
+      "seededForChecking": "one of eight seeded past rounds, for the Admin history view"
+    },
+    {
+      "id": "hist-06",
+      "type": "vote",
+      "kind": "rate",
+      "candidates": [
+        {
+          "id": "rc-thief",
+          "title": "The Book Thief",
+          "author": "Markus Zusak",
+          "cover": ""
+        },
+        {
+          "id": "rc-1984",
+          "title": "1984",
+          "author": "George Orwell",
+          "cover": ""
+        },
+        {
+          "id": "rc-kite",
+          "title": "The Kite Runner",
+          "author": "Khaled Hosseini",
+          "cover": ""
+        }
+      ],
+      "opensAt": "2026-08-10T14:00:00.000Z",
+      "closesAt": "2026-08-12T14:00:00.000Z",
+      "cancelledAt": null,
+      "closedAt": "2026-08-12T14:00:00.000Z",
+      "turnout": 3,
+      "nominated": [],
+      "totals": [
+        {
+          "id": "rc-thief",
+          "title": "The Book Thief",
+          "total": 14,
+          "raters": 2,
+          "avg": 7.0
+        },
+        {
+          "id": "rc-1984",
+          "title": "1984",
+          "total": 14,
+          "raters": 2,
+          "avg": 7.0
+        },
+        {
+          "id": "rc-kite",
+          "title": "The Kite Runner",
+          "total": 6,
+          "raters": 2,
+          "avg": 3.0
+        }
+      ],
+      "winner": null,
+      "tied": [
+        "rc-thief",
+        "rc-1984"
+      ],
+      "resultsHidden": false,
+      "parent": null,
+      "at": "2026-08-10T14:00:00.000Z",
+      "seededForChecking": "one of eight seeded past rounds, for the Admin history view"
+    },
+    {
+      "id": "hist-07",
+      "type": "nomination",
+      "kind": "nominate",
+      "candidates": [],
+      "opensAt": "2026-08-24T14:00:00.000Z",
+      "closesAt": "2026-08-26T14:00:00.000Z",
+      "cancelledAt": null,
+      "closedAt": "2026-08-26T14:00:00.000Z",
+      "turnout": 3,
+      "nominated": [
+        {
+          "id": "rc-thief",
+          "n": 2,
+          "org": false
+        },
+        {
+          "id": "rc-1984",
+          "n": 1,
+          "org": false
+        }
+      ],
+      "totals": null,
+      "winner": null,
+      "tied": null,
+      "nomTabHidden": true,
+      "parent": null,
+      "at": "2026-08-24T14:00:00.000Z",
+      "seededForChecking": "one of eight seeded past rounds, for the Admin history view"
+    },
+    {
+      "id": "hist-08",
+      "type": "vote",
+      "kind": "rate",
+      "candidates": [
+        {
+          "id": "rc-thief",
+          "title": "The Book Thief",
+          "author": "Markus Zusak",
+          "cover": ""
+        },
+        {
+          "id": "rc-1984",
+          "title": "1984",
+          "author": "George Orwell",
+          "cover": ""
+        },
+        {
+          "id": "rc-kite",
+          "title": "The Kite Runner",
+          "author": "Khaled Hosseini",
+          "cover": ""
+        }
+      ],
+      "opensAt": "2026-09-07T14:00:00.000Z",
+      "closesAt": "2026-09-09T14:00:00.000Z",
+      "cancelledAt": null,
+      "closedAt": "2026-09-09T14:00:00.000Z",
+      "turnout": 3,
+      "nominated": [],
+      "totals": [
+        {
+          "id": "rc-thief",
+          "title": "The Book Thief",
+          "total": 16,
+          "raters": 2,
+          "avg": 8.0
+        },
+        {
+          "id": "rc-1984",
+          "title": "1984",
+          "total": 13,
+          "raters": 2,
+          "avg": 6.5
+        },
+        {
+          "id": "rc-kite",
+          "title": "The Kite Runner",
+          "total": 12,
+          "raters": 2,
+          "avg": 6.0
+        }
+      ],
+      "winner": "rc-thief",
+      "tied": null,
+      "resultsHidden": false,
+      "parent": null,
+      "at": "2026-09-07T14:00:00.000Z",
+      "seededForChecking": "one of eight seeded past rounds, for the Admin history view"
+    },
+    {
       "id": "vote-mvfwbmz2irh0l",
       "kind": "rate",
       "candidates": [
