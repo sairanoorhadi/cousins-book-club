@@ -1,5 +1,5 @@
 {
-  "rev": 1608,
+  "rev": 1609,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -254,6 +254,18 @@
       "notify": [
         "*"
       ],
+      "fable": "",
+      "goodreads": ""
+    },
+    {
+      "id": "mb-mvigwe1tpr4cx",
+      "name": "Zainah",
+      "joined": "2026-10-21",
+      "avatar": "",
+      "email": "",
+      "notifyRef": "sub-778e8b2b-c31",
+      "emailHint": "z••••@gmail.com",
+      "notify": [],
       "fable": "",
       "goodreads": ""
     }
@@ -2672,7 +2684,8 @@
     "endorse-c8cfcae9-d00",
     "join-ec461707-0a5",
     "join-4a77a46d-4f2",
-    "join-9698360b-3a7"
+    "join-9698360b-3a7",
+    "join-9d7efa0d-90f"
   ],
   "vocab": {
     "genre": {
