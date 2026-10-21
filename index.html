@@ -325,6 +325,10 @@ a.getrow:hover{background:var(--sunk)}
    somebody typed" rather than a shelf the book sits on. */
 .tag--trope{background:none;border-style:dashed;font-family:var(--f-mono);font-size:11.5px;
   letter-spacing:.02em;color:var(--ink)}
+/* Between the two: the genre's solid fill, in a quieter tone, with the
+   trope's mono face. A subgenre is a kind of shelf, but a narrower one. */
+.tag--sub{background:color-mix(in srgb, var(--ink) 8%, transparent);border-style:solid;
+  font-family:var(--f-mono);font-size:11.5px;letter-spacing:.02em;color:var(--ink)}
 
 .meetcard{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
 .meetcard__top{background:var(--sky);color:var(--on-sky);padding:13px 20px;border-bottom:2px solid var(--edge)}
@@ -972,6 +976,12 @@ a.getrow:hover{background:var(--sunk)}
 /* trope chips carry the same accent their pills do elsewhere on the site, so
    the two lists in the panel are never mistaken for one */
 .tagchip--trope[aria-pressed="true"]{background:var(--zest);color:var(--on-zest)}
+/* and subgenre chips their own, so all three are told apart at a glance */
+.tagchip--sub{font-family:var(--f-mono);letter-spacing:.02em}
+.tagchip--sub[aria-pressed="true"]{background:var(--sky);color:var(--on-sky);border-color:var(--edge)}
+/* Each tag area folds, so three of them do not make the panel enormous. */
+.tagfold{margin-top:14px}
+.tagfold > summary{cursor:pointer}
 
 /* ============ already-have-it notice on the suggestion form ============ */
 /* Three strengths, because the three cases are not the same thing: one is a
@@ -2010,6 +2020,7 @@ a.getrow:hover{background:var(--sunk)}
           <div class="field"><label for="sGenres">Genres <span style="text-transform:none;letter-spacing:0">(comma separated)</span></label><input class="input" id="sGenres" name="genres" placeholder="Young Adult, Fantasy" maxlength="300"></div>
           <!-- Under genres, and never filled by the lookup: Open Library
                shelves books, it does not read them. -->
+          <div class="field"><label for="sSubgenres">Subgenres <span style="text-transform:none;letter-spacing:0">(comma separated &mdash; yours to add, the lookup can&rsquo;t tell these from genres)</span></label><input class="input" id="sSubgenres" name="subgenres" placeholder="Epic fantasy, Cosy mystery" maxlength="300"></div>
           <div class="field"><label for="sTropes">Tropes <span style="text-transform:none;letter-spacing:0">(comma separated &mdash; yours to add, the lookup can&rsquo;t find these)</span></label><input class="input" id="sTropes" name="tropes" placeholder="Enemies to lovers, Found family" maxlength="300"></div>
           <div class="field"><label>Readers&rsquo; ratings <span style="text-transform:none;letter-spacing:0">(out of 5 &mdash; add as many as you like)</span></label>
             <div id="sRatings"></div>
@@ -2355,6 +2366,22 @@ function canonGenre(raw){
    Not genres, so they are not run through canonGenre: there is no vocabulary
    to merge them against and no shelving noise to strip. Comma separated,
    trimmed, de-duplicated, and bounded so a paste cannot turn into a wall. */
+/* Tropes and subgenres clean the same way: split, trim, cap, de-duplicate,
+   and apply whatever aliases the organiser has set for that category. One
+   function, told which category's alias table to consult. */
+function tagListFor(kind, v){
+  var out = [], seen = {};
+  (Array.isArray(v) ? v : String(v || "").split(",")).forEach(function(entry){
+    var t = String(entry || "").trim().replace(/\s+/g, " ").slice(0, 40);
+    if(!t) return;
+    t = vocabAlias(kind, t) || t;
+    var k = t.toLowerCase();
+    if(seen[k]) return;
+    seen[k] = 1;
+    out.push(t);
+  });
+  return out.slice(0, 12);
+}
 function tropeList(v){
   var out = [], seen = {};
   (Array.isArray(v) ? v : String(v || "").split(",")).forEach(function(entry){
@@ -2399,12 +2426,24 @@ function normaliseGenres(list){
                                and never needs seeding.
      aliases {typed: Canonical} what a Compare swap taught us, so the same
                                wording maps itself next time someone submits.  */
+/* The tag categories, and the order they appear in everywhere. Adding a
+   fourth means one entry here and one word in VOCAB_ORDER -- the form, the
+   four editors, the modal, the vocabulary tab and the filter panel all read
+   the order from here rather than each repeating it. */
 var VOCAB_KINDS = {
   genre: { one: "genre", many: "Genres", field: "genres",
            clean: function(v){ return normaliseGenres(v); } },
+  subgenre: { one: "subgenre", many: "Subgenres", field: "subgenres",
+           clean: function(v){ return tagListFor("subgenre", v); } },
   trope: { one: "trope", many: "Tropes", field: "tropes",
            clean: function(v){ return tropeList(v); } }
 };
+var VOCAB_ORDER = ["genre", "subgenre", "trope"];
+/* Every category except this one. "The other one" stopped meaning anything
+   the moment there were three of them. */
+function otherKinds(kind){
+  return VOCAB_ORDER.filter(function(k){ return k !== kind; });
+}
 function vkey(s){ return String(s || "").trim().toLowerCase().replace(/\s+/g, " "); }
 function vocabStore(kind){
   if(!state) return { terms: [], aliases: {} };
@@ -2491,7 +2530,7 @@ function vocabHomes(){
 function vocabHome(name, from){
   var map = from ? ((from.vocab && from.vocab.home) || {}) : vocabHomes();
   var h = map[vkey(name)];
-  return h === "genre" || h === "trope" ? h : "";
+  return VOCAB_ORDER.indexOf(h) !== -1 ? h : "";
 }
 /* Genres in and tropes in, genres out and tropes out, with every word sent to
    the side it now belongs on whichever box it was typed into. Called wherever
@@ -2502,17 +2541,97 @@ function vocabHome(name, from){
    while it is routing, `state` is still null and reading the live one would
    quietly find nothing. The backstop has to be handed the file it is
    cleaning, not go looking for a global that is not there yet. */
-function routeTags(genres, tropes, from){
-  var g = [], t = [], seenG = {}, seenT = {};
+/* All the tag fields in, all of them out, with every word sent to the
+   category it now belongs to whichever box it was typed into. It has to see
+   them together: a word aliased into Subgenres has to be liftable out of the
+   genres box, which means one call that holds all three. */
+function routeTags(fields, from){
+  var out = {}, seen = {};
+  VOCAB_ORDER.forEach(function(k){ out[k] = []; seen[k] = {}; });
   var put = function(name, fallback){
     var k = vkey(name); if(!k) return;
     var side = vocabHome(name, from) || fallback;
-    if(side === "trope"){ if(!seenT[k]){ seenT[k] = 1; t.push(name); } }
-    else if(!seenG[k]){ seenG[k] = 1; g.push(name); }
+    if(VOCAB_ORDER.indexOf(side) === -1) side = fallback;
+    if(seen[side][k]) return;
+    seen[side][k] = 1;
+    out[side].push(name);
   };
-  normaliseGenres(genres).forEach(function(x){ put(x, "genre"); });
-  tropeList(tropes).forEach(function(x){ put(x, "trope"); });
-  return { genres: g.slice(0, 12), tropes: t.slice(0, 12) };
+  VOCAB_ORDER.forEach(function(kind){
+    VOCAB_KINDS[kind].clean((fields || {})[VOCAB_KINDS[kind].field]).forEach(function(x){
+      put(x, kind);
+    });
+  });
+  var res = {};
+  VOCAB_ORDER.forEach(function(k){ res[VOCAB_KINDS[k].field] = out[k].slice(0, 12); });
+  return res;
+}
+/* The tag rows on a card's hover panel, in the order of the categories. Genres
+   always shows, even empty, because a book with none is worth saying; the rest
+   only when there is something in them. One place, so the order cannot drift
+   apart between the recommendation card and the shelf card again. */
+function tagRevealHTML(o){
+  return VOCAB_ORDER.map(function(k){
+    var list = (o || {})[VOCAB_KINDS[k].field] || [];
+    if(!list.length && k !== "genre") return "";
+    return '<span class="k">' + esc(VOCAB_KINDS[k].many) + '</span><span class="v">' +
+      esc(list.join(" \u00b7 ") || "Unlisted") + "</span>";
+  }).join("");
+}
+/* Every tag on a book as pills, in the order of the categories, each in its
+   own style. One place, so a fourth category appears in the modal for free. */
+var VOCAB_PILL = { genre: "tag", subgenre: "tag tag--sub", trope: "tag tag--trope" };
+function tagPillsHTML(o){
+  return VOCAB_ORDER.map(function(k){
+    return ((o || {})[VOCAB_KINDS[k].field] || []).map(function(t){
+      return '<span class="' + (VOCAB_PILL[k] || "tag") + '">' + esc(t) + "</span>";
+    }).join("");
+  }).join("");
+}
+/* Routes a record's or a payload's tag fields and writes them back onto it,
+   which is what almost every caller actually wants. One place, so a fourth
+   category needs no new call sites. */
+function withTags(o, from){
+  var r = routeTags(tagFieldsOf(o), from);
+  VOCAB_ORDER.forEach(function(k){ o[VOCAB_KINDS[k].field] = r[VOCAB_KINDS[k].field]; });
+  return o;
+}
+/* The reduced copy of a book that a tile is drawn from. Named fields here
+   meant a tile showed genres but not tropes in one place and not subgenres in
+   another; the categories travel together instead. */
+function copyTags(to, from){
+  VOCAB_ORDER.forEach(function(k){ to[VOCAB_KINDS[k].field] = (from || {})[VOCAB_KINDS[k].field] || []; });
+  return to;
+}
+/* A record built out of a submission's payload takes its tags from that
+   payload and routes them. Both callers -- the waiting draft and the record
+   written on Approve -- go through here, so a fourth category is carried by
+   both without either being edited. Named fields in the object literals above
+   them is exactly how these tags got dropped once already. */
+function payloadTags(o, p){
+  VOCAB_ORDER.forEach(function(k){ o[VOCAB_KINDS[k].field] = (p || {})[VOCAB_KINDS[k].field]; });
+  return withTags(o);
+}
+/* The tag boxes on the suggest form, routed together. */
+function tagFormRoute(){
+  var f = {};
+  VOCAB_ORDER.forEach(function(k){
+    var el = $(tagInputId(k));
+    f[VOCAB_KINDS[k].field] = el ? el.value : "";
+  });
+  return routeTags(f);
+}
+/* The suggest form's input id for a category: sGenres, sSubgenres, sTropes. */
+function tagInputId(kind){
+  var m = VOCAB_KINDS[kind].many;
+  return "s" + m.charAt(0).toUpperCase() + m.slice(1);
+}
+/* The three fields read off a record or a payload, for handing to routeTags. */
+function tagFieldsOf(o){
+  var f = {};
+  VOCAB_ORDER.forEach(function(k){
+    f[VOCAB_KINDS[k].field] = (o || {})[VOCAB_KINDS[k].field];
+  });
+  return f;
 }
 function vocabAlias(kind, raw){
   var v = vocabStore(kind), k = vkey(raw);
@@ -2872,8 +2991,8 @@ function migrate(s){
     /* Routed rather than cleaned separately, so a word an admin moved
        between the lists is on the right side even in records written before
        the move — the backstop behind every write path below. */
-    var broute = routeTags(b.genres, b.tropes, s);
-    b.genres = broute.genres; b.tropes = broute.tropes;
+    var broute = routeTags(tagFieldsOf(b), s);
+    VOCAB_ORDER.forEach(function(k){ b[VOCAB_KINDS[k].field] = broute[VOCAB_KINDS[k].field]; });
     withAges(b);
     if(b.review && typeof b.review.community !== "number") b.review.community = 0;
   });
@@ -2882,7 +3001,6 @@ function migrate(s){
     if(!r.by) r.by = REC_BY[String(r.title||"").toLowerCase().trim()] || "";
     if(typeof r.at !== "string") r.at = "";
     if(typeof r.shortlist !== "boolean") r.shortlist = false;
-    r.genres = normaliseGenres(r.genres);
     if(typeof r.summarySource !== "string") r.summarySource = "own";
     if(!Array.isArray(r.reviews)) r.reviews = [];
     if(!Array.isArray(r.endorsements)) r.endorsements = [];
@@ -2891,8 +3009,8 @@ function migrate(s){
        score and a StoryGraph score and they disagree — worth seeing both rather
        than picking one. The old single pair folds in, so nothing already
        saved is lost. */
-    var rroute = routeTags(r.genres, r.tropes, s);
-    r.genres = rroute.genres; r.tropes = rroute.tropes;
+    var rroute = routeTags(tagFieldsOf(r), s);
+    VOCAB_ORDER.forEach(function(k){ r[VOCAB_KINDS[k].field] = rroute[VOCAB_KINDS[k].field]; });
     r.ratings = cleanRatings(r.ratings);
     if(!r.ratings.length && Number(r.rating) > 0){
       r.ratings = [{ score: clampRating(r.rating), source: String(r.ratingSource || "").slice(0, 40) }];
@@ -3338,7 +3456,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-20e";
+var SCRIPT_WANT = "2026-10-21a";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -4886,8 +5004,7 @@ function renderShelf(){
         '<div class="tagbank" style="margin-top:10px">' +
           '<span class="tag tag--surf">' + esc(levelText(b)) + "</span>" +
           '<span class="tag tag--zest mono">' + esc(b.pages || "?") + " pages</span>" +
-          (b.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
-          (b.tropes || []).map(function(t){ return '<span class="tag tag--trope">' + esc(t) + "</span>"; }).join("") +
+          tagPillsHTML(b) +
         "</div>" +
         (rev
           ? '<div class="review">' + ratingPair(b.review) +
@@ -5038,7 +5155,7 @@ function ratingNarrowed(){ return recFilter.rateMin > 0 || recFilter.rateMax < R
 function ratelessCount(){
   return approvedRecs().filter(function(r){ return recRating(r) === null; }).length;
 }
-var recFilter = { by: "", sort: "top", genres: [], tropes: [], ageMin: 0, ageMax: AGE_TOP,
+var recFilter = { by: "", sort: "top", genres: [], subgenres: [], tropes: [], ageMin: 0, ageMax: AGE_TOP,
                   pagesMin: 0, pagesMax: PAGE_TOP, rateMin: 0, rateMax: RATE_TOP,
                   nomOnly: false };
 var filtersOpen = false;
@@ -5060,8 +5177,10 @@ function recMatches(r){
     var nround = currentNom();
     if(!nround || !nomHas(nround, r.id)) return false;
   }
-  if(!tagFilterOk("genre", r)) return false;
-  if(!tagFilterOk("trope", r)) return false;
+  /* Every category, so a fourth needs no line here. */
+  for(var vi = 0; vi < VOCAB_ORDER.length; vi++){
+    if(!tagFilterOk(VOCAB_ORDER[vi], r)) return false;
+  }
   /* keep anything whose age band overlaps the band being asked for */
   if(r.ageMin > recFilter.ageMax || r.ageMax < recFilter.ageMin) return false;
   /* At the full range the slider is not asking anything, so a book nobody has
@@ -5591,6 +5710,12 @@ function voteCandidate(v, id){
    nowhere else: the state is meant to last the visit, not survive a reload,
    so nothing is written to storage. */
 var TAGBOX_DEF = 118, tagBoxH = {}, tagBoxOpen = {};
+/* Whether each category's fold is open, remembered across re-renders the
+   way filtersOpen is for the panel as a whole. Without it every control
+   inside a fold -- Expand, the drag grip, the chips -- closed the fold it
+   was pressed in, because the re-render fell back to "open if something is
+   picked" and the reader had just unpicked the last one. */
+var tagFoldOpen = {};
 /* Two rows of chips, measured off a real chip rather than guessed at, plus the
    list's own padding — so the window cannot be dragged shut. */
 function tagBoxMin(box){
@@ -5654,18 +5779,29 @@ function tagBoxTrim(){
   });
 }
 /* One list of chips, for whichever vocabulary it is given. */
+var VOCAB_CHIP = { genre: "", subgenre: " tagchip--sub", trope: " tagchip--trope" };
 function tagFilterHTML(kind){
   var K = VOCAB_KINDS[kind], terms = vocabFilterTerms(kind);
   if(!terms.length) return "";
   var open = !!tagBoxOpen[kind], picked = recFilter[K.field] || [];
+  var fold = (kind in tagFoldOpen) ? tagFoldOpen[kind] : !!picked.length;
   var on = function(t){ return picked.some(function(x){ return vkey(x) === vkey(t); }); };
-  return '<div class="field" style="margin-top:14px"><label>' + esc(K.many) +
+  /* Three resizable windows stacked would make this panel enormous, so each
+     category is folded shut and says how many chips are picked inside it.
+     Anything with a selection opens itself, which is the rule the whole
+     panel already follows -- a filter you have set should not be hidden. */
+  return '<details class="editor tagfold"' + (fold ? " open" : "") + ">" +
+    '<summary data-tagfold="' + esc(kind) + '">' + esc(K.many) +
+      (picked.length ? ' <span class="pill">' + esc(picked.length) + " selected</span>" : "") +
+      ' <span class="hint">' + esc(terms.length) + " to choose from</span></summary>" +
+    '<div class="editor__body">' +
+    '<div class="field" style="margin-top:0"><label>' + esc(K.many) +
       ' <span style="text-transform:none;letter-spacing:0">(pick several to narrow &mdash; books must have all of them)</span></label>' +
     '<div class="tagwrap" data-tagwrap data-tagkind="' + esc(kind) + '"' + (open ? ' data-open="1"' : "") + ">" +
       '<div class="tagpick" data-tagpick' +
         (open || !tagBoxH[kind] ? "" : ' style="height:' + tagBoxH[kind] + 'px;max-height:none"') + ">" +
       terms.map(function(t){
-        return '<button class="tagchip' + (kind === "trope" ? " tagchip--trope" : "") + '" type="button" data-ftag="' +
+        return '<button class="tagchip' + (VOCAB_CHIP[kind] || "") + '" type="button" data-ftag="' +
           esc(t) + '" data-fkind="' + esc(kind) + '" aria-pressed="' + on(t) + '">' + esc(t) + "</button>";
       }).join("") + "</div>" +
       '<div class="taggrip" data-taggrip role="separator" aria-orientation="horizontal" tabindex="0"' +
@@ -5673,7 +5809,7 @@ function tagFilterHTML(kind){
     "</div>" +
     '<div class="tagact"><button class="btn btn--sm btn--ghost" type="button" data-tagtoggle="' + esc(kind) + '">' +
       (open ? "Collapse" : "Expand") + "</button></div>" +
-    "</div>";
+    "</div></div></details>";
 }
 /* How stale the numbers can be, said on the page rather than left to be
    discovered. A nomination is written to data/state.json by the script, and
@@ -5825,8 +5961,7 @@ function renderRecFilters(){
         }, RATE_SCALE) +
       "</div>" +
     "</div>" +
-    tagFilterHTML("genre") +
-    tagFilterHTML("trope") +
+    VOCAB_ORDER.map(tagFilterHTML).join("") +
     (function(){
       var nround = currentNom();
       if(!nround || voteStatusOf(nround) === "cancelled") return "";
@@ -5852,7 +5987,10 @@ function countLine(){
   return line;
 }
 function activeFilters(){
-  return (recFilter.by ? 1 : 0) + recFilter.genres.length + recFilter.tropes.length +
+  return (recFilter.by ? 1 : 0) +
+    VOCAB_ORDER.reduce(function(n, k){
+      return n + ((recFilter[VOCAB_KINDS[k].field] || []).length);
+    }, 0) +
     (recFilter.ageMin > 0 || recFilter.ageMax < AGE_TOP ? 1 : 0) +
     (pagesNarrowed() ? 1 : 0) + (ratingNarrowed() ? 1 : 0) +
     (recFilter.nomOnly ? 1 : 0);
@@ -5879,9 +6017,7 @@ function recCardHTML(r){
       '<span class="reccard__foot"><span>' + esc(r.pages || "?") + " pp</span>" +
         '<span class="reccard__by">' + (r.by ? esc(r.by) : "&nbsp;") + "</span></span>" +
       '<span class="reccard__reveal">' +
-        '<span class="k">Genres</span><span class="v">' + esc((r.genres || []).join(" · ") || "Unlisted") + "</span>" +
-        ((r.tropes || []).length
-          ? '<span class="k">Tropes</span><span class="v">' + esc(r.tropes.join(" · ")) + "</span>" : "") +
+        tagRevealHTML(r) +
         '<span class="k">Level</span><span class="v">' + esc(levelText(r)) + "</span>" +
         '<span class="k">Endorsed</span><span class="v">' + (up || "none yet") + (down ? " · " + down + " against" : "") + "</span>" +
       "</span>" +
@@ -6133,9 +6269,7 @@ function bookTileHTML(b, where){
       '<span class="reccard__foot"><span>' + esc(b.pages || "?") + " pp</span>" +
         '<span class="reccard__by">' + (b.author ? esc(b.author) : "&nbsp;") + "</span></span>" +
       '<span class="reccard__reveal">' +
-        '<span class="k">Genres</span><span class="v">' + esc((b.genres || []).join(" · ") || "Unlisted") + "</span>" +
-        ((b.tropes || []).length
-          ? '<span class="k">Tropes</span><span class="v">' + esc(b.tropes.join(" · ")) + "</span>" : "") +
+        tagRevealHTML(b) +
         '<span class="k">Level</span><span class="v">' + esc(levelText(b)) + "</span>" +
         '<span class="k">Read</span><span class="v">' + esc(readWhen(b)) + "</span>" +
       "</span>" +
@@ -6223,10 +6357,10 @@ function topGenresHTML(m){
 function top5HTML(m){
   var picks = (m.top5 || []).slice(0, 5);
   var out = picks.map(function(p, i){
-    return bookTileHTML({ id: p.id || "", title: p.title || "", author: p.author || "",
-      cover: p.cover || "", pages: p.pages || "", genres: p.genres || [],
+    return bookTileHTML(copyTags({ id: p.id || "", title: p.title || "", author: p.author || "",
+      cover: p.cover || "", pages: p.pages || "",
       ageMin: p.ageMin, ageMax: p.ageMax, level: p.level,
-      finished: "", started: "" }, { five: i, member: m.id });
+      finished: "", started: "" }, p), { five: i, member: m.id });
   });
   for(var n = picks.length; n < 5; n++) out.push(tileSlotHTML(n + 1));
   return out.join("");
@@ -6982,8 +7116,7 @@ function openBookDetail(o, kind, focus){
         '<div class="tagbank" style="margin-top:16px">' +
           '<span class="tag tag--zest mono">' + esc(o.pages || "?") + " pages</span>" +
           '<span class="tag tag--surf">' + esc(levelText(o)) + "</span>" +
-          (o.genres || []).map(function(g){ return '<span class="tag">' + esc(g) + "</span>"; }).join("") +
-          (o.tropes || []).map(function(t){ return '<span class="tag tag--trope">' + esc(t) + "</span>"; }).join("") +
+          tagPillsHTML(o) +
         "</div>" +
         (o.by ? '<p class="review__by" style="margin-top:14px">Recommended by ' + esc(o.by) + "</p>" : "") +
         (ups.length
@@ -7943,10 +8076,10 @@ function profFiveHTML(five){
   for(var i = 0; i < 5; i++){
     var b = five[i];
     var inner = b
-      ? bookTileHTML({ id: b.id || "", title: b.title || "", author: b.author || "", cover: b.cover || "",
-                       pages: b.pages || "", genres: b.genres || [], tropes: b.tropes || [],
+      ? bookTileHTML(copyTags({ id: b.id || "", title: b.title || "", author: b.author || "", cover: b.cover || "",
+                       pages: b.pages || "",
                        ageMin: b.ageMin, ageMax: b.ageMax,
-                       level: b.level, finished: "", started: "" }, { five: i })
+                       level: b.level, finished: "", started: "" }, b), { five: i })
       : (profEditing ? emptySlotHTML(i) : tileSlotHTML(i + 1));
     out.push('<div class="prof__slot" data-profslot="' + i + '"' +
       (profEditing ? ' draggable="true"' : "") + ">" + inner +
@@ -8039,6 +8172,7 @@ function profFormSnapshot(){
     author: (($("sAuthor") || {}).value || "").trim(),
     pages: (($("sPages") || {}).value || "").trim(),
     genres: (($("sGenres") || {}).value || "").trim(),
+    subgenres: (($("sSubgenres") || {}).value || "").trim(),
     tropes: (($("sTropes") || {}).value || "").trim(),
     blurb: (($("sBlurb") || {}).value || "").trim(),
     ratings: JSON.stringify(ratingsForSubmit()),
@@ -8088,6 +8222,7 @@ function profOpenForm(slot){
     if($("sAuthor")) $("sAuthor").value = b.author || "";
     if($("sPages")) $("sPages").value = b.pages || "";
     if($("sGenres")) $("sGenres").value = (b.genres || []).join(", ");
+    if($("sSubgenres")) $("sSubgenres").value = (b.subgenres || []).join(", ");
     if($("sTropes")) $("sTropes").value = (b.tropes || []).join(", ");
     if($("sBlurb")) $("sBlurb").value = b.blurb || "";
     if($("sMyScore")) $("sMyScore").value = b.myScore ? String(b.myScore) : "";
@@ -8149,11 +8284,13 @@ function profFormAsBook(){
   var age = dualValue("sAge");
   var title = ($("sTitle") && $("sTitle").value || "").trim();
   if(!title) return null;
+  var draftTags = tagFormRoute();
   return { id: "", title: title,
+    genres: draftTags.genres, subgenres: draftTags.subgenres, tropes: draftTags.tropes,
     author: ($("sAuthor") && $("sAuthor").value || "").trim(),
     pages: Number($("sPages") && $("sPages").value) || "",
-    genres: routeTags($("sGenres") && $("sGenres").value || "", $("sTropes") && $("sTropes").value || "").genres,
-    tropes: routeTags($("sGenres") && $("sGenres").value || "", $("sTropes") && $("sTropes").value || "").tropes,
+    /* One call, so a word aliased into another category is lifted out of
+       whichever box it was typed into -- see withTags below. */
     cover: sugCover || "",
     /* The form has a Summary box and it is the reason most people open this
        screen. It was not being read, so it was typed, saved, and quietly
@@ -8384,7 +8521,7 @@ function renderAdmin(){
   var waiting = inbox.filter(function(i){ return i && !i.handled && i.kind !== "suggest"; }).length;
   var tabs = [["shelf","Reading list"],["recs","Recommendations" + (pend ? " (" + pend + ")" : "")],
               ["meetings","Meetings"],["members","Members"],
-              ["tags","Genres & tropes"],["vote","Vote"],
+              ["tags","Tag lists"],["vote","Vote"],
               ["inbox","Inbox" + (waiting ? " (" + waiting + ")" : "")],["settings","Settings"]];
   $("adminModalBody").innerHTML =
     /* the Reading list tab carries its own, more specific version of this */
@@ -8436,8 +8573,10 @@ function bookEditor(b){
         '<div class="field"><label>Finished</label><input class="input" type="date" value="' + esc(b.finished || "") + '" data-bfield="finished" data-bid="' + esc(b.id) + '"></div>' +
         (b.status === "current" ? '<div class="field"><label>Pages read so far</label><input class="input" type="number" min="0" max="20000" value="' + esc(b.progressPage || 0) + '" data-bfield="progressPage" data-bid="' + esc(b.id) + '"></div>' : "") +
       "</div>" +
-      tagFieldHTML("genre", "book", b, 'data-bfield="genres" data-bid="' + esc(b.id) + '"') +
-      tagFieldHTML("trope", "book", b, 'data-bfield="tropes" data-bid="' + esc(b.id) + '"') +
+      VOCAB_ORDER.map(function(k){
+        return tagFieldHTML(k, "book", b, 'data-bfield="' + VOCAB_KINDS[k].field +
+          '" data-bid="' + esc(b.id) + '"');
+      }).join("") +
       '<div class="field" style="margin-top:14px"><label>Summary</label>' +
         '<textarea class="textarea" data-bfield="blurb" data-bid="' + esc(b.id) + '">' + esc(b.blurb || "") + "</textarea></div>" +
       '<div class="formgrid" style="margin-top:18px">' +
@@ -8622,10 +8761,9 @@ function recDraft(it){
   var id = it.id;
   if(!recDrafts[id]){
     var p = it.payload || {};
-    recDrafts[id] = withAges({
+    recDrafts[id] = withAges(payloadTags({
       id: id, title: p.title || "Untitled", author: p.author || "",
       pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
-      genres: routeTags(p.genres, p.tropes).genres, tropes: routeTags(p.genres, p.tropes).tropes,
       by: String(p.by || ""), at: String(it.at || "").slice(0, 10),
       cover: safeUrl(p.cover), blurb: String(p.blurb || ""),
       summarySource: String(p.summarySource || "own"),
@@ -8636,7 +8774,7 @@ function recDraft(it){
       endorsements: preEndorsements(p),
       ratings: cleanRatings(p.ratings).length ? cleanRatings(p.ratings)
         : (Number(p.rating) > 0 ? [{ score: clampRating(p.rating), source: String(p.ratingSource || "").slice(0, 40) }] : [])
-    });
+    }, p));
   }
   return recDrafts[id];
 }
@@ -8691,8 +8829,10 @@ function recEditor(r, opts){
       '<div data-ratinghost="' + esc(r.id) + '">' + adminRatingRowsHTML(r) + "</div>" +
       '<div style="margin-top:10px"><button class="btn btn--sm btn--ghost" type="button" ' +
         'data-raddrating="' + esc(r.id) + '">+ Add rating</button></div></div>' +
-    tagFieldHTML("genre", "rec", r, 'data-rfield="genres" data-rid="' + esc(r.id) + '"') +
-    tagFieldHTML("trope", "rec", r, 'data-rfield="tropes" data-rid="' + esc(r.id) + '"') +
+    VOCAB_ORDER.map(function(k){
+      return tagFieldHTML(k, "rec", r, 'data-rfield="' + VOCAB_KINDS[k].field +
+        '" data-rid="' + esc(r.id) + '"');
+    }).join("") +
     '<div class="field" style="margin-top:14px"><label>Summary</label>' +
       '<textarea class="textarea" data-rfield="blurb" data-rid="' + esc(r.id) + '">' + esc(r.blurb || "") + "</textarea></div>" +
     '<div class="field" style="margin-top:14px"><label>Reader reviews <span style="text-transform:none;letter-spacing:0">(spoiler-free, one per line as "quote — who said it")</span></label>' +
@@ -8853,7 +8993,7 @@ function tagChipsHTML(kind, owner, obj){
             '<button class="cmptag__go" type="button" data-cmpopen="' + esc(kind) + '"' + at +
               ' aria-expanded="false">Compare</button>' +
             '<button class="cmptag__go cmptag__go--move" type="button" data-mvopen="' + esc(kind) + '"' + at +
-              ' aria-expanded="false">→ ' + esc(VOCAB_KINDS[otherKind(kind)].many) + "</button></span>";
+              ' aria-expanded="false">Move to\u2026</button></span>';
         }).join("")
       : '<p class="hint" style="margin:0">No ' + esc(K.many.toLowerCase()) + " yet.</p>") +
     "</div><div id=\"" + esc(compareHostId(kind, owner, obj.id)) + "\"></div>";
@@ -8921,7 +9061,13 @@ async function compareSwap(kind, owner, id, i, to){
 /* ---------- moving a tag between the two lists ---------- */
 /* The other kind. Written once so nothing below has to spell out that there
    are exactly two of them. */
-function otherKind(kind){ return kind === "genre" ? "trope" : "genre"; }
+/* Retired: with three categories there is no "the other one". The
+   destination is chosen in the move panel and carried in compareAt.moveTo. */
+function moveDest(kind){
+  var want = compareAt && compareAt.moveTo;
+  return (want && want !== kind && VOCAB_ORDER.indexOf(want) !== -1)
+    ? want : otherKinds(kind)[0];
+}
 /* Everything a sweep would touch: the recommendations, including any pending
    submission still being reviewed, and the reading list. Their Five is left
    alone deliberately — those are a member's own five books rather than the
@@ -8943,8 +9089,8 @@ function carrierLine(hit){
 }
 /* One record. Out of the list it is in, into the other one — and if the other
    one already carries the word, the two become one rather than two. */
-function moveTagOn(obj, kind, term){
-  var from = VOCAB_KINDS[kind].field, to = VOCAB_KINDS[otherKind(kind)].field, k = vkey(term);
+function moveTagOn(obj, kind, term, toKind){
+  var from = VOCAB_KINDS[kind].field, to = VOCAB_KINDS[toKind].field, k = vkey(term);
   var src = obj[from] || [], dst = obj[to] || [];
   var at = -1;
   src.forEach(function(x, i){ if(vkey(x) === k) at = i; });
@@ -8958,30 +9104,30 @@ function moveTagOn(obj, kind, term){
 /* The canonical side of a sweep: the term record crosses over, the aliases
    that pointed at it come too, and the word is written down as living in the
    new list so the next submission of it is routed there. */
-function moveTermAcross(kind, term, opts){
+function moveTermAcross(kind, term, toKind, opts){
   opts = opts || {};
-  var src = vocabStore(kind), dst = vocabStore(otherKind(kind)), k = vkey(term);
+  var src = vocabStore(kind), dst = vocabStore(toKind), k = vkey(term);
   var rec = vocabTermRec(kind, term);
   var kids = src.terms.filter(function(x){ return vkey(x.parent) === k; });
   src.terms = src.terms.filter(function(x){ return vkey(x.name) !== k; });
   var name = rec ? rec.name : String(term).trim();
-  if(!vocabTermRec(otherKind(kind), name)) dst.terms.push({ name: name, parent: "" });
+  if(!vocabTermRec(toKind, name)) dst.terms.push({ name: name, parent: "" });
   /* a renaming alias follows the word it renames, or it would go on sending
      submissions into a list the term has left */
   Object.keys(src.aliases).forEach(function(a){
     if(vkey(src.aliases[a]) === k){ dst.aliases[a] = name; delete src.aliases[a]; }
   });
-  vocabHomes()[k] = otherKind(kind);
+  vocabHomes()[k] = toKind;
   /* Children either come along, keeping this term as their parent, or stay
      where they are with no parent at all. Never left pointing at a word that
      is no longer in their list. */
   kids.forEach(function(child){
-    if(opts.children === "move") moveTermAcross(kind, child.name, { children: "move" });
+    if(opts.children === "move") moveTermAcross(kind, child.name, toKind, { children: "move" });
     else child.parent = "";
   });
   if(opts.children === "move"){
     kids.forEach(function(child){
-      var moved = vocabTermRec(otherKind(kind), child.name);
+      var moved = vocabTermRec(toKind, child.name);
       if(moved) moved.parent = name;
     });
   }
@@ -9007,7 +9153,7 @@ function tagMoveHTML(kind, owner, id, i){
   var fromList = owner === "vocab";
   var obj = fromList ? null : compareTarget(owner, id);
   if(!fromList && !obj) return "";
-  var K = VOCAB_KINDS[kind], other = VOCAB_KINDS[otherKind(kind)];
+  var K = VOCAB_KINDS[kind], destKind = moveDest(kind), other = VOCAB_KINDS[destKind];
   var term = moveTermOf(kind, owner, id, i);
   if(!term) return "";
   var hit = tagCarriers(kind, term), fam = tagFamily(kind, term);
@@ -9016,6 +9162,14 @@ function tagMoveHTML(kind, owner, id, i){
       '" data-cmpid="' + esc(id) + '" data-cmpi="' + i + '">' +
     '<p class="cmp__head">Move <strong>' + esc(term) + "</strong> to " + esc(other.many) +
       '<button class="cmp__x" type="button" data-cmpclose aria-label="Close">×</button></p>' +
+    /* Which list it is going to. Two options today, more if a category is
+       ever added, and never the one it is already in. */
+    '<div class="field" style="margin:0 0 10px"><label for="mvDest">Into</label>' +
+      '<select class="select" id="mvDest" data-mvdest>' +
+        otherKinds(kind).map(function(k2){
+          return '<option value="' + esc(k2) + '"' + (k2 === destKind ? " selected" : "") +
+            ">" + esc(VOCAB_KINDS[k2].many) + "</option>";
+        }).join("") + "</select></div>" +
     (dupe ? '<p class="hint" style="margin:0 0 10px">This book already has it as a ' + esc(other.one) +
       ", so the two will be merged into one tag.</p>" : "") +
     (fromList
@@ -9058,6 +9212,9 @@ async function tagMove(kind, owner, id, i, all){
   if(owner !== "vocab" && !obj) return;
   var term = moveTermOf(kind, owner, id, i);
   if(!term) return;
+  /* Read before compareAt is cleared: the destination is the organiser's
+     choice, not an implied opposite. */
+  var dest = moveDest(kind);
   if(owner === "vocab") all = true;   /* there is no one book to move it on */
   if(all){
     var box = document.querySelector("[data-cmp][data-cmpmode='move']");
@@ -9065,21 +9222,21 @@ async function tagMove(kind, owner, id, i, all){
     var par = box && box.querySelector("[data-mvparent]");
     var hit = tagCarriers(kind, term);
     var parentName = par && par.checked ? vocabParent(kind, term) : "";
-    hit.recs.concat(hit.books).forEach(function(o){ moveTagOn(o, kind, term); });
+    hit.recs.concat(hit.books).forEach(function(o){ moveTagOn(o, kind, term, dest); });
     if(parentName){
       tagCarriers(kind, parentName).recs.concat(tagCarriers(kind, parentName).books)
-        .forEach(function(o){ moveTagOn(o, kind, parentName); });
+        .forEach(function(o){ moveTagOn(o, kind, parentName, dest); });
     }
-    moveTermAcross(kind, term, { children: kids && kids.checked ? "move" : "drop" });
+    moveTermAcross(kind, term, dest, { children: kids && kids.checked ? "move" : "drop" });
     if(parentName){
-      moveTermAcross(kind, parentName, { children: "drop" });
+      moveTermAcross(kind, parentName, dest, { children: "drop" });
       /* Both crossed over, so the relationship crosses with them — moving a
          parent along is only worth offering if the pair arrives still joined. */
-      var landed = vocabTermRec(otherKind(kind), term);
+      var landed = vocabTermRec(dest, term);
       if(landed) landed.parent = parentName;
     }
   }
-  else moveTagOn(obj, kind, term);
+  else moveTagOn(obj, kind, term, dest);
   compareAt = null;
   if(await save("Moving the tag…")){ renderAll(); renderAdmin(); }
 }
@@ -9873,12 +10030,13 @@ function paneArchived(){
 
 /* ---------- Admin: the canonical lists themselves ---------- */
 function paneTags(){
-  return '<p class="eyebrow">Genres &amp; tropes</p>' +
+  return '<p class="eyebrow">Tag lists</p>' +
     '<h3 style="font-size:22px;margin:8px 0 18px">The words the filters run on</h3>' +
     '<p class="hint" style="margin-bottom:18px">Every word already tagged on a book is in these lists. ' +
     'Give one a parent and filtering by the parent also finds it — so a Historical Fiction parented to ' +
-    'Fiction turns up under either. Nothing is assumed: a term has no parent until you give it one.</p>' +
-    vocabBlock("genre") + vocabBlock("trope");
+    'Fiction turns up under either. Nothing is assumed: a term has no parent until you give it one. ' +
+    'Parents work inside one list: a subgenre can sit under another subgenre, not under a genre.</p>' +
+    VOCAB_ORDER.map(vocabBlock).join("");
 }
 function vocabBlock(kind){
   var K = VOCAB_KINDS[kind], terms = vocabTerms(kind), counts = vocabCounts(kind), v = vocabStore(kind);
@@ -9901,7 +10059,7 @@ function vocabBlock(kind){
               '<span class="vocabrow__n">' + (counts[vkey(t)] || 0) + " in use</span>" +
               '<button class="vocabrow__move" type="button" data-mvterm="' + esc(kind) + '" data-mvrow="' +
                 esc(row) + '" data-mvname="' + esc(t) + '" aria-expanded="false">→ ' +
-                esc(VOCAB_KINDS[otherKind(kind)].many) + "</button>" +
+                "Move to\u2026</button>" +
               '<select class="select" data-vparent="' + esc(t) + '" data-vkind="' + esc(kind) + '">' +
                 '<option value="">No parent</option>' +
                 terms.filter(function(o){ return vkey(o) !== vkey(t); }).map(function(o){
@@ -10536,9 +10694,21 @@ document.addEventListener("click", async function(e){
   }
 
   /* recommendation filters */
+  if((el = t.closest("[data-tagfold]"))){
+    /* The browser does the toggling; this only writes down which way it went,
+       so the next re-render leaves the fold as the reader left it. At click
+       time the element still holds the old state. */
+    var fdet = el.closest("details");
+    tagFoldOpen[el.getAttribute("data-tagfold")] = !(fdet && fdet.open);
+    return;
+  }
   if((el = t.closest("[data-ftag]"))){
     gridPage.recs = 0;
     var fkind = el.getAttribute("data-fkind") || "genre";
+    /* A fold that opened itself for a selection stays open once that selection
+       is dropped -- otherwise unpicking the last chip takes the list away
+       from under the hand that is using it. */
+    tagFoldOpen[fkind] = true;
     var list = recFilter[VOCAB_KINDS[fkind].field], g = el.getAttribute("data-ftag");
     var at = -1;
     list.forEach(function(x, i){ if(vkey(x) === vkey(g)) at = i; });
@@ -10551,11 +10721,12 @@ document.addEventListener("click", async function(e){
        window, at whatever height it was last dragged to */
     var tk = el.getAttribute("data-tagtoggle");
     tagBoxOpen[tk] = !tagBoxOpen[tk];
+    tagFoldOpen[tk] = true;      /* the button is inside the fold */
     renderRecFilters();
     return;
   }
   if(t.closest("#fReset")){
-    recFilter = { by: "", sort: "top", genres: [], tropes: [], ageMin: 0, ageMax: AGE_TOP,
+    recFilter = { by: "", sort: "top", genres: [], subgenres: [], tropes: [], ageMin: 0, ageMax: AGE_TOP,
                   pagesMin: 0, pagesMax: PAGE_TOP, rateMin: 0, rateMax: RATE_TOP,
                   nomOnly: false };
     filtersOpen = true;
@@ -11727,11 +11898,19 @@ document.addEventListener("click", async function(e){
     var pg = get("pages"); if(pg) bb.pages = Number(pg.value) || null;
     var si = get("seriesIndex"); if(si) bb.seriesIndex = Number(si.value) || 1;
     var pp = get("progressPage"); if(pp) bb.progressPage = Math.max(0, Number(pp.value) || 0);
-    var gn = get("genres"), btr = get("tropes");
-    if(gn || btr){
-      var broute2 = routeTags(gn ? gn.value : bb.genres, btr ? btr.value : bb.tropes);
-      if(gn) bb.genres = broute2.genres;
-      if(btr) bb.tropes = broute2.tropes;
+    /* Read from the inputs that are on screen, falling back to what the
+       record holds for any that are not. Then routed once, together. */
+    var tagIn = {}, anyTag = false;
+    VOCAB_ORDER.forEach(function(k){
+      var el2 = get(VOCAB_KINDS[k].field);
+      if(el2) anyTag = true;
+      tagIn[VOCAB_KINDS[k].field] = el2 ? el2.value : bb[VOCAB_KINDS[k].field];
+    });
+    if(anyTag){
+      var broute2 = routeTags(tagIn);
+      VOCAB_ORDER.forEach(function(k){
+        if(get(VOCAB_KINDS[k].field)) bb[VOCAB_KINDS[k].field] = broute2[VOCAB_KINDS[k].field];
+      });
     }
     var picks = p2.querySelectorAll('[data-bmember][data-bid="' + bb.id + '"]');
     if(picks.length){
@@ -12019,11 +12198,17 @@ function readRecFields(rec){
      to land on the right side whichever box it is sitting in. This runs on
      Approve as well as on Save, which is where a move on a pending suggestion
      would otherwise be read back out of the old box and undone. */
-  var gn = get("genres"), tr = get("tropes");
-  if(gn || tr){
-    var rroute2 = routeTags(gn ? gn.value : rec.genres, tr ? tr.value : rec.tropes);
-    if(gn) rec.genres = rroute2.genres;
-    if(tr) rec.tropes = rroute2.tropes;
+  var rTagIn = {}, rAnyTag = false;
+  VOCAB_ORDER.forEach(function(k){
+    var el3 = get(VOCAB_KINDS[k].field);
+    if(el3) rAnyTag = true;
+    rTagIn[VOCAB_KINDS[k].field] = el3 ? el3.value : rec[VOCAB_KINDS[k].field];
+  });
+  if(rAnyTag){
+    var rroute2 = routeTags(rTagIn);
+    VOCAB_ORDER.forEach(function(k){
+      if(get(VOCAB_KINDS[k].field)) rec[VOCAB_KINDS[k].field] = rroute2[VOCAB_KINDS[k].field];
+    });
   }
   if(pane.querySelector('[data-dualid="rc:' + rec.id + '"]')){
     var age = dualValue("rc:" + rec.id);
@@ -12040,10 +12225,9 @@ function acceptSubmission(item, opts){
   opts = opts || {};
   if(item.kind === "suggest"){
     if(recById(item.id)) return;
-    state.recs.push(withAges({
+    state.recs.push(withAges(payloadTags({
       id: item.id, title: String(p.title || "Untitled").slice(0, 140), author: String(p.author || "").slice(0, 140),
       pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
-      genres: routeTags(p.genres, p.tropes).genres, tropes: routeTags(p.genres, p.tropes).tropes,
       by: String(p.by || "").slice(0, 60),
       /* who sent it, when they were signed in — a name alone cannot be
          followed back to a person, and two of the names already here belong
@@ -12057,7 +12241,7 @@ function acceptSubmission(item, opts){
       shortlist: false, reviews: [], dislikes: [],
       ratings: cleanRatings(p.ratings).length ? cleanRatings(p.ratings)
         : (Number(p.rating) > 0 ? [{ score: clampRating(p.rating), source: String(p.ratingSource || "").slice(0, 40) }] : [])
-    }));
+    }, p)));
   }else if(item.kind === "join"){
     var nm = String(p.name || "").trim();
     if(!nm) return;
@@ -12136,9 +12320,9 @@ function adoptRec(rec, status, community){
   var picked = community === undefined
     ? (scores.length ? scores[0].score : 0)
     : clampRating(community);
-  var proute = routeTags(rec.genres, rec.tropes);
-  var copy = withAges({ id: rec.id, title: rec.title, author: rec.author, pages: rec.pages, genres: proute.genres,
-    tropes: proute.tropes,
+  var proute = routeTags(tagFieldsOf(rec));
+  var copy = withAges({ id: rec.id, title: rec.title, author: rec.author, pages: rec.pages,
+    genres: proute.genres, subgenres: proute.subgenres, tropes: proute.tropes,
     ageMin: rec.ageMin, ageMax: rec.ageMax, blurb: rec.blurb, status: status, cover: rec.cover || "", badge: "",
     series: "", seriesIndex: 1, started: status === "current" ? todayISO() : "",
     finished: status === "past" ? todayISO() : "", progressPage: 0, members: [],
@@ -12191,6 +12375,16 @@ document.addEventListener("change", async function(e){
   if(n && n.hasAttribute && n.hasAttribute("data-nomsel")){
     nomPick[n.getAttribute("data-nomsel")] = !!n.checked;
     renderAdmin();
+    return;
+  }
+  if(n && n.hasAttribute && n.hasAttribute("data-mvdest")){
+    if(compareAt) compareAt.moveTo = n.value;
+    /* compareRefresh needs to be told which panel: called bare it matched
+       nothing, so the head went on naming the old list and the
+       already-has-it merge note never appeared, while the move itself
+       obeyed the picker. */
+    if(compareAt) compareRefresh(compareAt.kind, compareAt.owner, compareAt.id);
+    vocabMoveRefresh();
     return;
   }
   if(n && n.id === "fNomOnly"){
@@ -13784,11 +13978,13 @@ $("suggestForm").addEventListener("submit", async function(e){
 
   if(endpoint()){
     note.textContent = "Sending\u2026";
+    /* All three tag boxes, routed together, so a word the organiser has
+       aliased into another category travels in the right field. */
+    var subRoute = tagFormRoute();
     var res = await submitPublic("suggest", {
       title: title, author: author, pages: Number(el.pages.value) || null,
       ageMin: age.lo, ageMax: age.hi, level: levelText({ ageMin: age.lo, ageMax: age.hi }),
-      genres: routeTags(genres, ($("sTropes") || {}).value || "").genres,
-      tropes: routeTags(genres, ($("sTropes") || {}).value || "").tropes,
+      genres: subRoute.genres, subgenres: subRoute.subgenres, tropes: subRoute.tropes,
       blurb: blurb, summarySource: chosen.from, cover: sugCover, by: by,
       byId: (myMember() || {}).id || "",
       ratings: ratingsForSubmit()
