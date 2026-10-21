@@ -1777,6 +1777,19 @@
         "name": "Saira",
         "vote": "up"
       }
+    },
+    {
+      "id": "join-9d7efa0d-90f",
+      "kind": "join",
+      "at": "2026-10-21T18:36:19.875Z",
+      "payload": {
+        "name": "Zainah",
+        "fable": "",
+        "goodreads": "",
+        "note": "Zainah",
+        "emailRef": "sub-778e8b2b-c31",
+        "emailHint": "z••••@gmail.com"
+      }
     }
   ]
 }
