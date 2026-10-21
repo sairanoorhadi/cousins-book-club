@@ -1,5 +1,5 @@
 {
-  "rev": 1596,
+  "rev": 1597,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2689,7 +2689,8 @@
       "tied": null,
       "parent": null,
       "at": "2026-10-20T04:21:27.160Z",
-      "test": true
+      "test": true,
+      "archived": true
     },
     {
       "id": "nom-mvgzm95ifl1zx",
