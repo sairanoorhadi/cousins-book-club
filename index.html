@@ -1180,6 +1180,17 @@ a.getrow:hover{background:var(--sunk)}
   padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;
   text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
 .reccard__nom--under{top:34px}
+/* Under the Nominated badge, and in the club's own ink rather than the grape
+   so the two read as different kinds of fact. */
+.reccard__mine{position:absolute;top:34px;left:7px;z-index:2;pointer-events:none;
+  background:var(--surface);color:var(--ink);border:2px solid var(--edge);border-radius:999px;
+  padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
+.reccard__mine--under{top:61px}
+.reccard__onshort{position:absolute;bottom:40px;left:7px;z-index:2;pointer-events:none;
+  background:var(--flare);color:var(--on-flare);border:2px solid var(--edge);border-radius:999px;
+  padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
 /* The nominate prompt sits under the endorse row and reads as its own
    question rather than more of the same one. */
 .endorse--nom{margin-top:10px}
@@ -1916,6 +1927,9 @@ a.getrow:hover{background:var(--sunk)}
       </div>
       <div class="tabbar" role="tablist" aria-label="Recommendations">
         <button class="tabbtn" role="tab" id="tab-recs" aria-controls="panel-recs" aria-selected="true" type="button">Recommendations</button>
+        <!-- Hidden rather than absent: tabGroup() binds its click once at boot,
+             so the button has to exist even when there is no round to show. -->
+        <button class="tabbtn" role="tab" id="tab-nominations" aria-controls="panel-nominations" aria-selected="false" type="button" hidden>Nominations</button>
         <button class="tabbtn" role="tab" id="tab-short" aria-controls="panel-short" aria-selected="false" type="button">Next Book &ndash; Shortlist</button>
         <button class="tabbtn" role="tab" id="tab-suggest" aria-controls="panel-suggest" aria-selected="false" type="button">Suggest a Book</button>
       </div>
@@ -1924,6 +1938,18 @@ a.getrow:hover{background:var(--sunk)}
         <div id="recPageTop"></div>
         <div class="recgrid" id="recGrid"></div>
         <div id="recPageBot"></div>
+      </div>
+      <div class="tabpanel" role="tabpanel" id="panel-nominations" aria-labelledby="tab-nominations" hidden>
+        <div id="nomHead"></div>
+        <!-- The Pile's own Filter & Sort panel renders into whichever of these
+             two hosts is on screen, so its element ids are never duplicated. -->
+        <div id="nomFilters"></div>
+        <div id="nomPageTop"></div>
+        <div class="recgrid" id="nomGrid"></div>
+        <div id="nomPageBot"></div>
+        <p class="hint" style="margin-top:18px" id="nomBrowseWrap">
+          <button class="btn btn--sm btn--ghost" type="button" id="nomBrowseAll">Browse all recommendations to nominate a book</button>
+        </p>
       </div>
       <div class="tabpanel" role="tabpanel" id="panel-short" aria-labelledby="tab-short" hidden>
         <p class="focusnote" style="margin-bottom:18px">The books in the running for the next read. The organiser shortlists them from the recommendations.</p>
@@ -5066,9 +5092,16 @@ function pagesNarrowed(){ return recFilter.pagesMin > 0 || recFilter.pagesMax < 
 function pagelessCount(){
   return approvedRecs().filter(function(r){ return !Number(r.pages); }).length;
 }
-function sortRecs(list){
-  var by = recFilter.sort;
+var nomSort = "noms";
+function sortRecs(list, which){
+  var by = which === "noms" ? nomSort : recFilter.sort;
+  var round = which === "noms" ? nomTabRound() : null;
   return list.slice().sort(function(a, b){
+    /* Most nominated first, titles settling a tie -- the same shape as the
+       Pile's own default, counting a different thing. */
+    if(by === "noms"){
+      return (nomCountFor(round, b.id) - nomCountFor(round, a.id)) || byTitle(a, b);
+    }
     if(by === "title") return byTitle(a, b);
     if(by === "author") return surname(a.author).localeCompare(surname(b.author)) || byTitle(a, b);
     /* Default: most endorsed first, dislikes counting against. Two books on
@@ -5096,10 +5129,13 @@ var afterSignIn = null;
 async function nomLoadMine(){
   var r = currentNom();
   nomMine = null;
-  if(!r || !myMember() || voteStatusOf(r) !== "open"){ renderVoteCta(); return; }
+  var st = r ? voteStatusOf(r) : "none";
+  /* Asked for on a closed round as well: the tab keeps showing which book was
+     yours after the round ends, and that answer only exists in the script. */
+  if(!r || !myMember() || (st !== "open" && st !== "closed")){ renderVoteCta(); return; }
   var res = await callEndpoint("nom-mine", { token: sessionToken(), roundId: r.id });
   if(res && res.ok) nomMine = res.mine || null;
-  renderVoteCta(); renderRecGrid();
+  renderVoteCta(); renderRecGrid(); renderNomGrid();
 }
 
 /* The count on a nominated cover. Top LEFT, because the endorse pill owns
@@ -5107,13 +5143,25 @@ async function nomLoadMine(){
    Shortlist badge is already there. pointer-events:none so the card
    underneath stays one big button, and nothing about the cover changes. */
 function nomBadgeHTML(r){
-  var round = currentNom();
-  if(!round || voteStatusOf(round) !== "open") return "";
+  var round = nomTabRound();
+  if(!round) return "";
+  var st = voteStatusOf(round);
+  if(st !== "open" && st !== "closed") return "";
   var n = nomCountFor(round, r.id);
   var org = nomList(round).filter(function(x){ return String(x.id) === String(r.id); })[0];
   if(!n && !(org && org.org)) return "";
-  return '<span class="reccard__nom' + (r.shortlist ? " reccard__nom--under" : "") + '">' +
+  var out = '<span class="reccard__nom' + (r.shortlist ? " reccard__nom--under" : "") + '">' +
     "Nominated" + (n > 1 ? " \u00d7" + n : "") + "</span>";
+  /* Only this reader sees it, because nomMine came from the script and is
+     about them alone. Nothing public says who nominated what. */
+  if(String(nomMine) === String(r.id)){
+    out += '<span class="reccard__mine' + (r.shortlist ? " reccard__mine--under" : "") +
+      '">Your nomination</span>';
+  }
+  /* Added because a nominated book missing from the vote is otherwise a
+     puzzle: this says it already went through. */
+  if(r.shortlist) out += '<span class="reccard__onshort">On the shortlist</span>';
+  return out;
 }
 
 /* The prompt under Endorse / Not for me in a recommendation's modal. Every
@@ -5627,8 +5675,99 @@ function tagFilterHTML(kind){
       (open ? "Collapse" : "Expand") + "</button></div>" +
     "</div>";
 }
+/* How stale the numbers can be, said on the page rather than left to be
+   discovered. A nomination is written to data/state.json by the script, and
+   GitHub Pages serves that file through a CDN -- so a count can be a few
+   minutes behind even with the cache beaten. Hence the line, the button, and
+   the re-check while the tab is in front of someone. */
+var NOM_POLL_MS = 60000;
+var nomFreshAt = 0, nomPollTimer = null, nomFreshTick = null;
+function nomAgoText(){
+  if(!nomFreshAt) return "";
+  var mins = Math.floor((Date.now() - nomFreshAt) / 60000);
+  return mins < 1 ? "Updated just now" :
+    mins === 1 ? "Updated 1 min ago" : "Updated " + mins + " min ago";
+}
+function nomTabVisible(){
+  var pane = $("panel-nominations");
+  return !!pane && !pane.hidden;
+}
+function nomPollOn(){
+  nomPollOff();
+  var r = nomTabRound();
+  if(!r || voteStatusOf(r) !== "open") return;   /* nothing moves once it is shut */
+  nomPollTimer = setInterval(function(){
+    if(document.hidden || !nomTabVisible()) return;   /* not in front of anyone */
+    nomRefresh(false);
+  }, NOM_POLL_MS);
+  /* the "2 min ago" line has to age even when nothing is fetched */
+  nomFreshTick = setInterval(function(){
+    if(!document.hidden && nomTabVisible()) renderNomHead();
+  }, 20000);
+}
+function nomPollOff(){
+  if(nomPollTimer){ clearInterval(nomPollTimer); nomPollTimer = null; }
+  if(nomFreshTick){ clearInterval(nomFreshTick); nomFreshTick = null; }
+}
+async function nomRefresh(alsoMine){
+  try{
+    await loadState();
+    nomFreshAt = Date.now();
+  }catch(e){}
+  if(alsoMine) await nomLoadMine();
+  renderNomHead(); renderNomGrid(); renderNomTabVisibility();
+}
+function renderNomTabVisibility(){
+  var btn = $("tab-nominations");
+  if(!btn) return;
+  var on = nomTabOn();
+  btn.hidden = !on;
+  /* If it is showing and then stops -- a vote launched, or it was put away --
+     whoever was looking at it is moved somewhere that still exists. */
+  if(!on && nomTabVisible()) tabShow(["recs","nominations","short","suggest"], "tab-", "recs");
+}
+function renderNomHead(){
+  var host = $("nomHead"); if(!host) return;
+  var r = nomTabRound();
+  if(!r){ host.innerHTML = ""; return; }
+  var st = voteStatusOf(r);
+  var total = voteMembers().length;
+
+  if(st === "scheduled"){
+    var wrapSched = $("nomBrowseWrap"); if(wrapSched) wrapSched.hidden = true;
+    host.innerHTML = '<p class="focusnote" style="margin-bottom:18px">' +
+      "<strong>Nominations open " + esc(voteWhen(r.opensAt)) + ".</strong> " +
+      "Nothing has been put forward yet.</p>";
+    return;
+  }
+  if(st === "closed"){
+    var wrap = $("nomBrowseWrap"); if(wrap) wrap.hidden = true;
+    /* Nothing here invites action any more: no countdown, no turnout, and
+       the numbers are final rather than a few minutes old. */
+    host.innerHTML = '<p class="focusnote" style="margin-bottom:18px">' +
+      "<strong>Nominations closed</strong> " + esc(voteWhen(r.closedAt || r.closesAt)) +
+      ". " + esc(nomList(r).length) +
+      (nomList(r).length === 1 ? " book was put forward." : " books were put forward.") +
+      ' <span class="hint">Final.</span></p>';
+    return;
+  }
+  var wrapOpen = $("nomBrowseWrap"); if(wrapOpen) wrapOpen.hidden = false;
+  host.innerHTML = '<p class="focusnote" style="margin-bottom:18px">' +
+    "<strong>Nominations are open.</strong> Closes " + esc(voteWhen(r.closesAt)) +
+    " \u00b7 " + esc(voteCountdown(r.closesAt)) + " \u00b7 " +
+    esc(r.turnout || 0) + " of " + esc(total) + " members have nominated. " +
+    '<span class="hint">' + esc(nomAgoText()) + " \u2014 counts can be a few minutes behind. " +
+    '<button class="btn btn--sm btn--ghost" type="button" id="nomReload">Refresh</button></span></p>';
+}
+
 function renderRecFilters(){
-  var host = $("recFilters");
+  /* One panel, rendered into whichever of the two tabs is on screen -- its
+     sliders and chips carry element ids, and two copies would duplicate
+     every one of them. */
+  var onNom = nomTabVisible();
+  var other = $(onNom ? "recFilters" : "nomFilters");
+  if(other) other.innerHTML = "";
+  var host = $(onNom ? "nomFilters" : "recFilters");
   if(!host) return;
   var people = [];
   approvedRecs().forEach(function(r){ if(r.by && people.indexOf(r.by) === -1) people.push(r.by); });
@@ -5652,9 +5791,19 @@ function renderRecFilters(){
           '<option value="">Everyone</option>' +
           people.map(function(p){ return '<option value="' + esc(p) + '"' + (recFilter.by === p ? " selected" : "") + ">" + esc(p) + "</option>"; }).join("") +
         "</select></div>" +
-        '<div class="field"><label for="fSort">Order</label><select class="select" id="fSort">' +
-          [["top","Most endorsements"],["title","A-Z by title"],["author","A-Z by author surname"]].map(function(o){
-            return '<option value="' + o[0] + '"' + (recFilter.sort === o[0] ? " selected" : "") + ">" + esc(o[1]) + "</option>";
+        '<div class="field"><label for="fSort">Order</label><select class="select" id="fSort"' +
+          (onNom ? ' data-sortwho="noms"' : "") + ">" +
+          /* Most nominations leads on the nominations tab and is meaningless
+             on the Pile, so it is offered only where it means something. The
+             other three are kept in both places: endorsements, title and
+             author surname all still say something about a nominated book. */
+          (onNom
+            ? [["noms","Most nominations"],["title","A-Z by title"],
+               ["top","Most endorsements"],["author","A-Z by author surname"]]
+            : [["top","Most endorsements"],["title","A-Z by title"],
+               ["author","A-Z by author surname"]]).map(function(o){
+            var cur = onNom ? nomSort : recFilter.sort;
+            return '<option value="' + o[0] + '"' + (cur === o[0] ? " selected" : "") + ">" + esc(o[1]) + "</option>";
           }).join("") +
         "</select></div>" +
       "</div>" +
@@ -5754,7 +5903,7 @@ function recCardHTML(r){
    itself out with auto-fill, so the number of columns is the layout's answer
    rather than a number written down here, and it is read back off the grid. */
 var REC_ROWS = 3;
-var recPage = 0;
+
 var recColsSeen = 3;   /* the last count actually measured */
 function recCols(host){
   /* Only a grid that is being laid out has resolved tracks. In a hidden tab
@@ -5769,35 +5918,49 @@ function recPerPage(host){ return Math.max(1, recCols(host) * REC_ROWS); }
 function recPageCount(n, per){ return Math.max(1, Math.ceil(n / per)); }
 var REC_ARROWS = [["first", "\u00AB", "Jump to the first page"], ["prev", "\u2190", "The page before this"],
                   ["next", "\u2192", "The page after this"], ["last", "\u00BB", "Jump to the last page"]];
-function recArrowHTML(to, page, pages){
+function recArrowHTML(to, page, pages, which){
   var a = REC_ARROWS.filter(function(x){ return x[0] === to; })[0];
   var off = (to === "first" || to === "prev") ? page === 0 : page >= pages - 1;
-  return '<button class="recpage__go" type="button" data-recpage="' + to + '" aria-label="' + a[2] + '"' +
+  return '<button class="recpage__go" type="button" data-recpage="' + to + '" data-recwho="' +
+    esc(which || "recs") + '" aria-label="' + a[2] + '"' +
     (off ? " disabled" : "") + ">" + a[1] + "</button>";
 }
-function recPagerHTML(page, pages, where){
+function recPagerHTML(page, pages, where, which){
   if(pages < 2) return "";
+  which = which || "recs";
   var opts = "";
   for(var i = 0; i < pages; i++)
     opts += '<option value="' + i + '"' + (i === page ? " selected" : "") + ">" + (i + 1) + "</option>";
   return '<div class="recpage' + (where === "foot" ? " recpage--foot" : "") + '" role="group" ' +
       'aria-label="Recommendation pages">' +
-    recArrowHTML("first", page, pages) + recArrowHTML("prev", page, pages) +
-    '<span class="recpage__at"><select class="recpage__sel" aria-label="Go to a page">' + opts + "</select></span>" +
+    recArrowHTML("first", page, pages, which) + recArrowHTML("prev", page, pages, which) +
+    '<span class="recpage__at"><select class="recpage__sel" data-recwho="' + esc(which) +
+      '" aria-label="Go to a page">' + opts + "</select></span>" +
     '<span class="recpage__of">of ' + pages + "</span>" +
-    recArrowHTML("next", page, pages) + recArrowHTML("last", page, pages) +
+    recArrowHTML("next", page, pages, which) + recArrowHTML("last", page, pages, which) +
   "</div>";
 }
-function renderRecGrid(){
-  var host = $("recGrid"), all = approvedRecs();
-  var top = $("recPageTop"), bot = $("recPageBot");
+/* The Pile's grid, drawn for whichever list is asked for. One renderer, one
+   card, one pager, one set of filters -- the nominations tab is the same shelf
+   showing fewer books, not a second shelf. */
+var GRIDS = {
+  recs: { grid:"recGrid", top:"recPageTop", bot:"recPageBot",
+          emptyAll:"No recommendations approved yet. Use the Suggest a Book tab to put one forward." },
+  noms: { grid:"nomGrid", top:"nomPageTop", bot:"nomPageBot",
+          emptyAll:"No nominations yet. Be the first." }
+};
+var gridPage = { recs: 0, noms: 0 };
+function renderGridFor(which, all){
+  var G = GRIDS[which];
+  var host = $(G.grid); if(!host) return;
+  var top = $(G.top), bot = $(G.bot);
   var clear = function(){ if(top) top.innerHTML = ""; if(bot) bot.innerHTML = ""; };
   if(!all.length){
     clear();
-    host.innerHTML = '<p class="empty">No recommendations approved yet. Use the Suggest a Book tab to put one forward.</p>';
+    host.innerHTML = '<p class="empty">' + esc(G.emptyAll) + "</p>";
     return;
   }
-  var list = sortRecs(all.filter(recMatches));
+  var list = sortRecs(all.filter(recMatches), which);
   if(!list.length){
     clear();
     host.innerHTML = '<p class="empty">Nothing matches those filters. Try clearing them.</p>';
@@ -5807,12 +5970,54 @@ function renderRecGrid(){
   /* clamped, not reset: a vote or an edit re-renders this, and being thrown
      back to the first page for it would be its own small annoyance. Narrowing
      the filters is the one thing that does reset it, where it is asked for. */
-  if(recPage > pages - 1) recPage = pages - 1;
-  if(recPage < 0) recPage = 0;
-  var from = recPage * per;
+  if(gridPage[which] > pages - 1) gridPage[which] = pages - 1;
+  if(gridPage[which] < 0) gridPage[which] = 0;
+  var from = gridPage[which] * per;
   host.innerHTML = list.slice(from, from + per).map(recCardHTML).join("");
-  if(top) top.innerHTML = recPagerHTML(recPage, pages, "head");
-  if(bot) bot.innerHTML = recPagerHTML(recPage, pages, "foot");
+  if(top) top.innerHTML = recPagerHTML(gridPage[which], pages, "head", which);
+  if(bot) bot.innerHTML = recPagerHTML(gridPage[which], pages, "foot", which);
+}
+function renderRecGrid(){ renderGridFor("recs", approvedRecs()); }
+function renderNomGrid(){ renderGridFor("noms", nominatedRecs()); }
+
+/* ---------- the Nominations tab ----------
+   It shows while a round is worth looking at: scheduled, open, or closed and
+   not yet answered by a vote. Once a vote exists for the books it produced,
+   the Shortlist tab is the better place to look and this one gets out of the
+   way -- unless that vote is cancelled, in which case the question is open
+   again and so is the tab. The organiser can also put it away by hand, and
+   archiving a round takes its tab with it. */
+function nomSupersededByVote(r){
+  var list = allRounds(), seen = false;
+  for(var i = 0; i < list.length; i++){
+    if(list[i].id === r.id){ seen = true; continue; }
+    if(!seen) continue;
+    if(roundTypeOf(list[i]) !== "vote") continue;
+    /* A cancelled vote never asked the club anything. */
+    if(list[i].cancelledAt) continue;
+    return true;
+  }
+  return false;
+}
+function nomTabRound(){
+  var r = currentNom();
+  if(!r || r.archived || r.nomTabHidden) return null;
+  var st = voteStatusOf(r);
+  if(st === "cancelled") return null;
+  if(st === "open" || st === "scheduled") return r;
+  return nomSupersededByVote(r) ? null : r;
+}
+function nomTabOn(){ return !!nomTabRound(); }
+
+/* The nominated books, as published: ids, counts and the organiser flag. One
+   card per book however it got there -- a book both nominated by members and
+   added by the organiser is one book. */
+function nominatedRecs(){
+  var r = nomTabRound();
+  if(!r) return [];
+  var want = {};
+  nomList(r).forEach(function(x){ want[String(x.id)] = 1; });
+  return approvedRecs().filter(function(b){ return want[String(b.id)]; });
 }
 function renderShortlist(){
   var host = $("shortGrid"); if(!host) return;
@@ -5827,7 +6032,11 @@ function renderShortlist(){
     ? list.map(recCardHTML).join("")
     : '<p class="empty">Nothing shortlisted yet. The organiser marks contenders under Organiser tools → Recommendations.</p>';
 }
-function renderRecs(){ renderRecFilters(); renderRecGrid(); renderShortlist(); renderVote(); renderVoteCta(); }
+function renderRecs(){
+  renderNomTabVisibility();
+  renderRecFilters(); renderRecGrid(); renderNomHead(); renderNomGrid();
+  renderShortlist(); renderVote(); renderVoteCta();
+}
 
 /* ---------- render: badges ---------- */
 /* Focus is a set, not one name: two or more picked shows only the books all of
@@ -9504,6 +9713,19 @@ function nomClosedDetail(r, withActions){
               "</div>"
             : "")
         : '<p class="empty">Nobody put a book forward.</p>') +
+      '<div class="field" style="margin-top:14px"><label>The Nominations tab</label>' +
+        '<p class="hint" style="margin:0 0 8px">' +
+          (r.nomTabHidden
+            ? "Hidden. Members can\u2019t see the nominations."
+            : nomSupersededByVote(r)
+              ? "Gone already, because a vote has been launched \u2014 the Shortlist tab shows the candidates now."
+              : "Members can see the nominations and their counts.") + "</p>" +
+        (nomSupersededByVote(r) ? ""
+          : '<button class="btn btn--sm ' + (r.nomTabHidden ? "btn--surf" : "btn--ghost") +
+            '" type="button" data-nomtab="' + esc(r.id) + '" data-nomtabhide="' +
+            (r.nomTabHidden ? "0" : "1") + '">' +
+            (r.nomTabHidden ? "Show it again" : "Hide Nominations tab") + "</button>") +
+      "</div>" +
       '<div class="field" style="margin-top:14px"><label>Emails and the timer</label>' +
         voteMailBlock(r) + "</div>" +
       "</div>";
@@ -9587,6 +9809,11 @@ function roundRowHTML(r, newestNom){
       (roundTypeOf(r) === "vote" && st === "closed"
         ? '<span class="hint"> · Results: ' +
           (r.resultsHidden ? "hidden" : "shown") + "</span>"
+        : "") +
+      (roundTypeOf(r) === "nomination" && st === "closed"
+        ? '<span class="hint"> · Tab: ' +
+          (r.nomTabHidden || r.archived ? "hidden"
+            : nomSupersededByVote(r) ? "gone (vote launched)" : "shown") + "</span>"
         : "") +
     "</summary>" +
     '<div class="editor__body">' +
@@ -10310,7 +10537,7 @@ document.addEventListener("click", async function(e){
 
   /* recommendation filters */
   if((el = t.closest("[data-ftag]"))){
-    recPage = 0;
+    gridPage.recs = 0;
     var fkind = el.getAttribute("data-fkind") || "genre";
     var list = recFilter[VOCAB_KINDS[fkind].field], g = el.getAttribute("data-ftag");
     var at = -1;
@@ -10332,7 +10559,7 @@ document.addEventListener("click", async function(e){
                   pagesMin: 0, pagesMax: PAGE_TOP, rateMin: 0, rateMax: RATE_TOP,
                   nomOnly: false };
     filtersOpen = true;
-    recPage = 0;          /* a wider list starts at its own first page */
+    gridPage.recs = 0;          /* a wider list starts at its own first page */
     renderRecs();
     return;
   }
@@ -10684,6 +10911,32 @@ document.addEventListener("click", async function(e){
          "no answer") + " Reload to try again.", "bad");
     }
     renderAll(); renderAdmin();
+    return;
+  }
+  if((el = t.closest("[data-nomtab]"))){
+    var ntId = el.getAttribute("data-nomtab");
+    var ntHide = el.getAttribute("data-nomtabhide") === "1";
+    var ntr = roundById(ntId);
+    if(!ntr) return;
+    if(ntHide && !confirm("Hide the Nominations tab? Members will no longer see the nominations or their counts.")) return;
+    /* A flag on the round, saved the way every other round edit is. */
+    if(ntHide) ntr.nomTabHidden = true; else delete ntr.nomTabHidden;
+    voteTouch(ntr.id);
+    if(await save(ntHide ? "Hiding the tab…" : "Showing the tab…")){
+      say(ntHide ? "The Nominations tab is hidden." : "The Nominations tab is back.", "ok");
+      renderAll(); renderAdmin();
+    }
+    return;
+  }
+  if(t.closest("#nomBrowseAll")){
+    tabShow(["recs","nominations","short","suggest"], "tab-", "recs");
+    var gAll = $("recGrid"); if(gAll) gAll.scrollIntoView({ block: "start" });
+    return;
+  }
+  if(t.closest("#nomReload")){
+    say("Checking\u2026", "busy");
+    await nomRefresh(true);
+    say(nomAgoText() || "Up to date.", "ok");
     return;
   }
   if((el = t.closest("[data-respreview]"))){
@@ -11942,7 +12195,7 @@ document.addEventListener("change", async function(e){
   }
   if(n && n.id === "fNomOnly"){
     recFilter.nomOnly = !!n.checked;
-    recPage = 0;
+    gridPage.recs = 0;
     liveCount();
     var a = document.getElementById("fActive"); if(a) a.textContent = activeLabel();
     return;
@@ -11980,20 +12233,27 @@ document.addEventListener("change", async function(e){
   /* the page dropdown. Above the id guard below: it is drawn twice, so it
      carries a class rather than an id. */
   if(n && n.classList && n.classList.contains("recpage__sel")){
-    recPage = Number(n.value) || 0;
-    renderRecGrid();
+    var selWho = n.getAttribute("data-recwho") || "recs";
+    gridPage[selWho] = Number(n.value) || 0;
+    renderGridFor(selWho, selWho === "noms" ? nominatedRecs() : approvedRecs());
     return;
   }
   if(!n || !n.id) return;
   /* a narrower list is a different list, so it starts at its own first page */
-  if(n.id === "fBy"){ recFilter.by = n.value; recPage = 0; renderRecs(); }
-  else if(n.id === "fSort"){ recFilter.sort = n.value; recPage = 0; renderRecs(); }
+  if(n.id === "fBy"){ recFilter.by = n.value; gridPage.recs = 0; gridPage.noms = 0; renderRecs(); }
+  else if(n.id === "fSort"){
+    /* The same dropdown serves both tabs, so which list it is ordering is the
+       tab it was drawn into, not a second control. */
+    if(n.getAttribute("data-sortwho") === "noms"){ nomSort = n.value; gridPage.noms = 0; }
+    else { recFilter.sort = n.value; gridPage.recs = 0; }
+    renderRecs();
+  }
 });
 
 /* ---------- tabs ---------- */
 /* Lifted out of the click handler so something other than a click can choose
    a tab — the club's name, putting the page back the way it starts. */
-var TAB_GROUPS = [ [["recs","short","suggest"], "tab-"], [["tree","time"], "tab-"] ];
+var TAB_GROUPS = [ [["recs","nominations","short","suggest"], "tab-"], [["tree","time"], "tab-"] ];
 function tabShow(ids, prefix, k){
   ids.forEach(function(j){
     var on = j === k;
@@ -12003,7 +12263,22 @@ function tabShow(ids, prefix, k){
   /* A hidden grid has no laid-out columns, so it cannot be asked how many fit
      a row. Now that it is on screen it can be, and the page is redrawn with
      the real answer. */
-  if(k === "recs" && $("recGrid")) renderRecGrid();
+  /* A hidden grid has no laid-out columns, so it cannot be asked how many fit
+     a row. Now that it is on screen it can be, and the page is redrawn with
+     the real answer. Both grids need it, and the filter panel has to move to
+     whichever host is showing. */
+  if(k === "recs" || k === "nominations"){
+    renderRecFilters();
+    if($("recGrid")) renderRecGrid();
+    if($("nomGrid")) renderNomGrid();
+  }
+  if(k === "nominations"){
+    renderNomHead();
+    nomRefresh(true);      /* fresh numbers the moment the tab opens */
+    nomPollOn();
+  }else{
+    nomPollOff();
+  }
 }
 function tabGroup(ids, prefix){
   ids.forEach(function(k){
@@ -13278,11 +13553,14 @@ document.addEventListener("click", async function(e){
   var rpg = e.target.closest && e.target.closest("[data-recpage]");
   if(rpg){
     var to = rpg.getAttribute("data-recpage");
-    var perNow = recPerPage($("recGrid"));
-    var lastPage = recPageCount(sortRecs(approvedRecs().filter(recMatches)).length, perNow) - 1;
-    recPage = to === "first" ? 0 : to === "last" ? lastPage
-            : to === "next" ? recPage + 1 : recPage - 1;
-    renderRecGrid();
+    var who = rpg.getAttribute("data-recwho") || "recs";
+    var allFor = who === "noms" ? nominatedRecs() : approvedRecs();
+    var perNow = recPerPage($(GRIDS[who].grid));
+    var lastPage = recPageCount(sortRecs(allFor.filter(recMatches), who).length, perNow) - 1;
+    var at = gridPage[who];
+    gridPage[who] = to === "first" ? 0 : to === "last" ? lastPage
+            : to === "next" ? at + 1 : at - 1;
+    renderGridFor(who, allFor);
     return;
   }
   /* forward and back through the shelf. Nothing is fetched and nothing is
@@ -13641,6 +13919,17 @@ function voteJumpIfAsked(){
      whatever the reader was doing — the author picker's Confirm button shifted
      27px between one pick and the next, which is the exact misclick the
      okcheck, okbook and authok suites exist to catch. They caught it. */
+  if(location.hash === "#recs-nominations"){
+    /* Sent to the Recommendations tab rather than an empty one: the tab only
+       exists while there is a round worth looking at. */
+    var want = nomTabOn() ? "nominations" : "recs";
+    tabShow(["recs","nominations","short","suggest"], "tab-", want);
+    setTimeout(function(){
+      var h = $(want === "nominations" ? "panel-nominations" : "recGrid") || $("recs");
+      if(h) h.scrollIntoView({ block: "start" });
+    }, 120);
+    return;
+  }
   if(location.hash === "#recs"){
     var rt = $("tab-recs");
     if(rt) rt.click();
