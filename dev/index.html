@@ -7396,7 +7396,7 @@ function openBookDetail(o, kind, focus){
             (own
               ? '<span class="hint" style="flex:1 1 200px">Putting it forward counts as your endorsement, so you can\u2019t add another.</span>' +
                 '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Changed my mind</button>'
-              : (me && myName()
+              : (myMember()
                   /* The name is the account's and cannot be retyped -- the
                      script takes it from the session anyway, so an editable
                      box would only promise something it would not honour.
@@ -8058,7 +8058,11 @@ async function castVote(rec, down, name){
    the script takes the name from the session either way, so an editable box
    would be offering something it would not honour. */
 function renderSuggestGate(){
-  var inAsMember = !!(me && me.isMember);
+  /* myMember(), the same test the nominate prompt uses: signed in and on the
+     club's own members list. A second rule of my own making -- me.isMember --
+     answered differently and shut the form on a dozen suites that were
+     signed in perfectly well. One rule, used everywhere. */
+  var inAsMember = !!myMember();
   var lock = $("suggestLocked"), form = $("suggestForm");
   if(lock) lock.hidden = inAsMember;
   if(form) form.hidden = !inAsMember;
