@@ -1,6 +1,29 @@
 {
   "items": [
     {
+      "id": "endorse-devsample03",
+      "kind": "endorse",
+      "at": "2026-10-16T10:05:00.000Z",
+      "payload": {
+        "name": "Eliza",
+        "recId": "rc-thief",
+        "title": "The Book Thief"
+      }
+    },
+    {
+      "id": "notify-devsample02",
+      "kind": "notify",
+      "at": "2026-10-16T12:30:00.000Z",
+      "payload": {
+        "name": "Omar Siddiqui",
+        "emailRef": "sub-devsample04",
+        "emailHint": "o••••@example.com",
+        "books": [
+          "meetings"
+        ]
+      }
+    },
+    {
       "id": "join-devsample01",
       "kind": "join",
       "at": "2026-10-18T09:12:00.000Z",
