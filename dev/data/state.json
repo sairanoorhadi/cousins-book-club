@@ -1131,7 +1131,10 @@
           "source": "Goodreads"
         }
       ],
-      "tropes": []
+      "tropes": [],
+      "subgenres": [
+        "Dark fantasy"
+      ]
     },
     {
       "id": "suggest-2603dba6-457",
@@ -1164,7 +1167,10 @@
         }
       ],
       "level": "Ages 14+",
-      "tropes": []
+      "tropes": [],
+      "subgenres": [
+        "Portal fantasy"
+      ]
     },
     {
       "id": "suggest-a68f18ee-188",
@@ -1225,7 +1231,10 @@
         }
       ],
       "level": "Ages 16+",
-      "tropes": []
+      "tropes": [],
+      "subgenres": [
+        "Dark fantasy"
+      ]
     },
     {
       "id": "suggest-6944d6d5-5f3",
@@ -1259,7 +1268,10 @@
         }
       ],
       "level": "Ages 8-12",
-      "tropes": []
+      "tropes": [],
+      "subgenres": [
+        "Cosy mystery"
+      ]
     },
     {
       "id": "suggest-3b3ebcb6-1b1",
@@ -1289,7 +1301,10 @@
         }
       ],
       "level": "Ages 13+",
-      "tropes": []
+      "tropes": [],
+      "subgenres": [
+        "Village mystery"
+      ]
     },
     {
       "id": "suggest-5b4bab6f-ca1",
@@ -1322,7 +1337,10 @@
         }
       ],
       "level": "Ages 8-12",
-      "tropes": []
+      "tropes": [],
+      "subgenres": [
+        "Portal fantasy"
+      ]
     },
     {
       "id": "suggest-9502fb3c-cb7",
@@ -1847,6 +1865,10 @@
       "aliases": {}
     },
     "trope": {
+      "terms": [],
+      "aliases": {}
+    },
+    "subgenre": {
       "terms": [],
       "aliases": {}
     }

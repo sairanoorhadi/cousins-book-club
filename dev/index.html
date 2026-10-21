@@ -2566,6 +2566,18 @@ function routeTags(fields, from){
   VOCAB_ORDER.forEach(function(k){ res[VOCAB_KINDS[k].field] = out[k].slice(0, 12); });
   return res;
 }
+/* The tag rows on a card's hover panel, in the order of the categories. Genres
+   always shows, even empty, because a book with none is worth saying; the rest
+   only when there is something in them. One place, so the order cannot drift
+   apart between the recommendation card and the shelf card again. */
+function tagRevealHTML(o){
+  return VOCAB_ORDER.map(function(k){
+    var list = (o || {})[VOCAB_KINDS[k].field] || [];
+    if(!list.length && k !== "genre") return "";
+    return '<span class="k">' + esc(VOCAB_KINDS[k].many) + '</span><span class="v">' +
+      esc(list.join(" \u00b7 ") || "Unlisted") + "</span>";
+  }).join("");
+}
 /* Every tag on a book as pills, in the order of the categories, each in its
    own style. One place, so a fourth category appears in the modal for free. */
 var VOCAB_PILL = { genre: "tag", subgenre: "tag tag--sub", trope: "tag tag--trope" };
@@ -2583,6 +2595,15 @@ function withTags(o, from){
   var r = routeTags(tagFieldsOf(o), from);
   VOCAB_ORDER.forEach(function(k){ o[VOCAB_KINDS[k].field] = r[VOCAB_KINDS[k].field]; });
   return o;
+}
+/* A record built out of a submission's payload takes its tags from that
+   payload and routes them. Both callers -- the waiting draft and the record
+   written on Approve -- go through here, so a fourth category is carried by
+   both without either being edited. Named fields in the object literals above
+   them is exactly how these tags got dropped once already. */
+function payloadTags(o, p){
+  VOCAB_ORDER.forEach(function(k){ o[VOCAB_KINDS[k].field] = (p || {})[VOCAB_KINDS[k].field]; });
+  return withTags(o);
 }
 /* The tag boxes on the suggest form, routed together. */
 function tagFormRoute(){
@@ -5684,6 +5705,12 @@ function voteCandidate(v, id){
    nowhere else: the state is meant to last the visit, not survive a reload,
    so nothing is written to storage. */
 var TAGBOX_DEF = 118, tagBoxH = {}, tagBoxOpen = {};
+/* Whether each category's fold is open, remembered across re-renders the
+   way filtersOpen is for the panel as a whole. Without it every control
+   inside a fold -- Expand, the drag grip, the chips -- closed the fold it
+   was pressed in, because the re-render fell back to "open if something is
+   picked" and the reader had just unpicked the last one. */
+var tagFoldOpen = {};
 /* Two rows of chips, measured off a real chip rather than guessed at, plus the
    list's own padding — so the window cannot be dragged shut. */
 function tagBoxMin(box){
@@ -5752,13 +5779,14 @@ function tagFilterHTML(kind){
   var K = VOCAB_KINDS[kind], terms = vocabFilterTerms(kind);
   if(!terms.length) return "";
   var open = !!tagBoxOpen[kind], picked = recFilter[K.field] || [];
+  var fold = (kind in tagFoldOpen) ? tagFoldOpen[kind] : !!picked.length;
   var on = function(t){ return picked.some(function(x){ return vkey(x) === vkey(t); }); };
   /* Three resizable windows stacked would make this panel enormous, so each
      category is folded shut and says how many chips are picked inside it.
      Anything with a selection opens itself, which is the rule the whole
      panel already follows -- a filter you have set should not be hidden. */
-  return '<details class="editor tagfold"' + (picked.length ? " open" : "") + ">" +
-    '<summary>' + esc(K.many) +
+  return '<details class="editor tagfold"' + (fold ? " open" : "") + ">" +
+    '<summary data-tagfold="' + esc(kind) + '">' + esc(K.many) +
       (picked.length ? ' <span class="pill">' + esc(picked.length) + " selected</span>" : "") +
       ' <span class="hint">' + esc(terms.length) + " to choose from</span></summary>" +
     '<div class="editor__body">' +
@@ -5984,11 +6012,7 @@ function recCardHTML(r){
       '<span class="reccard__foot"><span>' + esc(r.pages || "?") + " pp</span>" +
         '<span class="reccard__by">' + (r.by ? esc(r.by) : "&nbsp;") + "</span></span>" +
       '<span class="reccard__reveal">' +
-        '<span class="k">Genres</span><span class="v">' + esc((r.genres || []).join(" · ") || "Unlisted") + "</span>" +
-        ((r.tropes || []).length
-          ? '<span class="k">Tropes</span><span class="v">' + esc(r.tropes.join(" · ")) + "</span>" : "") +
-        ((r.subgenres || []).length
-          ? '<span class="k">Subgenres</span><span class="v">' + esc(r.subgenres.join(" · ")) + "</span>" : "") +
+        tagRevealHTML(r) +
         '<span class="k">Level</span><span class="v">' + esc(levelText(r)) + "</span>" +
         '<span class="k">Endorsed</span><span class="v">' + (up || "none yet") + (down ? " · " + down + " against" : "") + "</span>" +
       "</span>" +
@@ -6240,11 +6264,7 @@ function bookTileHTML(b, where){
       '<span class="reccard__foot"><span>' + esc(b.pages || "?") + " pp</span>" +
         '<span class="reccard__by">' + (b.author ? esc(b.author) : "&nbsp;") + "</span></span>" +
       '<span class="reccard__reveal">' +
-        '<span class="k">Genres</span><span class="v">' + esc((b.genres || []).join(" · ") || "Unlisted") + "</span>" +
-        ((b.tropes || []).length
-          ? '<span class="k">Tropes</span><span class="v">' + esc(b.tropes.join(" · ")) + "</span>" : "") +
-        ((b.subgenres || []).length
-          ? '<span class="k">Subgenres</span><span class="v">' + esc(b.subgenres.join(" · ")) + "</span>" : "") +
+        tagRevealHTML(b) +
         '<span class="k">Level</span><span class="v">' + esc(levelText(b)) + "</span>" +
         '<span class="k">Read</span><span class="v">' + esc(readWhen(b)) + "</span>" +
       "</span>" +
@@ -8736,7 +8756,7 @@ function recDraft(it){
   var id = it.id;
   if(!recDrafts[id]){
     var p = it.payload || {};
-    recDrafts[id] = withAges({
+    recDrafts[id] = withAges(payloadTags({
       id: id, title: p.title || "Untitled", author: p.author || "",
       pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
       by: String(p.by || ""), at: String(it.at || "").slice(0, 10),
@@ -8749,7 +8769,7 @@ function recDraft(it){
       endorsements: preEndorsements(p),
       ratings: cleanRatings(p.ratings).length ? cleanRatings(p.ratings)
         : (Number(p.rating) > 0 ? [{ score: clampRating(p.rating), source: String(p.ratingSource || "").slice(0, 40) }] : [])
-    });
+    }, p));
   }
   return recDrafts[id];
 }
@@ -10669,9 +10689,21 @@ document.addEventListener("click", async function(e){
   }
 
   /* recommendation filters */
+  if((el = t.closest("[data-tagfold]"))){
+    /* The browser does the toggling; this only writes down which way it went,
+       so the next re-render leaves the fold as the reader left it. At click
+       time the element still holds the old state. */
+    var fdet = el.closest("details");
+    tagFoldOpen[el.getAttribute("data-tagfold")] = !(fdet && fdet.open);
+    return;
+  }
   if((el = t.closest("[data-ftag]"))){
     gridPage.recs = 0;
     var fkind = el.getAttribute("data-fkind") || "genre";
+    /* A fold that opened itself for a selection stays open once that selection
+       is dropped -- otherwise unpicking the last chip takes the list away
+       from under the hand that is using it. */
+    tagFoldOpen[fkind] = true;
     var list = recFilter[VOCAB_KINDS[fkind].field], g = el.getAttribute("data-ftag");
     var at = -1;
     list.forEach(function(x, i){ if(vkey(x) === vkey(g)) at = i; });
@@ -10684,6 +10716,7 @@ document.addEventListener("click", async function(e){
        window, at whatever height it was last dragged to */
     var tk = el.getAttribute("data-tagtoggle");
     tagBoxOpen[tk] = !tagBoxOpen[tk];
+    tagFoldOpen[tk] = true;      /* the button is inside the fold */
     renderRecFilters();
     return;
   }
@@ -12187,7 +12220,7 @@ function acceptSubmission(item, opts){
   opts = opts || {};
   if(item.kind === "suggest"){
     if(recById(item.id)) return;
-    state.recs.push(withAges({
+    state.recs.push(withAges(payloadTags({
       id: item.id, title: String(p.title || "Untitled").slice(0, 140), author: String(p.author || "").slice(0, 140),
       pages: Number(p.pages) || null, ageMin: Number(p.ageMin), ageMax: Number(p.ageMax),
       by: String(p.by || "").slice(0, 60),
@@ -12203,7 +12236,7 @@ function acceptSubmission(item, opts){
       shortlist: false, reviews: [], dislikes: [],
       ratings: cleanRatings(p.ratings).length ? cleanRatings(p.ratings)
         : (Number(p.rating) > 0 ? [{ score: clampRating(p.rating), source: String(p.ratingSource || "").slice(0, 40) }] : [])
-    }));
+    }, p)));
   }else if(item.kind === "join"){
     var nm = String(p.name || "").trim();
     if(!nm) return;
@@ -12341,7 +12374,11 @@ document.addEventListener("change", async function(e){
   }
   if(n && n.hasAttribute && n.hasAttribute("data-mvdest")){
     if(compareAt) compareAt.moveTo = n.value;
-    compareRefresh();
+    /* compareRefresh needs to be told which panel: called bare it matched
+       nothing, so the head went on naming the old list and the
+       already-has-it merge note never appeared, while the move itself
+       obeyed the picker. */
+    if(compareAt) compareRefresh(compareAt.kind, compareAt.owner, compareAt.id);
     vocabMoveRefresh();
     return;
   }
