@@ -611,6 +611,11 @@ a.getrow:hover{background:var(--sunk)}
 #memberScrim,#meScrim{z-index:140}
 #loginScrim{z-index:150}
 #dropScrim{z-index:160}
+/* Above the Admin modal, which it is opened from: at the shared z-index of
+   100 the admin scrim came later in the document and painted over it, so the
+   confirmation appeared behind the tab bar and neither of its buttons could
+   be clicked. */
+#bulkScrim{z-index:170}
 .modal{width:100%;max-width:820px;background:var(--paper);border:2px solid var(--edge);border-radius:12px;box-shadow:8px 8px 0 var(--stamp);overflow:hidden;
   display:flex;flex-direction:column;max-height:calc(100vh - 64px)}
 /* A summary and a review together can run past the bottom of the screen. The
