@@ -1,5 +1,5 @@
 {
-  "rev": 1595,
+  "rev": 1596,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2690,36 +2690,6 @@
       "parent": null,
       "at": "2026-10-20T04:21:27.160Z",
       "test": true
-    },
-    {
-      "id": "nom-mvgzecvndoabl",
-      "type": "nomination",
-      "kind": "nominate",
-      "candidates": [],
-      "opensAt": "2026-10-20T17:52:57.779Z",
-      "closesAt": "2026-10-20T23:52:00.000Z",
-      "cancelledAt": null,
-      "closedAt": "2026-10-20T17:57:01.950Z",
-      "turnout": 1,
-      "nominated": [
-        {
-          "id": "suggest-2603dba6-457",
-          "n": 1,
-          "org": false
-        },
-        {
-          "id": "suggest-39222c93-e0b",
-          "n": 0,
-          "org": true
-        }
-      ],
-      "totals": null,
-      "winner": null,
-      "tied": null,
-      "parent": null,
-      "at": "2026-10-20T17:52:57.779Z",
-      "test": true,
-      "archived": true
     },
     {
       "id": "nom-mvgzm95ifl1zx",
