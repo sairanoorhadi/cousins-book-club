@@ -1,5 +1,5 @@
 {
-  "rev": 1588,
+  "rev": 1589,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2448,6 +2448,40 @@
         }
       ],
       "level": "Ages 15+"
+    },
+    {
+      "id": "suggest-89fb2798-340",
+      "title": "Lord of the Flies",
+      "author": "William Golding",
+      "pages": 243,
+      "ageMin": 13,
+      "ageMax": 16,
+      "genres": [
+        "Adventure",
+        "Survival",
+        "Childhood",
+        "Ethics",
+        "Literary Fiction"
+      ],
+      "tropes": [],
+      "by": "Saira",
+      "byId": "",
+      "status": "approved",
+      "at": "2026-10-20",
+      "endorsements": [],
+      "cover": "https://covers.openlibrary.org/b/id/8684447-L.jpg",
+      "blurb": "A plane crashes on an uninhabited island and the only survivors, a group of schoolboys, assemble on the beach and wait to be rescued. By day they inhabit a land of bright fantastic birds and dark blue seas, but at night their dreams are haunted by the image of a terrifying beast.\n\nIn this, his first novel, William Golding gave the traditional adventure story an ironic, devastating twist. The boys' delicate sense of order fades, and their childish fears are transformed into something deeper and more primitive. Their games take on a horrible significance, and before long the well-behaved party of schoolboys has turned into a tribe of faceless, murderous savages.",
+      "summarySource": "own",
+      "shortlist": false,
+      "reviews": [],
+      "dislikes": [],
+      "ratings": [
+        {
+          "score": 3.67,
+          "source": "Open Library"
+        }
+      ],
+      "level": "Ages 13-16"
     }
   ],
   "inbox": [
@@ -2563,7 +2597,8 @@
     "suggest-82286c1a-d8e",
     "join-28be4897-08c",
     "suggest-fa0a1dad-191",
-    "suggest-1a451d9b-60a"
+    "suggest-1a451d9b-60a",
+    "suggest-89fb2798-340"
   ],
   "vocab": {
     "genre": {
