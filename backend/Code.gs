@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-21b';
+var SCRIPT_VERSION = '2026-10-22a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -111,10 +111,9 @@ function voteRatings(v, raw) {
 }
 
 function voteCast(payload) {
-  var email = whoIs(payload.token);
-  if (!email) return { ok: false, error: 'signed out' };
-  var member = memberFor(email);
-  if (!member) return { ok: false, error: 'not a member yet' };
+  var who = memberOnly(payload);
+  if (typeof who === 'string') return { ok: false, error: who };
+  var email = who.email, member = who.member;
 
   var state;
   try { state = JSON.parse(stateRead().content || '{}'); }
@@ -1150,10 +1149,12 @@ function nomOpenRoundFor(roundId) {
 
 /* A member and the round they are acting on, or the reason not to. */
 function nomActor(payload, needOpen) {
-  var email = whoIs(payload.token);
-  if (!email) return 'signed out';
-  var member = memberFor(email);
-  if (!member) return 'not a member yet';
+  /* Nominating is a club member's say in what the club reads next, so an
+     observer is told so rather than left with "not a member yet", which
+     sounds like something that will change on its own. */
+  var who = memberOnly(payload);
+  if (typeof who === 'string') return who;
+  var email = who.email, member = who.member;
   var got = needOpen ? nomOpenRoundFor(payload.roundId) : nomRoundFor(payload.roundId);
   if (typeof got === 'string') return got;
   /* A test round is the organiser rehearsing. The site hides it, but
@@ -1351,6 +1352,13 @@ function doPost(e) {
   if (kind === 'profile-set') return json(profileSet(payload));
   if (kind === 'profile-get') return json(profileGet(payload));
   if (kind === 'approve-notify') return json(approveNotify(payload));
+  if (kind === 'observer-list') return json(observerList(payload));
+  if (kind === 'observer-add') return json(observerCreate(payload));
+  if (kind === 'observer-remove') return json(observerRemove(payload));
+  if (kind === 'observer-promote') return json(observerPromote(payload));
+  if (kind === 'observer-set') return json(observerSet(payload));
+  if (kind === 'email-change') return json(emailChangeRequest(payload));
+  if (kind === 'email-verify') return json(emailChangeVerify(payload));
   if (kind === 'notes-add') return json(notesAdd(payload));
   if (kind === 'notes-del') return json(notesDel(payload));
   if (kind === 'notes-edit') return json(notesEdit(payload));
@@ -1400,13 +1408,12 @@ function doPost(e) {
      here. */
   var actor = null;
   if (KINDS_SIGNED_IN.indexOf(kind) !== -1) {
-    /* The token rides inside the payload, the way every other signed-in call
-       on this script sends it. */
-    var who = whoIs(payload.token);
-    if (!who) return json({ ok: false, error: 'signed out' });
-    actor = memberFor(who);
-    if (!actor) return json({ ok: false, error: 'not a member yet' });
-    actor.email = who;
+    /* Either kind of account: endorsing and putting a book forward are two of
+       the things an observer is here to do. The token rides inside the
+       payload, the way every other signed-in call on this script sends it. */
+    var got = actorFor(payload);
+    if (typeof got === 'string') return json({ ok: false, error: got });
+    actor = got;
   }
 
   var item = {
@@ -1429,12 +1436,19 @@ function doPost(e) {
     var isOrganiser = normEmail(actor.email) === normEmail(propEmail('ORGANISER_EMAIL'));
     var typed = String(item.payload.name || item.payload.by || '').trim();
     var named = (isOrganiser && typed) ? typed : String(actor.name || '').trim();
+    /* A member's id belongs on the record; an observer's does not, because
+       state.json is public and nothing there should point at a guest beyond
+       the name on what they wrote. The one-per-person check reads obsId
+       instead for them. */
+    var mine = actor.type === 'member' ? actor.id : '';
     if (kind === 'endorse') {
       item.payload.name = named;
-      item.payload.memberId = actor.id;          /* the part that cannot be typed */
+      item.payload.memberId = mine;              /* the part that cannot be typed */
+      if (actor.type === 'observer') { item.payload.obs = true; item.payload.obsId = actor.id; }
     } else {
       item.payload.by = named;
-      item.payload.byId = actor.id;
+      item.payload.byId = mine;
+      if (actor.type === 'observer') { item.payload.obs = true; item.payload.obsId = actor.id; }
     }
   }
 
@@ -1582,6 +1596,252 @@ function saveDirectory(dir) {
   PropertiesService.getScriptProperties().setProperty('directory', JSON.stringify(dir));
 }
 
+/* ---------------------------------------------------------- observers ----
+   Family and friends who are not in the club. They are never written to
+   state.members, because that file is public and they are not part of the
+   club's public record -- so they live here, in the script's own storage,
+   beside the addresses. One row each: id, name, joined.
+
+   Keyed by normalised email, the same way the directory is, so the lookup
+   from a session is one read. */
+function observers() {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty('observers') || '{}'); }
+  catch (err) { return {}; }
+}
+function saveObservers(all) {
+  PropertiesService.getScriptProperties().setProperty('observers', JSON.stringify(all));
+}
+function observerFor(email) {
+  var want = normEmail(email);
+  if (!want) return null;
+  var row = observers()[want];
+  return row ? row : null;
+}
+/* Who is calling, of either kind. One answer the whole script asks for,
+   rather than every endpoint deciding again what counts as an account. */
+function accountFor(email) {
+  var member = memberFor(email);
+  if (member) return { type: 'member', id: member.id, name: member.name, member: member, email: email };
+  var obs = observerFor(email);
+  if (obs) return { type: 'observer', id: obs.id, name: obs.name, observer: obs, email: email };
+  return null;
+}
+/* The caller behind a token, or a string naming what is wrong with them. Every
+   endpoint that either kind may use goes through this; the ones only members
+   may use go through memberOnly below. */
+function actorFor(payload) {
+  var email = whoIs(payload && payload.token);
+  if (!email) return 'signed out';
+  var who = accountFor(email);
+  if (!who) return pendingFor(email) ? 'pending' : 'not a member yet';
+  return who;
+}
+/* The same, refusing an observer. The wording is what the page shows. */
+function memberOnly(payload) {
+  var who = actorFor(payload);
+  if (typeof who === 'string') return who;
+  return who.type === 'member' ? who : 'members only';
+}
+function observerAdd(email, name) {
+  var key = normEmail(email);
+  if (!key) return null;
+  var all = observers();
+  if (all[key]) return all[key];
+  all[key] = { id: 'ob-' + Utilities.getUuid().slice(0, 12),
+               name: String(name || '').slice(0, 60),
+               joined: new Date().toISOString().slice(0, 10) };
+  saveObservers(all);
+  return all[key];
+}
+
+/* The organiser, or a string saying why not. The same three lines were
+   written out in eight endpoints before this. */
+function organiserOnly(payload) {
+  var email = whoIs(payload && payload.token);
+  if (!email) return 'signed out';
+  var mine = propEmail('ORGANISER_EMAIL');
+  if (!mine) return 'ORGANISER_EMAIL is not set';
+  if (normEmail(email) !== normEmail(mine)) return 'organiser only';
+  return email;
+}
+
+/* ---- the organiser's side of the observer list ---- */
+function observerList(payload) {
+  var gate = organiserOnly(payload);
+  if (typeof gate === 'string' && gate.indexOf('@') === -1) return { ok: false, error: gate };
+  var all = observers(), out = [];
+  Object.keys(all).forEach(function (key) {
+    var o = all[key];
+    out.push({ id: o.id, name: o.name, joined: o.joined, emailHint: maskEmail(key) });
+  });
+  out.sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
+  return { ok: true, observers: out };
+}
+/* Approving a join request as an observer. The address is already withheld
+   behind a ref, so this takes the ref rather than the address. */
+function observerCreate(payload) {
+  var gate = organiserOnly(payload);
+  if (typeof gate === 'string' && gate.indexOf('@') === -1) return { ok: false, error: gate };
+  var address = lookupEmail(String(payload.ref || ''));
+  if (!address) return { ok: false, error: 'unknown ref' };
+  if (memberFor(address)) return { ok: false, error: 'already a member' };
+  var row = observerAdd(address, payload.name);
+  if (!row) return { ok: false, error: 'bad address' };
+  return { ok: true, observer: { id: row.id, name: row.name, joined: row.joined,
+                                 emailHint: maskEmail(address) } };
+}
+/* Removing one. Their notes and the books they put forward stay exactly as
+   they are -- those carry a name, not a link to this row, so nothing breaks
+   and nothing is rewritten. What goes is the account: they can no longer
+   sign in, and their address is forgotten with it. */
+function observerRemove(payload) {
+  var gate = organiserOnly(payload);
+  if (typeof gate === 'string' && gate.indexOf('@') === -1) return { ok: false, error: gate };
+  var id = String(payload.observerId || '');
+  var all = observers(), hit = '';
+  Object.keys(all).forEach(function (key) { if (all[key].id === id) hit = key; });
+  if (!hit) return { ok: false, error: 'no such observer' };
+  delete all[hit];
+  saveObservers(all);
+  /* The address goes too, and the directory row with it, or signing in again
+     would find a stranger with meeting-email preferences already set. */
+  var dir = directory();
+  var ref = (dir[hit] || {}).ref;
+  if (ref) PropertiesService.getScriptProperties().deleteProperty('email:' + ref);
+  delete dir[hit];
+  saveDirectory(dir);
+  return { ok: true };
+}
+/* Making one a member. The row here goes; the organiser's own save puts them
+   on the public members list, because that file is hers to write, not this
+   script's. */
+function observerPromote(payload) {
+  var gate = organiserOnly(payload);
+  if (typeof gate === 'string' && gate.indexOf('@') === -1) return { ok: false, error: gate };
+  var id = String(payload.observerId || '');
+  var all = observers(), hit = '';
+  Object.keys(all).forEach(function (key) { if (all[key].id === id) hit = key; });
+  if (!hit) return { ok: false, error: 'no such observer' };
+  var row = all[hit];
+  delete all[hit];
+  saveObservers(all);
+  /* The directory entry stays: it holds their reminder preferences and the
+     ref the members list will point at. */
+  var dir = directory();
+  if (!dir[hit]) dir[hit] = { ref: '', name: row.name, books: [], memberId: '' };
+  if (!dir[hit].ref) {
+    var ref2 = 'sub-' + Utilities.getUuid().slice(0, 12);
+    PropertiesService.getScriptProperties().setProperty('email:' + ref2, hit);
+    dir[hit].ref = ref2;
+  }
+  dir[hit].name = row.name;
+  saveDirectory(dir);
+  return { ok: true, name: row.name, emailRef: dir[hit].ref, emailHint: maskEmail(hit) };
+}
+
+/* An observer's own details. Their name, and nothing else: the address has
+   its own pair of calls below, because changing it has to be proved, and the
+   reminder preferences already have notifySet. */
+function observerSet(payload) {
+  var who = actorFor(payload);
+  if (typeof who === 'string') return { ok: false, error: who };
+  if (who.type !== 'observer') return { ok: false, error: 'observers only' };
+  var name = String(payload.name || '').trim().slice(0, 60);
+  if (!name) return { ok: false, error: 'no name' };
+  var all = observers(), key = normEmail(who.email);
+  if (!all[key]) return { ok: false, error: 'no such observer' };
+  all[key].name = name;
+  saveObservers(all);
+  var dir = directory();
+  if (dir[key]) { dir[key].name = name; saveDirectory(dir); }
+  return { ok: true, name: name };
+}
+
+/* ---- changing the address on an account ----
+   The code goes to the NEW address, because that is the thing being proved.
+   Until it is entered the old address still signs in and still receives
+   anything the club sends, so a typo cannot lock anyone out. */
+function emailChangeRequest(payload) {
+  var who = actorFor(payload);
+  if (typeof who === 'string') return { ok: false, error: who };
+  var next = normEmail(payload.email);
+  if (!next || next.indexOf('@') < 1) return { ok: false, error: 'bad email' };
+  if (next === normEmail(who.email)) return { ok: false, error: 'same email' };
+  if (accountFor(next)) return { ok: false, error: 'taken' };
+
+  var store = PropertiesService.getScriptProperties();
+  /* The same half-minute between sends that signing in uses, keyed on the
+     address being written to. */
+  var lastSent = Number(store.getProperty('sent:' + next) || 0);
+  var since = Date.now() - lastSent;
+  if (lastSent && since >= 0 && since < CODE_GAP_MS) {
+    return { ok: false, error: 'too soon', wait: Math.ceil((CODE_GAP_MS - since) / 1000) };
+  }
+  var code = String(Math.floor(100000 + Math.random() * 900000));
+  store.setProperty('chg:' + normEmail(who.email), JSON.stringify({
+    to: next, hash: hashCode(code, next), tries: 0,
+    expires: Date.now() + CODE_MINUTES * 60000
+  }));
+  store.setProperty('sent:' + next, String(Date.now()));
+  MailApp.sendEmail({
+    to: next,
+    subject: 'Your book club confirmation code: ' + code,
+    body: 'Your code is ' + code + '\n\n' +
+          'Enter it on the site to start using this address for the book club.\n' +
+          'It works for the next ' + CODE_MINUTES + ' minutes.\n\n' +
+          "If you didn't ask for this, you can ignore it \u2014 nothing changes until the code is entered."
+  });
+  return { ok: true, hint: maskEmail(next) };
+}
+function emailChangeVerify(payload) {
+  var who = actorFor(payload);
+  if (typeof who === 'string') return { ok: false, error: who };
+  var store = PropertiesService.getScriptProperties();
+  var from = normEmail(who.email), key = 'chg:' + from;
+  var rec;
+  try { rec = JSON.parse(store.getProperty(key) || 'null'); } catch (err) { rec = null; }
+  if (!rec) return { ok: false, error: 'no code' };
+  if (Date.now() > rec.expires) { store.deleteProperty(key); return { ok: false, error: 'expired' }; }
+  if (hashCode(String(payload.code || '').trim(), rec.to) !== rec.hash) {
+    rec.tries = (rec.tries || 0) + 1;
+    if (rec.tries >= CODE_TRIES) store.deleteProperty(key);
+    else store.setProperty(key, JSON.stringify(rec));
+    return { ok: false, error: 'wrong', left: Math.max(0, CODE_TRIES - rec.tries) };
+  }
+  store.deleteProperty(key);
+  var next = rec.to;
+  if (accountFor(next)) return { ok: false, error: 'taken' };
+
+  /* The ref is kept and repointed rather than replaced. A new one would
+     leave the old email: property behind with the old address still in it,
+     and anything already pointing at the ref -- a member row, a waiting join
+     request -- pointing at nothing. */
+  var dir = directory();
+  var entry = dir[from] || { ref: '', name: who.name, books: [], memberId: '' };
+  if (entry.ref) store.setProperty('email:' + entry.ref, next);
+  else {
+    entry.ref = 'sub-' + Utilities.getUuid().slice(0, 12);
+    store.setProperty('email:' + entry.ref, next);
+  }
+  delete dir[from];
+  dir[next] = entry;
+  saveDirectory(dir);
+
+  if (who.type === 'observer') {
+    var all = observers();
+    if (all[from]) { all[next] = all[from]; delete all[from]; saveObservers(all); }
+  }
+
+  /* Sessions are keyed by the address they were made with, so the one in use
+     has to move with it or the next call looks signed out. */
+  var sessKey = 'sess:' + String(payload.token || '');
+  var sess;
+  try { sess = JSON.parse(store.getProperty(sessKey) || 'null'); } catch (err) { sess = null; }
+  if (sess) { sess.email = next; store.setProperty(sessKey, JSON.stringify(sess)); }
+
+  return { ok: true, email: next, emailHint: maskEmail(next) };
+}
+
 function loginRequest(payload) {
   var email = normEmail(payload.email);
   if (!email || email.indexOf('@') < 1) return { ok: false, error: 'bad email' };
@@ -1590,7 +1850,7 @@ function loginRequest(payload) {
      organiser is told so rather than left wondering; someone we have never
      heard of is pointed at signing up. Neither gets a code, so neither gets a
      session. */
-  if (!memberFor(email)) {
+  if (!accountFor(email)) {
     return { ok: false, error: pendingFor(email) ? 'pending' : 'not a member' };
   }
 
@@ -1657,7 +1917,7 @@ function loginVerify(payload) {
 
   /* Checked again here, not only when the code was asked for: a request can be
      withdrawn in the ten minutes a code is good for. */
-  if (!memberFor(email)) {
+  if (!accountFor(email)) {
     return { ok: false, error: pendingFor(email) ? 'pending' : 'not a member' };
   }
 
@@ -1745,11 +2005,17 @@ function profileFor(email) {
     email: email,
     emailHint: maskEmail(email),
     ref: entry.ref,
-    name: entry.name || (member ? member.name : ''),
+    name: entry.name || (member ? member.name : '') || ((observerFor(email) || {}).name || ''),
     books: entry.books || [],
     memberId: member ? member.id : (entry.memberId || ''),
     hue: member ? (member.hue || '') : '',
     isMember: !!member,
+    /* 'member', 'observer', or '' for somebody signed in with neither -- which
+       should not happen, since sign-in refuses them, but the page reads this
+       to decide what to show and guessing from an absent flag is how the
+       Suggest form ended up hidden from members. */
+    type: member ? 'member' : (observerFor(email) ? 'observer' : ''),
+    observerId: member ? '' : ((observerFor(email) || {}).id || ''),
     /* The page locks the endorse and submit name boxes for everyone but the
        organiser. It is told the same fact the submission gate decides on, so
        the two cannot drift: a box the page leaves editable is one the script
@@ -1873,10 +2139,10 @@ function nextMeetingOf(state, meeting) {
    the id comes from the session, not from the browser, so nobody can mark
    anyone else. Sent without `ready` it toggles; sent with one it sets. */
 function meetReady(payload) {
-  var email = whoIs(payload.token);
-  if (!email) return { ok: false, error: 'signed out' };
-  var member = memberFor(email);
-  if (!member || !member.id) return { ok: false, error: 'not a member yet' };
+  var who = memberOnly(payload);
+  if (typeof who === 'string') return { ok: false, error: who };
+  var email = who.email, member = who.member;
+  if (!member.id) return { ok: false, error: 'not a member yet' };
   if (!propKey('GITHUB_TOKEN', '')) return { ok: false, error: 'no github token' };
 
   var lock = LockService.getScriptLock();
@@ -1915,10 +2181,11 @@ function meetReady(payload) {
 }
 
 function notesAdd(payload) {
-  var email = whoIs(payload.token);
-  if (!email) return { ok: false, error: 'signed out' };
-  var member = memberFor(email);
-  if (!member) return { ok: false, error: 'not a member yet' };
+  /* Either kind of account. An observer reads the club's meetings and is
+     welcome to say what they think will happen in the book. */
+  var who = actorFor(payload);
+  if (typeof who === 'string') return { ok: false, error: who };
+  var email = who.email, member = who.member || null;
 
   var key = noteField(String(payload.field || ''));
   if (!key) return { ok: false, error: 'bad field' };
@@ -1959,6 +2226,17 @@ function notesAdd(payload) {
       });
 
       var item = { id: payload.field + '-' + Utilities.getUuid().slice(0, 12), text: text, by: '', byIds: byIds };
+      /* An observer is not on the members list, so there is no id to carry and
+         no list of names to choose from: the entry is theirs and says so. The
+         opaque obsId is what "their own" is decided on later -- a name match
+         would hand one observer another's entry the day two of them share a
+         first name. */
+      if (who.type === 'observer') {
+        item.byIds = [];
+        item.by = who.name;
+        item.obs = true;
+        item.obsId = who.id;
+      }
       meeting[key].push(item);
       state.rev = Number(state.rev || 0) + 1;
 
@@ -1981,10 +2259,11 @@ function notesAdd(payload) {
    an edit is the smaller half of it — a delete-and-retype was always allowed
    and reached the same place with the authorship thrown away. */
 function notesEdit(payload) {
-  var email = whoIs(payload.token);
-  if (!email) return { ok: false, error: 'signed out' };
-  var member = memberFor(email);
-  if (!member) return { ok: false, error: 'not a member yet' };
+  /* Either kind of account. An observer reads the club's meetings and is
+     welcome to say what they think will happen in the book. */
+  var who = actorFor(payload);
+  if (typeof who === 'string') return { ok: false, error: who };
+  var email = who.email, member = who.member || null;
 
   var key = noteField(String(payload.field || ''));
   if (!key) return { ok: false, error: 'bad field' };
@@ -2000,6 +2279,12 @@ function notesEdit(payload) {
     var item = (Array.isArray(meeting[key]) ? meeting[key] : [])
       .filter(function (x) { return x.id === itemId; })[0];
     if (!item) return { error: 'not found' };
+    /* Members may edit each other's, which was a deliberate trade made long
+       before observers existed. An observer may edit only what they wrote --
+       they are a guest in the club's notes, not a keeper of them. */
+    if (who.type === 'observer' && String(item.obsId || '') !== String(who.id)) {
+      return { error: 'not yours' };
+    }
     item.text = text;
     return { reply: { item: item } };
   });
@@ -2011,10 +2296,9 @@ function notesEdit(payload) {
    anyone could set one. The window runs until the meeting where it is
    reviewed is itself closed. */
 function notesVerdict(payload) {
-  var email = whoIs(payload.token);
-  if (!email) return { ok: false, error: 'signed out' };
-  var member = memberFor(email);
-  if (!member) return { ok: false, error: 'not a member yet' };
+  var who = memberOnly(payload);
+  if (typeof who === 'string') return { ok: false, error: who };
+  var email = who.email, member = who.member;
 
   var itemId = String(payload.itemId || '');
   if (!itemId) return { ok: false, error: 'no item' };
@@ -2040,10 +2324,9 @@ function notesVerdict(payload) {
    The original keeps its place in the meeting it was made at, flagged as
    carried so it cannot be sent forward twice. */
 function notesCarry(payload) {
-  var email = whoIs(payload.token);
-  if (!email) return { ok: false, error: 'signed out' };
-  var member = memberFor(email);
-  if (!member) return { ok: false, error: 'not a member yet' };
+  var who = memberOnly(payload);
+  if (typeof who === 'string') return { ok: false, error: who };
+  var email = who.email, member = who.member;
 
   var itemId = String(payload.itemId || '');
   if (!itemId) return { ok: false, error: 'no item' };
@@ -2077,10 +2360,11 @@ function notesCarry(payload) {
    — the signed-in member, not the free-text name on the item — which
    meeting, and when, which is what putting it back by hand needs. */
 function notesDel(payload) {
-  var email = whoIs(payload.token);
-  if (!email) return { ok: false, error: 'signed out' };
-  var member = memberFor(email);
-  if (!member) return { ok: false, error: 'not a member yet' };
+  /* Either kind of account. An observer reads the club's meetings and is
+     welcome to say what they think will happen in the book. */
+  var who = actorFor(payload);
+  if (typeof who === 'string') return { ok: false, error: who };
+  var email = who.email, member = who.member || null;
 
   var key = noteField(String(payload.field || ''));
   if (!key) return { ok: false, error: 'bad field' };
@@ -2109,6 +2393,11 @@ function notesDel(payload) {
       var list = Array.isArray(meeting[key]) ? meeting[key] : [];
       var removed = list.filter(function (x) { return x.id === itemId; })[0];
       if (!removed) return { ok: false, error: 'not found' };
+      /* Same rule as editing: members keep the unrestricted delete they
+         already had, an observer may remove only their own. */
+      if (who.type === 'observer' && String(removed.obsId || '') !== String(who.id)) {
+        return { ok: false, error: 'not yours' };
+      }
       meeting[key] = list.filter(function (x) { return x.id !== itemId; });
       state.rev = Number(state.rev || 0) + 1;
 
@@ -2125,7 +2414,10 @@ function notesDel(payload) {
               field: payload.field,
               text: removed.text,
               by: removed.by,
-              deletedBy: member.name || email
+              deletedBy: who.name || email,
+              /* The log says which kind of account did it, so a deletion by a
+                 guest reads differently from one by a member. */
+              deletedByType: who.type
             }
           });
         } catch (logErr) { /* the deletion itself already succeeded; a failed log entry should not undo it */ }
@@ -2171,8 +2463,13 @@ function profileGet(payload) {
 }
 
 function profileSet(payload) {
-  var email = whoIs(payload.token);
-  if (!email) return { ok: false, error: 'signed out' };
+  /* Every field this writes -- badge colour, Goodreads, Fable, top genres,
+     the top five -- belongs to a member's public profile, and an observer
+     has no public profile to write to. Their own name, address and reminders
+     are changed through observerSet and the email-change pair below. */
+  var gate = memberOnly(payload);
+  if (typeof gate === 'string') return { ok: false, error: gate };
+  var email = gate.email;
 
   var entry = directory()[email];
   if (!entry) return { ok: false, error: 'no profile' };
@@ -2341,7 +2638,10 @@ function approveNotify(payload) {
   try { state = JSON.parse(stateRead().content || '{}'); }
   catch (err) { return { ok: false, error: 'unreadable state' }; }
   var member = (state.members || []).filter(function (m) { return m.notifyRef === ref; })[0];
-  if (!member) return { ok: false, error: 'not approved' };
+  /* Either kind counts as approved. An observer is never on the members list,
+     so looking only there told them they had not been let in. */
+  var obs = member ? null : observerFor(address);
+  if (!member && !obs) return { ok: false, error: 'not approved' };
 
   var store = PropertiesService.getScriptProperties();
   var sentKey = 'approved:' + ref;
@@ -2349,15 +2649,25 @@ function approveNotify(payload) {
 
   var site = 'https://sairanoorhadi.github.io/cousins-book-club/';
   var club = (state.club && state.club.name) || 'Cousins Book Club';
+  var who = member || obs;
+  /* An observer is not a member and the email should not tell them they are:
+     what they can actually do is the useful part. */
+  var body = obs
+    ? 'Hi ' + (who.name || 'there') + ',\n\n' +
+      'An organiser has approved your account, so you can follow the ' + club + ' now.\n\n' +
+      'You can read the meeting notes, add predictions and discussion points, put books ' +
+      'forward and second the ones you like. Voting and nominating are for club members.\n\n' +
+      'Sign in at ' + site + ' with this address \u2014 you\u2019ll get a six-digit code by email ' +
+      'each time, so there\u2019s no password to remember.'
+    : 'Hi ' + (who.name || 'there') + ',\n\n' +
+      'An organiser has approved your account, so you\u2019re a member of the ' + club + ' now.\n\n' +
+      'Sign in at ' + site + ' with this address \u2014 you\u2019ll get a six-digit code by email each ' +
+      'time, so there\u2019s no password to remember.\n\n' +
+      'See you at the next meeting.';
   MailApp.sendEmail({
     to: address,
-    subject: "You're in \u2014 " + club,
-    body:
-    'Hi ' + (member.name || 'there') + ',\n\n' +
-    'An organiser has approved your account, so you\u2019re a member of the ' + club + ' now.\n\n' +
-    'Sign in at ' + site + ' with this address \u2014 you\u2019ll get a six-digit code by email each ' +
-    'time, so there\u2019s no password to remember.\n\n' +
-    'See you at the next meeting.'
+    subject: obs ? "You're approved \u2014 " + club : "You're in \u2014 " + club,
+    body: body
   });
   store.setProperty(sentKey, new Date().toISOString());
   return { ok: true };
@@ -2706,6 +3016,10 @@ function endorseAlready(item, actor) {
   if (!recId || !actor) return '';
   var mine = function (row) {
     if (!row) return false;
+    if (actor.type === 'observer') {
+      if (row.obsId) return String(row.obsId) === String(actor.id);
+      return sameNameGS(row.name, p.name);
+    }
     if (row.memberId && actor.id) return String(row.memberId) === String(actor.id);
     return sameNameGS(row.name, p.name);
   };
