@@ -3861,11 +3861,14 @@ function myMember(){ return me && me.memberId ? memberById(me.memberId) : null; 
    organiser hasn't closed. Membership is the same server-side answer as
    everywhere else — this only decides whether the controls are worth
    drawing, the endpoint decides for real. */
-function canEditNotes(m){ return !!(me && myMember() && m && !m.done); }
+/* Predictions, discussion points and the write-up are open to either kind of
+   account -- an observer reads the club's meetings and is welcome to say what
+   they think will happen. Voting on them is the members' part. */
+function canEditNotes(m){ return !!(me && (myMember() || isObserver()) && m && !m.done); }
 function notesLockedReason(m){
   if(m && m.done) return "This meeting is marked done \u2014 only the organiser can still change its notes.";
   if(!me) return "Sign in to add one.";
-  if(!myMember()) return "Your account isn\u2019t on the members list yet.";
+  if(!myMember() && !isObserver()) return "Your account isn\u2019t on the members list yet.";
   return "";
 }
 function myName(){ return (me && (me.name || "")) || ""; }
@@ -5570,6 +5573,13 @@ function nomBlockHTML(o){
       "</div>";
   }
   if(!myMember()){
+    /* Telling an observer to sign in would be nonsense -- they are signed in,
+       and signing in again would not make them a member. */
+    if(isObserver()){
+      return '<div class="endorse endorse--nom">' +
+        '<span class="nomq">Nominations are open \u2014 one book each.</span>' +
+        '<span class="hint">' + esc(MEMBERS_ONLY) + "</span></div>";
+    }
     return '<div class="endorse endorse--nom">' +
       '<span class="nomq">Nominations are open \u2014 one book each.</span>' +
       '<button class="btn btn--sm btn--grape" type="button" data-nomsignin="' + esc(o.id) +
@@ -7241,7 +7251,11 @@ function meetingHTML(m, b){
       : "") +
     '<section class="noteblock noteblock--sum"><div class="noteblock__head"><h3>' +
       (party ? "How the party went" : "What happened at the meeting") + "</h3></div><div class=\"noteblock__body\">" +
-      (isAdmin
+      /* The write-up is open to anyone with an account while the meeting is
+         still open, which is when it actually gets written. The organiser
+         keeps her own box either way -- she writes state.json directly, so
+         she can still write one up after the meeting is closed. */
+      (isAdmin || canEditNotes(m)
         ? '<textarea class="textarea" id="sumBox" style="min-height:190px" placeholder="' +
             (party ? "Who came, what you ate, what everyone argued about anyway." : "Write up the meeting — who argued what, where the room split, what to carry forward.") +
           '">' + esc(m.summary || "") + "</textarea>" +
@@ -7440,7 +7454,7 @@ function openBookDetail(o, kind, focus){
             (own
               ? '<span class="hint" style="flex:1 1 200px">Putting it forward counts as your endorsement, so you can\u2019t add another.</span>' +
                 '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Changed my mind</button>'
-              : (myMember()
+              : ((myMember() || isObserver())
                   /* The name is the account's and cannot be retyped -- the
                      script takes it from the session anyway, so an editable
                      box would only promise something it would not honour.
@@ -8106,7 +8120,7 @@ function renderSuggestGate(){
      club's own members list. A second rule of my own making -- me.isMember --
      answered differently and shut the form on a dozen suites that were
      signed in perfectly well. One rule, used everywhere. */
-  var inAsMember = !!myMember();
+  var inAsMember = !!(myMember() || isObserver());
   var lock = $("suggestLocked"), form = $("suggestForm");
   if(lock) lock.hidden = inAsMember;
   if(form) form.hidden = !inAsMember;
@@ -10741,7 +10755,43 @@ function paneMembers(){
       '<div class="field"><label for="amFable">Fable profile</label><input class="input" id="amFable" type="url" placeholder="https://fable.co/..." maxlength="300"></div>' +
       '<div class="field"><label for="amGoodreads">Goodreads profile</label><input class="input" id="amGoodreads" type="url" placeholder="https://www.goodreads.com/user/show/..." maxlength="300"></div>' +
     '</div><div style="margin-top:16px"><button class="btn btn--sm btn--sky" type="button" id="amAdd">Add member</button></div>' +
-    '<p class="hint" style="margin-top:12px">Add them first, then upload their picture from the row above. Profile links must start with http:// or https:// to show on the site.</p></div>';
+    '<p class="hint" style="margin-top:12px">Add them first, then upload their picture from the row above. Profile links must start with http:// or https:// to show on the site.</p></div>' +
+    observersPaneHTML();
+}
+
+/* ---- observers, in the Admin Members tab ----
+   They are not in state.json, so this cannot be drawn from it: the list comes
+   from the script and is asked for when the tab opens. */
+var obsList = null;        /* null = not asked yet, [] = asked and empty */
+var obsBusy = false;
+function observersPaneHTML(){
+  return '<hr class="divider"><p class="eyebrow">Following along</p>' +
+    '<h3 style="font-size:20px;margin:8px 0 6px">Observers' +
+      (obsList && obsList.length ? ' <span class="filters__count">' + obsList.length + "</span>" : "") +
+    "</h3>" +
+    '<p class="hint" style="margin-bottom:16px">Family and friends who read the notes and put books forward ' +
+      'without being in the club. They are kept in the script, never in the public file, so they appear ' +
+      'nowhere on the site except by name on anything they wrote.</p>' +
+    (obsList === null
+      ? '<p class="hint">' + (obsBusy ? "Loading\u2026" : "") + "</p>" +
+        (obsBusy ? "" : '<button class="btn btn--sm btn--ghost" type="button" id="obsLoad">Show observers</button>')
+      : !obsList.length
+      ? '<p class="empty">Nobody is following along yet. A sign-up as an observer lands in the Inbox.</p>'
+      : obsList.map(function(o){
+          return '<div class="vocabitem"><div class="vocabrow">' +
+            "<strong>" + esc(o.name) + "</strong>" +
+            '<span class="vocabrow__n">' + esc(o.emailHint || "") + "</span>" +
+            '<span class="vocabrow__n">' + (o.joined ? "joined " + esc(shortDate(o.joined)) : "") + "</span>" +
+            '<span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">' +
+              '<button class="btn btn--sm btn--surf" type="button" data-obspromote="' + esc(o.id) +
+                '" data-obsname="' + esc(o.name) + '">Make member</button>' +
+              '<button class="btn btn--sm btn--ghost" type="button" data-obsremove="' + esc(o.id) +
+                '" data-obsname="' + esc(o.name) + '">Remove</button>' +
+            "</span></div></div>";
+        }).join("") +
+        '<p class="hint" style="margin-top:12px">Removing one takes their account and their address. ' +
+        'What they wrote \u2014 predictions, discussion points, the books they put forward \u2014 stays ' +
+        'exactly where it is, with their name on it.</p>');
 }
 
 function paneSettings(){
@@ -12278,6 +12328,46 @@ document.addEventListener("click", async function(e){
   /* ---- edit profile */
   if(t.closest("#menuProfile")){ menuShut(); await openMe(); return; }
   if(t.closest("#menuAccount")){ menuShut(); await openAccount(); return; }
+  if(t.closest("#obsLoad")){
+    obsBusy = true; renderAdminPane();
+    var olist = await callEndpoint("observer-list", { token: sessionToken() });
+    obsBusy = false;
+    if(!olist.ok){
+      obsList = null;
+      say(endpointTrouble(olist.error, olist.detail) || olist.error, "bad");
+    }else obsList = olist.observers || [];
+    renderAdminPane();
+    return;
+  }
+  if((el = t.closest("[data-obspromote]"))){
+    var opid = el.getAttribute("data-obspromote"), opname = el.getAttribute("data-obsname") || "";
+    say("Making them a member\u2026", "busy", true);
+    var pres = await callEndpoint("observer-promote", { token: sessionToken(), observerId: opid });
+    if(!pres.ok){ say(endpointTrouble(pres.error, pres.detail) || pres.error, "bad"); return; }
+    /* The script lets go of the row; the public members list is hers to
+       write, so the page adds them here and saves it. */
+    state.members.push({ id: uid("mb"), name: pres.name || opname, joined: todayISO(), avatar: "",
+      email: "", notifyRef: pres.emailRef || "", emailHint: pres.emailHint || "",
+      notify: [], fable: "", goodreads: "" });
+    if(await save("Adding them to the club\u2026")){
+      obsList = (obsList || []).filter(function(o){ return o.id !== opid; });
+      renderAll(); renderAdmin();
+      say((pres.name || opname) + " is a member now.", "ok");
+    }
+    return;
+  }
+  if((el = t.closest("[data-obsremove]"))){
+    var orid = el.getAttribute("data-obsremove"), orname = el.getAttribute("data-obsname") || "them";
+    if(!confirm("Remove " + orname + "?\n\nThey won't be able to sign in and their address is " +
+                "forgotten. Anything they wrote stays, with their name on it.")) return;
+    say("Removing\u2026", "busy", true);
+    var rmres = await callEndpoint("observer-remove", { token: sessionToken(), observerId: orid });
+    if(!rmres.ok){ say(endpointTrouble(rmres.error, rmres.detail) || rmres.error, "bad"); return; }
+    obsList = (obsList || []).filter(function(o){ return o.id !== orid; });
+    renderAdminPane();
+    say("Removed.", "ok");
+    return;
+  }
   if(t.closest("#acSaveName")){
     var nm = ($("acName") && $("acName").value || "").trim();
     if(!nm){ if($("acName")) $("acName").focus(); say("Put a name in first.", "bad"); return; }
@@ -12527,8 +12617,28 @@ document.addEventListener("click", async function(e){
   }
   if((el = t.closest("[data-savesum]"))){
     var sm = meetingById(el.getAttribute("data-savesum")); if(!sm) return;
-    sm.summary = $("sumBox").value;
-    await save("Saving summary…"); renderAll();
+    var sumText = $("sumBox").value;
+    /* The organiser writes the file herself, with her token. Everybody else
+       goes through the script, which checks the meeting is still open. */
+    if(adminUnlocked && ghToken()){
+      sm.summary = sumText;
+      await save("Saving summary\u2026"); renderAll();
+      return;
+    }
+    say("Saving\u2026", "busy", true);
+    var sres = await callEndpoint("notes-summary",
+      { token: sessionToken(), meetingId: sm.id, text: sumText });
+    if(!sres.ok){
+      say(sres.error === "meeting closed"
+        ? "This meeting is marked done, so its write-up is fixed now."
+        : (endpointTrouble(sres.error, sres.detail) || sres.error), "bad");
+      return;
+    }
+    sm.summary = sres.summary;
+    say("Saved.", "ok");
+    renderAll();
+    var host = $("meetModalBody");
+    if(host) host.innerHTML = meetingHTML(sm, bookById(sm.bookId));
     return;
   }
 
