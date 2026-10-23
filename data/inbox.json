@@ -1824,6 +1824,18 @@
         "vote": "up",
         "memberId": "mb-mvigwe1tpr4cx"
       }
+    },
+    {
+      "id": "endorse-b18a4268-7b3",
+      "kind": "endorse",
+      "at": "2026-10-23T21:26:47.969Z",
+      "payload": {
+        "recId": "suggest-fddd8ae2-833",
+        "title": "A Deadly Education",
+        "name": "Filza",
+        "vote": "up",
+        "memberId": "mb-mt3zx2lgcj3x8"
+      }
     }
   ]
 }
