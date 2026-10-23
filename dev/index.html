@@ -1919,6 +1919,9 @@ a.getrow:hover{background:var(--sunk)}
           <a class="menu__item" role="menuitem" href="#badges">Badges</a>
           <a class="menu__item" role="menuitem" href="#members">Members</a>
           <button class="menu__item" role="menuitem" type="button" id="menuProfile" hidden>Edit profile</button>
+          <!-- An observer has no public profile to edit; what they do have is
+               a name, an address and their reminders. -->
+          <button class="menu__item" role="menuitem" type="button" id="menuAccount" hidden>Account</button>
           <button class="menu__item" role="menuitem" type="button" id="menuAdmin">Admin</button>
           <button class="menu__item menu__item--out" role="menuitem" type="button" id="menuSession">Sign in</button>
         </div>
@@ -3139,6 +3142,11 @@ function noteAuthors(n, members){
   if(!n || typeof n !== "object") return n;
   if(!Array.isArray(n.byIds)) n.byIds = [];
   if(typeof n.by !== "string") n.by = String(n.by || "");
+  /* An observer's entry carries a name and no id on purpose. Resolving it
+     against the members list would hand the note to whichever member happens
+     to share the name -- an observer called Eliza would have written it as
+     the Eliza who is in the club. The flag is on the item for this. */
+  if(n.obs) return n;
   if(n.byIds.length || !n.by) return n;
   var known = {};
   (members || []).forEach(function(m){ if(m && m.name) known[m.name.trim().toLowerCase()] = m.id; });
@@ -3503,6 +3511,9 @@ function submitFailMsg(res){
      than the condition: "signed out" is the script's word for it, not
      something to show a reader. */
   if(why === "signed out") return "Please sign in \u2014 endorsing and putting a book forward are for club members.";
+  if(why === "members only") return MEMBERS_ONLY;
+  if(why === "not yours") return "You can only change what you wrote.";
+  if(why === "observers only") return "That one is for observer accounts.";
   if(why === "not a member yet") return "Your account is still waiting for the organiser to approve it.";
   if(why === "already endorsements") return "You\u2019ve already endorsed this one.";
   if(why === "already dislikes") return "You\u2019ve already passed on this one.";
@@ -3714,6 +3725,12 @@ async function callEndpoint(kind, payload, urlOverride){
    don't behave exactly as they did. */
 function endpointTrouble(err, detail){
   var why = detail ? " (" + detail + ")" : "";
+  /* The permission refusals, here too: every signed-in call goes through
+     this, and a reader meeting "members only" in a toast should read the
+     sentence rather than the condition. */
+  if(err === "members only") return MEMBERS_ONLY;
+  if(err === "not yours") return "You can only change what you wrote.";
+  if(err === "observers only") return "That one is for observer accounts.";
   if(err === "dev-blocked") return "That's switched off on the test site — it would reach real members. Try it on the real site.";
   if(err === "unconfigured") return "No script address saved yet — add it under Admin → Settings.";
   /* Was "check Who has access is Anyone", for every one of these. That is one
@@ -3857,6 +3874,14 @@ function myName(){ return (me && (me.name || "")) || ""; }
    Only this unlocks a name box, because only this is what the script honours
    when it decides whose endorsement a submission is. */
 function isOrganiser(){ return !!(me && me.isOrganiser); }
+/* Someone signed in who follows the club without being in it. The session
+   says so; the page never infers it from a missing member record, because
+   "no member row" is also what a half-loaded session looks like. */
+function isObserver(){ return !!(me && me.type === "observer"); }
+/* What an observer is told when they reach something that is not theirs. One
+   sentence, in one place, so the twelve controls that need it cannot word it
+   twelve ways. */
+var MEMBERS_ONLY = "This is for club members.";
 
 var loginStep = "email", loginEmail = "";
 /* One sign-in call at a time. Neither button had a guard, and a double click
@@ -8156,6 +8181,100 @@ async function profileRefresh(){
   if(res.name) mem.name = res.name;
   profEdits = null; profDraft = null;
 }
+/* ---------- an observer's account ----------
+   Four things, and nothing else: what they are called, the address the club
+   writes to, whether it writes at all, and what became of the books they put
+   forward. No badge colour, no Goodreads, no Fable, no top genres, no top
+   five -- those are a member's public profile, and an observer has none. */
+var acctStep = "";          /* "" or "code" while an address change is waiting */
+var acctNext = "";
+async function openAccount(){
+  if(!isObserver()) return;
+  $("meModalTitle").textContent = "Your account";
+  $("meModalBody").innerHTML = '<p class="hint">Loading\u2026</p>';
+  openScrim("meScrim");
+  var res = await callEndpoint("notify-get", { token: sessionToken() });
+  myNotify = (res && res.ok && res.books) || [];
+  renderAccount();
+}
+function renderAccount(){
+  var host = $("meModalBody"); if(!host) return;
+  var notifiable = currentBooks().concat(nextBooks());
+  var on = function(id){ return (myNotify || []).indexOf(id) !== -1; };
+  host.innerHTML =
+    '<p class="eyebrow">Observer</p>' +
+    '<h3 style="font-size:24px;margin:8px 0 6px">' + esc(myName() || "Your account") + "</h3>" +
+    '<p class="hint">You follow the club without being a member: you can read the meetings, ' +
+    'say what you think, and put books forward. Voting and nominating are for members.</p>' +
+
+    '<div class="field" style="margin-top:20px"><label for="acName">Display name</label>' +
+      '<input class="input" id="acName" maxlength="60" value="' + esc(myName()) + '">' +
+      '<p class="hint" style="margin-top:6px">This is the name on anything you write.</p></div>' +
+    '<div style="margin-top:10px"><button class="btn btn--sm btn--zest" type="button" id="acSaveName">Save name</button></div>' +
+
+    '<hr class="divider">' +
+    '<div class="field"><label for="acEmail">Email</label>' +
+      (acctStep === "code"
+        ? '<p>We\u2019ve sent a six-digit code to <strong>' + esc(acctNext) + "</strong>. " +
+          "Until you enter it, the club still writes to your old address.</p>" +
+          '<input class="input" id="acCode" inputmode="numeric" maxlength="6" placeholder="123456" ' +
+            'style="margin-top:10px;max-width:160px">' +
+          '<div class="lookbar" id="acBar" role="status" aria-label="Checking your code" hidden><span></span></div>' +
+          '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">' +
+            '<button class="btn btn--sm btn--surf" type="button" id="acVerify">Confirm</button>' +
+            '<button class="btn btn--sm btn--ghost" type="button" id="acCancel">Cancel</button></div>'
+        : '<p class="hint" style="margin:0 0 8px">Currently ' +
+            esc((me && me.emailHint) || "\u2014") + ".</p>" +
+          '<input class="input" id="acEmail" type="email" maxlength="160" placeholder="new@example.com">' +
+          '<div class="lookbar" id="acBar" role="status" aria-label="Sending your code" hidden><span></span></div>' +
+          '<div style="margin-top:10px"><button class="btn btn--sm btn--zest" type="button" id="acSendCode">' +
+            "Change email</button></div>" +
+          '<p class="hint" style="margin-top:6px">We send a code to the new address. Nothing changes ' +
+            "until you enter it, so a typo can\u2019t lock you out.</p>") +
+    "</div>" +
+
+    '<hr class="divider">' +
+    '<div class="field"><label>Meeting reminders</label>' +
+      '<div class="checkgrid">' +
+        '<label><input type="checkbox" data-acnotify="*"' + (on("*") ? " checked" : "") + ">Every meeting</label>" +
+        notifiable.map(function(b){
+          return '<label><input type="checkbox" data-acnotify="' + esc(b.id) + '"' +
+            (on(b.id) ? " checked" : "") + ">" + esc(b.title) + "</label>";
+        }).join("") +
+      "</div>" +
+      '<p class="hint" style="margin-top:8px">Only these. The club\u2019s voting emails go to members.</p></div>' +
+    '<div style="margin-top:10px"><button class="btn btn--sm btn--zest" type="button" id="acSaveNotify">Save reminders</button></div>' +
+
+    '<hr class="divider">' +
+    '<p class="eyebrow">My recommendations</p>' + myRecsHTML();
+}
+/* What became of the books this account put forward. The same question a
+   member's account answers, asked of a name rather than a member id. */
+function myRecsHTML(){
+  var name = String(myName() || "").trim().toLowerCase();
+  if(!name) return '<p class="empty">Nothing yet.</p>';
+  var mine = (state.recs || []).filter(function(r){
+    return String(r.by || "").trim().toLowerCase() === name;
+  });
+  var waiting = inbox.filter(function(it){
+    return it && it.kind === "suggest" && !it.handled && !recById(it.id) &&
+      String((it.payload || {}).by || "").trim().toLowerCase() === name;
+  });
+  if(!mine.length && !waiting.length){
+    return '<p class="empty">You haven\u2019t put a book forward yet. The Recommendations page has the form.</p>';
+  }
+  var row = function(title, status){
+    return '<div class="vocabitem"><div class="vocabrow"><span>' + esc(title) + "</span>" +
+      '<span class="vocabrow__n" style="margin-left:auto">' + esc(status) + "</span></div></div>";
+  };
+  return waiting.map(function(it){ return row((it.payload || {}).title || "Untitled", "waiting"); }).join("") +
+    mine.map(function(r){
+      return row(r.title, r.status === "approved"
+        ? (r.shortlist ? "on the shortlist" : "on the list")
+        : r.status === "rejected" ? "not taken up" : "waiting");
+    }).join("");
+}
+
 async function openMe(){
   if(!me){ openLogin(); return; }
   /* Shut until the profile has been fetched and drawn. Pressing Save against
@@ -8792,6 +8911,8 @@ function tryUnlock(){
 function paintMenuProfile(){
   var b = $("menuProfile"); if(!b) return;
   b.hidden = !(me && myMember());
+  var a = $("menuAccount");
+  if(a) a.hidden = !isObserver();
 }
 function paintMenuSession(){
   var b = $("menuSession");
@@ -12156,6 +12277,72 @@ document.addEventListener("click", async function(e){
      discarding an edit made through this box. */
   /* ---- edit profile */
   if(t.closest("#menuProfile")){ menuShut(); await openMe(); return; }
+  if(t.closest("#menuAccount")){ menuShut(); await openAccount(); return; }
+  if(t.closest("#acSaveName")){
+    var nm = ($("acName") && $("acName").value || "").trim();
+    if(!nm){ if($("acName")) $("acName").focus(); say("Put a name in first.", "bad"); return; }
+    say("Saving\u2026", "busy", true);
+    var nres = await callEndpoint("observer-set", { token: sessionToken(), name: nm });
+    if(!nres.ok){ say(endpointTrouble(nres.error, nres.detail) || nres.error, "bad"); return; }
+    me.name = nres.name;
+    say("Saved.", "ok");
+    renderAll(); renderAccount();
+    return;
+  }
+  if(t.closest("#acSendCode")){
+    var next = ($("acEmail") && $("acEmail").value || "").trim();
+    if(!next){ if($("acEmail")) $("acEmail").focus(); say("Put the new address in first.", "bad"); return; }
+    var sbtn = $("acSendCode");
+    busyOn("acBar", sbtn, "Sending\u2026");
+    var cres = await callEndpoint("email-change", { token: sessionToken(), email: next });
+    busyOff("acBar", sbtn, "Change email");
+    if(!cres.ok){
+      say(cres.error === "taken" ? "That address already has an account."
+        : cres.error === "same email" ? "That is the address you already use."
+        : cres.error === "bad email" ? "That doesn\u2019t look like an email address."
+        : cres.error === "too soon" ? "Just a moment \u2014 try again in " + (cres.wait || 30) + "s."
+        : (endpointTrouble(cres.error, cres.detail) || cres.error), "bad");
+      return;
+    }
+    acctStep = "code"; acctNext = next;
+    renderAccount();
+    say("Code sent to " + next + ".", "ok");
+    return;
+  }
+  if(t.closest("#acCancel")){ acctStep = ""; acctNext = ""; renderAccount(); return; }
+  if(t.closest("#acVerify")){
+    var code = ($("acCode") && $("acCode").value || "").trim();
+    if(!code){ if($("acCode")) $("acCode").focus(); return; }
+    var vbtn = $("acVerify");
+    busyOn("acBar", vbtn, "Checking\u2026");
+    var vres = await callEndpoint("email-verify", { token: sessionToken(), code: code });
+    busyOff("acBar", vbtn, "Confirm");
+    if(!vres.ok){
+      say(vres.error === "wrong"
+            ? "That code isn\u2019t right." + (vres.left ? " " + vres.left + " tries left." : "")
+        : vres.error === "expired" ? "That code has expired \u2014 ask for another."
+        : vres.error === "taken" ? "That address was claimed while you were typing."
+        : (endpointTrouble(vres.error, vres.detail) || vres.error), "bad");
+      return;
+    }
+    me.email = vres.email; me.emailHint = vres.emailHint;
+    acctStep = ""; acctNext = "";
+    renderAccount();
+    say("That\u2019s your address now.", "ok");
+    return;
+  }
+  if(t.closest("#acSaveNotify")){
+    var want = [];
+    [].forEach.call(document.querySelectorAll("[data-acnotify]"), function(c){
+      if(c.checked) want.push(c.getAttribute("data-acnotify"));
+    });
+    say("Saving\u2026", "busy", true);
+    var rres = await callEndpoint("notify-set", { token: sessionToken(), books: want });
+    if(!rres.ok){ say(endpointTrouble(rres.error, rres.detail) || rres.error, "bad"); return; }
+    myNotify = rres.books || want;
+    say(want.length ? "Saved." : "You won\u2019t get meeting emails.", "ok");
+    return;
+  }
   if(t.closest("#profEdit")){ profCapture(); profEditing = !profEditing; renderMe(); return; }
   if((el = t.closest("[data-profpick]"))){ profOpenForm(Number(el.getAttribute("data-profpick"))); return; }
   if((el = t.closest("[data-profdrop]"))){ profAskDrop(Number(el.getAttribute("data-profdrop"))); return; }
