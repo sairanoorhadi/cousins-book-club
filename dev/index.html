@@ -7088,6 +7088,9 @@ function whoPickLabel(kind){
 }
 function whoPickHTML(kind){
   var picked = notePick[kind] || [];
+  /* The button goes with the panel: an observer writes under their own name
+     and has nothing to choose. */
+  if(isObserver()) return "";
   return '<div class="whopick" data-whopick="' + kind + '">' +
     '<button class="btn btn--sm btn--ghost whopick__btn" type="button" data-whotoggle="' + kind + '" ' +
       'aria-expanded="false"' + (picked.length ? "" : ' data-empty="1"') + ">" +
@@ -7100,6 +7103,11 @@ function whoPickHTML(kind){
    should do anyway. */
 function whoPanelHTML(kind){
   var picked = notePick[kind] || [];
+  /* An observer's entry is their own and says so; the script sets the name
+     from the session and ignores any ids sent. Offering them the club's
+     names to choose from would be offering something that is not theirs to
+     give. */
+  if(isObserver()) return "";
   return '<div class="whopick__panel" data-whopanel="' + kind + '" hidden>' +
     (state.members.length
       ? '<span class="whopick__lab">Who said it?</span>' + state.members.map(function(m){
@@ -7185,7 +7193,11 @@ function noteList(items, kind, mid, m, review){
                   : "")
         : "") +
       "</span>" +
-      (can && !review
+      /* Members may still edit and remove each other's, which is the trade
+         this club made long ago. An observer may only touch their own, and
+         the script refuses the rest -- so the buttons are not offered on
+         somebody else's, rather than offered and then failing. */
+      (can && !review && (!isObserver() || (p.obs && String(p.obsId || "") === String((me && me.observerId) || "")))
         ? '<span class="noteacts">' +
             '<button class="note__e" type="button" data-noteedit="' + kind + '" data-mid="' + esc(mid) + '" ' +
               'data-iid="' + esc(p.id) + '" title="Change what this says" aria-label="Change what this says">' + PENCIL + "</button>" +
