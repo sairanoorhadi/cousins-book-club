@@ -1,5 +1,5 @@
 {
-  "rev": 1343,
+  "rev": 1344,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -120,7 +120,8 @@
         "by": ""
       },
       "getbook": [],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "bk-soc",
@@ -158,7 +159,8 @@
       "ageMin": 14,
       "ageMax": 100,
       "getbook": [],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "bk-mt7pvx697h34g",
@@ -207,7 +209,8 @@
           "url": "https://drive.google.com/file/d/1K4fmA-yhxjvhduODCHHkKgz_z9RW5Ys_/view?usp=drive_link"
         }
       ],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-91746858-bc0",
@@ -236,7 +239,8 @@
       "order": 2,
       "level": "Ages 10-13",
       "getbook": [],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     }
   ],
   "meetings": [
@@ -814,6 +818,21 @@
       "points": [],
       "ready": [],
       "sent": {}
+    },
+    {
+      "id": "mt-mvl8fjs2askja",
+      "bookId": "suggest-91746858-bc0",
+      "kind": "meeting",
+      "date": "2026-11-13",
+      "time": "19:00",
+      "place": "",
+      "chapters": "",
+      "pages": "",
+      "done": false,
+      "summary": "",
+      "photos": [],
+      "predictions": [],
+      "points": []
     }
   ],
   "recs": [
@@ -841,7 +860,8 @@
       "ageMax": 100,
       "dislikes": [],
       "ratings": [],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "rc-1984",
@@ -872,7 +892,8 @@
           "source": "Goodreads"
         }
       ],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "rc-kite",
@@ -903,7 +924,8 @@
           "source": "Goodreads"
         }
       ],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "rc-mockingbird",
@@ -934,7 +956,8 @@
           "source": "Goodreads"
         }
       ],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "rc-elevator",
@@ -970,7 +993,8 @@
           "source": "Goodreads"
         }
       ],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "rc-champion",
@@ -1001,7 +1025,8 @@
           "source": "Goodreads"
         }
       ],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "rc-grace",
@@ -1032,7 +1057,8 @@
           "source": "Goodreads"
         }
       ],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "rc-trouts",
@@ -1063,7 +1089,8 @@
           "source": "Amazon"
         }
       ],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "rc-pandas",
@@ -1094,7 +1121,8 @@
           "source": "Goodreads"
         }
       ],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "rc-heartless",
@@ -1131,7 +1159,8 @@
           "source": "Goodreads"
         }
       ],
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-2603dba6-457",
@@ -1164,7 +1193,8 @@
         }
       ],
       "level": "Ages 14+",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-a68f18ee-188",
@@ -1194,7 +1224,8 @@
         }
       ],
       "level": "Ages 14+",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-6ccf5deb-801",
@@ -1225,7 +1256,8 @@
         }
       ],
       "level": "Ages 16+",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-6944d6d5-5f3",
@@ -1259,7 +1291,8 @@
         }
       ],
       "level": "Ages 8-12",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-3b3ebcb6-1b1",
@@ -1289,7 +1322,8 @@
         }
       ],
       "level": "Ages 13+",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-5b4bab6f-ca1",
@@ -1322,7 +1356,8 @@
         }
       ],
       "level": "Ages 8-12",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-9502fb3c-cb7",
@@ -1349,7 +1384,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 13+",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-714168e4-c04",
@@ -1377,7 +1413,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 10+",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-2b3d7a12-9c3",
@@ -1405,7 +1442,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 8-12",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-09244f59-518",
@@ -1434,7 +1472,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 8-12",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-d7325660-22d",
@@ -1459,7 +1498,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 10-13",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-b2f54907-410",
@@ -1486,7 +1526,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 13+",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-2b14f01f-7c5",
@@ -1514,7 +1555,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 16+",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-f70a1c8e-a89",
@@ -1539,7 +1581,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 12-18",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-d75be64d-de7",
@@ -1566,7 +1609,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 8-12",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-d10cfbab-9f0",
@@ -1592,7 +1636,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 10+",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-795c1639-13d",
@@ -1618,7 +1663,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 8-12",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-98664ae7-609",
@@ -1646,7 +1692,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 8-12",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-941ddf1d-79d",
@@ -1674,7 +1721,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 8-12",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-373be845-e1b",
@@ -1699,7 +1747,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 8-12",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-661067d6-b72",
@@ -1724,7 +1773,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 10-15",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     },
     {
       "id": "suggest-9430b520-ce4",
@@ -1750,7 +1800,8 @@
       "dislikes": [],
       "ratings": [],
       "level": "Ages 16+",
-      "tropes": []
+      "tropes": [],
+      "subgenres": []
     }
   ],
   "inbox": [
