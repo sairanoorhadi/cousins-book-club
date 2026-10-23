@@ -1445,6 +1445,16 @@ a.getrow:hover{background:var(--sunk)}
 .inboxbulk__opt--off{color:var(--muted);cursor:default}
 .inboxundo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px;
   border:1.5px solid var(--hairline);border-radius:var(--r);padding:9px 13px;font-size:13.5px}
+/* ---- the two kinds of account, on the sign-up form ----
+   Stacked, each with its line of explanation, because the choice decides what
+   the whole account is for and a radio with a bare label would not say so. */
+.acctpick{display:flex;flex-direction:column;gap:8px}
+.acctpick__opt{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;cursor:pointer;
+  border:1.5px solid var(--hairline);border-radius:var(--r)}
+.acctpick__opt:hover{border-color:var(--edge)}
+.acctpick__opt input{margin-top:3px;flex:none}
+.acctpick__opt span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.acctpick__opt .hint{margin:0}
 .inboxrow{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:16px 18px;box-shadow:var(--shadow-sm)}
 .inboxrow + .inboxrow{margin-top:12px}
 .inboxrow__head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
@@ -1909,6 +1919,9 @@ a.getrow:hover{background:var(--sunk)}
           <a class="menu__item" role="menuitem" href="#badges">Badges</a>
           <a class="menu__item" role="menuitem" href="#members">Members</a>
           <button class="menu__item" role="menuitem" type="button" id="menuProfile" hidden>Edit profile</button>
+          <!-- An observer has no public profile to edit; what they do have is
+               a name, an address and their reminders. -->
+          <button class="menu__item" role="menuitem" type="button" id="menuAccount" hidden>Account</button>
           <button class="menu__item" role="menuitem" type="button" id="menuAdmin">Admin</button>
           <button class="menu__item menu__item--out" role="menuitem" type="button" id="menuSession">Sign in</button>
         </div>
@@ -3128,6 +3141,11 @@ function noteAuthors(n, members){
   if(!n || typeof n !== "object") return n;
   if(!Array.isArray(n.byIds)) n.byIds = [];
   if(typeof n.by !== "string") n.by = String(n.by || "");
+  /* An observer's entry carries a name and no id on purpose. Resolving it
+     against the members list would hand the note to whichever member happens
+     to share the name -- an observer called Eliza would have written it as
+     the Eliza who is in the club. The flag is on the item for this. */
+  if(n.obs) return n;
   if(n.byIds.length || !n.by) return n;
   var known = {};
   (members || []).forEach(function(m){ if(m && m.name) known[m.name.trim().toLowerCase()] = m.id; });
@@ -3492,6 +3510,9 @@ function submitFailMsg(res){
      than the condition: "signed out" is the script's word for it, not
      something to show a reader. */
   if(why === "signed out") return "Please sign in \u2014 endorsing and putting a book forward are for club members.";
+  if(why === "members only") return MEMBERS_ONLY;
+  if(why === "not yours") return "You can only change what you wrote.";
+  if(why === "observers only") return "That one is for observer accounts.";
   if(why === "not a member yet") return "Your account is still waiting for the organiser to approve it.";
   if(why === "already endorsements") return "You\u2019ve already endorsed this one.";
   if(why === "already dislikes") return "You\u2019ve already passed on this one.";
@@ -3536,7 +3557,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-21b";
+var SCRIPT_WANT = "2026-10-22a";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -3586,6 +3607,15 @@ var ENDPOINT_REPEATABLE = {
   /* Showing and hiding set a flag to a value rather than toggling it, so a
      repeat lands where the first would have; reading only reads. */
   "vote-hide": 1, "vote-show": 1, "vote-results": 1,
+  /* The observer calls. Adding one is keyed on the address and returns the
+     existing row rather than a second, listing and promoting only read or
+     move a row that is already gone on a repeat, and removing one is gone
+     either way. Setting a name and writing up a meeting both land the value
+     they were handed. email-change sends a code and is NOT repeatable: a
+     second send would spend another of the sender's daily allowance and
+     invalidate the code they are already typing. */
+  "observer-list": 1, "observer-add": 1, "observer-remove": 1,
+  "observer-promote": 1, "observer-set": 1, "notes-summary": 1,
   /* The preview only reads. The two sends are guarded by a stored flag in the
      script, so a repeat cannot produce a second email -- and the me-only one
      is for checking wording, which is a thing you do more than once. */
@@ -3694,6 +3724,12 @@ async function callEndpoint(kind, payload, urlOverride){
    don't behave exactly as they did. */
 function endpointTrouble(err, detail){
   var why = detail ? " (" + detail + ")" : "";
+  /* The permission refusals, here too: every signed-in call goes through
+     this, and a reader meeting "members only" in a toast should read the
+     sentence rather than the condition. */
+  if(err === "members only") return MEMBERS_ONLY;
+  if(err === "not yours") return "You can only change what you wrote.";
+  if(err === "observers only") return "That one is for observer accounts.";
   if(err === "dev-blocked") return "That's switched off on the test site — it would reach real members. Try it on the real site.";
   if(err === "unconfigured") return "No script address saved yet — add it under Admin → Settings.";
   /* Was "check Who has access is Anyone", for every one of these. That is one
@@ -3824,11 +3860,14 @@ function myMember(){ return me && me.memberId ? memberById(me.memberId) : null; 
    organiser hasn't closed. Membership is the same server-side answer as
    everywhere else — this only decides whether the controls are worth
    drawing, the endpoint decides for real. */
-function canEditNotes(m){ return !!(me && myMember() && m && !m.done); }
+/* Predictions, discussion points and the write-up are open to either kind of
+   account -- an observer reads the club's meetings and is welcome to say what
+   they think will happen. Voting on them is the members' part. */
+function canEditNotes(m){ return !!(me && (myMember() || isObserver()) && m && !m.done); }
 function notesLockedReason(m){
   if(m && m.done) return "This meeting is marked done \u2014 only the organiser can still change its notes.";
   if(!me) return "Sign in to add one.";
-  if(!myMember()) return "Your account isn\u2019t on the members list yet.";
+  if(!myMember() && !isObserver()) return "Your account isn\u2019t on the members list yet.";
   return "";
 }
 function myName(){ return (me && (me.name || "")) || ""; }
@@ -3837,6 +3876,14 @@ function myName(){ return (me && (me.name || "")) || ""; }
    Only this unlocks a name box, because only this is what the script honours
    when it decides whose endorsement a submission is. */
 function isOrganiser(){ return !!(me && me.isOrganiser); }
+/* Someone signed in who follows the club without being in it. The session
+   says so; the page never infers it from a missing member record, because
+   "no member row" is also what a half-loaded session looks like. */
+function isObserver(){ return !!(me && me.type === "observer"); }
+/* What an observer is told when they reach something that is not theirs. One
+   sentence, in one place, so the twelve controls that need it cannot word it
+   twelve ways. */
+var MEMBERS_ONLY = "This is for club members.";
 
 var loginStep = "email", loginEmail = "";
 /* One sign-in call at a time. Neither button had a guard, and a double click
@@ -5525,6 +5572,13 @@ function nomBlockHTML(o){
       "</div>";
   }
   if(!myMember()){
+    /* Telling an observer to sign in would be nonsense -- they are signed in,
+       and signing in again would not make them a member. */
+    if(isObserver()){
+      return '<div class="endorse endorse--nom">' +
+        '<span class="nomq">Nominations are open \u2014 one book each.</span>' +
+        '<span class="hint">' + esc(MEMBERS_ONLY) + "</span></div>";
+    }
     return '<div class="endorse endorse--nom">' +
       '<span class="nomq">Nominations are open \u2014 one book each.</span>' +
       '<button class="btn btn--sm btn--grape" type="button" data-nomsignin="' + esc(o.id) +
@@ -7033,6 +7087,9 @@ function whoPickLabel(kind){
 }
 function whoPickHTML(kind){
   var picked = notePick[kind] || [];
+  /* The button goes with the panel: an observer writes under their own name
+     and has nothing to choose. */
+  if(isObserver()) return "";
   return '<div class="whopick" data-whopick="' + kind + '">' +
     '<button class="btn btn--sm btn--ghost whopick__btn" type="button" data-whotoggle="' + kind + '" ' +
       'aria-expanded="false"' + (picked.length ? "" : ' data-empty="1"') + ">" +
@@ -7045,6 +7102,11 @@ function whoPickHTML(kind){
    should do anyway. */
 function whoPanelHTML(kind){
   var picked = notePick[kind] || [];
+  /* An observer's entry is their own and says so; the script sets the name
+     from the session and ignores any ids sent. Offering them the club's
+     names to choose from would be offering something that is not theirs to
+     give. */
+  if(isObserver()) return "";
   return '<div class="whopick__panel" data-whopanel="' + kind + '" hidden>' +
     (state.members.length
       ? '<span class="whopick__lab">Who said it?</span>' + state.members.map(function(m){
@@ -7130,7 +7192,11 @@ function noteList(items, kind, mid, m, review){
                   : "")
         : "") +
       "</span>" +
-      (can && !review
+      /* Members may still edit and remove each other's, which is the trade
+         this club made long ago. An observer may only touch their own, and
+         the script refuses the rest -- so the buttons are not offered on
+         somebody else's, rather than offered and then failing. */
+      (can && !review && (!isObserver() || (p.obs && String(p.obsId || "") === String((me && me.observerId) || "")))
         ? '<span class="noteacts">' +
             '<button class="note__e" type="button" data-noteedit="' + kind + '" data-mid="' + esc(mid) + '" ' +
               'data-iid="' + esc(p.id) + '" title="Change what this says" aria-label="Change what this says">' + PENCIL + "</button>" +
@@ -7196,7 +7262,11 @@ function meetingHTML(m, b){
       : "") +
     '<section class="noteblock noteblock--sum"><div class="noteblock__head"><h3>' +
       (party ? "How the party went" : "What happened at the meeting") + "</h3></div><div class=\"noteblock__body\">" +
-      (isAdmin
+      /* The write-up is open to anyone with an account while the meeting is
+         still open, which is when it actually gets written. The organiser
+         keeps her own box either way -- she writes state.json directly, so
+         she can still write one up after the meeting is closed. */
+      (isAdmin || canEditNotes(m)
         ? '<textarea class="textarea" id="sumBox" style="min-height:190px" placeholder="' +
             (party ? "Who came, what you ate, what everyone argued about anyway." : "Write up the meeting — who argued what, where the room split, what to carry forward.") +
           '">' + esc(m.summary || "") + "</textarea>" +
@@ -7395,7 +7465,7 @@ function openBookDetail(o, kind, focus){
             (own
               ? '<span class="hint" style="flex:1 1 200px">Putting it forward counts as your endorsement, so you can\u2019t add another.</span>' +
                 '<button class="btn btn--sm btn--ghost" type="button" data-dislike="' + esc(o.id) + '">Changed my mind</button>'
-              : (me && myName()
+              : ((myMember() || isObserver())
                   /* The name is the account's and cannot be retyped -- the
                      script takes it from the session anyway, so an editable
                      box would only promise something it would not honour.
@@ -8057,7 +8127,11 @@ async function castVote(rec, down, name){
    the script takes the name from the session either way, so an editable box
    would be offering something it would not honour. */
 function renderSuggestGate(){
-  var inAsMember = !!(me && me.isMember);
+  /* myMember(), the same test the nominate prompt uses: signed in and on the
+     club's own members list. A second rule of my own making -- me.isMember --
+     answered differently and shut the form on a dozen suites that were
+     signed in perfectly well. One rule, used everywhere. */
+  var inAsMember = !!(myMember() || isObserver());
   var lock = $("suggestLocked"), form = $("suggestForm");
   if(lock) lock.hidden = inAsMember;
   if(form) form.hidden = !inAsMember;
@@ -8132,6 +8206,100 @@ async function profileRefresh(){
   if(res.name) mem.name = res.name;
   profEdits = null; profDraft = null;
 }
+/* ---------- an observer's account ----------
+   Four things, and nothing else: what they are called, the address the club
+   writes to, whether it writes at all, and what became of the books they put
+   forward. No badge colour, no Goodreads, no Fable, no top genres, no top
+   five -- those are a member's public profile, and an observer has none. */
+var acctStep = "";          /* "" or "code" while an address change is waiting */
+var acctNext = "";
+async function openAccount(){
+  if(!isObserver()) return;
+  $("meModalTitle").textContent = "Your account";
+  $("meModalBody").innerHTML = '<p class="hint">Loading\u2026</p>';
+  openScrim("meScrim");
+  var res = await callEndpoint("notify-get", { token: sessionToken() });
+  myNotify = (res && res.ok && res.books) || [];
+  renderAccount();
+}
+function renderAccount(){
+  var host = $("meModalBody"); if(!host) return;
+  var notifiable = currentBooks().concat(nextBooks());
+  var on = function(id){ return (myNotify || []).indexOf(id) !== -1; };
+  host.innerHTML =
+    '<p class="eyebrow">Observer</p>' +
+    '<h3 style="font-size:24px;margin:8px 0 6px">' + esc(myName() || "Your account") + "</h3>" +
+    '<p class="hint">You follow the club without being a member: you can read the meetings, ' +
+    'say what you think, and put books forward. Voting and nominating are for members.</p>' +
+
+    '<div class="field" style="margin-top:20px"><label for="acName">Display name</label>' +
+      '<input class="input" id="acName" maxlength="60" value="' + esc(myName()) + '">' +
+      '<p class="hint" style="margin-top:6px">This is the name on anything you write.</p></div>' +
+    '<div style="margin-top:10px"><button class="btn btn--sm btn--zest" type="button" id="acSaveName">Save name</button></div>' +
+
+    '<hr class="divider">' +
+    '<div class="field"><label for="acEmail">Email</label>' +
+      (acctStep === "code"
+        ? '<p>We\u2019ve sent a six-digit code to <strong>' + esc(acctNext) + "</strong>. " +
+          "Until you enter it, the club still writes to your old address.</p>" +
+          '<input class="input" id="acCode" inputmode="numeric" maxlength="6" placeholder="123456" ' +
+            'style="margin-top:10px;max-width:160px">' +
+          '<div class="lookbar" id="acBar" role="status" aria-label="Checking your code" hidden><span></span></div>' +
+          '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">' +
+            '<button class="btn btn--sm btn--surf" type="button" id="acVerify">Confirm</button>' +
+            '<button class="btn btn--sm btn--ghost" type="button" id="acCancel">Cancel</button></div>'
+        : '<p class="hint" style="margin:0 0 8px">Currently ' +
+            esc((me && me.emailHint) || "\u2014") + ".</p>" +
+          '<input class="input" id="acEmail" type="email" maxlength="160" placeholder="new@example.com">' +
+          '<div class="lookbar" id="acBar" role="status" aria-label="Sending your code" hidden><span></span></div>' +
+          '<div style="margin-top:10px"><button class="btn btn--sm btn--zest" type="button" id="acSendCode">' +
+            "Change email</button></div>" +
+          '<p class="hint" style="margin-top:6px">We send a code to the new address. Nothing changes ' +
+            "until you enter it, so a typo can\u2019t lock you out.</p>") +
+    "</div>" +
+
+    '<hr class="divider">' +
+    '<div class="field"><label>Meeting reminders</label>' +
+      '<div class="checkgrid">' +
+        '<label><input type="checkbox" data-acnotify="*"' + (on("*") ? " checked" : "") + ">Every meeting</label>" +
+        notifiable.map(function(b){
+          return '<label><input type="checkbox" data-acnotify="' + esc(b.id) + '"' +
+            (on(b.id) ? " checked" : "") + ">" + esc(b.title) + "</label>";
+        }).join("") +
+      "</div>" +
+      '<p class="hint" style="margin-top:8px">Only these. The club\u2019s voting emails go to members.</p></div>' +
+    '<div style="margin-top:10px"><button class="btn btn--sm btn--zest" type="button" id="acSaveNotify">Save reminders</button></div>' +
+
+    '<hr class="divider">' +
+    '<p class="eyebrow">My recommendations</p>' + myRecsHTML();
+}
+/* What became of the books this account put forward. The same question a
+   member's account answers, asked of a name rather than a member id. */
+function myRecsHTML(){
+  var name = String(myName() || "").trim().toLowerCase();
+  if(!name) return '<p class="empty">Nothing yet.</p>';
+  var mine = (state.recs || []).filter(function(r){
+    return String(r.by || "").trim().toLowerCase() === name;
+  });
+  var waiting = inbox.filter(function(it){
+    return it && it.kind === "suggest" && !it.handled && !recById(it.id) &&
+      String((it.payload || {}).by || "").trim().toLowerCase() === name;
+  });
+  if(!mine.length && !waiting.length){
+    return '<p class="empty">You haven\u2019t put a book forward yet. The Recommendations page has the form.</p>';
+  }
+  var row = function(title, status){
+    return '<div class="vocabitem"><div class="vocabrow"><span>' + esc(title) + "</span>" +
+      '<span class="vocabrow__n" style="margin-left:auto">' + esc(status) + "</span></div></div>";
+  };
+  return waiting.map(function(it){ return row((it.payload || {}).title || "Untitled", "waiting"); }).join("") +
+    mine.map(function(r){
+      return row(r.title, r.status === "approved"
+        ? (r.shortlist ? "on the shortlist" : "on the list")
+        : r.status === "rejected" ? "not taken up" : "waiting");
+    }).join("");
+}
+
 async function openMe(){
   if(!me){ openLogin(); return; }
   /* Shut until the profile has been fetched and drawn. Pressing Save against
@@ -8643,15 +8811,39 @@ function profRecsHTML(){
 }
 
 /* ---------- member requests ---------- */
+/* The two kinds of account, in one place: the sign-up picker, the Admin
+   inbox label and the Accept dropdown all read it, so a third kind would be
+   one entry rather than three edits. */
+var ACCOUNT_KINDS = [
+  { key: "member", label: "Member of the club",
+    blurb: "You read along, vote on what\u2019s next, and come to the meetings." },
+  { key: "observer", label: "Observer (family or friend)",
+    blurb: "You can read the notes, say what you think and put books forward \u2014 but not vote or nominate." }
+];
+function accountKindLabel(k){
+  var hit = ACCOUNT_KINDS.filter(function(a){ return a.key === k; })[0];
+  return hit ? hit.label : "Member of the club";
+}
 function openMemberForm(kind, bookId){
   var titles = { join: "Ask to join the club", profile: "Update my profile", notify: "Email me about meetings" };
   $("memberModalTitle").textContent = titles[kind] || "The club";
   var notifiable = currentBooks().concat(nextBooks());
   var body =
     (kind === "join"
-      ? '<p class="eyebrow">New member</p><h3 style="font-size:24px;margin:8px 0 6px">Ask to join</h3>' +
+      ? '<p class="eyebrow">New account</p><h3 style="font-size:24px;margin:8px 0 6px">Ask to join</h3>' +
         '<p class="hint">An organiser reads your request and approves it. Until then you won\u2019t be able ' +
-        'to sign in \u2014 we\u2019ll email you the moment you\u2019re in.</p>'
+        'to sign in \u2014 we\u2019ll email you the moment you\u2019re in.</p>' +
+        /* Asked before anything else, because it decides what the rest of the
+           account is for. Both kinds wait on the organiser either way. */
+        '<div class="field" style="margin-top:18px"><label>I\u2019m a\u2026</label>' +
+        '<div class="acctpick">' +
+          ACCOUNT_KINDS.map(function(a){
+            return '<label class="acctpick__opt"><input type="radio" name="mfType" value="' + esc(a.key) + '"' +
+              (a.key === "member" ? " checked" : "") + ">" +
+              '<span><strong>' + esc(a.label) + "</strong>" +
+              '<span class="hint">' + esc(a.blurb) + "</span></span></label>";
+          }).join("") +
+        "</div></div>"
       : kind === "profile"
       ? '<p class="eyebrow">Existing member</p><h3 style="font-size:24px;margin:8px 0 6px">Request a change</h3>' +
         '<p class="hint">Say what you want changed on your profile and the organiser will apply it.</p>'
@@ -8744,6 +8936,8 @@ function tryUnlock(){
 function paintMenuProfile(){
   var b = $("menuProfile"); if(!b) return;
   b.hidden = !(me && myMember());
+  var a = $("menuAccount");
+  if(a) a.hidden = !isObserver();
 }
 function paintMenuSession(){
   var b = $("menuSession");
@@ -10572,7 +10766,43 @@ function paneMembers(){
       '<div class="field"><label for="amFable">Fable profile</label><input class="input" id="amFable" type="url" placeholder="https://fable.co/..." maxlength="300"></div>' +
       '<div class="field"><label for="amGoodreads">Goodreads profile</label><input class="input" id="amGoodreads" type="url" placeholder="https://www.goodreads.com/user/show/..." maxlength="300"></div>' +
     '</div><div style="margin-top:16px"><button class="btn btn--sm btn--sky" type="button" id="amAdd">Add member</button></div>' +
-    '<p class="hint" style="margin-top:12px">Add them first, then upload their picture from the row above. Profile links must start with http:// or https:// to show on the site.</p></div>';
+    '<p class="hint" style="margin-top:12px">Add them first, then upload their picture from the row above. Profile links must start with http:// or https:// to show on the site.</p></div>' +
+    observersPaneHTML();
+}
+
+/* ---- observers, in the Admin Members tab ----
+   They are not in state.json, so this cannot be drawn from it: the list comes
+   from the script and is asked for when the tab opens. */
+var obsList = null;        /* null = not asked yet, [] = asked and empty */
+var obsBusy = false;
+function observersPaneHTML(){
+  return '<hr class="divider"><p class="eyebrow">Following along</p>' +
+    '<h3 style="font-size:20px;margin:8px 0 6px">Observers' +
+      (obsList && obsList.length ? ' <span class="filters__count">' + obsList.length + "</span>" : "") +
+    "</h3>" +
+    '<p class="hint" style="margin-bottom:16px">Family and friends who read the notes and put books forward ' +
+      'without being in the club. They are kept in the script, never in the public file, so they appear ' +
+      'nowhere on the site except by name on anything they wrote.</p>' +
+    (obsList === null
+      ? '<p class="hint">' + (obsBusy ? "Loading\u2026" : "") + "</p>" +
+        (obsBusy ? "" : '<button class="btn btn--sm btn--ghost" type="button" id="obsLoad">Show observers</button>')
+      : !obsList.length
+      ? '<p class="empty">Nobody is following along yet. A sign-up as an observer lands in the Inbox.</p>'
+      : obsList.map(function(o){
+          return '<div class="vocabitem"><div class="vocabrow">' +
+            "<strong>" + esc(o.name) + "</strong>" +
+            '<span class="vocabrow__n">' + esc(o.emailHint || "") + "</span>" +
+            '<span class="vocabrow__n">' + (o.joined ? "joined " + esc(shortDate(o.joined)) : "") + "</span>" +
+            '<span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">' +
+              '<button class="btn btn--sm btn--surf" type="button" data-obspromote="' + esc(o.id) +
+                '" data-obsname="' + esc(o.name) + '">Make member</button>' +
+              '<button class="btn btn--sm btn--ghost" type="button" data-obsremove="' + esc(o.id) +
+                '" data-obsname="' + esc(o.name) + '">Remove</button>' +
+            "</span></div></div>";
+        }).join("") +
+        '<p class="hint" style="margin-top:12px">Removing one takes their account and their address. ' +
+        'What they wrote \u2014 predictions, discussion points, the books they put forward \u2014 stays ' +
+        'exactly where it is, with their name on it.</p>');
 }
 
 function paneSettings(){
@@ -10729,7 +10959,7 @@ function dismissedHTML(){
       var p = it.payload || {};
       var who = String(p.name || p.title || p.by || "").trim();
       return '<div class="vocabitem"><div class="vocabrow">' +
-        '<span class="kind">' + esc(INBOX_LABELS[it.kind] || it.kind) + "</span>" +
+        '<span class="kind">' + esc(inboxLabel(it)) + "</span>" +
         "<span>" + esc(who || "\u2014") + "</span>" +
         '<span class="vocabrow__n">' + esc(it.at ? shortDate(String(it.at).slice(0, 10)) : "") + "</span>" +
         '<button class="btn btn--sm btn--ghost" type="button" style="margin-left:auto" ' +
@@ -10740,6 +10970,16 @@ function dismissedHTML(){
 }
 var INBOX_LABELS = { join:"Waiting for approval", profile:"Profile change", endorse:"Endorsement",
                      notify:"Meeting emails", suggest:"Book put forward", notedelete:"Note deleted" };
+/* A join request says which kind of account was asked for, because approving
+   it creates that kind and the two are not the same thing. */
+function inboxLabel(it){
+  if(!it) return "";
+  if(it.kind === "join"){
+    var want = ((it.payload || {}).accountType === "observer") ? "observer" : "member";
+    return "Join request (" + want + ")";
+  }
+  return INBOX_LABELS[it.kind] || it.kind;
+}
 
 /* The confirmation. Same shape as Remove book: the destructive action on the
    left, Cancel on the right. It names the breakdown of what is actually
@@ -10838,12 +11078,25 @@ function paneInbox(){
       return '<span class="k">' + esc(k) + "</span><span>" + esc(String(v)) + "</span>";
     }).join("");
     return '<div class="inboxrow"><div class="inboxrow__head">' +
-      '<span class="kind">' + esc(labels[it.kind] || it.kind) + "</span>" +
+      '<span class="kind">' + esc(inboxLabel(it)) + "</span>" +
       '<span class="lanerow__meta">' + esc(it.at ? shortDate(String(it.at).slice(0, 10)) : "") + "</span>" +
       '<span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">' +
-        (it.kind === "join" || it.kind === "notify"
-          ? '<button class="btn btn--sm btn--surf" type="button" data-inaccept="' + esc(it.id) + '">' +
-            (it.kind === "join" ? "Approve" : "Accept") + "</button>" : "") +
+        (it.kind === "join"
+          /* The type they asked for is preselected, and changeable: somebody
+             who called themselves a member when they meant to follow along
+             is corrected here rather than approved and then unpicked. */
+          ? '<select class="select" style="width:auto;padding:5px 9px;font-size:12.5px" ' +
+              'data-inastype="' + esc(it.id) + '" aria-label="Approve as">' +
+              ACCOUNT_KINDS.map(function(a){
+                var want = ((it.payload || {}).accountType === "observer") ? "observer" : "member";
+                return '<option value="' + esc(a.key) + '"' + (a.key === want ? " selected" : "") +
+                  ">as " + esc(a.key) + "</option>";
+              }).join("") +
+            "</select>" +
+            '<button class="btn btn--sm btn--surf" type="button" data-inaccept="' + esc(it.id) + '">Approve</button>'
+          : it.kind === "notify"
+          ? '<button class="btn btn--sm btn--surf" type="button" data-inaccept="' + esc(it.id) + '">Accept</button>'
+          : "") +
         '<button class="btn btn--sm btn--ghost" type="button" data-indismiss="' + esc(it.id) + '">' +
           (it.kind === "join" ? "Reject" : "Dismiss") + "</button>" +
       "</span></div>" +
@@ -11888,6 +12141,10 @@ document.addEventListener("click", async function(e){
       var who = memberById($("mfWho").value);
       pay.member = who ? who.name : ""; pay.memberId = $("mfWho") ? $("mfWho").value : "";
     }else if($("mfName")){ pay.name = $("mfName").value.trim(); }
+    if(mk === "join"){
+      var picked = $("memberModalBody").querySelector('input[name="mfType"]:checked');
+      pay.accountType = picked ? picked.value : "member";
+    }
     if($("mfFable")) pay.fable = $("mfFable").value.trim();
     if($("mfGoodreads")) pay.goodreads = $("mfGoodreads").value.trim();
     if($("mfNote")) pay.note = $("mfNote").value.trim();
@@ -11912,7 +12169,9 @@ document.addEventListener("click", async function(e){
         '<p class="eyebrow">Waiting on an organiser</p>' +
         '<h3 style="font-size:24px;margin:8px 0 10px">Thanks, ' + esc((pay.name || "").split(" ")[0]) + "</h3>" +
         '<p>Your account must be approved by an organiser before you can sign in. ' +
-        'You\u2019re not a member yet \u2014 the request is with them now.</p>' +
+        (pay.accountType === "observer"
+          ? "You can\u2019t sign in yet \u2014 the request is with them now."
+          : "You\u2019re not a member yet \u2014 the request is with them now.") + "</p>" +
         '<p class="hint" style="margin-top:12px">We\u2019ll email this address as soon as it\u2019s approved, ' +
         'and then you can sign in with it.</p>' +
         '<div style="margin-top:20px"><button class="btn btn--surf" type="button" data-close="memberScrim">Got it</button></div>';
@@ -11957,6 +12216,32 @@ document.addEventListener("click", async function(e){
     var iid0 = el.getAttribute("data-inaccept");
     var item = inbox.filter(function(x){ return x && x.id === iid0; })[0];
     if(!item) return;
+    /* An observer is not written to the public members list -- that is the
+       whole point of them -- so approving one is a call to the script, which
+       keeps their row in its own storage. Only once that has worked is the
+       request marked handled, or a failed call would lose the request and
+       leave them waiting on an approval that already happened. */
+    var asSel = document.querySelector('[data-inastype="' + iid0 + '"]');
+    var asType = asSel ? asSel.value : "member";
+    if(item.kind === "join" && asType === "observer"){
+      var oref = (item.payload || {}).emailRef;
+      if(!oref){ say("That request has no address behind it, so there is nobody to approve.", "bad"); return; }
+      say("Approving\u2026", "busy", true);
+      var ores = await callEndpoint("observer-add",
+        { token: sessionToken(), ref: oref, name: (item.payload || {}).name || "" });
+      if(!ores.ok){ say("Couldn\u2019t add them: " + (endpointTrouble(ores.error, ores.detail) || ores.error), "bad"); return; }
+      state.inbox.push(iid0);
+      if(await save("Approving\u2026")){
+        item.handled = true;
+        renderAll(); renderAdmin();
+        var ares0 = await callEndpoint("approve-notify", { ref: oref });
+        say(ares0.ok
+          ? (ares0.already ? "Approved. They were already told." : "Approved, and they\u2019ve been emailed.")
+          : "Approved, but the email didn\u2019t go: " + (endpointTrouble(ares0.error, ares0.detail) || ares0.error),
+          ares0.ok ? "ok" : "bad");
+      }
+      return;
+    }
     acceptSubmission(item);
     state.inbox.push(iid0);
     if(await save(item.kind === "join" ? "Approving…" : "Accepting…")){
@@ -12053,6 +12338,112 @@ document.addEventListener("click", async function(e){
      discarding an edit made through this box. */
   /* ---- edit profile */
   if(t.closest("#menuProfile")){ menuShut(); await openMe(); return; }
+  if(t.closest("#menuAccount")){ menuShut(); await openAccount(); return; }
+  if(t.closest("#obsLoad")){
+    obsBusy = true; renderAdminPane();
+    var olist = await callEndpoint("observer-list", { token: sessionToken() });
+    obsBusy = false;
+    if(!olist.ok){
+      obsList = null;
+      say(endpointTrouble(olist.error, olist.detail) || olist.error, "bad");
+    }else obsList = olist.observers || [];
+    renderAdminPane();
+    return;
+  }
+  if((el = t.closest("[data-obspromote]"))){
+    var opid = el.getAttribute("data-obspromote"), opname = el.getAttribute("data-obsname") || "";
+    say("Making them a member\u2026", "busy", true);
+    var pres = await callEndpoint("observer-promote", { token: sessionToken(), observerId: opid });
+    if(!pres.ok){ say(endpointTrouble(pres.error, pres.detail) || pres.error, "bad"); return; }
+    /* The script lets go of the row; the public members list is hers to
+       write, so the page adds them here and saves it. */
+    state.members.push({ id: uid("mb"), name: pres.name || opname, joined: todayISO(), avatar: "",
+      email: "", notifyRef: pres.emailRef || "", emailHint: pres.emailHint || "",
+      notify: [], fable: "", goodreads: "" });
+    if(await save("Adding them to the club\u2026")){
+      obsList = (obsList || []).filter(function(o){ return o.id !== opid; });
+      renderAll(); renderAdmin();
+      say((pres.name || opname) + " is a member now.", "ok");
+    }
+    return;
+  }
+  if((el = t.closest("[data-obsremove]"))){
+    var orid = el.getAttribute("data-obsremove"), orname = el.getAttribute("data-obsname") || "them";
+    if(!confirm("Remove " + orname + "?\n\nThey won't be able to sign in and their address is " +
+                "forgotten. Anything they wrote stays, with their name on it.")) return;
+    say("Removing\u2026", "busy", true);
+    var rmres = await callEndpoint("observer-remove", { token: sessionToken(), observerId: orid });
+    if(!rmres.ok){ say(endpointTrouble(rmres.error, rmres.detail) || rmres.error, "bad"); return; }
+    obsList = (obsList || []).filter(function(o){ return o.id !== orid; });
+    renderAdminPane();
+    say("Removed.", "ok");
+    return;
+  }
+  if(t.closest("#acSaveName")){
+    var nm = ($("acName") && $("acName").value || "").trim();
+    if(!nm){ if($("acName")) $("acName").focus(); say("Put a name in first.", "bad"); return; }
+    say("Saving\u2026", "busy", true);
+    var nres = await callEndpoint("observer-set", { token: sessionToken(), name: nm });
+    if(!nres.ok){ say(endpointTrouble(nres.error, nres.detail) || nres.error, "bad"); return; }
+    me.name = nres.name;
+    say("Saved.", "ok");
+    renderAll(); renderAccount();
+    return;
+  }
+  if(t.closest("#acSendCode")){
+    var next = ($("acEmail") && $("acEmail").value || "").trim();
+    if(!next){ if($("acEmail")) $("acEmail").focus(); say("Put the new address in first.", "bad"); return; }
+    var sbtn = $("acSendCode");
+    busyOn("acBar", sbtn, "Sending\u2026");
+    var cres = await callEndpoint("email-change", { token: sessionToken(), email: next });
+    busyOff("acBar", sbtn, "Change email");
+    if(!cres.ok){
+      say(cres.error === "taken" ? "That address already has an account."
+        : cres.error === "same email" ? "That is the address you already use."
+        : cres.error === "bad email" ? "That doesn\u2019t look like an email address."
+        : cres.error === "too soon" ? "Just a moment \u2014 try again in " + (cres.wait || 30) + "s."
+        : (endpointTrouble(cres.error, cres.detail) || cres.error), "bad");
+      return;
+    }
+    acctStep = "code"; acctNext = next;
+    renderAccount();
+    say("Code sent to " + next + ".", "ok");
+    return;
+  }
+  if(t.closest("#acCancel")){ acctStep = ""; acctNext = ""; renderAccount(); return; }
+  if(t.closest("#acVerify")){
+    var code = ($("acCode") && $("acCode").value || "").trim();
+    if(!code){ if($("acCode")) $("acCode").focus(); return; }
+    var vbtn = $("acVerify");
+    busyOn("acBar", vbtn, "Checking\u2026");
+    var vres = await callEndpoint("email-verify", { token: sessionToken(), code: code });
+    busyOff("acBar", vbtn, "Confirm");
+    if(!vres.ok){
+      say(vres.error === "wrong"
+            ? "That code isn\u2019t right." + (vres.left ? " " + vres.left + " tries left." : "")
+        : vres.error === "expired" ? "That code has expired \u2014 ask for another."
+        : vres.error === "taken" ? "That address was claimed while you were typing."
+        : (endpointTrouble(vres.error, vres.detail) || vres.error), "bad");
+      return;
+    }
+    me.email = vres.email; me.emailHint = vres.emailHint;
+    acctStep = ""; acctNext = "";
+    renderAccount();
+    say("That\u2019s your address now.", "ok");
+    return;
+  }
+  if(t.closest("#acSaveNotify")){
+    var want = [];
+    [].forEach.call(document.querySelectorAll("[data-acnotify]"), function(c){
+      if(c.checked) want.push(c.getAttribute("data-acnotify"));
+    });
+    say("Saving\u2026", "busy", true);
+    var rres = await callEndpoint("notify-set", { token: sessionToken(), books: want });
+    if(!rres.ok){ say(endpointTrouble(rres.error, rres.detail) || rres.error, "bad"); return; }
+    myNotify = rres.books || want;
+    say(want.length ? "Saved." : "You won\u2019t get meeting emails.", "ok");
+    return;
+  }
   if(t.closest("#profEdit")){ profCapture(); profEditing = !profEditing; renderMe(); return; }
   if((el = t.closest("[data-profpick]"))){ profOpenForm(Number(el.getAttribute("data-profpick"))); return; }
   if((el = t.closest("[data-profdrop]"))){ profAskDrop(Number(el.getAttribute("data-profdrop"))); return; }
@@ -12237,8 +12628,28 @@ document.addEventListener("click", async function(e){
   }
   if((el = t.closest("[data-savesum]"))){
     var sm = meetingById(el.getAttribute("data-savesum")); if(!sm) return;
-    sm.summary = $("sumBox").value;
-    await save("Saving summary…"); renderAll();
+    var sumText = $("sumBox").value;
+    /* The organiser writes the file herself, with her token. Everybody else
+       goes through the script, which checks the meeting is still open. */
+    if(adminUnlocked && ghToken()){
+      sm.summary = sumText;
+      await save("Saving summary\u2026"); renderAll();
+      return;
+    }
+    say("Saving\u2026", "busy", true);
+    var sres = await callEndpoint("notes-summary",
+      { token: sessionToken(), meetingId: sm.id, text: sumText });
+    if(!sres.ok){
+      say(sres.error === "meeting closed"
+        ? "This meeting is marked done, so its write-up is fixed now."
+        : (endpointTrouble(sres.error, sres.detail) || sres.error), "bad");
+      return;
+    }
+    sm.summary = sres.summary;
+    say("Saved.", "ok");
+    renderAll();
+    var host = $("meetModalBody");
+    if(host) host.innerHTML = meetingHTML(sm, bookById(sm.bookId));
     return;
   }
 
@@ -14612,17 +15023,33 @@ function renderAll(){
    in for a session so the page can be looked at as any member would see it. It
    is a local pretence and nothing more: callEndpoint still refuses to send, so
    nothing can be written from here whoever is selected. */
+/* Observers live in the script, which the test site never reaches, so there
+   is no list of them to pick from here. The dev bar offers one made-up
+   observer instead -- enough to see what the page does for the kind of
+   account, which is all /dev/ can ever show. */
+var DEV_OBSERVER = { id: "ob-dev", name: "Auntie Nasreen (observer)" };
 function devAsSetup(){
   var sel = $("devAs"); if(!sel) return;
   sel.innerHTML = '<option value="">nobody</option>' + state.members.map(function(m){
     return '<option value="' + esc(m.id) + '">' + esc(m.name) + "</option>";
-  }).join("");
+  }).join("") +
+  '<option value="' + esc(DEV_OBSERVER.id) + '">' + esc(DEV_OBSERVER.name) + "</option>";
   var org = $("devOrg");
   if(org) org.addEventListener("change", function(){
     if(me) me.isOrganiser = !!org.checked;
     renderAll();
   });
   sel.addEventListener("change", function(){
+    var asOrg0 = $("devOrg");
+    if(sel.value === DEV_OBSERVER.id){
+      me = { memberId: "", name: DEV_OBSERVER.name, emailHint: "a\u2022\u2022\u2022\u2022@example.com",
+             dev: true, isMember: false, type: "observer", observerId: DEV_OBSERVER.id,
+             isOrganiser: false };
+      if(asOrg0) asOrg0.checked = false;
+      notePick = { pred: [], disc: [] };
+      renderWhoami(); renderAll();
+      return;
+    }
     var mem = memberById(sel.value);
     /* isMember and isOrganiser are what the real session carries, so the test
        harness has to carry them too -- without isMember the Suggest tab would
@@ -14633,7 +15060,8 @@ function devAsSetup(){
        own rather than guessing from a name. */
     var asOrg = $("devOrg");
     me = mem ? { memberId: mem.id, name: mem.name, emailHint: "test", dev: true,
-                 isMember: true, isOrganiser: !!(asOrg && asOrg.checked) } : null;
+                 isMember: true, type: "member", observerId: "",
+                 isOrganiser: !!(asOrg && asOrg.checked) } : null;
     notePick = { pred: [], disc: [] };
     renderWhoami();
     renderAll();
