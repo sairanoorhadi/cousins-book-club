@@ -2488,13 +2488,17 @@ function profileGet(payload) {
 }
 
 function profileSet(payload) {
+  var email = whoIs(payload.token);
+  if (!email) return { ok: false, error: 'signed out' };
   /* Every field this writes -- badge colour, Goodreads, Fable, top genres,
      the top five -- belongs to a member's public profile, and an observer
      has no public profile to write to. Their own name, address and reminders
-     are changed through observerSet and the email-change pair below. */
-  var gate = memberOnly(payload);
-  if (typeof gate === 'string') return { ok: false, error: gate };
-  var email = gate.email;
+     are changed through observerSet and the email-change pair below.
+
+     Asked of the observer list rather than through memberOnly, which proves
+     membership by reading state.json from GitHub: that added a third read to
+     every profile save, where this one reads a script property and none. */
+  if (observerFor(email)) return { ok: false, error: 'members only' };
 
   var entry = directory()[email];
   if (!entry) return { ok: false, error: 'no profile' };
