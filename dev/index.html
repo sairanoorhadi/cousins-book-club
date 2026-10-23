@@ -15024,17 +15024,33 @@ function renderAll(){
    in for a session so the page can be looked at as any member would see it. It
    is a local pretence and nothing more: callEndpoint still refuses to send, so
    nothing can be written from here whoever is selected. */
+/* Observers live in the script, which the test site never reaches, so there
+   is no list of them to pick from here. The dev bar offers one made-up
+   observer instead -- enough to see what the page does for the kind of
+   account, which is all /dev/ can ever show. */
+var DEV_OBSERVER = { id: "ob-dev", name: "Auntie Nasreen (observer)" };
 function devAsSetup(){
   var sel = $("devAs"); if(!sel) return;
   sel.innerHTML = '<option value="">nobody</option>' + state.members.map(function(m){
     return '<option value="' + esc(m.id) + '">' + esc(m.name) + "</option>";
-  }).join("");
+  }).join("") +
+  '<option value="' + esc(DEV_OBSERVER.id) + '">' + esc(DEV_OBSERVER.name) + "</option>";
   var org = $("devOrg");
   if(org) org.addEventListener("change", function(){
     if(me) me.isOrganiser = !!org.checked;
     renderAll();
   });
   sel.addEventListener("change", function(){
+    var asOrg0 = $("devOrg");
+    if(sel.value === DEV_OBSERVER.id){
+      me = { memberId: "", name: DEV_OBSERVER.name, emailHint: "a\u2022\u2022\u2022\u2022@example.com",
+             dev: true, isMember: false, type: "observer", observerId: DEV_OBSERVER.id,
+             isOrganiser: false };
+      if(asOrg0) asOrg0.checked = false;
+      notePick = { pred: [], disc: [] };
+      renderWhoami(); renderAll();
+      return;
+    }
     var mem = memberById(sel.value);
     /* isMember and isOrganiser are what the real session carries, so the test
        harness has to carry them too -- without isMember the Suggest tab would
@@ -15045,7 +15061,8 @@ function devAsSetup(){
        own rather than guessing from a name. */
     var asOrg = $("devOrg");
     me = mem ? { memberId: mem.id, name: mem.name, emailHint: "test", dev: true,
-                 isMember: true, isOrganiser: !!(asOrg && asOrg.checked) } : null;
+                 isMember: true, type: "member", observerId: "",
+                 isOrganiser: !!(asOrg && asOrg.checked) } : null;
     notePick = { pred: [], disc: [] };
     renderWhoami();
     renderAll();
