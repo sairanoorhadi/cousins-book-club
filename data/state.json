@@ -1,5 +1,5 @@
 {
-  "rev": 1618,
+  "rev": 1619,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2753,51 +2753,6 @@
     }
   },
   "votes": [
-    {
-      "id": "vote-mvg6eqyg8soz3",
-      "kind": "rate",
-      "candidates": [
-        {
-          "id": "suggest-2603dba6-457",
-          "title": "The Cruel Prince",
-          "author": "Holly Black",
-          "cover": "https://covers.openlibrary.org/b/id/8361789-L.jpg"
-        },
-        {
-          "id": "suggest-fddd8ae2-833",
-          "title": "A Deadly Education",
-          "author": "Naomi Novik",
-          "cover": "https://covers.openlibrary.org/b/id/10206042-L.jpg"
-        }
-      ],
-      "opensAt": "2026-10-20T04:21:27.160Z",
-      "closesAt": "2026-10-21T04:21:00.000Z",
-      "cancelledAt": null,
-      "closedAt": "2026-10-20T04:26:47.918Z",
-      "turnout": 1,
-      "totals": [
-        {
-          "id": "suggest-fddd8ae2-833",
-          "title": "A Deadly Education",
-          "total": 10,
-          "raters": 1,
-          "avg": 10
-        },
-        {
-          "id": "suggest-2603dba6-457",
-          "title": "The Cruel Prince",
-          "total": 7,
-          "raters": 1,
-          "avg": 7
-        }
-      ],
-      "winner": "suggest-fddd8ae2-833",
-      "tied": null,
-      "parent": null,
-      "at": "2026-10-20T04:21:27.160Z",
-      "test": true,
-      "archived": true
-    },
     {
       "id": "nom-mvgzm95ifl1zx",
       "type": "nomination",
