@@ -1364,6 +1364,7 @@ function doPost(e) {
   if (kind === 'notes-edit') return json(notesEdit(payload));
   if (kind === 'notes-verdict') return json(notesVerdict(payload));
   if (kind === 'notes-carry') return json(notesCarry(payload));
+  if (kind === 'notes-summary') return json(notesSummary(payload));
   if (kind === 'meet-ready') return json(meetReady(payload));
   if (kind === 'vote-cast') return json(voteCast(payload));
   if (kind === 'vote-mine') return json(voteMine(payload));
@@ -2287,6 +2288,30 @@ function notesEdit(payload) {
     }
     item.text = text;
     return { reply: { item: item } };
+  });
+}
+
+/* The write-up of the meeting. It had no endpoint at all: the box was shown
+   to the organiser alone and saved straight to the repo with her token, so no
+   member could touch it and neither could an observer. Both can now, on a
+   meeting not yet marked done -- the same gate the predictions and the
+   discussion points sit behind, and the same read-modify-write.
+
+   The organiser's own path is untouched. She writes state.json directly, so
+   she can still write up a meeting after it is closed, which is usually when
+   a write-up actually gets done. */
+function notesSummary(payload) {
+  var who = actorFor(payload);
+  if (typeof who === 'string') return { ok: false, error: who };
+  var text = String(payload.text === undefined || payload.text === null ? '' : payload.text)
+    .trim().slice(0, 6000);
+
+  return withState('Summary updated from the site', function (state) {
+    var meeting = (state.meetings || []).filter(function (m) { return m.id === payload.meetingId; })[0];
+    if (!meeting) return { error: 'no such meeting' };
+    if (meeting.done) return { error: 'meeting closed' };
+    meeting.summary = text;
+    return { reply: { summary: text } };
   });
 }
 

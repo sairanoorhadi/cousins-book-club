@@ -1445,6 +1445,16 @@ a.getrow:hover{background:var(--sunk)}
 .inboxbulk__opt--off{color:var(--muted);cursor:default}
 .inboxundo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px;
   border:1.5px solid var(--hairline);border-radius:var(--r);padding:9px 13px;font-size:13.5px}
+/* ---- the two kinds of account, on the sign-up form ----
+   Stacked, each with its line of explanation, because the choice decides what
+   the whole account is for and a radio with a bare label would not say so. */
+.acctpick{display:flex;flex-direction:column;gap:8px}
+.acctpick__opt{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;cursor:pointer;
+  border:1.5px solid var(--hairline);border-radius:var(--r)}
+.acctpick__opt:hover{border-color:var(--edge)}
+.acctpick__opt input{margin-top:3px;flex:none}
+.acctpick__opt span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.acctpick__opt .hint{margin:0}
 .inboxrow{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);padding:16px 18px;box-shadow:var(--shadow-sm)}
 .inboxrow + .inboxrow{margin-top:12px}
 .inboxrow__head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
@@ -3587,6 +3597,15 @@ var ENDPOINT_REPEATABLE = {
   /* Showing and hiding set a flag to a value rather than toggling it, so a
      repeat lands where the first would have; reading only reads. */
   "vote-hide": 1, "vote-show": 1, "vote-results": 1,
+  /* The observer calls. Adding one is keyed on the address and returns the
+     existing row rather than a second, listing and promoting only read or
+     move a row that is already gone on a repeat, and removing one is gone
+     either way. Setting a name and writing up a meeting both land the value
+     they were handed. email-change sends a code and is NOT repeatable: a
+     second send would spend another of the sender's daily allowance and
+     invalidate the code they are already typing. */
+  "observer-list": 1, "observer-add": 1, "observer-remove": 1,
+  "observer-promote": 1, "observer-set": 1, "notes-summary": 1,
   /* The preview only reads. The two sends are guarded by a stored flag in the
      script, so a repeat cannot produce a second email -- and the me-only one
      is for checking wording, which is a thing you do more than once. */
@@ -8648,15 +8667,39 @@ function profRecsHTML(){
 }
 
 /* ---------- member requests ---------- */
+/* The two kinds of account, in one place: the sign-up picker, the Admin
+   inbox label and the Accept dropdown all read it, so a third kind would be
+   one entry rather than three edits. */
+var ACCOUNT_KINDS = [
+  { key: "member", label: "Member of the club",
+    blurb: "You read along, vote on what\u2019s next, and come to the meetings." },
+  { key: "observer", label: "Observer (family or friend)",
+    blurb: "You can read the notes, say what you think and put books forward \u2014 but not vote or nominate." }
+];
+function accountKindLabel(k){
+  var hit = ACCOUNT_KINDS.filter(function(a){ return a.key === k; })[0];
+  return hit ? hit.label : "Member of the club";
+}
 function openMemberForm(kind, bookId){
   var titles = { join: "Ask to join the club", profile: "Update my profile", notify: "Email me about meetings" };
   $("memberModalTitle").textContent = titles[kind] || "The club";
   var notifiable = currentBooks().concat(nextBooks());
   var body =
     (kind === "join"
-      ? '<p class="eyebrow">New member</p><h3 style="font-size:24px;margin:8px 0 6px">Ask to join</h3>' +
+      ? '<p class="eyebrow">New account</p><h3 style="font-size:24px;margin:8px 0 6px">Ask to join</h3>' +
         '<p class="hint">An organiser reads your request and approves it. Until then you won\u2019t be able ' +
-        'to sign in \u2014 we\u2019ll email you the moment you\u2019re in.</p>'
+        'to sign in \u2014 we\u2019ll email you the moment you\u2019re in.</p>' +
+        /* Asked before anything else, because it decides what the rest of the
+           account is for. Both kinds wait on the organiser either way. */
+        '<div class="field" style="margin-top:18px"><label>I\u2019m a\u2026</label>' +
+        '<div class="acctpick">' +
+          ACCOUNT_KINDS.map(function(a){
+            return '<label class="acctpick__opt"><input type="radio" name="mfType" value="' + esc(a.key) + '"' +
+              (a.key === "member" ? " checked" : "") + ">" +
+              '<span><strong>' + esc(a.label) + "</strong>" +
+              '<span class="hint">' + esc(a.blurb) + "</span></span></label>";
+          }).join("") +
+        "</div></div>"
       : kind === "profile"
       ? '<p class="eyebrow">Existing member</p><h3 style="font-size:24px;margin:8px 0 6px">Request a change</h3>' +
         '<p class="hint">Say what you want changed on your profile and the organiser will apply it.</p>'
@@ -10734,7 +10777,7 @@ function dismissedHTML(){
       var p = it.payload || {};
       var who = String(p.name || p.title || p.by || "").trim();
       return '<div class="vocabitem"><div class="vocabrow">' +
-        '<span class="kind">' + esc(INBOX_LABELS[it.kind] || it.kind) + "</span>" +
+        '<span class="kind">' + esc(inboxLabel(it)) + "</span>" +
         "<span>" + esc(who || "\u2014") + "</span>" +
         '<span class="vocabrow__n">' + esc(it.at ? shortDate(String(it.at).slice(0, 10)) : "") + "</span>" +
         '<button class="btn btn--sm btn--ghost" type="button" style="margin-left:auto" ' +
@@ -10745,6 +10788,16 @@ function dismissedHTML(){
 }
 var INBOX_LABELS = { join:"Waiting for approval", profile:"Profile change", endorse:"Endorsement",
                      notify:"Meeting emails", suggest:"Book put forward", notedelete:"Note deleted" };
+/* A join request says which kind of account was asked for, because approving
+   it creates that kind and the two are not the same thing. */
+function inboxLabel(it){
+  if(!it) return "";
+  if(it.kind === "join"){
+    var want = ((it.payload || {}).accountType === "observer") ? "observer" : "member";
+    return "Join request (" + want + ")";
+  }
+  return INBOX_LABELS[it.kind] || it.kind;
+}
 
 /* The confirmation. Same shape as Remove book: the destructive action on the
    left, Cancel on the right. It names the breakdown of what is actually
@@ -10843,12 +10896,25 @@ function paneInbox(){
       return '<span class="k">' + esc(k) + "</span><span>" + esc(String(v)) + "</span>";
     }).join("");
     return '<div class="inboxrow"><div class="inboxrow__head">' +
-      '<span class="kind">' + esc(labels[it.kind] || it.kind) + "</span>" +
+      '<span class="kind">' + esc(inboxLabel(it)) + "</span>" +
       '<span class="lanerow__meta">' + esc(it.at ? shortDate(String(it.at).slice(0, 10)) : "") + "</span>" +
       '<span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">' +
-        (it.kind === "join" || it.kind === "notify"
-          ? '<button class="btn btn--sm btn--surf" type="button" data-inaccept="' + esc(it.id) + '">' +
-            (it.kind === "join" ? "Approve" : "Accept") + "</button>" : "") +
+        (it.kind === "join"
+          /* The type they asked for is preselected, and changeable: somebody
+             who called themselves a member when they meant to follow along
+             is corrected here rather than approved and then unpicked. */
+          ? '<select class="select" style="width:auto;padding:5px 9px;font-size:12.5px" ' +
+              'data-inastype="' + esc(it.id) + '" aria-label="Approve as">' +
+              ACCOUNT_KINDS.map(function(a){
+                var want = ((it.payload || {}).accountType === "observer") ? "observer" : "member";
+                return '<option value="' + esc(a.key) + '"' + (a.key === want ? " selected" : "") +
+                  ">as " + esc(a.key) + "</option>";
+              }).join("") +
+            "</select>" +
+            '<button class="btn btn--sm btn--surf" type="button" data-inaccept="' + esc(it.id) + '">Approve</button>'
+          : it.kind === "notify"
+          ? '<button class="btn btn--sm btn--surf" type="button" data-inaccept="' + esc(it.id) + '">Accept</button>'
+          : "") +
         '<button class="btn btn--sm btn--ghost" type="button" data-indismiss="' + esc(it.id) + '">' +
           (it.kind === "join" ? "Reject" : "Dismiss") + "</button>" +
       "</span></div>" +
@@ -11893,6 +11959,10 @@ document.addEventListener("click", async function(e){
       var who = memberById($("mfWho").value);
       pay.member = who ? who.name : ""; pay.memberId = $("mfWho") ? $("mfWho").value : "";
     }else if($("mfName")){ pay.name = $("mfName").value.trim(); }
+    if(mk === "join"){
+      var picked = $("memberModalBody").querySelector('input[name="mfType"]:checked');
+      pay.accountType = picked ? picked.value : "member";
+    }
     if($("mfFable")) pay.fable = $("mfFable").value.trim();
     if($("mfGoodreads")) pay.goodreads = $("mfGoodreads").value.trim();
     if($("mfNote")) pay.note = $("mfNote").value.trim();
@@ -11917,7 +11987,9 @@ document.addEventListener("click", async function(e){
         '<p class="eyebrow">Waiting on an organiser</p>' +
         '<h3 style="font-size:24px;margin:8px 0 10px">Thanks, ' + esc((pay.name || "").split(" ")[0]) + "</h3>" +
         '<p>Your account must be approved by an organiser before you can sign in. ' +
-        'You\u2019re not a member yet \u2014 the request is with them now.</p>' +
+        (pay.accountType === "observer"
+          ? "You can\u2019t sign in yet \u2014 the request is with them now."
+          : "You\u2019re not a member yet \u2014 the request is with them now.") + "</p>" +
         '<p class="hint" style="margin-top:12px">We\u2019ll email this address as soon as it\u2019s approved, ' +
         'and then you can sign in with it.</p>' +
         '<div style="margin-top:20px"><button class="btn btn--surf" type="button" data-close="memberScrim">Got it</button></div>';
@@ -11962,6 +12034,32 @@ document.addEventListener("click", async function(e){
     var iid0 = el.getAttribute("data-inaccept");
     var item = inbox.filter(function(x){ return x && x.id === iid0; })[0];
     if(!item) return;
+    /* An observer is not written to the public members list -- that is the
+       whole point of them -- so approving one is a call to the script, which
+       keeps their row in its own storage. Only once that has worked is the
+       request marked handled, or a failed call would lose the request and
+       leave them waiting on an approval that already happened. */
+    var asSel = document.querySelector('[data-inastype="' + iid0 + '"]');
+    var asType = asSel ? asSel.value : "member";
+    if(item.kind === "join" && asType === "observer"){
+      var oref = (item.payload || {}).emailRef;
+      if(!oref){ say("That request has no address behind it, so there is nobody to approve.", "bad"); return; }
+      say("Approving\u2026", "busy", true);
+      var ores = await callEndpoint("observer-add",
+        { token: sessionToken(), ref: oref, name: (item.payload || {}).name || "" });
+      if(!ores.ok){ say("Couldn\u2019t add them: " + (endpointTrouble(ores.error, ores.detail) || ores.error), "bad"); return; }
+      state.inbox.push(iid0);
+      if(await save("Approving\u2026")){
+        item.handled = true;
+        renderAll(); renderAdmin();
+        var ares0 = await callEndpoint("approve-notify", { ref: oref });
+        say(ares0.ok
+          ? (ares0.already ? "Approved. They were already told." : "Approved, and they\u2019ve been emailed.")
+          : "Approved, but the email didn\u2019t go: " + (endpointTrouble(ares0.error, ares0.detail) || ares0.error),
+          ares0.ok ? "ok" : "bad");
+      }
+      return;
+    }
     acceptSubmission(item);
     state.inbox.push(iid0);
     if(await save(item.kind === "join" ? "Approving…" : "Accepting…")){
