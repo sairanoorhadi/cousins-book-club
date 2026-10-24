@@ -171,7 +171,19 @@ img{max-width:100%;display:block}
 .memgen__c{flex:0 1 auto;min-width:38px;border:2px solid var(--edge);border-radius:999px;background:var(--sunk);padding:2px 7px;font-family:var(--f-display);font-weight:700;font-size:10px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .memgen__c--none{border-style:dashed;background:none;color:var(--muted);font-weight:400;font-family:var(--f-mono);font-size:8.5px}
 /* the two profiles elsewhere, as marks rather than sentences, one above the other */
-.memlinks{flex:none;display:flex;flex-direction:column;gap:6px;margin-left:auto}
+/* The name and the two links are their own row in the markup now, so the
+   phone can drop the tag and the genres below them (see the 700px block).
+   Here the wrapper is transparent and the header is the single flex line it
+   always was -- with the links ordered last, since in source they follow the
+   name rather than the genres. */
+.memhead__top{display:contents}
+/* The 3px of padding is the three the move cost: the links used to be the
+   header's own child, 11px along from the genres, and inside .memhead__who
+   they are 8px along instead. Padding rather than a margin because the auto
+   margin takes the free space and there is none to take -- the row is
+   over-subscribed at every width, so the gap would simply have come out 3px
+   short and the pills 3px longer. */
+.memlinks{flex:none;display:flex;flex-direction:column;gap:6px;margin-left:auto;order:1;padding-left:3px}
 .memmark{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid var(--edge);border-radius:50%;box-shadow:2px 2px 0 var(--stamp);text-decoration:none}
 .memmark__l{font-family:var(--f-display);font-weight:800;font-size:16px;line-height:1}
 .memmark--goodreads{background:#F4F1EA;color:#382110}
@@ -256,8 +268,21 @@ img{max-width:100%;display:block}
 /* Two rows: cover + title block, then Get the book + the progress bar. The
    second row is what puts those two on one line. */
 .hero__main{display:grid;grid-template-columns:172px minmax(0,1fr);
-  column-gap:30px;row-gap:16px;align-items:start}
+  column-gap:30px;row-gap:16px;align-items:start;
+  /* Named rather than auto-placed. The cover and the button are wrapped in
+     .hero__left for the phone's sake, and display:contents keeps them as
+     grid items but in their new source order -- which auto-placement read as
+     cover, button, head, bar and put the button beside the cover. These four
+     lines say what the old order said, and the result is the same pixels. */
+  grid-template-areas:"cover head" "get prog"}
+.hero__cover{grid-area:cover}
+.hero__head{grid-area:head}
+#heroGet{grid-area:get}
+.hero__prog{grid-area:prog}
 .hero__head{min-width:0}
+/* Nothing of its own on a desktop: the cover and the button are grid items
+   of .hero__main, the way they have always been. */
+.hero__left{display:contents}
 /* level with the button beside it rather than hard against the top */
 .hero__prog{align-self:center;min-width:0}
 .hero__prog .progress{margin-top:0}
@@ -424,6 +449,13 @@ a.getrow:hover{background:var(--sunk)}
 .review__text{margin-top:6px;font-size:15.5px}
 .review__by{margin-top:6px;font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .shelfrow__side{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+/* The phone's copy of the genre pills. Off everywhere else. */
+.shelfrow__gen{display:none}
+/* The desktop copy sits inside the tagbank. display:contents keeps the pills
+   as direct flex items of it -- wrapped in anything that generates a box they
+   become one item between them and the gap lands in the wrong places, which
+   moved all three 3px down and up to 14px sideways. */
+.shelfrow__geninline{display:contents}
 
 /* ============ recommendations ============ */
 .recgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:20px}
@@ -1222,6 +1254,10 @@ a.getrow:hover{background:var(--sunk)}
   padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;
   text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
 .reccard__mine--under{top:61px}
+/* The nomination facts as a line of text under the cover's foot. Drawn on a
+   phone only, where a badge on a 106px cover covers the book; on a wide
+   screen the badges above say the same thing. */
+.reccard__nomline{display:none}
 .reccard__onshort{position:absolute;bottom:40px;left:7px;z-index:2;pointer-events:none;
   background:var(--flare);color:var(--on-flare);border:2px solid var(--edge);border-radius:999px;
   padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;
@@ -1531,20 +1567,66 @@ a.getrow:hover{background:var(--sunk)}
   .lookaside__cap{width:100%;margin-bottom:0}
 }
 @media (max-width:700px){
-  .hero__main{grid-template-columns:118px minmax(0,1fr);gap:20px}
+  /* Named rows rather than auto-placement. The title-and-tags column is
+     taller than the cover here, so row one was as tall as IT, and "Get the
+     book" -- auto-placed into row two -- began 123px below the cover with
+     nothing in between. The head spans both rows instead, which puts the
+     button hard under the cover where it belongs, and the progress bar takes
+     a row of its own across the full width. */
+  /* Two columns: the cover and its button as one stack, the title block
+     beside them, and the progress bar across the foot. Grid rows were tried
+     first and the head, spanning two of them, shared its extra height
+     between them and pushed the button 11px off the cover at 360. A column
+     that owns both cannot do that. */
+  .hero__main{grid-template-columns:118px minmax(0,1fr);gap:20px;
+    grid-template-areas:"left head" "prog prog"}
+  .hero__left{display:flex;flex-direction:column;gap:12px;grid-area:left;min-width:0}
+  .hero__head{grid-area:head}
+  .hero__prog{grid-area:prog;align-self:start}
+  /* The button is the cover's width by being in the cover's column; it only
+     needs telling not to sit in the middle of it. The top margin was spacing
+     it from a cover it no longer sits level with -- the row gap does that
+     now, and keeping both put 32px between them. */
+  .getbtn{width:100%}
+  /* The row gap already separates it from the tags; its own top margin was
+     spacing it from a button that used to sit beside it. */
+  .hero__prog .progress{margin-top:0}
+  /* The summary follows the bar directly. */
+  .hero__grid{row-gap:0}
+  .hero__blurb{margin-top:14px}
   .hero__cover{width:118px}
   /* the column is 118px here, and "Get the book" wraps to three lines at the
-     full size */
-  .getbtn{margin-top:12px;padding:9px 10px}
+     full size. No top margin: it used to sit level with the progress bar and
+     needed lifting off the cover's row, and now it sits directly under the
+     cover with the grid's own 20px between them. */
+  .getbtn{margin-top:0;padding:9px 10px}
   .getbtn__t{font-size:13px}
   .getbtn__n{font-size:9.5px;letter-spacing:.03em}
-  .shelfrow{grid-template-columns:64px minmax(0,1fr)}
-  .shelfrow__cover{width:64px}
+  /* 152px: the widest genre the club has is "Realistic Fiction" at 146px, and
+     "Historical Fiction" is a shade wider. Anything longer than that wraps
+     inside its pill rather than pushing the column out -- see
+     .shelfrow__gen .tag below. The cover keeps its 64px and centres in it. */
+  .shelfrow{grid-template-columns:152px minmax(0,1fr);
+    grid-template-areas:"cover head" "side head" "gen head";
+    /* The left column takes 152 of the row, so the gap and the card's own
+       padding come down to leave the title something to live in: at 360px
+       they were costing 62 of the 312 available. */
+    gap:14px;padding:14px}
+  .shelfrow__cover{width:64px;grid-area:cover;justify-self:center}
+  .shelfrow__head{grid-area:head}
+  /* One per row, under the button, in the same column. */
+  .shelfrow__gen{grid-area:gen;display:flex;flex-direction:column;gap:6px;
+    align-items:stretch;margin-top:8px}
+  .shelfrow__gen .tag{white-space:normal;text-align:center}
+  .shelfrow__geninline{display:none}
   /* Recommendation covers came out about the width of the screen's half here,
      which is far more room than a cover needs to be recognised. Three to a
      row at the shelf's own size instead. Desktop is left alone. */
   .recgrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-  .shelfrow__side{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:flex-start}
+  /* Was grid-column:1/-1, a full-width row at the foot of the card. It goes
+     under the cover now, so it takes the cover's column and stacks. */
+  .shelfrow__side{grid-area:side;flex-direction:column;align-items:stretch;
+    justify-content:flex-start;margin-top:10px}
   .pending{grid-template-columns:1fr}
   .pending__acts{flex-direction:row}
   .tree{aspect-ratio:1/1.05;min-height:460px}
@@ -1552,17 +1634,86 @@ a.getrow:hover{background:var(--sunk)}
   .tree__disc span{font-size:17px}
   .tree__disc--hub{width:84px;height:84px}
   .tree__cap{font-size:10.5px;max-width:92px}
+  /* The profile header was one nowrap row at every width, and the name is
+     what gave way: at 390 it had 11px of the 51 "Saira" needs -- a letter and
+     an ellipsis. Two rows here. Row one is the name with its two links beside
+     it, level with the top of the avatar; row two is the tag and the genres,
+     wrapping as they need to. */
+  .memhead{align-items:flex-start;gap:10px}
+  .memhead__who{flex-wrap:wrap;align-items:flex-start;gap:7px}
+  /* flex-basis 100% so the tag and the genres cannot join this row. */
+  .memhead__top{display:flex;flex:1 1 100%;min-width:0;gap:8px;align-items:flex-start}
+  /* No ellipsis and no nowrap: a name cut to its first letter says nothing,
+     and this one takes the width it needs and wraps when it cannot have it.
+     flex:0 1 auto rather than 1 1 auto, so the links sit beside the name
+     instead of being pushed to the far edge by it. */
+  .memhead__who h3{flex:0 1 auto;white-space:normal;overflow:visible;
+    text-overflow:clip;overflow-wrap:break-word}
+  /* Beside the name, not out at the right margin. */
+  .memlinks{flex-direction:row;align-items:flex-start;gap:6px;margin-left:0;order:0;padding-left:0}
+  /* The label and the three pills join the tag's flow rather than being one
+     unsplittable item after it, so the row fills and then wraps. */
+  .memgen{display:contents}
+  /* They are no longer sharing a row with the name, so they can be their own
+     width and say the whole genre. */
+  .memgen__c{flex:0 0 auto;min-width:0;overflow:visible;text-overflow:clip}
+  /* The endorse pill was 78px of the cover's 106 at 390 -- the control
+     covering the book. The paint comes down to about half that; the tap
+     target does not. Each button carries a transparent 32px pad, which hangs
+     outside the pill -- hence overflow:visible here. The two pads meet rather
+     than overlap, each taking its slack where the other has no use for it: +
+     reaches left across the score, which does nothing on its own, and -
+     reaches right past the pill's edge into the grid gap. */
+  .vote{top:5px;right:5px;border-width:1.5px;box-shadow:1.5px 1.5px 0 var(--stamp);
+    font-size:9px;overflow:visible}
+  .vote__score{padding:2px 4px;min-width:0}
+  .vote__btn,.reccard-wrap:hover .vote__btn{width:16px;height:18px;font-size:12px}
+  /* The button clips its own overflow at the full size, where the pill opens
+     out and the two have to stay inside it. The pad hangs outside on purpose,
+     so here it must not be clipped. */
+  .vote__btn{position:relative;overflow:visible}
+  .vote__btn::after{content:"";position:absolute;top:-7px;bottom:-7px}
+  /* -18 rather than -16 because an absolute offset resolves against the
+     padding box: the 1.5px borders either side of the glyph come off the
+     pad's own width, and 16 left 31 of the 32 asked for. */
+  .vote__btn--up::after{left:-18px;right:0}
+  .vote__btn--down::after{left:0;right:-16px}
+  /* Off the cover, under the foot. */
+  .reccard__nom,.reccard__mine{display:none}
+  .reccard__nomline{display:block;margin-top:6px;font-family:var(--f-mono);
+    font-size:9.5px;line-height:1.3;letter-spacing:.04em;color:var(--ink);text-align:center}
+  /* Both facts, on a line each -- a mid-dot between them wrapped anyway at
+     this width, and in a worse place. */
+  .reccard__nomline__b{display:block;color:var(--muted)}
 }
 @media (max-width:620px){
   body{font-size:16px}
-  /* Below this width the topbar wraps and the nav drops to its own row,
-     left-aligned — so the burger is nowhere near the right edge. The panel
-     hung off the burger with right:0, which put a 200px panel at -63px and
-     clipped every item. It anchors to the header's content width instead,
-     which fits at any width and needs no guess about where the burger
-     ended up. */
-  .topbar__in{padding:12px 0;flex-wrap:wrap;position:relative}
-  .navlinks{margin-left:0;width:100%}
+  /* The bar stays one row. It used to wrap, dropping the nav to a row of its
+     own under the club name, which left the burger and the account chip
+     adrift on a second line.
+
+     The panel fix that wrapping was tangled up with is kept: the panel hung
+     off the burger with right:0, which put a 200px panel at -63px and
+     clipped every item, so it anchors to the header's content width instead.
+     That never depended on the wrapping -- position:static and the left/right
+     pair below do all of it. */
+  .topbar__in{padding:10px 0;flex-wrap:nowrap;position:relative;gap:10px}
+  /* The brand gives way first and wraps to two lines; it is the only thing
+     here that can take two lines without looking broken. */
+  .brand{flex:0 1 auto;min-width:0}
+  .brand__name{white-space:normal;font-size:16px;line-height:1.08;
+    overflow:visible;text-overflow:clip}
+  .navlinks{margin-left:auto;width:auto;flex:0 0 auto;flex-wrap:nowrap;gap:6px}
+  /* Sign up, then Sign in, then the burger: the forward action sits to the
+     right of the alternative, the way the sign-in card has it. The source
+     order is left alone so the desktop bar is untouched. */
+  #signupOpen{order:1}
+  #loginOpen{order:2}
+  .navlinks .menu{order:3}
+  /* A long name gives way before the club's does, by truncating inside the
+     chip rather than pushing anything along the row. */
+  .navlinks .whoami{min-width:0;max-width:44vw;padding-right:10px}
+  .whoami__n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
   .menu{position:static}
   /* 24px in on each side, so it lines up with the page's own gutter — an
      absolutely positioned box resolves against the padding box, so left:0
@@ -1948,7 +2099,15 @@ a.getrow:hover{background:var(--sunk)}
              "Get the book" beside the progress bar. They share a grid row, so
              they sit on one line without anyone guessing at heights. -->
         <div class="hero__main swipe" id="heroSwipe">
-          <div class="hero__cover cover-wrap" id="heroCover"></div>
+          <!-- display:contents on a desktop, so these two stay independent
+               grid items exactly as they were; one flex column on a phone,
+               which is the only way to guarantee the button sits hard under
+               the cover however tall the title block beside it grows. -->
+          <div class="hero__left">
+            <div class="hero__cover cover-wrap" id="heroCover"></div>
+            <!-- Hidden unless the organiser has put something there. -->
+            <button class="getbtn" type="button" id="heroGet" hidden></button>
+          </div>
           <div class="hero__head">
             <div class="cyc" id="heroCyc"></div>
             <h1 id="heroTitle">—</h1>
@@ -1957,8 +2116,6 @@ a.getrow:hover{background:var(--sunk)}
                  lone tag does not take a line of its own -->
             <div class="hero__facts tagbank" id="heroFacts"></div>
           </div>
-          <!-- Hidden unless the organiser has put something there. -->
-          <button class="getbtn" type="button" id="heroGet" hidden></button>
           <div class="hero__prog" id="heroProgress"></div>
         </div>
         <div class="stack" style="gap:18px">
@@ -5131,12 +5288,17 @@ function renderShelf(){
     var rev = b.review && (b.review.text || Number(b.review.rating) > 0);
     return '<article class="shelfrow">' +
       '<button class="shelfrow__cover cover-wrap" type="button" data-book="' + esc(b.id) + '" style="background:none;border:0;padding:0">' + coverHTML(b) + "</button>" +
-      "<div><h3>" + esc(b.title) + "</h3>" +
+      '<div class="shelfrow__head"><h3>' + esc(b.title) + "</h3>" +
         '<p class="shelfrow__author">by ' + esc(b.author) + (when ? " · finished " + esc(shortDate(when)) : "") + "</p>" +
         '<div class="tagbank" style="margin-top:10px">' +
           '<span class="tag tag--surf">' + esc(levelText(b)) + "</span>" +
           '<span class="tag tag--zest mono">' + esc(b.pages || "?") + " pages</span>" +
-          tagPillsHTML(b) +
+          /* Shown on a desktop, where these sit on one line with the two
+             above. On a phone they move to the cover's column, which they can
+             only do as a direct child of the row's grid -- so the copy below
+             carries them there and this one is hidden. Two renders of one
+             list rather than a desktop layout bent to suit a phone. */
+          '<span class="shelfrow__geninline">' + tagPillsHTML(b) + "</span>" +
         "</div>" +
         (rev
           ? '<div class="review">' + ratingPair(b.review) +
@@ -5149,7 +5311,9 @@ function renderShelf(){
          only repeated what clicking the cover already does. */
       '<div class="shelfrow__side">' +
         (m ? '<button class="btn btn--sm btn--grape" type="button" data-badge="' + esc(b.id) + '">Meeting notes</button>' : "") +
-      "</div></article>";
+      "</div>" +
+      '<div class="shelfrow__gen">' + tagPillsHTML(b) + "</div>" +
+    "</article>";
   }).join("");
 }
 
@@ -5542,14 +5706,22 @@ function nomBadgeHTML(r){
   var n = nomCountFor(round, r.id);
   var org = nomList(round).filter(function(x){ return String(x.id) === String(r.id); })[0];
   if(!n && !(org && org.org)) return "";
+  var count = "Nominated" + (n > 1 ? " \u00d7" + n : "");
   var out = '<span class="reccard__nom' + (r.shortlist ? " reccard__nom--under" : "") + '">' +
-    "Nominated" + (n > 1 ? " \u00d7" + n : "") + "</span>";
+    count + "</span>";
   /* Only this reader sees it, because nomMine came from the script and is
      about them alone. Nothing public says who nominated what. */
-  if(String(nomMine) === String(r.id)){
+  var mine = String(nomMine) === String(r.id);
+  if(mine){
     out += '<span class="reccard__mine' + (r.shortlist ? " reccard__mine--under" : "") +
       '">Your nomination</span>';
   }
+  /* The same facts again, as a line of text for under the cover's foot. One
+     of the two is drawn and the other is display:none -- the badges on a wide
+     screen, this on a phone, where a badge the width of half the cover hides
+     the book it is about. */
+  out += '<span class="reccard__nomline">' + count +
+    (mine ? ' <span class="reccard__nomline__b">Your nomination</span>' : "") + "</span>";
   /* Added because a nominated book missing from the vote is otherwise a
      puzzle: this says it already went through. */
   if(r.shortlist) out += '<span class="reccard__onshort">On the shortlist</span>';
@@ -6607,17 +6779,23 @@ function memberProfileHTML(m){
     '<div class="memhead">' +
       memberPic(m, "memhead__pic") +
       '<div class="memhead__who">' +
-        "<h3>" + esc(m.name) + "</h3>" +
+        /* The name and the two profile links are one row, and the tag and the
+           genres follow it. On a wide screen the wrapper is display:contents
+           and all four are the one line they were; on a phone the row keeps
+           the links beside the name and the rest goes underneath. */
+        '<div class="memhead__top">' +
+          "<h3>" + esc(m.name) + "</h3>" +
+          '<div class="memlinks">' +
+            profileLinkHTML(m.goodreads, "Goodreads", "g") +
+            profileLinkHTML(m.fable, "Fable", "F") +
+          "</div>" +
+        "</div>" +
         /* "in the club" is what the section is; on someone's own header the
            tag reads as their tenure without it, and those three words were
            sixty pixels the name and the genres both needed. */
         (since ? '<span class="memtag" title="' + esc(since + " in the club") + '">' +
           esc(since) + "</span>" : "") +
         topGenresHTML(m) +
-      "</div>" +
-      '<div class="memlinks">' +
-        profileLinkHTML(m.goodreads, "Goodreads", "g") +
-        profileLinkHTML(m.fable, "Fable", "F") +
       "</div>" +
     "</div>" +
     '<h4 class="memsub">Their five</h4>' +
