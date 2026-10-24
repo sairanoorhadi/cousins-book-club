@@ -171,7 +171,19 @@ img{max-width:100%;display:block}
 .memgen__c{flex:0 1 auto;min-width:38px;border:2px solid var(--edge);border-radius:999px;background:var(--sunk);padding:2px 7px;font-family:var(--f-display);font-weight:700;font-size:10px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .memgen__c--none{border-style:dashed;background:none;color:var(--muted);font-weight:400;font-family:var(--f-mono);font-size:8.5px}
 /* the two profiles elsewhere, as marks rather than sentences, one above the other */
-.memlinks{flex:none;display:flex;flex-direction:column;gap:6px;margin-left:auto}
+/* The name and the two links are their own row in the markup now, so the
+   phone can drop the tag and the genres below them (see the 700px block).
+   Here the wrapper is transparent and the header is the single flex line it
+   always was -- with the links ordered last, since in source they follow the
+   name rather than the genres. */
+.memhead__top{display:contents}
+/* The 3px of padding is the three the move cost: the links used to be the
+   header's own child, 11px along from the genres, and inside .memhead__who
+   they are 8px along instead. Padding rather than a margin because the auto
+   margin takes the free space and there is none to take -- the row is
+   over-subscribed at every width, so the gap would simply have come out 3px
+   short and the pills 3px longer. */
+.memlinks{flex:none;display:flex;flex-direction:column;gap:6px;margin-left:auto;order:1;padding-left:3px}
 .memmark{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid var(--edge);border-radius:50%;box-shadow:2px 2px 0 var(--stamp);text-decoration:none}
 .memmark__l{font-family:var(--f-display);font-weight:800;font-size:16px;line-height:1}
 .memmark--goodreads{background:#F4F1EA;color:#382110}
@@ -1242,6 +1254,10 @@ a.getrow:hover{background:var(--sunk)}
   padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;
   text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
 .reccard__mine--under{top:61px}
+/* The nomination facts as a line of text under the cover's foot. Drawn on a
+   phone only, where a badge on a 106px cover covers the book; on a wide
+   screen the badges above say the same thing. */
+.reccard__nomline{display:none}
 .reccard__onshort{position:absolute;bottom:40px;left:7px;z-index:2;pointer-events:none;
   background:var(--flare);color:var(--on-flare);border:2px solid var(--edge);border-radius:999px;
   padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;
@@ -1618,6 +1634,57 @@ a.getrow:hover{background:var(--sunk)}
   .tree__disc span{font-size:17px}
   .tree__disc--hub{width:84px;height:84px}
   .tree__cap{font-size:10.5px;max-width:92px}
+  /* The profile header was one nowrap row at every width, and the name is
+     what gave way: at 390 it had 11px of the 51 "Saira" needs -- a letter and
+     an ellipsis. Two rows here. Row one is the name with its two links beside
+     it, level with the top of the avatar; row two is the tag and the genres,
+     wrapping as they need to. */
+  .memhead{align-items:flex-start;gap:10px}
+  .memhead__who{flex-wrap:wrap;align-items:flex-start;gap:7px}
+  /* flex-basis 100% so the tag and the genres cannot join this row. */
+  .memhead__top{display:flex;flex:1 1 100%;min-width:0;gap:8px;align-items:flex-start}
+  /* No ellipsis and no nowrap: a name cut to its first letter says nothing,
+     and this one takes the width it needs and wraps when it cannot have it.
+     flex:0 1 auto rather than 1 1 auto, so the links sit beside the name
+     instead of being pushed to the far edge by it. */
+  .memhead__who h3{flex:0 1 auto;white-space:normal;overflow:visible;
+    text-overflow:clip;overflow-wrap:break-word}
+  /* Beside the name, not out at the right margin. */
+  .memlinks{flex-direction:row;align-items:flex-start;gap:6px;margin-left:0;order:0;padding-left:0}
+  /* The label and the three pills join the tag's flow rather than being one
+     unsplittable item after it, so the row fills and then wraps. */
+  .memgen{display:contents}
+  /* They are no longer sharing a row with the name, so they can be their own
+     width and say the whole genre. */
+  .memgen__c{flex:0 0 auto;min-width:0;overflow:visible;text-overflow:clip}
+  /* The endorse pill was 78px of the cover's 106 at 390 -- the control
+     covering the book. The paint comes down to about half that; the tap
+     target does not. Each button carries a transparent 32px pad, which hangs
+     outside the pill -- hence overflow:visible here. The two pads meet rather
+     than overlap, each taking its slack where the other has no use for it: +
+     reaches left across the score, which does nothing on its own, and -
+     reaches right past the pill's edge into the grid gap. */
+  .vote{top:5px;right:5px;border-width:1.5px;box-shadow:1.5px 1.5px 0 var(--stamp);
+    font-size:9px;overflow:visible}
+  .vote__score{padding:2px 4px;min-width:0}
+  .vote__btn,.reccard-wrap:hover .vote__btn{width:16px;height:18px;font-size:12px}
+  /* The button clips its own overflow at the full size, where the pill opens
+     out and the two have to stay inside it. The pad hangs outside on purpose,
+     so here it must not be clipped. */
+  .vote__btn{position:relative;overflow:visible}
+  .vote__btn::after{content:"";position:absolute;top:-7px;bottom:-7px}
+  /* -18 rather than -16 because an absolute offset resolves against the
+     padding box: the 1.5px borders either side of the glyph come off the
+     pad's own width, and 16 left 31 of the 32 asked for. */
+  .vote__btn--up::after{left:-18px;right:0}
+  .vote__btn--down::after{left:0;right:-16px}
+  /* Off the cover, under the foot. */
+  .reccard__nom,.reccard__mine{display:none}
+  .reccard__nomline{display:block;margin-top:6px;font-family:var(--f-mono);
+    font-size:9.5px;line-height:1.3;letter-spacing:.04em;color:var(--ink);text-align:center}
+  /* Both facts, on a line each -- a mid-dot between them wrapped anyway at
+     this width, and in a worse place. */
+  .reccard__nomline__b{display:block;color:var(--muted)}
 }
 @media (max-width:620px){
   body{font-size:16px}
@@ -5640,14 +5707,22 @@ function nomBadgeHTML(r){
   var n = nomCountFor(round, r.id);
   var org = nomList(round).filter(function(x){ return String(x.id) === String(r.id); })[0];
   if(!n && !(org && org.org)) return "";
+  var count = "Nominated" + (n > 1 ? " \u00d7" + n : "");
   var out = '<span class="reccard__nom' + (r.shortlist ? " reccard__nom--under" : "") + '">' +
-    "Nominated" + (n > 1 ? " \u00d7" + n : "") + "</span>";
+    count + "</span>";
   /* Only this reader sees it, because nomMine came from the script and is
      about them alone. Nothing public says who nominated what. */
-  if(String(nomMine) === String(r.id)){
+  var mine = String(nomMine) === String(r.id);
+  if(mine){
     out += '<span class="reccard__mine' + (r.shortlist ? " reccard__mine--under" : "") +
       '">Your nomination</span>';
   }
+  /* The same facts again, as a line of text for under the cover's foot. One
+     of the two is drawn and the other is display:none -- the badges on a wide
+     screen, this on a phone, where a badge the width of half the cover hides
+     the book it is about. */
+  out += '<span class="reccard__nomline">' + count +
+    (mine ? ' <span class="reccard__nomline__b">Your nomination</span>' : "") + "</span>";
   /* Added because a nominated book missing from the vote is otherwise a
      puzzle: this says it already went through. */
   if(r.shortlist) out += '<span class="reccard__onshort">On the shortlist</span>';
@@ -6705,17 +6780,23 @@ function memberProfileHTML(m){
     '<div class="memhead">' +
       memberPic(m, "memhead__pic") +
       '<div class="memhead__who">' +
-        "<h3>" + esc(m.name) + "</h3>" +
+        /* The name and the two profile links are one row, and the tag and the
+           genres follow it. On a wide screen the wrapper is display:contents
+           and all four are the one line they were; on a phone the row keeps
+           the links beside the name and the rest goes underneath. */
+        '<div class="memhead__top">' +
+          "<h3>" + esc(m.name) + "</h3>" +
+          '<div class="memlinks">' +
+            profileLinkHTML(m.goodreads, "Goodreads", "g") +
+            profileLinkHTML(m.fable, "Fable", "F") +
+          "</div>" +
+        "</div>" +
         /* "in the club" is what the section is; on someone's own header the
            tag reads as their tenure without it, and those three words were
            sixty pixels the name and the genres both needed. */
         (since ? '<span class="memtag" title="' + esc(since + " in the club") + '">' +
           esc(since) + "</span>" : "") +
         topGenresHTML(m) +
-      "</div>" +
-      '<div class="memlinks">' +
-        profileLinkHTML(m.goodreads, "Goodreads", "g") +
-        profileLinkHTML(m.fable, "Fable", "F") +
       "</div>" +
     "</div>" +
     '<h4 class="memsub">Their five</h4>' +
