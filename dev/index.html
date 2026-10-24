@@ -256,8 +256,21 @@ img{max-width:100%;display:block}
 /* Two rows: cover + title block, then Get the book + the progress bar. The
    second row is what puts those two on one line. */
 .hero__main{display:grid;grid-template-columns:172px minmax(0,1fr);
-  column-gap:30px;row-gap:16px;align-items:start}
+  column-gap:30px;row-gap:16px;align-items:start;
+  /* Named rather than auto-placed. The cover and the button are wrapped in
+     .hero__left for the phone's sake, and display:contents keeps them as
+     grid items but in their new source order -- which auto-placement read as
+     cover, button, head, bar and put the button beside the cover. These four
+     lines say what the old order said, and the result is the same pixels. */
+  grid-template-areas:"cover head" "get prog"}
+.hero__cover{grid-area:cover}
+.hero__head{grid-area:head}
+#heroGet{grid-area:get}
+.hero__prog{grid-area:prog}
 .hero__head{min-width:0}
+/* Nothing of its own on a desktop: the cover and the button are grid items
+   of .hero__main, the way they have always been. */
+.hero__left{display:contents}
 /* level with the button beside it rather than hard against the top */
 .hero__prog{align-self:center;min-width:0}
 .hero__prog .progress{margin-top:0}
@@ -424,6 +437,13 @@ a.getrow:hover{background:var(--sunk)}
 .review__text{margin-top:6px;font-size:15.5px}
 .review__by{margin-top:6px;font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .shelfrow__side{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+/* The phone's copy of the genre pills. Off everywhere else. */
+.shelfrow__gen{display:none}
+/* The desktop copy sits inside the tagbank. display:contents keeps the pills
+   as direct flex items of it -- wrapped in anything that generates a box they
+   become one item between them and the gap lands in the wrong places, which
+   moved all three 3px down and up to 14px sideways. */
+.shelfrow__geninline{display:contents}
 
 /* ============ recommendations ============ */
 .recgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:20px}
@@ -1531,20 +1551,66 @@ a.getrow:hover{background:var(--sunk)}
   .lookaside__cap{width:100%;margin-bottom:0}
 }
 @media (max-width:700px){
-  .hero__main{grid-template-columns:118px minmax(0,1fr);gap:20px}
+  /* Named rows rather than auto-placement. The title-and-tags column is
+     taller than the cover here, so row one was as tall as IT, and "Get the
+     book" -- auto-placed into row two -- began 123px below the cover with
+     nothing in between. The head spans both rows instead, which puts the
+     button hard under the cover where it belongs, and the progress bar takes
+     a row of its own across the full width. */
+  /* Two columns: the cover and its button as one stack, the title block
+     beside them, and the progress bar across the foot. Grid rows were tried
+     first and the head, spanning two of them, shared its extra height
+     between them and pushed the button 11px off the cover at 360. A column
+     that owns both cannot do that. */
+  .hero__main{grid-template-columns:118px minmax(0,1fr);gap:20px;
+    grid-template-areas:"left head" "prog prog"}
+  .hero__left{display:flex;flex-direction:column;gap:12px;grid-area:left;min-width:0}
+  .hero__head{grid-area:head}
+  .hero__prog{grid-area:prog;align-self:start}
+  /* The button is the cover's width by being in the cover's column; it only
+     needs telling not to sit in the middle of it. The top margin was spacing
+     it from a cover it no longer sits level with -- the row gap does that
+     now, and keeping both put 32px between them. */
+  .getbtn{width:100%}
+  /* The row gap already separates it from the tags; its own top margin was
+     spacing it from a button that used to sit beside it. */
+  .hero__prog .progress{margin-top:0}
+  /* The summary follows the bar directly. */
+  .hero__grid{row-gap:0}
+  .hero__blurb{margin-top:14px}
   .hero__cover{width:118px}
   /* the column is 118px here, and "Get the book" wraps to three lines at the
-     full size */
-  .getbtn{margin-top:12px;padding:9px 10px}
+     full size. No top margin: it used to sit level with the progress bar and
+     needed lifting off the cover's row, and now it sits directly under the
+     cover with the grid's own 20px between them. */
+  .getbtn{margin-top:0;padding:9px 10px}
   .getbtn__t{font-size:13px}
   .getbtn__n{font-size:9.5px;letter-spacing:.03em}
-  .shelfrow{grid-template-columns:64px minmax(0,1fr)}
-  .shelfrow__cover{width:64px}
+  /* 152px: the widest genre the club has is "Realistic Fiction" at 146px, and
+     "Historical Fiction" is a shade wider. Anything longer than that wraps
+     inside its pill rather than pushing the column out -- see
+     .shelfrow__gen .tag below. The cover keeps its 64px and centres in it. */
+  .shelfrow{grid-template-columns:152px minmax(0,1fr);
+    grid-template-areas:"cover head" "side head" "gen head";
+    /* The left column takes 152 of the row, so the gap and the card's own
+       padding come down to leave the title something to live in: at 360px
+       they were costing 62 of the 312 available. */
+    gap:14px;padding:14px}
+  .shelfrow__cover{width:64px;grid-area:cover;justify-self:center}
+  .shelfrow__head{grid-area:head}
+  /* One per row, under the button, in the same column. */
+  .shelfrow__gen{grid-area:gen;display:flex;flex-direction:column;gap:6px;
+    align-items:stretch;margin-top:8px}
+  .shelfrow__gen .tag{white-space:normal;text-align:center}
+  .shelfrow__geninline{display:none}
   /* Recommendation covers came out about the width of the screen's half here,
      which is far more room than a cover needs to be recognised. Three to a
      row at the shelf's own size instead. Desktop is left alone. */
   .recgrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-  .shelfrow__side{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:flex-start}
+  /* Was grid-column:1/-1, a full-width row at the foot of the card. It goes
+     under the cover now, so it takes the cover's column and stacks. */
+  .shelfrow__side{grid-area:side;flex-direction:column;align-items:stretch;
+    justify-content:flex-start;margin-top:10px}
   .pending{grid-template-columns:1fr}
   .pending__acts{flex-direction:row}
   .tree{aspect-ratio:1/1.05;min-height:460px}
@@ -1966,7 +2032,15 @@ a.getrow:hover{background:var(--sunk)}
              "Get the book" beside the progress bar. They share a grid row, so
              they sit on one line without anyone guessing at heights. -->
         <div class="hero__main swipe" id="heroSwipe">
-          <div class="hero__cover cover-wrap" id="heroCover"></div>
+          <!-- display:contents on a desktop, so these two stay independent
+               grid items exactly as they were; one flex column on a phone,
+               which is the only way to guarantee the button sits hard under
+               the cover however tall the title block beside it grows. -->
+          <div class="hero__left">
+            <div class="hero__cover cover-wrap" id="heroCover"></div>
+            <!-- Hidden unless the organiser has put something there. -->
+            <button class="getbtn" type="button" id="heroGet" hidden></button>
+          </div>
           <div class="hero__head">
             <div class="cyc" id="heroCyc"></div>
             <h1 id="heroTitle">—</h1>
@@ -1975,8 +2049,6 @@ a.getrow:hover{background:var(--sunk)}
                  lone tag does not take a line of its own -->
             <div class="hero__facts tagbank" id="heroFacts"></div>
           </div>
-          <!-- Hidden unless the organiser has put something there. -->
-          <button class="getbtn" type="button" id="heroGet" hidden></button>
           <div class="hero__prog" id="heroProgress"></div>
         </div>
         <div class="stack" style="gap:18px">
@@ -5150,12 +5222,17 @@ function renderShelf(){
     var rev = b.review && (b.review.text || Number(b.review.rating) > 0);
     return '<article class="shelfrow">' +
       '<button class="shelfrow__cover cover-wrap" type="button" data-book="' + esc(b.id) + '" style="background:none;border:0;padding:0">' + coverHTML(b) + "</button>" +
-      "<div><h3>" + esc(b.title) + "</h3>" +
+      '<div class="shelfrow__head"><h3>' + esc(b.title) + "</h3>" +
         '<p class="shelfrow__author">by ' + esc(b.author) + (when ? " · finished " + esc(shortDate(when)) : "") + "</p>" +
         '<div class="tagbank" style="margin-top:10px">' +
           '<span class="tag tag--surf">' + esc(levelText(b)) + "</span>" +
           '<span class="tag tag--zest mono">' + esc(b.pages || "?") + " pages</span>" +
-          tagPillsHTML(b) +
+          /* Shown on a desktop, where these sit on one line with the two
+             above. On a phone they move to the cover's column, which they can
+             only do as a direct child of the row's grid -- so the copy below
+             carries them there and this one is hidden. Two renders of one
+             list rather than a desktop layout bent to suit a phone. */
+          '<span class="shelfrow__geninline">' + tagPillsHTML(b) + "</span>" +
         "</div>" +
         (rev
           ? '<div class="review">' + ratingPair(b.review) +
@@ -5168,7 +5245,9 @@ function renderShelf(){
          only repeated what clicking the cover already does. */
       '<div class="shelfrow__side">' +
         (m ? '<button class="btn btn--sm btn--grape" type="button" data-badge="' + esc(b.id) + '">Meeting notes</button>' : "") +
-      "</div></article>";
+      "</div>" +
+      '<div class="shelfrow__gen">' + tagPillsHTML(b) + "</div>" +
+    "</article>";
   }).join("");
 }
 
