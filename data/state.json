@@ -1,5 +1,5 @@
 {
-  "rev": 1628,
+  "rev": 1629,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1962,10 +1962,6 @@
         {
           "name": "Saira",
           "at": "2026-09-28T20:35:30.130Z"
-        },
-        {
-          "name": "Test",
-          "at": "2026-10-24T03:52:15.712Z"
         }
       ],
       "dislikes": [],
