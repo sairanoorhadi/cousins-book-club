@@ -1864,6 +1864,39 @@
         "obs": true,
         "obsId": "ob-73410fc6-857"
       }
+    },
+    {
+      "id": "suggest-0184ada0-db2",
+      "kind": "suggest",
+      "at": "2026-10-24T03:52:41.103Z",
+      "payload": {
+        "title": "Psychological testing",
+        "author": "Anne Anastasi",
+        "pages": 721,
+        "ageMin": 0,
+        "ageMax": 100,
+        "level": "Ages 0+",
+        "genres": [
+          "Mental tests",
+          "Personality tests",
+          "Testes Psicologicos",
+          "Psychologische Diagnostik",
+          "Psychological tests",
+          "Test",
+          "Psychometrie",
+          "Testen"
+        ],
+        "subgenres": [],
+        "tropes": [],
+        "blurb": "",
+        "summarySource": "own",
+        "cover": "https://covers.openlibrary.org/b/id/14462-L.jpg",
+        "by": "Test",
+        "byId": "",
+        "ratings": [],
+        "obs": true,
+        "obsId": "ob-73410fc6-857"
+      }
     }
   ]
 }
