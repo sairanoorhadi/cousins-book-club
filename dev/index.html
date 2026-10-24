@@ -1555,14 +1555,32 @@ a.getrow:hover{background:var(--sunk)}
 }
 @media (max-width:620px){
   body{font-size:16px}
-  /* Below this width the topbar wraps and the nav drops to its own row,
-     left-aligned — so the burger is nowhere near the right edge. The panel
-     hung off the burger with right:0, which put a 200px panel at -63px and
-     clipped every item. It anchors to the header's content width instead,
-     which fits at any width and needs no guess about where the burger
-     ended up. */
-  .topbar__in{padding:12px 0;flex-wrap:wrap;position:relative}
-  .navlinks{margin-left:0;width:100%}
+  /* The bar stays one row. It used to wrap, dropping the nav to a row of its
+     own under the club name, which left the burger and the account chip
+     adrift on a second line.
+
+     The panel fix that wrapping was tangled up with is kept: the panel hung
+     off the burger with right:0, which put a 200px panel at -63px and
+     clipped every item, so it anchors to the header's content width instead.
+     That never depended on the wrapping -- position:static and the left/right
+     pair below do all of it. */
+  .topbar__in{padding:10px 0;flex-wrap:nowrap;position:relative;gap:10px}
+  /* The brand gives way first and wraps to two lines; it is the only thing
+     here that can take two lines without looking broken. */
+  .brand{flex:0 1 auto;min-width:0}
+  .brand__name{white-space:normal;font-size:16px;line-height:1.08;
+    overflow:visible;text-overflow:clip}
+  .navlinks{margin-left:auto;width:auto;flex:0 0 auto;flex-wrap:nowrap;gap:6px}
+  /* Sign up, then Sign in, then the burger: the forward action sits to the
+     right of the alternative, the way the sign-in card has it. The source
+     order is left alone so the desktop bar is untouched. */
+  #signupOpen{order:1}
+  #loginOpen{order:2}
+  .navlinks .menu{order:3}
+  /* A long name gives way before the club's does, by truncating inside the
+     chip rather than pushing anything along the row. */
+  .navlinks .whoami{min-width:0;max-width:44vw;padding-right:10px}
+  .whoami__n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
   .menu{position:static}
   /* 24px in on each side, so it lines up with the page's own gutter — an
      absolutely positioned box resolves against the padding box, so left:0
