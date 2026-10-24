@@ -1,5 +1,5 @@
 {
-  "rev": 1629,
+  "rev": 1630,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1257,16 +1257,7 @@
       "done": false,
       "summary": "",
       "photos": [],
-      "predictions": [
-        {
-          "id": "pred-de6b2220-960",
-          "text": "Test",
-          "by": "Test",
-          "byIds": [],
-          "obs": true,
-          "obsId": "ob-73410fc6-857"
-        }
-      ],
+      "predictions": [],
       "points": [],
       "sent": {},
       "ready": [
