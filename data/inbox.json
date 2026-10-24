@@ -1836,6 +1836,20 @@
         "vote": "up",
         "memberId": "mb-mt3zx2lgcj3x8"
       }
+    },
+    {
+      "id": "join-f4d8c70b-d1b",
+      "kind": "join",
+      "at": "2026-10-24T03:48:25.784Z",
+      "payload": {
+        "name": "Test",
+        "accountType": "observer",
+        "fable": "",
+        "goodreads": "",
+        "note": "",
+        "emailRef": "sub-b88654e2-9a2",
+        "emailHint": "s••••@gmail.com"
+      }
     }
   ]
 }
