@@ -1897,6 +1897,20 @@
         "obs": true,
         "obsId": "ob-73410fc6-857"
       }
+    },
+    {
+      "id": "join-467f8b6d-de5",
+      "kind": "join",
+      "at": "2026-10-25T16:09:50.631Z",
+      "payload": {
+        "name": "Pareesa",
+        "accountType": "member",
+        "fable": "",
+        "goodreads": "",
+        "note": "",
+        "emailRef": "sub-bc124cdd-7de",
+        "emailHint": "p••••@gmail.com"
+      }
     }
   ]
 }
