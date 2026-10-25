@@ -1,5 +1,5 @@
 {
-  "rev": 1630,
+  "rev": 1631,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2777,7 +2777,7 @@
       "closesAt": "2026-10-26T00:00:00.000Z",
       "cancelledAt": null,
       "closedAt": null,
-      "turnout": 2,
+      "turnout": 3,
       "nominated": [
         {
           "id": "suggest-fddd8ae2-833",
@@ -2786,6 +2786,11 @@
         },
         {
           "id": "suggest-2603dba6-457",
+          "n": 1,
+          "org": false
+        },
+        {
+          "id": "rc-mockingbird",
           "n": 1,
           "org": false
         },
