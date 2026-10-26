@@ -1,5 +1,5 @@
 {
-  "rev": 1639,
+  "rev": 1640,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1266,7 +1266,7 @@
       "bookId": "suggest-91746858-bc0",
       "kind": "meeting",
       "date": "2026-10-28",
-      "time": "16:00",
+      "time": "20:00",
       "place": "Online - Discord",
       "chapters": "7-9",
       "pages": "53",
