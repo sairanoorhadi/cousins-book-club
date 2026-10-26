@@ -1143,6 +1143,11 @@ a.getrow:hover{background:var(--sunk)}
 .votecta__head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 .votecta__head h2{font-size:23px}
 .votecta__when{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+/* A round that closed and was opened again says so, so that nobody who saw
+   it close has to wonder whether they are looking at a new one. */
+.votecta__ext{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;border:2px solid var(--edge);border-radius:999px;
+  padding:2px 9px;background:var(--surface);color:var(--ink)}
 /* Left, with the heading and the call to action above and below them. The
    point of the box is that its left edge is the hero's left edge; centring
    the covers inside it would set up a second alignment arguing with the
@@ -3731,7 +3736,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-22a";
+var SCRIPT_WANT = "2026-10-26a";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -3800,6 +3805,9 @@ var ENDPOINT_REPEATABLE = {
      first would have. The other two only read. */
   "nom-cast": 1, "nom-clear": 1, "nom-mine": 1, "nom-who": 1,
   "nom-add": 1, "nom-del": 1,
+  /* nom-reopen is NOT on this list: it emails every member, and a repeat
+     after a timeout that had in fact gone through would tell them twice. It
+     is left for a person to press again, having seen it did not land. */
   /* the page sends the state it wants rather than "flip it", so repeating
      it lands where the first one would have */
   "meet-ready": 1,
@@ -5691,7 +5699,7 @@ function sortRecs(list, which){
    is in the public file. Asked for once when there is a vote to ask about. */
 /* ---------- nominating, as a member ---------- */
 var nomMine = null;        /* the rec id this member put forward, from the script */
-var nomWhoBy = null;       /* Admin only: member ids per rec, asked for on demand */
+var nomWhoBy = {};         /* Admin only: per round id, member ids per rec, asked for on demand */
 /* Prompts closed with "No". Kept for the visit and nowhere else: saying no to
    one book is not a decision worth remembering past a reload. */
 var nomAsked = {};
@@ -6093,6 +6101,9 @@ function renderNomCta(host, r){
   host.innerHTML = '<a class="votecta' + (done ? " votecta--quiet" : "") + '" href="#recs">' +
     '<span class="votecta__head"><h2>' +
       (done ? "You nominated " + esc(mineRec.title) : "Nominations are open") + "</h2>" +
+      /* Reopened after it had closed: said here, because the countdown alone
+         would read as a round that had never shut. */
+      ((r.reopens || []).length ? '<span class="votecta__ext">Extended</span>' : "") +
       '<span class="votecta__when">' +
         (done ? "Change until " + esc(voteWhen(r.closesAt))
               : "Closes " + esc(voteWhen(r.closesAt)) + " \u00b7 " + esc(voteCountdown(r.closesAt))) +
@@ -10328,15 +10339,110 @@ var NOM_SHORTLIST_EASY = 8;
 
 function nomPickOn(id){ return nomPick[id] !== false; }
 
+/* Who has not put a book forward, with the turnout beside it. Drawn for a
+   closed round as well as an open one: after it closes is exactly when the
+   organiser is weighing up whether to give people longer. The names come
+   from this page's own members list -- the script answers with member ids
+   and never with a name, and none of this is in the public file. Pending
+   accounts are out by voteMembers(), and observers were never in it. */
+function nomWaitingHTML(r, withTurnout){
+  var mem = voteMembers(), got = nomWhoBy[r.id] || null;
+  var waiting = got
+    ? mem.filter(function(m){ return (got.nominated || []).indexOf(m.id) === -1; })
+    : null;
+  return '<div class="field" style="margin-top:12px"><label>Still to nominate</label>' +
+    (withTurnout
+      ? '<p class="hint" style="margin:0 0 8px">' + esc(r.turnout || 0) + " of " +
+        esc(mem.length) + " nominated</p>"
+      : "") +
+    (waiting === null
+      ? '<p class="hint" style="margin:0"><button class="btn btn--sm btn--ghost" type="button" ' +
+        'data-nomwhogo="' + esc(r.id) + '">Show who hasn\u2019t nominated</button></p>'
+      : waiting.length
+        ? '<div class="tagbank">' + waiting.map(function(m){
+            return '<span class="tag">' + esc(m.name) + "</span>"; }).join("") + "</div>"
+        : '<p class="hint" style="margin:0">Everyone has nominated.</p>') + "</div>";
+}
+
+/* ---------- reopening a closed round ----------
+   The three conditions, said on screen rather than discovered at the press:
+   recent enough, nothing else running, and no vote launched from it. The
+   script checks all three again -- this is the form, not the gate. */
+var NOM_REOPEN_DAYS = 7;
+/* Which round's confirm step is open, for the visit only. */
+var nomReopenAsk = null;
+function nomReopenState(r){
+  if(!r || voteStatusOf(r) !== "closed") return { show: false };
+  /* A vote has been launched from it: the question has been taken further,
+     and the control goes away rather than being refused. */
+  if(nomSupersededByVote(r)) return { show: false };
+  var shut = Date.parse(r.closedAt || r.closesAt);
+  if(!isFinite(shut)) return { show: false };
+  if(Date.now() - shut > NOM_REOPEN_DAYS * 86400000) return { show: false };
+  var busy = roundInTheWay();
+  return { show: true, why: busy ? roundBusyNote(busy) : "" };
+}
+/* Books from this round that are already on the shortlist. Reopening does
+   not take them off it, but it does mean the shortlist is no longer the
+   whole answer, which is worth saying before rather than after. */
+function nomShortlistedFrom(r){
+  return nomList(r).map(function(x){ return recById(x.id); })
+    .filter(function(b){ return b && b.shortlist; });
+}
+function nomReopenHTML(r){
+  var re = nomReopenState(r);
+  if(!re.show) return "";
+  var shut = r.closedAt || r.closesAt;
+  var head = '<div class="field" style="margin-top:14px"><label>Reopen / extend</label>' +
+    '<p class="hint" style="margin:0 0 8px">Closed ' + esc(voteWhen(shut)) +
+      ". Reopening keeps every nomination already in, and gives the club until a new time.</p>";
+  if(re.why){
+    return head + '<p class="hint" style="margin:0 0 8px">' + esc(re.why) + "</p>" +
+      '<button class="btn btn--sm btn--ghost" type="button" disabled>Reopen / extend</button></div>';
+  }
+  if(nomReopenAsk !== r.id){
+    return head + '<button class="btn btn--sm btn--surf" type="button" data-nomreopen="' +
+      esc(r.id) + '">Reopen / extend</button></div>';
+  }
+  var short = nomShortlistedFrom(r);
+  var soon = new Date(Date.now() + 24 * 3600 * 1000);
+  return head + '<div class="adminrow">' +
+    '<div class="field"><label for="nomReopenAt">New closing time</label>' +
+      '<input class="input" type="datetime-local" id="nomReopenAt" style="max-width:240px" value="' +
+        esc(localInputValue(soon)) + '"></div>' +
+    '<div class="field" style="margin-top:12px"><label>Or just say how long it lasts</label>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        VOTE_LASTS.map(function(l){
+          return '<button class="btn btn--sm btn--ghost" type="button" data-nomreopenlasts="' +
+            l[2] + '">' + esc(l[1]) + "</button>";
+        }).join("") + "</div>" +
+      '<p class="hint" style="margin:6px 0 0">At least ' +
+        (r.test ? VOTE_MIN_TEST_MINUTES + " minutes" : "an hour") + " from now.</p></div>" +
+    (short.length
+      ? '<p class="hint" style="margin:12px 0 0"><strong>' + esc(short.length) +
+        (short.length === 1 ? " of these is" : " of these are") +
+        " already on the shortlist.</strong> Reopening doesn\u2019t take them off it, but " +
+        "anything nominated between now and the new close won\u2019t be on it either \u2014 " +
+        "so the shortlist wants doing again once this closes.</p>"
+      : "") +
+    '<div class="field" style="margin-top:12px">' +
+      '<label><input type="checkbox" id="nomReopenMail" checked> Email members that nominations reopened</label>' +
+      '<p class="hint" style="margin:6px 0 10px">Everyone with an address, whatever their ' +
+        "notification settings say \u2014 the same people the opening email went to. It says the new closing time.</p>" +
+      '<label><input type="checkbox" id="nomReopenTest"' + (r.test ? " checked disabled" : "") +
+        "> Test: email only me</label></div>" +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">' +
+      '<button class="btn btn--sm btn--grape" type="button" id="nomReopenGo">Reopen nominations</button>' +
+      '<button class="btn btn--sm btn--ghost" type="button" id="nomReopenCancel">Cancel</button>' +
+    "</div></div></div>";
+}
+
 function paneNomPart(){
   var r = currentNom(), st = voteStatusOf(r);
   var out = "";
 
   if(r && (st === "open" || st === "scheduled")){
     var mem = voteMembers();
-    var waiting = nomWhoBy
-      ? mem.filter(function(m){ return (nomWhoBy.nominated || []).indexOf(m.id) === -1; })
-      : null;
     out += '<p class="eyebrow">Before the vote</p>' +
       '<h3 style="font-size:22px;margin:8px 0 16px">Nominations</h3>' +
       '<div class="adminrow"><div class="adminrow__head"><strong>One book each</strong>' +
@@ -10351,7 +10457,7 @@ function paneNomPart(){
         (nomList(r).length
           ? '<div class="vocablist">' + nomList(r).map(function(x){
               var b = recById(x.id);
-              var who = nomWhoBy ? ((nomWhoBy.byRec || {})[x.id] || []) : null;
+              var who = nomWhoBy[r.id] ? ((nomWhoBy[r.id].byRec || {})[x.id] || []) : null;
               return '<div class="vocabitem"><div class="vocabrow">' +
                 '<span class="tag">' + esc(b ? b.title : x.id) + "</span>" +
                 '<span class="vocabrow__n">' + esc(x.n || 0) +
@@ -10372,13 +10478,7 @@ function paneNomPart(){
                 "</div></div>";
             }).join("") + "</div>"
           : '<p class="hint" style="margin:0">Nothing yet.</p>') + "</div>" +
-      '<div class="field" style="margin-top:12px"><label>Still to nominate</label>' +
-        (waiting === null
-          ? '<p class="hint" style="margin:0"><button class="btn btn--sm btn--ghost" type="button" id="nomWhoGo">Show who hasn’t nominated</button></p>'
-          : waiting.length
-            ? '<div class="tagbank">' + waiting.map(function(m){
-                return '<span class="tag">' + esc(m.name) + "</span>"; }).join("") + "</div>"
-            : '<p class="hint" style="margin:0">Everyone has nominated.</p>') + "</div>" +
+      nomWaitingHTML(r, false) +
       /* The organiser's own additions. Alphabetised ignoring leading
          articles, by the same helper the book lists use. */
       '<div class="field" style="margin-top:12px"><label for="nomAddPick">Add a book yourself</label>' +
@@ -10592,6 +10692,10 @@ function nomClosedDetail(r, withActions){
             (r.nomTabHidden ? "0" : "1") + '">' +
             (r.nomTabHidden ? "Show it again" : "Hide Nominations tab") + "</button>") +
       "</div>" +
+      /* Who did not get to it, and then the way to give them longer. In
+         that order, because the list is what the decision is made on. */
+      nomWaitingHTML(r, true) +
+      nomReopenHTML(r) +
       '<div class="field" style="margin-top:14px"><label>Emails and the timer</label>' +
         voteMailBlock(r) + "</div>" +
       "</div>";
@@ -11878,10 +11982,10 @@ document.addEventListener("click", async function(e){
     }
     return;
   }
-  if(t.closest("#nomWhoGo")){
-    var nwr = currentNom(); if(!nwr) return;
+  if((el = t.closest("[data-nomwhogo]"))){
+    var nwr = roundById(el.getAttribute("data-nomwhogo")); if(!nwr) return;
     var nwres = await callEndpoint("nom-who", { token: sessionToken(), roundId: nwr.id });
-    if(nwres && nwres.ok){ nomWhoBy = nwres; renderAdmin(); }
+    if(nwres && nwres.ok){ nomWhoBy[nwr.id] = nwres; renderAdmin(); }
     else say("Couldn’t ask who has nominated: " +
       (endpointTrouble(nwres && nwres.error, nwres && nwres.detail) ||
        (nwres && nwres.error) || "no answer"), "bad");
@@ -11924,7 +12028,7 @@ document.addEventListener("click", async function(e){
     kr.turnout = kres.turnout;
     /* the who-list is now out of date, so it is asked for again rather than
        shown stale */
-    nomWhoBy = null;
+    nomWhoBy[kr.id] = null;
     say("Removed.", "ok");
     renderAll(); renderAdmin();
     return;
@@ -11938,6 +12042,65 @@ document.addEventListener("click", async function(e){
     xr.closesAt = xwin.closesAt;
     voteTouch(xr.id);
     if(await save("Saving the closing time…")){ renderAll(); renderAdmin(); }
+    return;
+  }
+  if((el = t.closest("[data-nomreopen]"))){
+    nomReopenAsk = el.getAttribute("data-nomreopen");
+    renderAdmin();
+    return;
+  }
+  if(t.closest("#nomReopenCancel")){ nomReopenAsk = null; renderAdmin(); return; }
+  if((el = t.closest("[data-nomreopenlasts]"))){
+    var rohrs = Number(el.getAttribute("data-nomreopenlasts"));
+    /* From now, not from when it opened: this is a new window on an old
+       round, and "1 week" means a week to answer in. */
+    if($("nomReopenAt")) $("nomReopenAt").value =
+      localInputValue(new Date(Date.now() + rohrs * 3600 * 1000));
+    return;
+  }
+  if(t.closest("#nomReopenGo")){
+    var ror = roundById(nomReopenAsk);
+    if(!ror){ nomReopenAsk = null; renderAdmin(); return; }
+    /* Checked again at the press and not only when the panel was drawn: it
+       may have been sitting open while something else was launched. The
+       script checks all of it a third time, which is the check that counts. */
+    var rost = nomReopenState(ror);
+    if(!rost.show || rost.why){
+      say(rost.why || "That round can\u2019t be reopened now.", "bad");
+      nomReopenAsk = null; renderAdmin(); return;
+    }
+    var roIso = isoFromLocal($("nomReopenAt") && $("nomReopenAt").value);
+    if(!roIso){ say("That closing time doesn\u2019t look right.", "bad"); return; }
+    var roLeast = ror.test ? VOTE_MIN_TEST_MINUTES : VOTE_MIN_MINUTES;
+    if(Date.parse(roIso) - Date.now() < roLeast * 60000){
+      say(ror.test
+        ? "Give a test round at least " + VOTE_MIN_TEST_MINUTES + " minutes from now."
+        : "Give it at least an hour from now.", "bad");
+      return;
+    }
+    var roMail = !!($("nomReopenMail") && $("nomReopenMail").checked);
+    var roMe = !!($("nomReopenTest") && $("nomReopenTest").checked);
+    var rores = await callEndpoint("nom-reopen", { token: sessionToken(), roundId: ror.id,
+      closesAt: roIso, email: roMail, test: roMe });
+    if(!(rores && rores.ok)){
+      say("Couldn\u2019t reopen it: " +
+        (endpointTrouble(rores && rores.error, rores && rores.detail) ||
+         (rores && rores.error) || "no answer"), "bad");
+      return;
+    }
+    /* The script has written the round; this copy is brought up to it rather
+       than left to be noticed on the next load. Not voteTouch()ed: the page
+       and the file now say the same thing, and touching it would stop the
+       nominations that arrive next from being taken back at the next save. */
+    ror.closesAt = rores.closesAt || roIso;
+    ror.closedAt = null;
+    if(rores.reopens) ror.reopens = rores.reopens;
+    nomReopenAsk = null;
+    say("Nominations are open again until " + voteWhen(ror.closesAt) +
+      (rores.emailed
+        ? " \u00b7 " + rores.sent + (rores.sent === 1 ? " email sent" : " emails sent")
+        : " \u00b7 no email sent"), "ok");
+    renderAll(); renderAdmin();
     return;
   }
   if((el = t.closest("[data-nomclose]"))){

@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-22a';
+var SCRIPT_VERSION = '2026-10-26a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -503,6 +503,17 @@ function voteMailCopy(state, v, stage) {
      it has its own words -- but the same two stages, the same tag, the same
      closing time and the same once-only flags around it. */
   if (roundTypeOf(v) === 'nomination') {
+    /* Reopened. Not "nominations are now open", which would read to anyone
+       who already put a book forward as though theirs had been lost. */
+    if (stage === 'reopen') {
+      return { subject: tag + clubName + ': nominations are open again',
+        body: [clubName, '',
+          'Nominations have been reopened. They now close ' + closes + '.', '',
+          'Whatever you put forward before is still there \u2014 nothing was lost. ' +
+            'You can change it, or put a book forward now if you did not before.', '',
+          nomLink(), '',
+          'Whatever is nominated becomes the shortlist we then vote on.'].join('\n') };
+    }
     if (stage === 'remind') {
       return { subject: tag + clubName + ': ' + VOTE_REMIND_HOURS +
           ' hours left to put a book forward',
@@ -1289,6 +1300,145 @@ function nomOrganiserEdit(payload, add) {
   return { ok: true, counts: pub.counts, turnout: pub.turnout, published: pub.published };
 }
 
+/* ---- reopening a round that has closed ----
+   A window that shut before the club had answered is worth being able to
+   open again: the same books, the same nominations already in the private
+   store, a new closing time. Every condition is checked here and not only
+   in the form, because the form is one way to reach this URL and not the
+   only one.
+
+   Seven days, because a round reopened a fortnight on is a new question
+   rather than the old one left open -- and the further back it goes, the
+   more likely something else has moved since. */
+var NOM_REOPEN_DAYS = 7;
+var NOM_REOPEN_MIN_MINUTES = 60;
+/* A test round may be reopened for ten minutes, the same allowance the
+   launch form gives one. The whole point of a test is watching the timer
+   open, nudge and close it while you sit there. */
+var NOM_REOPEN_MIN_TEST_MINUTES = 10;
+var NOM_REOPEN_LOG = 12;
+
+/* A vote launched after this round is the round's answer, and reopening it
+   then would reopen a question that has already been taken further. Read the
+   way the page reads it: the first vote round after this one in the list,
+   cancelled ones aside -- a cancelled vote never asked the club anything. */
+function nomVoteAfter(state, round) {
+  var list = (state && state.votes) || [], seen = false;
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].id === round.id) { seen = true; continue; }
+    if (!seen) continue;
+    if (roundTypeOf(list[i]) === 'nomination') continue;
+    if (list[i].cancelledAt) continue;
+    return list[i];
+  }
+  return null;
+}
+/* Any other round still running or waiting to run. One at a time, which is
+   the rule the launch form already keeps. */
+function roundInTheWayOf(state, round) {
+  var list = (state && state.votes) || [];
+  for (var i = 0; i < list.length; i++) {
+    var r = list[i];
+    if (!r || !r.id || r.id === round.id || r.cancelledAt) continue;
+    var st = voteStatus(r);
+    if (st === 'open' || st === 'scheduled') return r;
+  }
+  return null;
+}
+
+function nomReopen(payload) {
+  var gate = organiserOnly(payload);
+  if (typeof gate === 'string' && gate.indexOf('@') === -1) return { ok: false, error: gate };
+
+  var got = nomRoundFor(payload.roundId);
+  if (typeof got === 'string') return { ok: false, error: got };
+  var round = got.round, state = got.state;
+  if (round.cancelledAt) return { ok: false, error: 'that round was cancelled' };
+  if (voteStatus(round) !== 'closed') return { ok: false, error: 'that round has not closed' };
+
+  /* When it shut: the stamp the timer left, or the time it was due to, for a
+     round the timer has not reached yet. */
+  var shut = Date.parse(round.closedAt || round.closesAt);
+  if (!isFinite(shut)) return { ok: false, error: 'that round has no closing time' };
+  var now = Date.now();
+  if (now - shut > NOM_REOPEN_DAYS * 86400000) {
+    return { ok: false, error: 'that round closed more than ' + NOM_REOPEN_DAYS +
+      ' days ago, so it cannot be reopened' };
+  }
+  if (nomVoteAfter(state, round)) {
+    return { ok: false, error: 'a vote has already been launched from that round' };
+  }
+  var busy = roundInTheWayOf(state, round);
+  if (busy) {
+    return { ok: false, error: roundTypeOf(busy) === 'nomination'
+      ? 'another nominations round is open or scheduled'
+      : 'a vote is open or scheduled' };
+  }
+
+  var closes = Date.parse(payload.closesAt);
+  if (!isFinite(closes)) return { ok: false, error: 'that closing time does not look right' };
+  var least = round.test ? NOM_REOPEN_MIN_TEST_MINUTES : NOM_REOPEN_MIN_MINUTES;
+  if (closes - now < least * 60000) {
+    return { ok: false, error: round.test
+      ? 'give a test round at least ' + NOM_REOPEN_MIN_TEST_MINUTES + ' minutes from now'
+      : 'give it at least an hour from now' };
+  }
+  var closesIso = new Date(closes).toISOString();
+  var entry = { at: new Date().toISOString(), from: round.closesAt || null,
+                to: closesIso, closedAt: round.closedAt || null };
+
+  /* The same locked read-modify-write every nomination goes through, and the
+     two conditions that could have changed under us are checked again inside
+     it: the copy read a moment ago is not the copy being written. */
+  var out = withState('Nominations reopened', function (st) {
+    var rr = voteOf(st, String(payload.roundId || ''));
+    if (!rr) return { error: 'no such round' };
+    if (nomVoteAfter(st, rr)) return { error: 'a vote has already been launched from that round' };
+    if (roundInTheWayOf(st, rr)) return { error: 'another round is open or scheduled' };
+    rr.closedAt = null;
+    rr.closesAt = closesIso;
+    rr.reopens = (rr.reopens || []).concat([entry]).slice(-NOM_REOPEN_LOG);
+    return { reply: { closesAt: closesIso, reopens: rr.reopens } };
+  });
+  if (!out.ok) return out;
+
+  /* The nudge is about a deadline and the deadline is new, so it is armed
+     again -- unless the new window is too short to hold one, which is where
+     the timer draws the same line when a round is launched. Nobody who has
+     already nominated is nudged: that list is worked out when it fires. */
+  var flags = voteMailFlags(round.id);
+  delete flags.remind;
+  delete flags.remindTo;
+  flags.remindSkipped = (closes - now) <= VOTE_REMIND_HOURS * 3600000;
+  flags.reopened = (flags.reopened || []).concat([entry.at]).slice(-NOM_REOPEN_LOG);
+
+  var sent = 0, missing = [], mailed = false;
+  if (payload.email) {
+    /* A test round, or a test send, reaches the organiser and nobody else.
+       Otherwise the opening email's own rule: every member with an address,
+       whatever their notification preferences say, and nobody pending --
+       they are not in state.members at all. */
+    var who = (payload.test || round.test) ? voteTestRecipients() : voteAddresses(state);
+    missing = who.missing || [];
+    if (missing.length) flags.missing = missing;
+    var when = {};
+    for (var k in round) if (round.hasOwnProperty(k)) when[k] = round[k];
+    when.closesAt = closesIso;
+    var copy = voteMailCopy(state, when, 'reopen');
+    if (voteSendTo(who.list, copy.subject, copy.body, flags, 'reopen')) {
+      sent = who.list.length;
+      mailed = true;
+      flags.reopenMailed = new Date().toISOString();
+      flags.reopenMailedTo = sent;
+    }
+  }
+  voteMailFlagsWrite(round.id, flags);
+  /* The copy this script is holding is the one from before the write. */
+  stateForget();
+  return { ok: true, closesAt: closesIso, reopens: out.reopens || [],
+           emailed: mailed, sent: sent, missing: missing };
+}
+
 /* Settling a closed round: the final counts and a closedAt, so the record
    stops depending on the clock. Called by the timer; safe to call twice. */
 function nomSettle(round) {
@@ -1377,6 +1527,7 @@ function doPost(e) {
   if (kind === 'nom-who') return json(nomWho(payload));
   if (kind === 'nom-add') return json(nomOrganiserEdit(payload, true));
   if (kind === 'nom-del') return json(nomOrganiserEdit(payload, false));
+  if (kind === 'nom-reopen') return json(nomReopen(payload));
   if (kind === 'vote-mail') return json(voteMailStatus(payload));
   if (kind === 'vote-hide') return json(voteResultsVisible(payload, true));
   if (kind === 'vote-show') return json(voteResultsVisible(payload, false));
