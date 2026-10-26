@@ -1,5 +1,5 @@
 {
-  "rev": 1633,
+  "rev": 1634,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -272,6 +272,18 @@
       "fable": "",
       "goodreads": "",
       "hue": ""
+    },
+    {
+      "id": "mb-mvok3zcdl2qk6",
+      "name": "Pareesa",
+      "joined": "2026-10-25",
+      "avatar": "",
+      "email": "",
+      "notifyRef": "sub-bc124cdd-7de",
+      "emailHint": "p••••@gmail.com",
+      "notify": [],
+      "fable": "",
+      "goodreads": ""
     }
   ],
   "books": [
@@ -2719,7 +2731,8 @@
     "suggest-0184ada0-db2",
     "endorse-239a04eb-1fb",
     "endorse-b18a4268-7b3",
-    "endorse-58bf8758-c55"
+    "endorse-58bf8758-c55",
+    "join-467f8b6d-de5"
   ],
   "vocab": {
     "genre": {
