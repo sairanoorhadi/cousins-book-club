@@ -1923,6 +1923,18 @@
         "vote": "up",
         "memberId": "mb-mtaiuu788is5a"
       }
+    },
+    {
+      "id": "endorse-22b2a415-6a7",
+      "kind": "endorse",
+      "at": "2026-10-26T20:33:32.137Z",
+      "payload": {
+        "recId": "suggest-fddd8ae2-833",
+        "title": "A Deadly Education",
+        "name": "Eliza",
+        "vote": "up",
+        "memberId": "mb-mtaiuu788is5a"
+      }
     }
   ]
 }
