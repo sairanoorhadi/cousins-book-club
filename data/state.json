@@ -1,5 +1,5 @@
 {
-  "rev": 1638,
+  "rev": 1639,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -285,7 +285,8 @@
         "*"
       ],
       "fable": "",
-      "goodreads": ""
+      "goodreads": "",
+      "hue": ""
     }
   ],
   "books": [
@@ -1348,7 +1349,7 @@
       "at": "",
       "cover": "https://covers.openlibrary.org/b/olid/OL61995434M-L.jpg",
       "blurb": "Scout Finch grows up in Depression-era Alabama watching her father defend a Black man falsely accused of assault. A courtroom drama told from a child's shoulder height, where the neighbour everyone fears turns out to be the one paying attention.",
-      "shortlist": false,
+      "shortlist": true,
       "summarySource": "own",
       "reviews": [],
       "endorsements": [
@@ -1584,7 +1585,7 @@
       "cover": "https://covers.openlibrary.org/b/id/8361789-L.jpg",
       "blurb": "Jude and her two sisters are taken to the High Court of Faerie as children, after the fae knight Madoc kills their parents and claims them as his own. Ten years on, Jude is seventeen and mortal in a world that treats humans as pets or amusements, and she wants a place at court badly enough to bleed for it. Standing in her way is Prince Cardan, the youngest son of the High King, who makes her humiliation something close to a hobby. The court runs on old rules about lying, debts, and hospitality, and Jude learns quickly that the rules are the only weapon a human gets.",
       "summarySource": "ai",
-      "shortlist": false,
+      "shortlist": true,
       "reviews": [],
       "endorsements": [
         {
@@ -2118,7 +2119,7 @@
       "cover": "https://covers.openlibrary.org/b/id/7263528-L.jpg",
       "blurb": "The word gifted has never been applied to a kid like Donovan Curtis. It's usually more like Don't try this at home. So when the troublemaker pulls a major prank at his middle school, he thinks he's finally gone too far. But thanks to a mix-up by one of the administrators, instead of getting in trouble, Donovan is sent to the Academy of Scholastic Distinction (ASD), a special program for gifted and talented students.\n\nIt wasn't exactly what Donovan had intended, but there couldn't be a more perfect hideout for someone like him. That is, if he can manage to fool people whose IQs are above genius level. And that becomes harder and harder as the students and teachers of ASD grow to realize that Donovan may not be good at math or science (or just about anything). But after an ongoing experiment with a live human (sister), an unforgettably dramatic middle-school dance, and the most astonishing come-from-behind robot victory ever, Donovan shows that his gifts might be exactly what the ASD students never knew they needed.",
       "summarySource": "fetched",
-      "shortlist": false,
+      "shortlist": true,
       "reviews": [],
       "endorsements": [],
       "dislikes": [],
@@ -2514,7 +2515,7 @@
       "cover": "https://covers.openlibrary.org/b/id/10206042-L.jpg",
       "blurb": "A Deadly Education is set at Scholomance, a school for the magically gifted where failure means certain death (for real) — until one girl, El, begins to unlock its many secrets.\n\nThere are no teachers, no holidays, and no friendships, save strategic ones. Survival is more important than any letter grade, for the school won’t allow its students to leave until they graduate… or die! The rules are deceptively simple: Don’t walk the halls alone. And beware of the monsters who lurk everywhere.\n\nEl is uniquely prepared for the school’s dangers. She may be without allies, but she possesses a dark power strong enough to level mountains and wipe out millions. It would be easy enough for El to defeat the monsters that prowl the school. The problem? Her powerful dark magic might also kill all the other students.",
       "summarySource": "fetched",
-      "shortlist": false,
+      "shortlist": true,
       "reviews": [],
       "endorsements": [
         {
