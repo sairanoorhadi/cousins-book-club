@@ -465,15 +465,23 @@ a.getrow:hover{background:var(--sunk)}
 /* width:100% matters — a <button> sizes itself to its contents even at
    display:block, and the cover inside has no intrinsic width. It used to be a
    grid item, which stretched it; inside the vote wrapper it has to be told. */
-.reccard{position:relative;padding:0;border:0;background:none;cursor:pointer;display:block;width:100%;text-align:left;transition:transform .14s ease}
+/* overflow:hidden because the reveal panel below parks itself under the
+   card's bottom edge at rest, where it used to hang over whatever came next
+   -- at 390px that is 80px of the row beneath. */
+.reccard{position:relative;padding:0;border:0;background:none;cursor:pointer;display:block;width:100%;text-align:left;transition:transform .14s ease;overflow:hidden}
 .reccard:hover,.reccard:focus-visible{transform:translate(-3px,-3px)}
 .reccard .cover{box-shadow:var(--shadow-sm)}
 .reccard:hover .cover,.reccard:focus-visible .cover{box-shadow:6px 6px 0 var(--stamp)}
-.reccard__foot{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 11px;background:rgba(10,7,26,.82);color:#F6F2FF;border-top:2px solid var(--edge);border-radius:0 0 3px 3px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.03em}
+.reccard__foot{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 11px;background:rgba(10,7,26,.82);color:#F6F2FF;border-top:2px solid var(--edge);border-radius:0 0 3px 3px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.03em}
 .reccard__by{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85}
 .reccard .cover__gen{padding-bottom:18%}
-.reccard__reveal{position:absolute;left:0;right:0;bottom:0;background:rgba(10,7,26,.94);color:#F6F2FF;border-top:2px solid var(--edge);border-radius:0 0 3px 3px;padding:10px 12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 9px;align-items:baseline;transform:translateY(101%);opacity:0;transition:transform .2s cubic-bezier(.22,1,.36,1), opacity .16s ease;pointer-events:none}
-.reccard:hover .reccard__reveal,.reccard:focus-visible .reccard__reveal{transform:translateY(0);opacity:1}
+/* z-index below the foot, so on its way in and out it passes behind the bar
+   rather than over it -- its text used to read through those two translucent
+   dark layers. visibility, delayed by the length of the slide, so that once
+   parked it cannot paint at all: opacity:0 alone left it painting through
+   every frame of the transition. */
+.reccard__reveal{position:absolute;left:0;right:0;bottom:0;z-index:1;background:rgba(10,7,26,.94);color:#F6F2FF;border-top:2px solid var(--edge);border-radius:0 0 3px 3px;padding:10px 12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 9px;align-items:baseline;transform:translateY(101%);opacity:0;visibility:hidden;transition:transform .2s cubic-bezier(.22,1,.36,1), opacity .16s ease, visibility 0s linear .2s;pointer-events:none}
+.reccard:hover .reccard__reveal,.reccard:focus-visible .reccard__reveal{transform:translateY(0);opacity:1;visibility:visible;transition-delay:0s}
 .reccard__reveal .k{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.62;white-space:nowrap}
 .reccard__reveal .v{font-size:12.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
@@ -1239,34 +1247,43 @@ a.getrow:hover{background:var(--sunk)}
 .endorse[data-lean="down"]{border-color:var(--flare)}
 .endorse[data-lean="up"]{border-color:var(--surf)}
 .partytag{display:inline-block;background:var(--grape);color:var(--on-grape);border:2px solid var(--edge);border-radius:999px;padding:3px 12px;font-family:var(--f-display);font-weight:700;font-size:12.5px}
-/* Deliberately NOT at top right: .vote sits there, and the two must not
-   crowd each other. --under drops it below the Shortlist badge on a card
-   that carries both. */
-.reccard__nom{position:absolute;top:7px;left:7px;z-index:2;pointer-events:none;
+/* One tag to a cover, top left. Deliberately NOT top right: .vote sits
+   there, and the two must not crowd each other. Which tag it is, is decided
+   in recTag() -- the stack of badges this replaces could reach four deep on
+   one cover, which left the book itself barely visible.
+   max-width so a long tag is cut by the cover's edge rather than running
+   under the endorse pill. */
+.reccard__tag{position:absolute;top:7px;left:7px;z-index:2;pointer-events:none;
+  max-width:calc(100% - 14px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   background:var(--grape);color:#fff;border:2px solid var(--edge);border-radius:999px;
   padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;
   text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
-.reccard__nom--under{top:34px}
-/* Under the Nominated badge, and in the club's own ink rather than the grape
-   so the two read as different kinds of fact. */
-.reccard__mine{position:absolute;top:34px;left:7px;z-index:2;pointer-events:none;
-  background:var(--surface);color:var(--ink);border:2px solid var(--edge);border-radius:999px;
-  padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;
-  text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
-.reccard__mine--under{top:61px}
-/* The nomination facts as a line of text under the cover's foot. Drawn on a
-   phone only, where a badge on a 106px cover covers the book; on a wide
-   screen the badges above say the same thing. */
+/* The modifiers are written against the pill as well as themselves: the
+   phone's line of text carries the same modifier class, and a background,
+   a border and a stamp on a line of text made it a second pill under the
+   cover. */
+/* On the shortlist: the flare, as the Shortlist badge always was. */
+.reccard__tag.reccard__tag--short{background:var(--flare);color:var(--on-flare)}
+/* The reader's own pick, in the club's own ink rather than the grape, so it
+   reads as a different kind of fact from the count beside it on other
+   covers. */
+.reccard__tag.reccard__tag--mine{background:var(--surface);color:var(--ink)}
+/* Not this round: the quiet pair, no stamp under it, and in sentence case
+   with a month on the end. Nothing about it should read as live. */
+.reccard__tag.reccard__tag--prev{background:var(--sunk);color:var(--muted);
+  border-color:var(--hairline);border-style:dashed;box-shadow:none;
+  text-transform:none;letter-spacing:.03em;font-size:9px}
+/* The same tag as a line of text under the cover's foot, for the phone,
+   where a badge on a 106px cover covers the book. One or the other is drawn,
+   never both. */
 .reccard__nomline{display:none}
-.reccard__onshort{position:absolute;bottom:40px;left:7px;z-index:2;pointer-events:none;
-  background:var(--flare);color:var(--on-flare);border:2px solid var(--edge);border-radius:999px;
-  padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;
-  text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
 /* The nominate prompt sits under the endorse row and reads as its own
    question rather than more of the same one. */
 .endorse--nom{margin-top:10px}
+/* Which rounds this book has stood in, under both of them. A note, not a
+   question, so it is the hint's own quiet grey. */
+.nomhist{margin:9px 0 0}
 .nomq{font-family:var(--f-display);font-weight:700;font-size:14px}
-.reccard__short{position:absolute;top:7px;left:7px;background:var(--flare);color:var(--on-flare);border:2px solid var(--edge);border-radius:999px;padding:2px 9px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;box-shadow:2px 2px 0 var(--stamp)}
 .seconds{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
 .secondchip{font-family:var(--f-mono);font-size:11.5px;padding:3px 10px;border:1.5px solid var(--edge);border-radius:999px;background:var(--sunk);color:var(--ink)}
 /* this used to sit above .secondchip, so the base background quietly won and
@@ -1679,12 +1696,11 @@ a.getrow:hover{background:var(--sunk)}
   .vote__btn--up::after{left:-18px;right:0}
   .vote__btn--down::after{left:0;right:-16px}
   /* Off the cover, under the foot. */
-  .reccard__nom,.reccard__mine{display:none}
+  .reccard__tag{display:none}
   .reccard__nomline{display:block;margin-top:6px;font-family:var(--f-mono);
     font-size:9.5px;line-height:1.3;letter-spacing:.04em;color:var(--ink);text-align:center}
-  /* Both facts, on a line each -- a mid-dot between them wrapped anyway at
-     this width, and in a worse place. */
-  .reccard__nomline__b{display:block;color:var(--muted)}
+  /* The same quiet treatment the pill gets on a wide screen. */
+  .reccard__nomline.reccard__tag--prev{color:var(--muted);font-size:9px}
 }
 @media (max-width:620px){
   body{font-size:16px}
@@ -5695,38 +5711,90 @@ async function nomLoadMine(){
   renderVoteCta(); renderRecGrid(); renderNomGrid();
 }
 
-/* The count on a nominated cover. Top LEFT, because the endorse pill owns
-   top right and she asked for them kept apart; stepped down when the
-   Shortlist badge is already there. pointer-events:none so the card
-   underneath stays one big button, and nothing about the cover changes. */
-function nomBadgeHTML(r){
-  var round = nomTabRound();
-  if(!round) return "";
-  var st = voteStatusOf(round);
-  if(st !== "open" && st !== "closed") return "";
-  var n = nomCountFor(round, r.id);
-  var org = nomList(round).filter(function(x){ return String(x.id) === String(r.id); })[0];
-  if(!n && !(org && org.org)) return "";
-  var count = "Nominated" + (n > 1 ? " \u00d7" + n : "");
-  var out = '<span class="reccard__nom' + (r.shortlist ? " reccard__nom--under" : "") + '">' +
-    count + "</span>";
-  /* Only this reader sees it, because nomMine came from the script and is
+/* ---------- the one tag a cover carries ----------
+   Shortlisted, nominated again, your nomination, nominated so many times,
+   nominated in a round gone by: five facts that were four separate badges,
+   any of which could stack on the same cover -- four deep, on a 106px cover,
+   which left nothing of the book to see. One tag now, top LEFT because the
+   endorse pill owns top right and the two must not crowd each other. The
+   order in recTag() is what decides which: the first answer wins. */
+
+/* Every nomination round that ever ran, oldest first. A cancelled round
+   asked the club nothing, and a test round is the organiser's business
+   alone -- the same rule the rest of the page reads rounds by. */
+function nomRoundsAll(){
+  return allRounds().filter(function(r){
+    return roundTypeOf(r) === "nomination" && !r.cancelledAt && !voteHidden(r);
+  });
+}
+/* The round taking nominations right now, if there is one. A round is
+   history the moment it closes: its books fall to Prev. nominated, unless
+   they were shortlisted out of it. */
+function nomOpenRound(){
+  var r = nomTabRound();
+  return r && voteStatusOf(r) === "open" ? r : null;
+}
+/* The rounds a book stood in, oldest first. An organiser's own addition is
+   in the list with a count of nought, and it stood all the same. */
+function nomRoundsFor(recId){
+  return nomRoundsAll().filter(function(r){ return nomHas(r, recId); });
+}
+/* "Oct \u201926". Named for the month the round opened in: one that spans the
+   turn of a month is named for when the club was asked, not when it
+   answered. */
+function nomMonth(r){
+  var d = new Date((r && (r.opensAt || r.at)) || "");
+  return isNaN(d) ? "" : d.toLocaleString(undefined, { month: "short" }) +
+    " \u2019" + String(d.getFullYear()).slice(-2);
+}
+function recTag(r){
+  /* The shortlist is where a nomination was headed. Once a book is on it,
+     how it got there is no longer the news. */
+  if(r.shortlist) return { t: "Shortlisted", c: "reccard__tag--short" };
+  var open = nomOpenRound();
+  var standing = !!open && nomHas(open, r.id);
+  var past = nomRoundsFor(r.id).filter(function(x){ return voteStatusOf(x) === "closed"; });
+  if(standing && past.length) return { t: "Nominated again", c: "" };
+  /* Only this reader sees this one: nomMine came from the script and is
      about them alone. Nothing public says who nominated what. */
-  var mine = String(nomMine) === String(r.id);
-  if(mine){
-    out += '<span class="reccard__mine' + (r.shortlist ? " reccard__mine--under" : "") +
-      '">Your nomination</span>';
+  if(standing && String(nomMine) === String(r.id)){
+    return { t: "Your nomination", c: "reccard__tag--mine" };
   }
-  /* The same facts again, as a line of text for under the cover's foot. One
-     of the two is drawn and the other is display:none -- the badges on a wide
-     screen, this on a phone, where a badge the width of half the cover hides
-     the book it is about. */
-  out += '<span class="reccard__nomline">' + count +
-    (mine ? ' <span class="reccard__nomline__b">Your nomination</span>' : "") + "</span>";
-  /* Added because a nominated book missing from the vote is otherwise a
-     puzzle: this says it already went through. */
-  if(r.shortlist) out += '<span class="reccard__onshort">On the shortlist</span>';
-  return out;
+  if(standing){
+    var n = nomCountFor(open, r.id);
+    return { t: "Nominated" + (n > 1 ? " \u00d7" + n : ""), c: "" };
+  }
+  /* Stood in a round gone by and was not taken. Which round: the last one,
+     since that is the one anybody remembers. */
+  if(past.length){
+    return { t: "Prev. nominated " + nomMonth(past[past.length - 1]), c: "reccard__tag--prev" };
+  }
+  return null;
+}
+/* Written twice and shown once: the pill over the cover on a wide screen,
+   the line under the foot on a phone. pointer-events:none on the pill so the
+   card underneath stays one big button. */
+function recTagHTML(r){
+  var tag = recTag(r);
+  if(!tag) return "";
+  var cls = tag.c ? " " + tag.c : "";
+  return '<span class="reccard__tag' + cls + '">' + esc(tag.t) + "</span>" +
+    '<span class="reccard__nomline' + cls + '">' + esc(tag.t) + "</span>";
+}
+/* Which rounds a book has stood in, for its own modal. Months and nothing
+   else: a nomination is private, and the month is the most the published
+   file knows. */
+function nomHistoryHTML(o){
+  var months = [];
+  nomRoundsFor(o.id).forEach(function(r){
+    var m = nomMonth(r);
+    if(m && months.indexOf(m) === -1) months.push(m);
+  });
+  if(!months.length) return "";
+  var said = months.length === 1
+    ? months[0]
+    : months.slice(0, -1).join(", ") + " and " + months[months.length - 1];
+  return '<p class="hint nomhist">Nominated in ' + esc(said) + ".</p>";
 }
 
 /* The prompt under Endorse / Not for me in a recommendation's modal. Every
@@ -6471,7 +6539,6 @@ function recCardHTML(r){
   return '<div class="reccard-wrap">' +
     '<button class="reccard cover-wrap" type="button" data-rec="' + esc(r.id) + '" aria-label="' + esc(r.title + " by " + r.author + " — open summary") + '">' +
       coverHTML(r) +
-      (r.shortlist ? '<span class="reccard__short">Shortlist</span>' : "") +
       '<span class="reccard__foot"><span>' + esc(r.pages || "?") + " pp</span>" +
         '<span class="reccard__by">' + (r.by ? esc(r.by) : "&nbsp;") + "</span></span>" +
       '<span class="reccard__reveal">' +
@@ -6480,7 +6547,7 @@ function recCardHTML(r){
         '<span class="k">Endorsed</span><span class="v">' + (up || "none yet") + (down ? " · " + down + " against" : "") + "</span>" +
       "</span>" +
     "</button>" +
-    nomBadgeHTML(r) +
+    recTagHTML(r) +
     '<span class="vote' + (score > 0 ? " vote--up" : score < 0 ? " vote--down" : "") + '">' +
       '<span class="vote__score">' + esc(score === 0 ? "±" : scoreLabel(r)) + "</span>" +
       (mineToo
@@ -7635,7 +7702,7 @@ function openBookDetail(o, kind, focus){
                 '" type="button" data-dislike="' + esc(o.id) + '">' +
                 (standing === "down" ? "Not for me" : "Change to not for me") + "</button>" +
               '<button class="btn btn--sm btn--ghost" type="button" data-takeback="' + esc(o.id) + '">Take it back</button>' +
-            "</div>" + nomBlockHTML(o);
+            "</div>";
           }
           var own = !!myName() && isOwnRec(o, myName());
           return '<div class="endorse">' +
@@ -7659,7 +7726,7 @@ function openBookDetail(o, kind, focus){
                   : '<button class="btn btn--sm btn--grape" type="button" data-endorsesignin="' + esc(o.id) +
                     '">Sign in to endorse</button>')) +
           "</div>";
-        })() + nomBlockHTML(o)
+        })() + nomBlockHTML(o) + nomHistoryHTML(o)
       : "") +
     /* A recommendation has no shelf entry behind it, so there is nowhere for
        the organiser to have put these; only a real book gets the block. */
