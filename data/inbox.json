@@ -1911,6 +1911,18 @@
         "emailRef": "sub-bc124cdd-7de",
         "emailHint": "p••••@gmail.com"
       }
+    },
+    {
+      "id": "endorse-eb57398b-8f2",
+      "kind": "endorse",
+      "at": "2026-10-26T20:32:40.449Z",
+      "payload": {
+        "recId": "rc-mockingbird",
+        "title": "To Kill a Mockingbird",
+        "name": "Eliza",
+        "vote": "up",
+        "memberId": "mb-mtaiuu788is5a"
+      }
     }
   ]
 }
