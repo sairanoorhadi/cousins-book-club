@@ -1,5 +1,5 @@
 {
-  "rev": 1649,
+  "rev": 1650,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -166,7 +166,39 @@
       "notify": [
         "*"
       ],
-      "hue": "grape"
+      "hue": "#7c31d8",
+      "genres": [],
+      "top5": [
+        {
+          "id": "",
+          "title": "The Prison Healer",
+          "author": "Lynette Noni",
+          "cover": "https://covers.openlibrary.org/b/id/10864672-L.jpg",
+          "pages": 408,
+          "genres": [
+            "Dark Fantasy"
+          ],
+          "subgenres": [
+            "Prison"
+          ],
+          "tropes": [
+            "Enemies to lovers?"
+          ],
+          "level": "Ages 13+",
+          "blurb": "",
+          "ratings": [
+            {
+              "score": 4.2,
+              "source": ""
+            }
+          ],
+          "myScore": 0,
+          "myReview": "",
+          "ageMin": 13,
+          "ageMax": 100
+        }
+      ],
+      "notifyRecs": false
     },
     {
       "id": "mb-mtaiuu788is5a",
