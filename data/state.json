@@ -1,5 +1,5 @@
 {
-  "rev": 1660,
+  "rev": 1661,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1234,7 +1234,8 @@
             "mb-mtaiuu788is5a",
             "mb-mtcdg54c8cyyc",
             "mb-mtqod125fcqtd"
-          ]
+          ],
+          "carried": true
         }
       ],
       "points": [
@@ -1333,6 +1334,17 @@
           "byIds": [
             "mb-saira",
             "mb-mtaiuu788is5a",
+            "mb-mtqod125fcqtd"
+          ]
+        },
+        {
+          "id": "pred-93ddb1ec-230",
+          "text": "Fatimah does not realize it yet but she has feelings for Steve, & when she does, she will feel guilty about it and never act on it",
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mtaiuu788is5a",
+            "mb-mtcdg54c8cyyc",
             "mb-mtqod125fcqtd"
           ]
         }
