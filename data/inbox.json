@@ -2009,6 +2009,18 @@
         "vote": "down",
         "memberId": "mb-mtcdg54c8cyyc"
       }
+    },
+    {
+      "id": "endorse-2b49a9a6-eb4",
+      "kind": "endorse",
+      "at": "2026-10-29T01:11:03.931Z",
+      "payload": {
+        "recId": "suggest-09244f59-518",
+        "title": "That was then, this is now",
+        "name": "Eliza",
+        "vote": "down",
+        "memberId": "mb-mtaiuu788is5a"
+      }
     }
   ]
 }
