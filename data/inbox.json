@@ -1949,6 +1949,18 @@
         "deletedBy": "Filza",
         "deletedByType": "member"
       }
+    },
+    {
+      "id": "endorse-804040ad-190",
+      "kind": "endorse",
+      "at": "2026-10-29T01:09:14.535Z",
+      "payload": {
+        "recId": "rc-kite",
+        "title": "The Kite Runner",
+        "name": "Eliza",
+        "vote": "up",
+        "memberId": "mb-mtaiuu788is5a"
+      }
     }
   ]
 }
