@@ -1,5 +1,5 @@
 {
-  "rev": 1712,
+  "rev": 1713,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1536,8 +1536,7 @@
       "pages": 176,
       "genres": [
         "Middle Grade",
-        "Historical Fiction",
-        "Family"
+        "Historical Fiction"
       ],
       "level": "Ages 10-13",
       "by": "Pareesa",
@@ -1559,7 +1558,9 @@
         }
       ],
       "tropes": [],
-      "subgenres": []
+      "subgenres": [
+        "Family"
+      ]
     },
     {
       "id": "rc-trouts",
@@ -1947,8 +1948,7 @@
       "genres": [
         "Violence",
         "Crime",
-        "Classic",
-        "Family"
+        "Classic"
       ],
       "by": "Ms. Wendy",
       "status": "approved",
@@ -1963,7 +1963,9 @@
       "ratings": [],
       "level": "Ages 8-12",
       "tropes": [],
-      "subgenres": []
+      "subgenres": [
+        "Family"
+      ]
     },
     {
       "id": "suggest-09244f59-518",
@@ -2192,8 +2194,7 @@
       "ageMax": 12,
       "genres": [
         "Realistic",
-        "Orphan",
-        "Family"
+        "Orphan"
       ],
       "by": "Ms. Wendy",
       "status": "approved",
@@ -2213,7 +2214,9 @@
       "ratings": [],
       "level": "Ages 8-12",
       "tropes": [],
-      "subgenres": []
+      "subgenres": [
+        "Family"
+      ]
     },
     {
       "id": "suggest-98664ae7-609",
@@ -2925,7 +2928,8 @@
       "sports": "subgenre",
       "avatar": "subgenre",
       "animals": "subgenre",
-      "dark": "subgenre"
+      "dark": "subgenre",
+      "family": "subgenre"
     },
     "subgenre": {
       "terms": [
@@ -2951,6 +2955,10 @@
         },
         {
           "name": "Dark",
+          "parent": ""
+        },
+        {
+          "name": "Family",
           "parent": ""
         }
       ],
