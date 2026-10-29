@@ -1,5 +1,5 @@
 {
-  "rev": 1693,
+  "rev": 1694,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -202,21 +202,6 @@
       "hue": "#ff94f0"
     },
     {
-      "id": "mb-mtqod125fcqtd",
-      "name": "Summar",
-      "joined": "2026-04-17",
-      "avatar": "",
-      "email": "",
-      "notifyRef": "",
-      "emailHint": "",
-      "notify": [
-        "bk-mt7pvx697h34g"
-      ],
-      "fable": "",
-      "goodreads": "",
-      "hue": ""
-    },
-    {
       "id": "mb-munn9nj7dj0fl",
       "name": "Hadiqa",
       "joined": "2026-09-30",
@@ -301,7 +286,8 @@
       "emailHint": "s••••@gmail.com",
       "notify": [],
       "fable": "",
-      "goodreads": ""
+      "goodreads": "",
+      "hue": ""
     }
   ],
   "books": [
@@ -408,8 +394,7 @@
       "progressPage": 128,
       "members": [
         "mb-saira",
-        "mb-mtaiuu788is5a",
-        "mb-mtqod125fcqtd"
+        "mb-mtaiuu788is5a"
       ],
       "order": 2,
       "level": "Ages 9-12",
@@ -468,7 +453,6 @@
         "mb-mt3zx2lgcj3x8",
         "mb-mtaiuu788is5a",
         "mb-mtcdg54c8cyyc",
-        "mb-mtqod125fcqtd",
         "mb-munn9nj7dj0fl"
       ],
       "order": 3,
@@ -2514,6 +2498,10 @@
         {
           "name": "Zainab",
           "at": "2026-10-29T01:09:26.906Z"
+        },
+        {
+          "name": "Eliza",
+          "at": "2026-10-29T01:14:37.205Z"
         }
       ],
       "dislikes": [],
@@ -2550,7 +2538,16 @@
       "summarySource": "own",
       "shortlist": false,
       "reviews": [],
-      "endorsements": [],
+      "endorsements": [
+        {
+          "name": "Zainab",
+          "at": "2026-10-29T01:16:18.483Z"
+        },
+        {
+          "name": "Eliza",
+          "at": "2026-10-29T01:16:23.140Z"
+        }
+      ],
       "dislikes": [],
       "ratings": [
         {
