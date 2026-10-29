@@ -1,5 +1,5 @@
 {
-  "rev": 1704,
+  "rev": 1705,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2651,7 +2651,6 @@
       "genres": [
         "Science Fiction",
         "Thriller",
-        "Astronauts",
         "Survival"
       ],
       "tropes": [],
@@ -2673,7 +2672,9 @@
         }
       ],
       "level": "Ages 15+",
-      "subgenres": []
+      "subgenres": [
+        "Astronauts"
+      ]
     },
     {
       "id": "suggest-89fb2798-340",
@@ -2914,10 +2915,16 @@
       "aliases": {}
     },
     "home": {
-      "academia": "trope"
+      "academia": "trope",
+      "astronauts": "subgenre"
     },
     "subgenre": {
-      "terms": [],
+      "terms": [
+        {
+          "name": "Astronauts",
+          "parent": ""
+        }
+      ],
       "aliases": {}
     }
   },
