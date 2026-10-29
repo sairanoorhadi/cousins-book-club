@@ -1,5 +1,5 @@
 {
-  "rev": 1666,
+  "rev": 1667,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2928,6 +2928,52 @@
           "closedAt": "2026-10-26T00:01:52.797Z"
         }
       ]
+    },
+    {
+      "id": "vote-mvstulo3ku17z",
+      "kind": "rate",
+      "candidates": [
+        {
+          "id": "suggest-2603dba6-457",
+          "title": "The Cruel Prince",
+          "author": "Holly Black",
+          "cover": "https://covers.openlibrary.org/b/id/8361789-L.jpg"
+        },
+        {
+          "id": "suggest-fddd8ae2-833",
+          "title": "A Deadly Education",
+          "author": "Naomi Novik",
+          "cover": "https://covers.openlibrary.org/b/id/10206042-L.jpg"
+        },
+        {
+          "id": "suggest-6944d6d5-5f3",
+          "title": "A Good Girl's Guide to Murder",
+          "author": "Holly Jackson",
+          "cover": "https://covers.openlibrary.org/b/id/13156188-L.jpg"
+        },
+        {
+          "id": "rc-mockingbird",
+          "title": "To Kill a Mockingbird",
+          "author": "Harper Lee",
+          "cover": "https://covers.openlibrary.org/b/olid/OL61995434M-L.jpg"
+        },
+        {
+          "id": "suggest-98664ae7-609",
+          "title": "Ungifted",
+          "author": "Gordon Korman",
+          "cover": "https://covers.openlibrary.org/b/id/7263528-L.jpg"
+        }
+      ],
+      "opensAt": "2026-10-29T00:50:52.083Z",
+      "closesAt": "2026-10-31T00:00:00.000Z",
+      "cancelledAt": null,
+      "closedAt": null,
+      "turnout": 0,
+      "totals": null,
+      "winner": null,
+      "tied": null,
+      "parent": null,
+      "at": "2026-10-29T00:50:52.083Z"
     }
   ]
 }
