@@ -1,5 +1,5 @@
 {
-  "rev": 1713,
+  "rev": 1714,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1671,7 +1671,6 @@
       "ageMin": 14,
       "ageMax": 100,
       "genres": [
-        "Fairies",
         "Fantasy",
         "Princes",
         "Orphan"
@@ -1699,7 +1698,9 @@
       ],
       "level": "Ages 14+",
       "tropes": [],
-      "subgenres": []
+      "subgenres": [
+        "Fairies"
+      ]
     },
     {
       "id": "suggest-a68f18ee-188",
@@ -2929,7 +2930,8 @@
       "avatar": "subgenre",
       "animals": "subgenre",
       "dark": "subgenre",
-      "family": "subgenre"
+      "family": "subgenre",
+      "fairies": "subgenre"
     },
     "subgenre": {
       "terms": [
@@ -2959,6 +2961,10 @@
         },
         {
           "name": "Family",
+          "parent": ""
+        },
+        {
+          "name": "Fairies",
           "parent": ""
         }
       ],
