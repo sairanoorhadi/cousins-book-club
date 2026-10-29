@@ -1,5 +1,5 @@
 {
-  "rev": 1657,
+  "rev": 1658,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1200,7 +1200,8 @@
             "mb-mtaiuu788is5a",
             "mb-mtcdg54c8cyyc",
             "mb-mtqod125fcqtd"
-          ]
+          ],
+          "carried": true
         },
         {
           "id": "pred-2db2b0a2-5f9",
@@ -1300,6 +1301,17 @@
             "mb-saira",
             "mb-mtqod125fcqtd",
             "mb-mtaiuu788is5a"
+          ]
+        },
+        {
+          "id": "pred-d8a46b7f-312",
+          "text": "Hasan does not fully believe in Islam",
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mtaiuu788is5a",
+            "mb-mtcdg54c8cyyc",
+            "mb-mtqod125fcqtd"
           ]
         }
       ],
