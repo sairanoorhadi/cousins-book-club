@@ -1,5 +1,5 @@
 {
-  "rev": 1717,
+  "rev": 1718,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2230,7 +2230,6 @@
       "ageMax": 12,
       "genres": [
         "Humour",
-        "Robots",
         "Literary Fiction",
         "Social Problems"
       ],
@@ -2244,10 +2243,17 @@
       "reviews": [],
       "endorsements": [],
       "dislikes": [],
-      "ratings": [],
+      "ratings": [
+        {
+          "score": 4.07,
+          "source": "Goodreads"
+        }
+      ],
       "level": "Ages 8-12",
       "tropes": [],
-      "subgenres": []
+      "subgenres": [
+        "Robots"
+      ]
     },
     {
       "id": "suggest-941ddf1d-79d",
@@ -2602,11 +2608,10 @@
         }
       ],
       "level": "Ages 12+",
-      "tropes": [
-        "Academia"
-      ],
+      "tropes": [],
       "subgenres": [
-        "Dark"
+        "Dark",
+        "Academia"
       ]
     },
     {
