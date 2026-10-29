@@ -1,5 +1,5 @@
 {
-  "rev": 1705,
+  "rev": 1706,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1503,8 +1503,7 @@
       "pages": 257,
       "genres": [
         "Middle Grade",
-        "Historical Fiction",
-        "Sports"
+        "Historical Fiction"
       ],
       "level": "Ages 9-12",
       "by": "Pareesa",
@@ -1526,7 +1525,9 @@
         }
       ],
       "tropes": [],
-      "subgenres": []
+      "subgenres": [
+        "Sports"
+      ]
     },
     {
       "id": "rc-grace",
@@ -2916,12 +2917,17 @@
     },
     "home": {
       "academia": "trope",
-      "astronauts": "subgenre"
+      "astronauts": "subgenre",
+      "sports": "subgenre"
     },
     "subgenre": {
       "terms": [
         {
           "name": "Astronauts",
+          "parent": ""
+        },
+        {
+          "name": "Sports",
           "parent": ""
         }
       ],
