@@ -20,7 +20,7 @@
    app — and every confusing hour spent on this script has come from that gap.
    Compare scriptVersion() in the editor against what the /exec URL reports in
    a browser; if they differ, the deployment is stale. */
-var SCRIPT_VERSION = '2026-10-26a';
+var SCRIPT_VERSION = '2026-10-29a';
 
 var REPO_OWNER  = 'sairanoorhadi';
 var REPO_NAME   = 'cousins-book-club';
@@ -2168,6 +2168,9 @@ function profileFor(email) {
        Suggest form ended up hidden from members. */
     type: member ? 'member' : (observerFor(email) ? 'observer' : ''),
     observerId: member ? '' : ((observerFor(email) || {}).id || ''),
+    /* Whether they have been round the tour. Read at sign-in so a second
+       device does not start it again. */
+    tourDone: !!entry.tourDone,
     /* The page locks the endorse and submit name boxes for everyone but the
        organiser. It is told the same fact the submission gate decides on, so
        the two cannot drift: a box the page leaves editable is one the script
@@ -2638,9 +2641,40 @@ function profileGet(payload) {
            notifyRecs: !!member.notifyRecs };
 }
 
+/* Whether somebody has been round the tour. It is not part of a member's
+   public profile -- it is about this person rather than about the club -- so
+   it lives in the private directory entry beside their ref and their
+   reminders, not in state.members, which is a public file. Kept here rather
+   than in an endpoint of its own so there is one gate and one whitelist for
+   everything the page saves about an account.
+
+   Either kind of account may write it, which is the point: the observer
+   tour is the one that must not start again on another device, and
+   profileSet refuses observers everything else. */
+function tourDoneSet(email, done) {
+  var dir = directory();
+  /* Every signed-in account has an entry -- loginVerify makes one -- but a
+     missing one is a reason to write the flag, not to lose it. */
+  if (!dir[email]) dir[email] = { ref: '', name: '', books: [], memberId: '' };
+  dir[email].tourDone = !!done;
+  saveDirectory(dir);
+  return { ok: true, tourDone: !!done };
+}
+
 function profileSet(payload) {
   var email = whoIs(payload.token);
   if (!email) return { ok: false, error: 'signed out' };
+  /* A call that carries the tour flag and nothing else is that and nothing
+     else: it writes a script property and never reaches GitHub, and it is
+     answered before the members-only gate below. Checked field by field
+     rather than by counting keys, because the page sends a token too. */
+  if (payload.tourDone !== undefined &&
+      payload.name === undefined && payload.hue === undefined &&
+      payload.goodreads === undefined && payload.fable === undefined &&
+      payload.genres === undefined && payload.top5 === undefined &&
+      payload.notifyRecs === undefined) {
+    return tourDoneSet(email, payload.tourDone);
+  }
   /* Every field this writes -- badge colour, Goodreads, Fable, top genres,
      the top five -- belongs to a member's public profile, and an observer
      has no public profile to write to. Their own name, address and reminders

@@ -1700,6 +1700,13 @@ a.getrow:hover{background:var(--sunk)}
      pad's own width, and 16 left 31 of the 32 asked for. */
   .vote__btn--up::after{left:-18px;right:0}
   .vote__btn--down::after{left:0;right:-16px}
+  /* The tooltip takes the width it can get, and its buttons stay on one
+     row: a tour step that needs two rows of buttons on a phone is a step
+     that covers the thing it is pointing at. */
+  .tour__tip{width:calc(100vw - 24px);padding:14px 15px 12px}
+  .tour__tip h3{font-size:17px}
+  .tour__tip p.tour__t{font-size:14px}
+  .tour__acts .btn{padding:7px 11px}
   /* Off the cover, under the foot. */
   .reccard__tag{display:none}
   .reccard__nomline{display:block;margin-top:6px;font-family:var(--f-mono);
@@ -1744,6 +1751,65 @@ a.getrow:hover{background:var(--sunk)}
   .menuback{display:block}
   .section{padding:44px 0}
 }
+/* ---------- the tour ----------
+   Four dim panels with a hole between them rather than one overlay with a
+   cut-out: a box-shadow spotlight paints over the element it is lighting,
+   and this leaves the real thing on the page, at full contrast, with its own
+   corners. The hole is covered by a transparent catcher, because a tour must
+   not be able to endorse a book by being clicked through. */
+.tour{position:fixed;inset:0;z-index:300}
+.tour[hidden]{display:none}
+.tour__dim{position:fixed;background:rgba(12,8,32,.62);
+  background:color-mix(in srgb, var(--ink) 58%, transparent)}
+.tour__hole{position:fixed;background:transparent;cursor:default}
+.tour__ring{position:fixed;border:3px solid var(--zest);border-radius:8px;
+  box-shadow:0 0 0 3px var(--ink);pointer-events:none;transition:all .18s cubic-bezier(.22,1,.36,1)}
+.tour__tip{position:fixed;width:min(360px,calc(100vw - 24px));background:var(--paper);
+  border:2px solid var(--edge);border-radius:10px;box-shadow:6px 6px 0 var(--stamp);
+  padding:16px 18px 14px;z-index:2}
+.tour__n{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 6px}
+.tour__tip h3{font-size:19px;line-height:1.15;margin:0 0 7px}
+.tour__tip p.tour__t{margin:0;font-size:14.5px;line-height:1.45}
+/* A dead copy of a control that is not on this reader's page. It is labelled,
+   because a button that does nothing and says nothing about it is a fault. */
+.tour__practice{border:2px dashed var(--edge);border-radius:8px;padding:12px;
+  background:var(--sunk);margin-top:12px}
+.tour__practice[data-at]{margin:14px 0}
+.tour__practice::before{content:attr(data-what);display:block;font-family:var(--f-mono);
+  font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.tour__practice *{pointer-events:none}
+.tour__acts{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap}
+.tour__acts .tour__sp{flex:1 1 auto}
+/* The centred card: a step whose target is not on the page right now, or
+   cannot honestly be shown a copy of. */
+.tour--card .tour__tip{left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 24px))}
+.tour__tip:focus{outline:none}
+.tour__tip:focus-visible{outline:3px solid var(--grape);outline-offset:3px}
+/* the first-visit nudge */
+.tourbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  border:2px solid var(--edge);border-radius:10px;background:var(--zest);color:var(--on-zest);
+  box-shadow:4px 4px 0 var(--stamp);padding:11px 14px;margin:0 0 20px;
+  font-family:var(--f-display);font-weight:700;font-size:15px}
+.tourbar__x{margin-left:auto}
+/* the three doors */
+.tourpick{display:grid;gap:12px;margin-top:16px}
+.tourpick__opt{display:block;width:100%;text-align:left;border:2px solid var(--edge);border-radius:10px;
+  background:var(--surface);color:var(--ink);box-shadow:3px 3px 0 var(--stamp);padding:14px 16px;cursor:pointer}
+.tourpick__opt:hover{background:var(--sunk);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--stamp)}
+.tourpick__opt strong{display:block;font-family:var(--f-display);font-size:17px}
+.tourpick__opt span{display:block;font-size:13.5px;color:var(--muted);margin-top:3px}
+.tourpick__opt--you{background:var(--zest);color:var(--on-zest)}
+.tourpick__opt--you span{color:inherit;opacity:.8}
+/* how it works */
+.howsec{margin-top:26px}
+.howsec h3{font-size:20px;margin:0 0 4px}
+.howsec__who{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 12px}
+.howlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.howlist li{border:1.5px solid var(--hairline);border-radius:8px;background:var(--sunk);padding:12px 14px}
+.howlist strong{display:block;font-family:var(--f-display);font-size:15px;margin-bottom:3px}
+.howlist p{margin:0;font-size:14px;line-height:1.45;color:var(--ink)}
 @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms !important;animation-duration:.01ms !important}}
 
 </style>
@@ -2090,6 +2156,8 @@ a.getrow:hover{background:var(--sunk)}
           <a class="menu__item" role="menuitem" href="#recs">Recommendations</a>
           <a class="menu__item" role="menuitem" href="#badges">Badges</a>
           <a class="menu__item" role="menuitem" href="#members">Members</a>
+          <button class="menu__item" role="menuitem" type="button" id="menuHow">How it works</button>
+          <button class="menu__item" role="menuitem" type="button" id="menuTour">Take the tour</button>
           <button class="menu__item" role="menuitem" type="button" id="menuProfile" hidden>Edit profile</button>
           <!-- An observer has no public profile to edit; what they do have is
                a name, an address and their reminders. -->
@@ -2106,6 +2174,7 @@ a.getrow:hover{background:var(--sunk)}
   <!-- .wrap is the hero's own container, reused rather than reinvented, so
        the banner's edges are the hero's edges at every width by construction
        instead of by two numbers that have to be kept equal. -->
+  <div class="wrap" id="tourCta"></div>
   <div class="wrap" id="voteCta"></div>
   <!-- ===== NOW READING ===== -->
   <section class="hero" id="now">
@@ -2486,6 +2555,47 @@ a.getrow:hover{background:var(--sunk)}
     <div class="modal__bar"><h2 id="adminModalTitle">Organiser tools</h2>
       <button class="xbtn" type="button" data-close="adminScrim" aria-label="Close">&times;</button></div>
     <div class="modal__body" id="adminModalBody"></div>
+  </div>
+</div>
+
+<!-- Which tour to take. Anyone may pick any of them: it is a tour, not a
+     permission, and the fastest way to see what an account would get is to
+     be shown it. -->
+<div class="scrim" id="tourPickScrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="tourPickTitle" style="max-width:560px">
+    <div class="modal__bar"><h2 id="tourPickTitle">Take the tour</h2>
+      <button class="xbtn" type="button" data-close="tourPickScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body" id="tourPickBody"></div>
+  </div>
+</div>
+<div class="scrim" id="howScrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+    <div class="modal__bar"><h2 id="howTitle">How it works</h2>
+      <button class="xbtn" type="button" data-close="howScrim" aria-label="Close">&times;</button></div>
+    <div class="modal__body" id="howBody"></div>
+  </div>
+</div>
+<!-- The tour itself. Four dim panels, a catcher over the hole so nothing
+     underneath can be pressed, a ring, and the tooltip. -->
+<div class="tour" id="tour" hidden>
+  <div class="tour__dim" id="tourDimT"></div>
+  <div class="tour__dim" id="tourDimB"></div>
+  <div class="tour__dim" id="tourDimL"></div>
+  <div class="tour__dim" id="tourDimR"></div>
+  <div class="tour__hole" id="tourHole"></div>
+  <div class="tour__ring" id="tourRing"></div>
+  <div class="tour__tip" id="tourTip" role="dialog" aria-modal="true"
+       aria-labelledby="tourTitle" aria-describedby="tourText" tabindex="-1">
+    <p class="tour__n" id="tourN" aria-live="polite"></p>
+    <h3 id="tourTitle"></h3>
+    <p class="tour__t" id="tourText"></p>
+    <div class="tour__practice" id="tourPractice" data-what="Practice copy &mdash; it doesn&rsquo;t do anything" hidden></div>
+    <div class="tour__acts">
+      <button class="btn btn--sm btn--ghost" type="button" id="tourBack">Back</button>
+      <span class="tour__sp"></span>
+      <button class="btn btn--sm btn--ghost" type="button" id="tourSkip">Skip tour</button>
+      <button class="btn btn--sm btn--grape" type="button" id="tourNext">Next</button>
+    </div>
   </div>
 </div>
 
@@ -3736,7 +3846,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-26a";
+var SCRIPT_WANT = "2026-10-29a";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -3770,6 +3880,8 @@ function bodySnip(text, n){
 var ENDPOINT_REPEATABLE = {
   "ping": 1, "session": 1, "logout": 1,
   "notify-get": 1, "notify-set": 1,
+  /* profile-set sends the whole profile, or the tour flag on its own; both
+     land the same values twice over. */
   "profile-get": 1, "profile-set": 1,
   "photo-list": 1,
   /* sets three fields to what it was handed, so a second go lands the same
@@ -7167,9 +7279,14 @@ function openScrim(id){
   document.body.style.overflow = "hidden";
   var f = $(id).querySelector(".xbtn"); if(f) f.focus();
 }
-var SCRIMS = ["rateScrim","dropScrim","bulkScrim","lightbox","loginScrim","meScrim","memberScrim","getScrim","bookScrim","meetScrim","badgeScrim","adminScrim"];
+var SCRIMS = ["rateScrim","dropScrim","bulkScrim","lightbox","loginScrim","meScrim","memberScrim","getScrim","bookScrim","meetScrim","badgeScrim","adminScrim","tourPickScrim","howScrim"];
 function closeScrim(id){
   $(id).hidden = true;
+  if(id === "memberScrim" && tourAfterJoin){
+    tourAfterJoin = false;
+    /* after this turn, so the modal is really gone before the dim goes up */
+    setTimeout(function(){ tourStart("member", true); }, 0);
+  }
   /* The book form is on loan to the profile while a place is being edited, and
      it belongs to the Recommendations page. Shutting the profile by the cross,
      the backdrop or Escape used to leave it parked in the closed modal: the
@@ -9225,6 +9342,529 @@ document.addEventListener("click", function(e){
 document.addEventListener("keydown", function(e){
   if(e.key === "Escape") menuShut();
 });
+
+/* ---------- the tour, and the quick start it is written from ----------
+   ONE list. The walkthrough and the How it works page both draw from
+   TOUR_STEPS, so the two cannot drift apart: a step reworded here is
+   reworded in both. ANY CHANGE TO THE PAGE THAT MOVES OR RENAMES ONE OF
+   THESE TARGETS HAS TO COME BACK HERE. The test site says so out loud --
+   every step whose selector finds nothing logs a warning on /dev/ (see
+   tourCheckSteps), so a broken step is noticed rather than discovered.
+
+   tiers  which tours a step is in: V visitor, O observer, M member.
+   sel    what to point at. Null is a card in the middle of the screen.
+   open   what has to be opened first: "menu", "notes", "book", "suggest",
+          "fold". It is closed again when the step is left.
+   prac   a dead copy to put in place when the real control is not on this
+          reader's page -- signed out, there is no Endorse pill to point at.
+   psel   what to point at once that copy is there.
+   card   true means: if the target is missing, say it in a card rather than
+          failing or skipping in silence. Every situational step has it.  */
+var TOUR_STEPS = [
+  /* howText: what the quick start page says instead, for the steps whose
+     own words only make sense with the tour running. */
+  { id:"hello", tiers:"VOM", sel:null, card:true, title:"Hello",
+    text:"This is the club’s site. Two minutes and you’ll know where everything is — Escape gets you out whenever.",
+    howText:"This is the club’s site. Here is everything on it, in the order you’ll meet it." },
+  { id:"hero", tiers:"VOM", sel:"#heroCover", title:"What we’re reading",
+    text:"The book on the go. Tap the cover any time for the summary, the ratings and who said what." },
+  { id:"get", tiers:"VOM", sel:"#heroGet", title:"Get the book",
+    text:"Where to find a copy — library, shop, whatever’s been added. The small line says how many ways there are." },
+  { id:"progress", tiers:"VOM", sel:"#heroProgress", title:"How far in we are",
+    text:"Fills up as the club reads, against the chapters set for the next meeting." },
+  { id:"facts", tiers:"VOM", sel:"#heroFacts", title:"Age, length, ratings",
+    text:"The quick facts, and what the ratings sites think. Members’ own scores sit here too." },
+  { id:"meetcard", tiers:"VOM", sel:"#heroMeetBody", card:true, title:"The next meeting",
+    text:"When, where, and how much to have read. If more than one is coming up, the arrows cycle through them." },
+  { id:"ready", tiers:"M", sel:"[data-ready]", prac:"ready", psel:"#tourPracReady", card:true,
+    title:"I’m ready",
+    text:"Tick it when you’ve done the reading, so everyone can see who’s set." },
+  { id:"notes", tiers:"VOM", sel:".noteblock--pred", open:"notes", card:true, title:"Meeting notes",
+    text:"Every meeting keeps predictions, discussion points, a write-up and photos. Here’s one.",
+    howText:"Every meeting keeps predictions, discussion points, a write-up and photos. Open any meeting to read them." },
+  { id:"pred", tiers:"OM", sel:"[data-add=\"pred-text\"]", open:"notes", prac:"pred",
+    psel:"#tourPracPred", card:true, title:"Predictions",
+    text:"Say what you think happens before the meeting. You can edit or delete your own." },
+  { id:"disc", tiers:"OM", sel:"[data-add=\"disc-text\"]", open:"notes", prac:"disc",
+    psel:"#tourPracDisc", card:true, title:"Discussion points",
+    text:"A question worth arguing about on the night. Same thing — yours are yours to change." },
+  { id:"photos", tiers:"VOM", sel:"#partyPhotos", open:"notes", card:true, title:"Party photos",
+    text:"Photos from the meeting live at the bottom of its notes." },
+  { id:"shelf", tiers:"VOM", sel:"#shelf", title:"Previous Books",
+    text:"Everything the club has finished, newest first. Each one keeps its notes." },
+  { id:"recs", tiers:"VOM", sel:"#recs", title:"Recommendations",
+    text:"Every book anyone has put forward. This is where the next read comes from." },
+  { id:"search", tiers:"VOM", sel:"#recSearchIn", title:"Search",
+    text:"Title, author, genre — it forgives a typo or two. The tickbox searches summaries as well." },
+  { id:"filters", tiers:"VOM", sel:".filters__box summary", title:"Filter & sort",
+    text:"Narrow by who suggested it, genre, age, length or rating. The count says how many are left." },
+  { id:"card", tiers:"VOM", sel:"#recGrid .reccard", card:true, title:"Tap any cover",
+    text:"Opens the book: summary, genres, who put it forward and who’s endorsed it." },
+  /* A pill on the cover at one width and a line of text under it at
+     another: the step means whichever is on the screen. */
+  { id:"tags", tiers:"VOM", sel:"#recGrid .reccard__tag, #recGrid .reccard__nomline",
+    card:true, title:"The corner tags",
+    text:"Shortlisted, Nominated, Your nomination, or Prev. nominated with the month. Only ever one at a time." },
+  { id:"endorse", tiers:"OM", sel:"#recGrid .vote", card:true, title:"Endorse, or don’t",
+    text:"Plus if you’d read it, minus if it’s not for you. One each per book, and you can change your mind." },
+  { id:"nominate", tiers:"M", sel:".endorse--nom", open:"book", card:true, title:"Nominate one book",
+    text:"When a round is open you put one book forward. Change it or take it back until it closes." },
+  { id:"vote", tiers:"M", sel:"#voteBox", card:true, title:"Voting",
+    text:"Rate every shortlisted book 1–10. Nobody sees your ballot, and a tie goes to a runoff." },
+  { id:"suggest", tiers:"OM", sel:"#suggestForm", open:"suggest", prac:"suggest",
+    psel:"#tourPracSuggest", card:true, title:"Put a book forward",
+    text:"Anyone with an account can suggest one. An organiser reads it and publishes the ones the club wants." },
+  { id:"lookup", tiers:"OM", sel:"#sAskAI", open:"suggest", prac:"suggest",
+    psel:"#tourPracLookup", card:true, title:"Look up book",
+    text:"Type the title and press this — author, pages, genres and rating fill themselves in. All still editable." },
+  { id:"websum", tiers:"OM", sel:"#sSumSearch", open:"suggest", prac:"suggest",
+    psel:"#tourPracWeb", card:true, title:"Search the web",
+    text:"Stuck for a summary? This goes and finds one for you." },
+  { id:"badges", tiers:"VOM", sel:"#badges", title:"Badges",
+    text:"One for every book the club has finished. Tap one for that meeting’s notes." },
+  { id:"members", tiers:"VOM", sel:"#members", title:"Members",
+    text:"Everyone in the club, how long they’ve been in, and their top genres." },
+  { id:"five", tiers:"VOM", sel:".memtiles--five", card:true, title:"Their five",
+    text:"Five books each member stands by. Tap one to see it." },
+  { id:"readwith", tiers:"VOM", sel:".memfold", open:"fold", card:true, title:"Read with the club",
+    text:"Everything that member has read along with the club. It folds open." },
+  { id:"profile", tiers:"M", sel:"#menuProfile", open:"menu", card:true, title:"Your profile",
+    text:"Your five favourite books, your Goodreads and Fable links, and your top three genres." },
+  { id:"profile2", tiers:"M", sel:null, card:true, title:"…and the rest of it",
+    text:"Same place: your badge colour, and which meetings email you a reminder." },
+  { id:"onlymem", tiers:"O", sel:null, card:true, title:"What’s members-only",
+    text:"Voting, nominating and the “I’m ready” tick are for club members. Everything else here is yours." },
+  { id:"obsmore", tiers:"V", sel:null, card:true, title:"Observers get a bit more",
+    text:"Family and friends can sign up as Observers: endorse books, put one forward, and add predictions and discussion points." },
+  { id:"memmore", tiers:"V", sel:null, card:true, title:"Members get the rest",
+    text:"Members also vote on what we read next, nominate a book each round, and keep a profile with their five favourites." },
+  { id:"menu", tiers:"VOM", sel:"#menuPanel", open:"menu", title:"The menu",
+    text:"Jump to any section, and sign in or out. How it works and this tour live here too." },
+  { id:"top", tiers:"VOM", sel:"#brandHome", title:"Back to the top",
+    text:"The logo takes you back to Now Reading from anywhere on the page." },
+  { id:"join", tiers:"V", sel:"#signupOpen", card:true, title:"Fancy joining?",
+    text:"Sign up and an organiser approves you. Already have an account? Sign in." }
+];
+
+var TOUR_TIERS = { visitor:"V", observer:"O", member:"M" };
+var TOUR_TIER_NAME = { visitor:"Just looking", observer:"Observer", member:"Member" };
+function tourList(tier){
+  var letter = TOUR_TIERS[tier] || "V";
+  return TOUR_STEPS.filter(function(s){ return s.tiers.indexOf(letter) !== -1; });
+}
+/* The tier this reader actually is, which the chooser starts on. It is a
+   suggestion and nothing more -- anyone may take any of the three. */
+function tourMyTier(){
+  if(myMember()) return "member";
+  if(isObserver()) return "observer";
+  return "visitor";
+}
+
+var tour = { on:false, steps:[], i:0, tier:"visitor", required:false, closer:null, prac:null };
+
+/* ---- the things a step may have to open first ---- */
+/* A meeting worth showing: the newest one that has anything written on it. */
+function tourMeeting(){
+  var all = (state.meetings || []).slice().sort(function(a, b){
+    return String(b.date || "").localeCompare(String(a.date || ""));
+  });
+  var rich = all.filter(function(m){
+    return (m.predictions || []).length || (m.points || []).length || (m.photos || []).length || m.summary;
+  });
+  return rich[0] || all[0] || null;
+}
+function tourOpen(what){
+  if(what === "menu"){
+    var panel = $("menuPanel");
+    if(panel && panel.hidden) menuToggle();
+    return function(){ menuShut(); };
+  }
+  if(what === "notes"){
+    var m = tourMeeting();
+    if(!m) return null;
+    openMeeting(m.id);
+    return function(){ closeScrim("meetScrim"); };
+  }
+  if(what === "book"){
+    var r = approvedRecs()[0];
+    if(!r) return null;
+    openBookDetail(r, "rec");
+    return function(){ closeScrim("bookScrim"); };
+  }
+  if(what === "suggest"){
+    var group = ["recs", "nominations", "short", "suggest"];
+    var was = group.filter(function(k){
+      var b = $("tab-" + k);
+      return b && b.getAttribute("aria-selected") === "true";
+    })[0] || "recs";
+    tabShow(group, "tab-", "suggest");
+    return function(){ tabShow(group, "tab-", was); };
+  }
+  if(what === "fold"){
+    var btn = document.querySelector("#members [data-memopen]");
+    if(!btn) return null;
+    var id = btn.getAttribute("data-memopen");
+    var wasOpen = !!memberOpen[id];
+    if(!wasOpen){ memberOpen[id] = true; renderMembers(); }
+    return function(){ if(!wasOpen){ memberOpen[id] = false; renderMembers(); } };
+  }
+  return null;
+}
+
+/* ---- dead copies of controls this reader has not got ----
+   Signed out there is no Endorse pill and no Suggest form, and a tour that
+   skipped those steps would leave out the reason to have an account at all.
+   So the step shows the control, in the place it would be, wired to
+   nothing: .tour__practice says as much in its own label, and
+   pointer-events are off inside it. */
+function tourPracticeNode(host, id, inner, where){
+  var old = document.getElementById(id);
+  if(old && old.parentNode) old.parentNode.removeChild(old);
+  if(!host) return null;
+  var box = document.createElement("div");
+  box.className = "tour__practice";
+  box.id = id;
+  box.setAttribute("data-at", "1");
+  box.setAttribute("data-what", "Practice copy — it doesn’t do anything");
+  box.innerHTML = inner;
+  if(where === "first" && host.firstChild) host.insertBefore(box, host.firstChild);
+  else host.appendChild(box);
+  return box;
+}
+function tourPractice(name){
+  if(name === "ready"){
+    return tourPracticeNode($("heroMeetBody"), "tourPracReady",
+      '<button class="btn btn--sm btn--zest" type="button" id="tourPracReadyBtn">I’m ready</button>');
+  }
+  if(name === "pred" || name === "disc"){
+    var sec = document.querySelector(name === "pred" ? ".noteblock--pred .noteblock__body"
+                                                     : ".noteblock--disc .noteblock__body");
+    return tourPracticeNode(sec, name === "pred" ? "tourPracPred" : "tourPracDisc",
+      '<div class="addrow"><input class="input" type="text" disabled placeholder="' +
+      (name === "pred" ? "What do you think happens?" : "A question worth arguing about") +
+      '"><button class="btn btn--sm ' + (name === "pred" ? "btn--grape" : "btn--surf") +
+      '" type="button">Add</button></div>');
+  }
+  if(name === "suggest"){
+    return tourPracticeNode($("panel-suggest"), "tourPracSuggest",
+      '<div class="field"><label>Title</label>' +
+        '<input class="input" type="text" disabled value="The book you want to put forward"></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
+        '<button class="btn btn--sm btn--grape" type="button" id="tourPracLookup">Look up book</button>' +
+        '<button class="btn btn--sm btn--sky" type="button" id="tourPracWeb">Search the web</button>' +
+      "</div>", "first");
+  }
+  return null;
+}
+function tourClearPractice(){
+  ["tourPracReady", "tourPracPred", "tourPracDisc", "tourPracSuggest"].forEach(function(id){
+    var n = document.getElementById(id);
+    if(n && n.parentNode) n.parentNode.removeChild(n);
+  });
+}
+
+/* ---- running it ---- */
+/* Set when someone has just asked to join as a member: the tour starts the
+   moment they are done reading the "waiting on an organiser" note, however
+   they close it. */
+var tourAfterJoin = false;
+
+function tourStart(tier, required){
+  /* Whatever was open when this started is not part of the tour, and the
+     steps that need something open, open it themselves. */
+  SCRIMS.forEach(function(id){ if($(id) && !$(id).hidden) closeScrim(id); });
+  menuShut();
+  tour.tier = TOUR_TIERS[tier] ? tier : "visitor";
+  tour.steps = tourList(tour.tier);
+  tour.required = !!required;
+  tour.i = 0;
+  tour.on = true;
+  closeScrim("tourPickScrim");
+  $("tour").hidden = false;
+  document.body.style.overflow = "";
+  tourShow(0);
+}
+function tourTeardown(){
+  if(tour.closer){ try{ tour.closer(); }catch(e){} tour.closer = null; }
+  tourClearPractice();
+}
+/* Something a finger could land on: in the document, not hidden, and with a
+   box of its own. */
+function tourSeen(n){
+  if(!n || n.hidden) return false;
+  var r = n.getBoundingClientRect();
+  if(r.width < 2 || r.height < 2) return false;
+  var cs = getComputedStyle(n);
+  if(cs.visibility === "hidden" || cs.display === "none") return false;
+  return true;
+}
+/* The first match that is actually on screen. A step may name more than one
+   place to look: the corner tag is a pill on a wide screen and a line of
+   text under the cover on a phone, and either is the thing it means. */
+function tourFind(sel){
+  if(!sel) return null;
+  var all = document.querySelectorAll(sel);
+  for(var i = 0; i < all.length; i++) if(tourSeen(all[i])) return all[i];
+  return null;
+}
+function tourShow(i){
+  if(!tour.on) return;
+  if(i < 0) i = 0;
+  if(i >= tour.steps.length) return tourEnd(true);
+  tourTeardown();
+  tour.i = i;
+  var step = tour.steps[i];
+  if(step.open) tour.closer = tourOpen(step.open);
+
+  /* On the page is not the same as on the screen. The Suggest form is left
+     in the document and hidden when nobody is signed in, the ballot is an
+     empty div until a vote is running, and Edit profile is a hidden menu
+     item: all three are found by a selector and none of them is something
+     to point at. */
+  var node = tourFind(step.sel);
+  /* The real control is not on this reader's page, so a copy of it goes
+     where it would have been. */
+  if(!node && step.prac){
+    tourPractice(step.prac);
+    node = tourFind(step.psel);
+  }
+  var tip = $("tourTip");
+  $("tourN").textContent = (i + 1) + " of " + tour.steps.length;
+  $("tourTitle").textContent = step.title;
+  $("tourText").textContent = step.text;
+  $("tourBack").disabled = i === 0;
+  $("tourNext").textContent = i === tour.steps.length - 1 ? "Done" : "Next";
+  $("tourSkip").hidden = i === tour.steps.length - 1;
+
+  if(node){
+    $("tour").classList.remove("tour--card");
+    /* A whole section is taller than the screen, so centring it puts its top
+       and its bottom both off the edge and leaves the tooltip nowhere to go
+       that is not on top of it. Those are scrolled to their top instead,
+       clear of the bar, and the spotlight is capped below. */
+    var tall = node.getBoundingClientRect().height > window.innerHeight * 0.55;
+    try{
+      node.scrollIntoView({ block: tall ? "start" : "center", inline: "nearest" });
+    }catch(e){ node.scrollIntoView(); }
+    if(tall) window.scrollBy(0, -84);
+  }else{
+    $("tour").classList.add("tour--card");
+    if(step.sel) tourMissing(step);
+  }
+  tour.node = node || null;
+  tourPaint();
+  tip.focus();
+}
+/* Measure and lay out: four panels round the target, a ring on it, and the
+   tooltip below it or above it -- whichever side has the room. */
+function tourPaint(){
+  if(!tour.on) return;
+  var tip = $("tourTip"), ring = $("tourRing"), hole = $("tourHole");
+  var vw = window.innerWidth, vh = window.innerHeight;
+  var parts = { tourDimT: null, tourDimB: null, tourDimL: null, tourDimR: null };
+  var node = tour.node && document.body.contains(tour.node) ? tour.node : null;
+  if(!node){
+    ["tourDimT","tourDimB","tourDimL","tourDimR"].forEach(function(id, n){
+      var d = $(id);
+      d.style.cssText = n === 0 ? "inset:0" : "display:none";
+    });
+    ring.style.display = "none";
+    hole.style.display = "none";
+    tip.style.left = ""; tip.style.top = "";
+    return;
+  }
+  var r = node.getBoundingClientRect();
+  var pad = 6;
+  var box = { l: Math.max(0, r.left - pad), t: Math.max(0, r.top - pad),
+              rt: Math.min(vw, r.right + pad), b: Math.min(vh, r.bottom + pad) };
+  /* Light the top of a long section rather than all of it: a spotlight the
+     height of the screen is not a spotlight, and it would leave the tooltip
+     with nowhere to stand that is not over the thing it is describing. */
+  if(box.b - box.t > vh * 0.5) box.b = box.t + Math.round(vh * 0.4);
+  $("tourDimT").style.cssText = "left:0;top:0;width:" + vw + "px;height:" + box.t + "px";
+  $("tourDimB").style.cssText = "left:0;top:" + box.b + "px;width:" + vw + "px;height:" + Math.max(0, vh - box.b) + "px";
+  $("tourDimL").style.cssText = "left:0;top:" + box.t + "px;width:" + box.l + "px;height:" + (box.b - box.t) + "px";
+  $("tourDimR").style.cssText = "left:" + box.rt + "px;top:" + box.t + "px;width:" +
+    Math.max(0, vw - box.rt) + "px;height:" + (box.b - box.t) + "px";
+  ring.style.display = "";
+  ring.style.cssText += ";left:" + box.l + "px;top:" + box.t + "px;width:" + (box.rt - box.l) +
+    "px;height:" + (box.b - box.t) + "px";
+  /* Nothing under the hole can be pressed: a tour must not be able to
+     endorse a book by being clicked through. */
+  hole.style.display = "";
+  hole.style.cssText += ";left:" + box.l + "px;top:" + box.t + "px;width:" + (box.rt - box.l) +
+    "px;height:" + (box.b - box.t) + "px";
+
+  tip.style.left = "0px"; tip.style.top = "0px";
+  var th = tip.offsetHeight, tw = tip.offsetWidth, gap = 12;
+  var top = box.b + gap;
+  if(top + th > vh - 8) top = box.t - gap - th;            /* above instead */
+  if(top < 8) top = Math.max(8, Math.min(vh - th - 8, box.b + gap));
+  var left = Math.round(r.left + r.width / 2 - tw / 2);
+  left = Math.max(12, Math.min(vw - tw - 12, left));
+  tip.style.left = left + "px";
+  tip.style.top = Math.round(top) + "px";
+}
+function tourNext(){ tourShow(tour.i + 1); }
+function tourBack(){ tourShow(tour.i - 1); }
+function tourSkip(){
+  if(tour.required){
+    if(!confirm("Skip the tour? You can take it any time from the menu.")) return;
+    tourEnd(true);
+    return;
+  }
+  tourEnd(false);
+}
+function tourEnd(done){
+  tourTeardown();
+  tour.on = false;
+  tour.node = null;
+  $("tour").hidden = true;
+  $("tour").classList.remove("tour--card");
+  if(done) tourMarkDone();
+  renderTourCta();
+}
+/* Done is remembered twice over: here, so this browser stops asking, and on
+   the account, so another device does not start it again. A tour taken
+   while signed out has no account to write to, which is the whole of the
+   difference. */
+function tourMarkDone(){
+  try{ localStorage.setItem("marginNotes.tourDone", "1"); }catch(e){}
+  if(me && sessionToken()){
+    callEndpoint("profile-set", { token: sessionToken(), tourDone: true }).then(function(res){
+      if(res && res.ok && me) me.tourDone = true;
+    });
+  }
+}
+function tourTaken(){
+  if(me && me.tourDone) return true;
+  try{ return localStorage.getItem("marginNotes.tourDone") === "1"; }catch(e){ return false; }
+}
+/* On the test site only: a step pointing at something that is not there any
+   more is a change somebody made without coming back to this list. */
+function tourMissing(step){
+  if(!DEV) return;
+  console.warn("[tour] step \"" + step.id + "\" found nothing at " + step.sel +
+    " — it fell back to a card. Update TOUR_STEPS.");
+}
+function tourCheckSteps(){
+  if(!DEV) return;
+  TOUR_STEPS.forEach(function(s){
+    if(!s.sel || s.open || s.prac) return;        /* those need opening first */
+    if(!document.querySelector(s.sel)) tourMissing(s);
+  });
+}
+
+/* ---- choosing one ---- */
+function openTourPick(){
+  var mine = tourMyTier();
+  var opts = [
+    { key:"visitor", name:"Just looking", blurb:"What anyone can see and do, no account needed." },
+    { key:"observer", name:"I’m an Observer", blurb:"Family and friends: endorse, suggest, and join in on the notes." },
+    { key:"member", name:"I’m a member", blurb:"The lot — voting, nominating and your own profile." }
+  ];
+  $("tourPickBody").innerHTML =
+    '<p class="hint" style="margin:0">A minute or two, pointing at the real thing. Pick whichever you like — ' +
+      "you don’t have to be one to see it.</p>" +
+    '<div class="tourpick">' +
+      opts.map(function(o){
+        return '<button class="tourpick__opt' + (o.key === mine ? " tourpick__opt--you" : "") +
+          '" type="button" data-tourgo="' + esc(o.key) + '">' +
+          "<strong>" + esc(o.name) + (o.key === mine && me ? " — that’s you" : "") + "</strong>" +
+          "<span>" + esc(o.blurb) + "</span></button>";
+      }).join("") +
+    "</div>";
+  openScrim("tourPickScrim");
+}
+
+/* ---- the quick start, from the same list ---- */
+function openHow(){
+  var tiers = [
+    { key:"visitor", head:"Anyone", blurb:"No account, nothing to sign." },
+    { key:"observer", head:"Observers", blurb:"Family and friends, signed in but not in the club." },
+    { key:"member", head:"Members", blurb:"Everyone who reads along and votes." }
+  ];
+  /* Each tier's own steps, minus the ones it shares with the tier before --
+     so the page reads as "and these as well" rather than three copies of
+     the same list. */
+  var seen = {};
+  $("howBody").innerHTML =
+    '<p class="hint" style="margin:0 0 4px">Everything you can do here, in the order you’ll meet it. ' +
+      'Prefer being shown? <button class="btn btn--sm btn--grape" type="button" id="howTour">Take the tour</button></p>' +
+    tiers.map(function(t){
+      var rows = tourList(t.key).filter(function(s){
+        if(seen[s.id]) return false;
+        seen[s.id] = 1;
+        return true;
+      });
+      if(!rows.length) return "";
+      return '<section class="howsec"><h3>' + esc(t.head) + "</h3>" +
+        '<p class="howsec__who">' + esc(t.blurb) + "</p>" +
+        '<ul class="howlist">' + rows.map(function(s){
+          return "<li><strong>" + esc(s.title) + "</strong><p>" +
+            esc(s.howText || s.text) + "</p></li>";
+        }).join("") + "</ul></section>";
+    }).join("");
+  openScrim("howScrim");
+}
+
+/* ---- the first-visit nudge ---- */
+function tourBannerGone(){
+  try{ return localStorage.getItem("marginNotes.tourBanner") === "off"; }catch(e){ return false; }
+}
+function renderTourCta(){
+  var host = $("tourCta");
+  if(!host) return;
+  if(me || tourTaken() || tourBannerGone() || tour.on){ host.innerHTML = ""; return; }
+  host.innerHTML = '<div class="tourbar"><span>New here? Take a 1-minute tour.</span>' +
+    '<button class="btn btn--sm btn--surf" type="button" id="tourBarGo">Show me</button>' +
+    '<button class="xbtn tourbar__x" type="button" id="tourBarX" aria-label="No thanks">&times;</button></div>';
+}
+
+/* Bound here rather than through the page's click handler: a tour step can
+   have a modal open over the page, and these three have to keep working. */
+$("tourNext").addEventListener("click", function(){ tourNext(); });
+$("tourBack").addEventListener("click", function(){ tourBack(); });
+$("tourSkip").addEventListener("click", function(){ tourSkip(); });
+/* Outside the tooltip: a way out of an ordinary tour, and nothing at all on
+   a required one. */
+["tourDimT", "tourDimB", "tourDimL", "tourDimR", "tourHole"].forEach(function(id){
+  $(id).addEventListener("click", function(){
+    if(!tour.on) return;
+    if(tour.required) return;
+    tourEnd(false);
+  });
+});
+/* Caught on the way down, so Escape closes the tour rather than the modal a
+   step happens to have opened underneath it. Arrows walk the steps. */
+document.addEventListener("keydown", function(e){
+  if(!tour.on) return;
+  if(e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); tourSkip(); return; }
+  if(e.key === "ArrowRight"){ e.preventDefault(); e.stopPropagation(); tourNext(); return; }
+  if(e.key === "ArrowLeft"){ e.preventDefault(); e.stopPropagation(); tourBack(); return; }
+  /* Nothing behind the tour takes focus while it is up. */
+  if(e.key === "Tab"){
+    var inside = $("tourTip").contains(document.activeElement);
+    var able = Array.prototype.filter.call(
+      $("tourTip").querySelectorAll("button:not([disabled]):not([hidden])"),
+      function(b){ return b.offsetParent !== null; });
+    if(!able.length) return;
+    if(!inside){ e.preventDefault(); able[0].focus(); return; }
+    var at = able.indexOf(document.activeElement);
+    if(e.shiftKey && at <= 0){ e.preventDefault(); able[able.length - 1].focus(); }
+    else if(!e.shiftKey && at === able.length - 1){ e.preventDefault(); able[0].focus(); }
+  }
+}, true);
+/* The ring and the tooltip are measured against the viewport, so anything
+   that moves the viewport moves them. One frame at a time. */
+var tourPending = false;
+function tourRepaint(){
+  if(!tour.on || tourPending) return;
+  tourPending = true;
+  requestAnimationFrame(function(){ tourPending = false; tourPaint(); });
+}
+window.addEventListener("resize", tourRepaint);
+window.addEventListener("scroll", tourRepaint, true);
 
 function openAdmin(){
   renderAdmin();
@@ -11671,6 +12311,9 @@ document.addEventListener("click", async function(e){
     /* Somebody who was sent here from a book goes back to it, rather than
        being left on the landing page to find it again. Run once. */
     if(afterSignIn){ var go = afterSignIn; afterSignIn = null; try{ go(); }catch(e){} }
+    /* First time in: observers are shown round. The flag is on the account,
+       so a second device does not start it again. */
+    if(me && me.type === "observer" && !me.tourDone) tourStart("observer", true);
     return;
   }
   if(t.closest("#meNotifySave") || t.closest("#meNotifyNone")){
@@ -12583,8 +13226,14 @@ document.addEventListener("click", async function(e){
           : "You\u2019re not a member yet \u2014 the request is with them now.") + "</p>" +
         '<p class="hint" style="margin-top:12px">We\u2019ll email this address as soon as it\u2019s approved, ' +
         'and then you can sign in with it.</p>' +
-        '<div style="margin-top:20px"><button class="btn btn--surf" type="button" data-close="memberScrim">Got it</button></div>';
+        '<div style="margin-top:20px"><button class="btn btn--surf" type="button" data-close="memberScrim">' +
+        (pay.accountType === "observer" ? "Got it" : "Show me around \u2192") + "</button></div>";
       say("Request sent.", "ok");
+      /* A new member is never more curious than now, and the tour asks
+         nothing of an account they have not got yet. It starts when they
+         close this note -- by the button, the cross, the backdrop or
+         Escape, all of which come through closeScrim. */
+      if(pay.accountType !== "observer") tourAfterJoin = true;
       return;
     }
     say("Sent — the organiser will pick it up.", "ok");
@@ -13071,6 +13720,16 @@ document.addEventListener("click", async function(e){
   }
   if(t.closest("#menuOpen")){ menuToggle(); return; }
   if(t.closest("#menuAdmin")){ openAdmin(); return; }
+  if(t.closest("#menuHow")){ menuShut(); openHow(); return; }
+  if(t.closest("#menuTour")){ menuShut(); openTourPick(); return; }
+  if(t.closest("#howTour")){ closeScrim("howScrim"); openTourPick(); return; }
+  if(t.closest("#tourBarGo")){ openTourPick(); return; }
+  if(t.closest("#tourBarX")){
+    try{ localStorage.setItem("marginNotes.tourBanner", "off"); }catch(e){}
+    renderTourCta();
+    return;
+  }
+  if((el = t.closest("[data-tourgo]"))){ tourStart(el.getAttribute("data-tourgo"), false); return; }
   /* the same button either way round: it ends a session or it starts one */
   if(t.closest("#menuSession")){ if(me) await signOut(); else openLogin(); return; }
   if(t.closest("#admUnlock")){ tryUnlock(); return; }
@@ -15425,6 +16084,7 @@ function renderAll(){
   renderSuggestGate();
   renderHero(); renderShelf(); renderRecs(); renderMembers();
   renderFocus(); renderTree(); renderTimeline();
+  renderTourCta();
 }
 
 /* Signing in is off on the test site, which would otherwise hide every control
@@ -15535,6 +16195,10 @@ window.addEventListener("hashchange", voteJumpIfAsked);
   refreshWriteMode();
   initSuggestForm();
   renderAll();
+  tourCheckSteps();
+  /* An observer who has never been round it gets it on sight, including the
+     session they signed in with a moment ago and restored here. */
+  if(me && me.type === "observer" && !me.tourDone) tourStart("observer", true);
   window.addEventListener("resize", function(){ renderTree(); });
   /* A narrower window fits fewer covers to a row, which makes a page hold
      fewer of them. Settle first: a drag across a desktop fires this by the
