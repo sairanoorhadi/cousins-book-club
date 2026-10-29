@@ -2045,6 +2045,18 @@
         "vote": "down",
         "memberId": "mb-mtcdg54c8cyyc"
       }
+    },
+    {
+      "id": "endorse-fe43dbc5-8a9",
+      "kind": "endorse",
+      "at": "2026-10-29T01:13:06.923Z",
+      "payload": {
+        "recId": "suggest-5b4bab6f-ca1",
+        "title": "Red Queen",
+        "name": "Eliza",
+        "vote": "up",
+        "memberId": "mb-mtaiuu788is5a"
+      }
     }
   ]
 }
