@@ -1935,6 +1935,20 @@
         "vote": "up",
         "memberId": "mb-mtaiuu788is5a"
       }
+    },
+    {
+      "id": "notedelete-4784509e-8f4",
+      "kind": "notedelete",
+      "at": "2026-10-29T00:42:05.628Z",
+      "handled": true,
+      "payload": {
+        "meetingId": "mt-mulwtwfic531r",
+        "field": "pred",
+        "text": "the young terrorist is going to get cought but not but not the group",
+        "by": "",
+        "deletedBy": "Filza",
+        "deletedByType": "member"
+      }
     }
   ]
 }
