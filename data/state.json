@@ -1,5 +1,5 @@
 {
-  "rev": 1706,
+  "rev": 1707,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2899,6 +2899,10 @@
         {
           "name": "Spanish language materials",
           "parent": ""
+        },
+        {
+          "name": "Middle Eastern",
+          "parent": "Global"
         }
       ],
       "aliases": {
