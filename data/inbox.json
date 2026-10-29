@@ -1997,6 +1997,18 @@
         "vote": "up",
         "memberId": "mb-mtcdg54c8cyyc"
       }
+    },
+    {
+      "id": "endorse-71438d7d-579",
+      "kind": "endorse",
+      "at": "2026-10-29T01:10:29.360Z",
+      "payload": {
+        "recId": "suggest-eecb55d3-924",
+        "title": "Without Merit",
+        "name": "Zainab",
+        "vote": "down",
+        "memberId": "mb-mtcdg54c8cyyc"
+      }
     }
   ]
 }
