@@ -1,5 +1,5 @@
 {
-  "rev": 1694,
+  "rev": 1695,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -278,13 +278,15 @@
     },
     {
       "id": "mb-mvsuptrprh4h1",
-      "name": "Summar Hadi",
+      "name": "Summar",
       "joined": "2026-10-28",
       "avatar": "",
       "email": "",
       "notifyRef": "sub-005427fb-9ce",
       "emailHint": "s••••@gmail.com",
-      "notify": [],
+      "notify": [
+        "*"
+      ],
       "fable": "",
       "goodreads": "",
       "hue": ""
