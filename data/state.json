@@ -1,5 +1,5 @@
 {
-  "rev": 1709,
+  "rev": 1710,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1600,8 +1600,7 @@
       "pages": 192,
       "genres": [
         "Middle Grade",
-        "Historical Fiction",
-        "Animals"
+        "Historical Fiction"
       ],
       "level": "Ages 9-12",
       "by": "Pareesa",
@@ -1623,7 +1622,9 @@
         }
       ],
       "tropes": [],
-      "subgenres": []
+      "subgenres": [
+        "Animals"
+      ]
     },
     {
       "id": "rc-heartless",
@@ -2889,10 +2890,6 @@
           "parent": "Global"
         },
         {
-          "name": "Animals",
-          "parent": "Fables"
-        },
-        {
           "name": "Immigration",
           "parent": "Social Issues"
         },
@@ -2923,7 +2920,8 @@
       "academia": "subgenre",
       "astronauts": "subgenre",
       "sports": "subgenre",
-      "avatar": "subgenre"
+      "avatar": "subgenre",
+      "animals": "subgenre"
     },
     "subgenre": {
       "terms": [
@@ -2941,6 +2939,10 @@
         },
         {
           "name": "Academia",
+          "parent": ""
+        },
+        {
+          "name": "Animals",
           "parent": ""
         }
       ],
