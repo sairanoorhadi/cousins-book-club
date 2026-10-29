@@ -1,5 +1,5 @@
 {
-  "rev": 1696,
+  "rev": 1697,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2863,7 +2863,8 @@
     "endorse-fe43dbc5-8a9",
     "endorse-91893b47-2a8",
     "endorse-c89f6f4e-159",
-    "endorse-c2ccfab7-21a"
+    "endorse-c2ccfab7-21a",
+    "join-06d354fe-40c"
   ],
   "vocab": {
     "genre": {
