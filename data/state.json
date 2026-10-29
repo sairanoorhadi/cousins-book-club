@@ -1,5 +1,5 @@
 {
-  "rev": 1658,
+  "rev": 1659,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1211,7 +1211,8 @@
             "mb-saira",
             "mb-mtcdg54c8cyyc",
             "mb-mtaiuu788is5a"
-          ]
+          ],
+          "carried": true
         },
         {
           "id": "pred-cf8ba065-2b3",
@@ -1312,6 +1313,16 @@
             "mb-mtaiuu788is5a",
             "mb-mtcdg54c8cyyc",
             "mb-mtqod125fcqtd"
+          ]
+        },
+        {
+          "id": "pred-9a191eeb-bd7",
+          "text": "Someone from Hasan's friend group is in kahoots with the terroist group",
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mtcdg54c8cyyc",
+            "mb-mtaiuu788is5a"
           ]
         }
       ],
