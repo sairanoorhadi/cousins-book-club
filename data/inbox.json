@@ -2109,6 +2109,18 @@
         "emailRef": "sub-14c533bb-ee0",
         "emailHint": "s••••@gmail.com"
       }
+    },
+    {
+      "id": "endorse-c2ccfab7-21a",
+      "kind": "endorse",
+      "at": "2026-10-29T01:13:42.146Z",
+      "payload": {
+        "recId": "suggest-39222c93-e0b",
+        "title": "The Lion, the Witch and the Wardrobe",
+        "name": "Eliza",
+        "vote": "down",
+        "memberId": "mb-mtaiuu788is5a"
+      }
     }
   ]
 }
