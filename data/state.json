@@ -1,5 +1,5 @@
 {
-  "rev": 1710,
+  "rev": 1711,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1741,8 +1741,7 @@
       "ageMax": 100,
       "genres": [
         "Fantasy",
-        "Romance",
-        "Dark"
+        "Romance"
       ],
       "by": "Filza",
       "status": "approved",
@@ -1762,7 +1761,9 @@
       ],
       "level": "Ages 16+",
       "tropes": [],
-      "subgenres": []
+      "subgenres": [
+        "Dark"
+      ]
     },
     {
       "id": "suggest-6944d6d5-5f3",
@@ -2457,7 +2458,6 @@
       "ageMin": 14,
       "ageMax": 100,
       "genres": [
-        "Dark",
         "Fantasy",
         "Mythology",
         "Scandinavian"
@@ -2476,7 +2476,9 @@
       "ratings": [],
       "level": "Ages 14+",
       "tropes": [],
-      "subgenres": []
+      "subgenres": [
+        "Dark"
+      ]
     },
     {
       "id": "suggest-880508de-751",
@@ -2574,8 +2576,7 @@
       "ageMax": 100,
       "genres": [
         "Fantasy",
-        "Mystery",
-        "Dark"
+        "Mystery"
       ],
       "by": "Saira",
       "byId": "mb-saira",
@@ -2598,7 +2599,9 @@
       "tropes": [
         "Academia"
       ],
-      "subgenres": []
+      "subgenres": [
+        "Dark"
+      ]
     },
     {
       "id": "suggest-fddd8ae2-833",
@@ -2921,7 +2924,8 @@
       "astronauts": "subgenre",
       "sports": "subgenre",
       "avatar": "subgenre",
-      "animals": "subgenre"
+      "animals": "subgenre",
+      "dark": "subgenre"
     },
     "subgenre": {
       "terms": [
@@ -2943,6 +2947,10 @@
         },
         {
           "name": "Animals",
+          "parent": ""
+        },
+        {
+          "name": "Dark",
           "parent": ""
         }
       ],
