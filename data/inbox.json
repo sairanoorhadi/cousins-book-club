@@ -2145,6 +2145,18 @@
         "vote": "up",
         "memberId": "mb-mtcdg54c8cyyc"
       }
+    },
+    {
+      "id": "endorse-2ac8c096-d2c",
+      "kind": "endorse",
+      "at": "2026-10-29T01:16:23.140Z",
+      "payload": {
+        "recId": "suggest-f1fa97b2-1ab",
+        "title": "The Adventures of Amina Al-Sirafi",
+        "name": "Eliza",
+        "vote": "up",
+        "memberId": "mb-mtaiuu788is5a"
+      }
     }
   ]
 }
