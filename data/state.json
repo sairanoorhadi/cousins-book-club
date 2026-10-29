@@ -1,5 +1,5 @@
 {
-  "rev": 1691,
+  "rev": 1692,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -290,6 +290,18 @@
       "fable": "",
       "goodreads": "",
       "hue": ""
+    },
+    {
+      "id": "mb-mvsuptrprh4h1",
+      "name": "Summar Hadi",
+      "joined": "2026-10-28",
+      "avatar": "",
+      "email": "",
+      "notifyRef": "sub-005427fb-9ce",
+      "emailHint": "s••••@gmail.com",
+      "notify": [],
+      "fable": "",
+      "goodreads": ""
     }
   ],
   "books": [
@@ -1405,7 +1417,12 @@
       "shortlist": false,
       "summarySource": "own",
       "reviews": [],
-      "endorsements": [],
+      "endorsements": [
+        {
+          "name": "Eliza",
+          "at": "2026-10-29T01:09:14.535Z"
+        }
+      ],
       "ageMin": 16,
       "ageMax": 100,
       "dislikes": [],
@@ -1851,7 +1868,12 @@
       "summarySource": "ai",
       "shortlist": false,
       "reviews": [],
-      "endorsements": [],
+      "endorsements": [
+        {
+          "name": "Eliza",
+          "at": "2026-10-29T01:13:06.923Z"
+        }
+      ],
       "dislikes": [],
       "ratings": [
         {
@@ -1974,7 +1996,20 @@
       "shortlist": false,
       "reviews": [],
       "endorsements": [],
-      "dislikes": [],
+      "dislikes": [
+        {
+          "name": "Eliza",
+          "at": "2026-10-29T01:11:03.931Z"
+        },
+        {
+          "name": "Saira",
+          "at": "2026-10-29T01:11:11.146Z"
+        },
+        {
+          "name": "Zainab",
+          "at": "2026-10-29T01:11:22.433Z"
+        }
+      ],
       "ratings": [],
       "level": "Ages 8-12",
       "tropes": [],
@@ -2238,7 +2273,12 @@
       "summarySource": "own",
       "shortlist": false,
       "reviews": [],
-      "endorsements": [],
+      "endorsements": [
+        {
+          "name": "Zainab",
+          "at": "2026-10-29T01:13:10.475Z"
+        }
+      ],
       "dislikes": [],
       "ratings": [],
       "level": "Ages 8-12",
@@ -2375,7 +2415,12 @@
       "shortlist": false,
       "reviews": [],
       "endorsements": [],
-      "dislikes": [],
+      "dislikes": [
+        {
+          "name": "Eliza",
+          "at": "2026-10-29T01:13:42.146Z"
+        }
+      ],
       "ratings": [],
       "level": "Ages 8-12",
       "tropes": [],
@@ -2465,7 +2510,12 @@
       "summarySource": "fetched",
       "shortlist": false,
       "reviews": [],
-      "endorsements": [],
+      "endorsements": [
+        {
+          "name": "Zainab",
+          "at": "2026-10-29T01:09:26.906Z"
+        }
+      ],
       "dislikes": [],
       "ratings": [
         {
@@ -2643,7 +2693,12 @@
       "byId": "",
       "status": "approved",
       "at": "2026-10-20",
-      "endorsements": [],
+      "endorsements": [
+        {
+          "name": "Eliza",
+          "at": "2026-10-29T01:13:32.110Z"
+        }
+      ],
       "cover": "https://covers.openlibrary.org/b/id/8684447-L.jpg",
       "blurb": "A plane crashes on an uninhabited island and the only survivors, a group of schoolboys, assemble on the beach and wait to be rescued. By day they inhabit a land of bright fantastic birds and dark blue seas, but at night their dreams are haunted by the image of a terrifying beast.\n\nIn this, his first novel, William Golding gave the traditional adventure story an ironic, devastating twist. The boys' delicate sense of order fades, and their childish fears are transformed into something deeper and more primitive. Their games take on a horrible significance, and before long the well-behaved party of schoolboys has turned into a tribe of faceless, murderous savages.",
       "summarySource": "own",
@@ -2796,7 +2851,8 @@
     "endorse-58bf8758-c55",
     "join-467f8b6d-de5",
     "endorse-eb57398b-8f2",
-    "endorse-22b2a415-6a7"
+    "endorse-22b2a415-6a7",
+    "join-c69f441e-bae"
   ],
   "vocab": {
     "genre": {
