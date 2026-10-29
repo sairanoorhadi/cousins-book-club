@@ -1,5 +1,5 @@
 {
-  "rev": 1707,
+  "rev": 1708,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2922,7 +2922,8 @@
     "home": {
       "academia": "trope",
       "astronauts": "subgenre",
-      "sports": "subgenre"
+      "sports": "subgenre",
+      "avatar": "subgenre"
     },
     "subgenre": {
       "terms": [
@@ -2932,6 +2933,10 @@
         },
         {
           "name": "Sports",
+          "parent": ""
+        },
+        {
+          "name": "Avatar",
           "parent": ""
         }
       ],
