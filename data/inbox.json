@@ -2121,6 +2121,18 @@
         "vote": "down",
         "memberId": "mb-mtaiuu788is5a"
       }
+    },
+    {
+      "id": "endorse-c8c97ea6-5d3",
+      "kind": "endorse",
+      "at": "2026-10-29T01:14:37.205Z",
+      "payload": {
+        "recId": "suggest-880508de-751",
+        "title": "Destiny's Edge",
+        "name": "Eliza",
+        "vote": "up",
+        "memberId": "mb-mtaiuu788is5a"
+      }
     }
   ]
 }
