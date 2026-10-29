@@ -1973,6 +1973,18 @@
         "vote": "up",
         "memberId": "mb-mtcdg54c8cyyc"
       }
+    },
+    {
+      "id": "endorse-cf012081-6b0",
+      "kind": "endorse",
+      "at": "2026-10-29T01:09:27.394Z",
+      "payload": {
+        "recId": "suggest-880508de-751",
+        "title": "Destiny's Edge",
+        "name": "Zainab",
+        "vote": "up",
+        "memberId": "mb-mtcdg54c8cyyc"
+      }
     }
   ]
 }
