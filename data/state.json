@@ -1,5 +1,5 @@
 {
-  "rev": 1702,
+  "rev": 1703,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -158,7 +158,7 @@
       "name": "Filza",
       "joined": "2026-04-17",
       "avatar": "",
-      "fable": "",
+      "fable": "https://fable.co/fabler/filza-mirza-192003595518?tab=stats",
       "goodreads": "",
       "email": "",
       "notifyRef": "sub-595bdd4d-58a",
@@ -2913,6 +2913,10 @@
     },
     "home": {
       "academia": "trope"
+    },
+    "subgenre": {
+      "terms": [],
+      "aliases": {}
     }
   },
   "votes": [
