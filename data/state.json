@@ -1,5 +1,5 @@
 {
-  "rev": 1714,
+  "rev": 1715,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -301,7 +301,6 @@
       "genres": [
         "Young Adult",
         "Fantasy",
-        "Heist",
         "Grishaverse"
       ],
       "level": "Ages 14+",
@@ -331,7 +330,9 @@
       },
       "getbook": [],
       "tropes": [],
-      "subgenres": []
+      "subgenres": [
+        "Heist"
+      ]
     },
     {
       "id": "bk-soc",
@@ -341,7 +342,6 @@
       "genres": [
         "Young Adult",
         "Fantasy",
-        "Heist",
         "Grishaverse"
       ],
       "level": "Ages 14+",
@@ -371,7 +371,9 @@
       "ageMax": 100,
       "getbook": [],
       "tropes": [],
-      "subgenres": []
+      "subgenres": [
+        "Heist"
+      ]
     },
     {
       "id": "bk-mt7pvx697h34g",
@@ -2931,7 +2933,8 @@
       "animals": "subgenre",
       "dark": "subgenre",
       "family": "subgenre",
-      "fairies": "subgenre"
+      "fairies": "subgenre",
+      "heist": "subgenre"
     },
     "subgenre": {
       "terms": [
@@ -2965,6 +2968,10 @@
         },
         {
           "name": "Fairies",
+          "parent": ""
+        },
+        {
+          "name": "Heist",
           "parent": ""
         }
       ],
