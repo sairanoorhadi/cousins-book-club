@@ -1,5 +1,5 @@
 {
-  "rev": 1734,
+  "rev": 1735,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -290,6 +290,18 @@
       "fable": "",
       "goodreads": "",
       "hue": ""
+    },
+    {
+      "id": "mb-mvvmnnbouv5rx",
+      "name": "Zara",
+      "joined": "2026-10-30",
+      "avatar": "",
+      "email": "",
+      "notifyRef": "sub-bd7ff379-027",
+      "emailHint": "z••••@gmail.com",
+      "notify": [],
+      "fable": "",
+      "goodreads": ""
     }
   ],
   "books": [
@@ -2886,7 +2898,8 @@
     "join-06d354fe-40c",
     "endorse-c8c97ea6-5d3",
     "endorse-290eb033-da1",
-    "endorse-2ac8c096-d2c"
+    "endorse-2ac8c096-d2c",
+    "join-97e12eef-92b"
   ],
   "vocab": {
     "genre": {
