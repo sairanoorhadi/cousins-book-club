@@ -1,5 +1,5 @@
 {
-  "rev": 1749,
+  "rev": 1750,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1853,7 +1853,7 @@
       "cover": "https://covers.openlibrary.org/b/id/13156188-L.jpg",
       "blurb": "Five years ago, Andie Bell disappeared from a small English town, and her boyfriend Sal Singh was blamed and found dead soon after. Pip Fitz-Amobi, a sixth-form student with an appetite for research, chooses the case for her senior capstone project, convinced the accepted story has holes in it. She enlists Sal's younger brother Ravi to help her retrace the timeline, and the interviews turn up neighbours and classmates who would rather the questions stopped. The book is structured around Pip's project logs and transcripts alongside the narrative.",
       "summarySource": "ai",
-      "shortlist": true,
+      "shortlist": false,
       "reviews": [],
       "endorsements": [
         {
