@@ -1,5 +1,5 @@
 {
-  "rev": 1754,
+  "rev": 1755,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1492,6 +1492,21 @@
       "place": "Online - Discord",
       "chapters": "8-11",
       "pages": "77",
+      "done": false,
+      "summary": "",
+      "photos": [],
+      "predictions": [],
+      "points": []
+    },
+    {
+      "id": "mt-mvvo3gvaaafw5",
+      "bookId": "suggest-fddd8ae2-833",
+      "kind": "meeting",
+      "date": "2026-11-29",
+      "time": "17:00",
+      "place": "Ferdinand",
+      "chapters": "12-13",
+      "pages": "51",
       "done": false,
       "summary": "",
       "photos": [],
