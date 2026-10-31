@@ -1,5 +1,5 @@
 {
-  "rev": 1738,
+  "rev": 1739,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -3086,10 +3086,46 @@
       "opensAt": "2026-10-29T00:50:52.083Z",
       "closesAt": "2026-10-31T00:00:00.000Z",
       "cancelledAt": null,
-      "closedAt": null,
+      "closedAt": "2026-10-31T00:01:52.383Z",
       "turnout": 9,
-      "totals": null,
-      "winner": null,
+      "totals": [
+        {
+          "id": "suggest-fddd8ae2-833",
+          "title": "A Deadly Education",
+          "total": 62,
+          "raters": 9,
+          "avg": 6.9
+        },
+        {
+          "id": "rc-mockingbird",
+          "title": "To Kill a Mockingbird",
+          "total": 53,
+          "raters": 9,
+          "avg": 5.9
+        },
+        {
+          "id": "suggest-2603dba6-457",
+          "title": "The Cruel Prince",
+          "total": 44,
+          "raters": 9,
+          "avg": 4.9
+        },
+        {
+          "id": "suggest-6944d6d5-5f3",
+          "title": "A Good Girl's Guide to Murder",
+          "total": 42,
+          "raters": 9,
+          "avg": 4.7
+        },
+        {
+          "id": "suggest-98664ae7-609",
+          "title": "Ungifted",
+          "total": 35,
+          "raters": 9,
+          "avg": 3.9
+        }
+      ],
+      "winner": "suggest-fddd8ae2-833",
       "tied": null,
       "parent": null,
       "at": "2026-10-29T00:50:52.083Z"
