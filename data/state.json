@@ -1,5 +1,5 @@
 {
-  "rev": 1762,
+  "rev": 1763,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1391,7 +1391,8 @@
             "mb-mtaiuu788is5a",
             "mb-mtcdg54c8cyyc",
             "mb-mtqod125fcqtd"
-          ]
+          ],
+          "verdict": "part"
         },
         {
           "id": "pred-9a191eeb-bd7",
