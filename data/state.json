@@ -1,5 +1,5 @@
 {
-  "rev": 1755,
+  "rev": 1756,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1450,7 +1450,10 @@
       "points": [],
       "sent": {},
       "ready": [
-        "mb-mt3zx2lgcj3x8"
+        "mb-saira",
+        "mb-mt3zx2lgcj3x8",
+        "mb-mtaiuu788is5a",
+        "mb-mvsuptrprh4h1"
       ]
     },
     {
@@ -1466,7 +1469,9 @@
       "summary": "",
       "photos": [],
       "predictions": [],
-      "points": []
+      "points": [],
+      "ready": [],
+      "sent": {}
     },
     {
       "id": "mt-mvvnzcqfljd7i",
@@ -1481,7 +1486,9 @@
       "summary": "",
       "photos": [],
       "predictions": [],
-      "points": []
+      "points": [],
+      "ready": [],
+      "sent": {}
     },
     {
       "id": "mt-mvvo1zpp6jcz9",
@@ -1496,7 +1503,9 @@
       "summary": "",
       "photos": [],
       "predictions": [],
-      "points": []
+      "points": [],
+      "ready": [],
+      "sent": {}
     },
     {
       "id": "mt-mvvo3gvaaafw5",
@@ -1511,7 +1520,9 @@
       "summary": "",
       "photos": [],
       "predictions": [],
-      "points": []
+      "points": [],
+      "ready": [],
+      "sent": {}
     }
   ],
   "recs": [
