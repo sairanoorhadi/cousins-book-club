@@ -1,5 +1,5 @@
 {
-  "rev": 1757,
+  "rev": 1758,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -542,6 +542,12 @@
           "kind": "link",
           "title": "MP4",
           "url": "https://drive.google.com/file/d/1fXC8fPZb5-UcE4ZhMwFogHxjDBK4mKby/view?usp=drive_link"
+        },
+        {
+          "id": "get-mvye9bk1rma45",
+          "kind": "link",
+          "title": "Vaughan Public Library",
+          "url": "https://vaughanpl.bibliocommons.com/v2/record/S130C507419?locale=en-CA"
         }
       ]
     }
