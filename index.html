@@ -7323,18 +7323,18 @@ function closeScrim(id){
      forgotten here rather than at each of them. */
   if(id === "dropScrim") profDropSlot = null;
   /* The same for the score question: something is waiting on its answer, and
-     the cross, the backdrop and Escape are all ways of not choosing one. The
-     book still goes on the list — that was already pressed — with no Reading
-     Community score against it. */
+     the cross and Escape are both ways of not choosing one. The book still
+     goes on the list — that was already pressed — with no Reading Community
+     score against it. */
   if(id === "rateScrim" && ratePick){ var go = ratePick; ratePick = null; go(0); }
   if(SCRIMS.every(function(s){ return $(s).hidden; })) document.body.style.overflow = "";
   if(lastFocus && lastFocus.focus) lastFocus.focus();
 }
 /* The profile is the one panel someone can be part-way through filling in, so
-   it asks before it closes on unsaved work. Every way out — the cross, the
-   backdrop, Escape — comes through here, which is why the question is asked
-   here rather than on each of them. A close the page does itself after saving
-   never reaches this. */
+   it asks before it closes on unsaved work. Both ways out — the cross and
+   Escape — come through here, which is why the question is asked here rather
+   than on each of them. A close the page does itself after saving never
+   reaches this. */
 function scrimMayClose(id){
   if(id !== "meScrim") return true;
   return profLeaveOk("You have changes to your profile that aren\u2019t saved. Close without saving them?");
@@ -7357,10 +7357,18 @@ document.addEventListener("keydown", function(e){
     return true;
   });
 });
+/* The cross, and nothing else on this side. A panel used to close when the
+   backdrop was clicked, which sounds harmless until you select text in a
+   field and let go a few pixels outside the box: the browser calls that a
+   click on the backdrop, and the panel closed with whatever had been typed
+   in it. Escape still closes them, and so does the cross -- both of which
+   are things somebody meant to do.
+   The menu is not one of these. It is a dropdown rather than a window, it
+   holds nothing anyone is part-way through, and it closes on an outside
+   click as it always did (see menuShut, below). */
 document.addEventListener("click", function(e){
   var c = e.target.closest && e.target.closest("[data-close]");
   if(c){ var cid = c.getAttribute("data-close"); if(scrimMayClose(cid)) closeScrim(cid); return; }
-  if(e.target.classList && e.target.classList.contains("scrim") && scrimMayClose(e.target.id)) closeScrim(e.target.id);
 });
 /* And the tab itself. The browser shows its own wording here; all it takes
    from us is that there is something to lose. */
