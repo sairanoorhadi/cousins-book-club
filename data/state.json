@@ -1,5 +1,5 @@
 {
-  "rev": 1719,
+  "rev": 1773,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -290,6 +290,19 @@
       "fable": "",
       "goodreads": "",
       "hue": ""
+    },
+    {
+      "id": "mb-mvvmnnbouv5rx",
+      "name": "Zara",
+      "joined": "2026-10-30",
+      "avatar": "",
+      "email": "",
+      "notifyRef": "sub-bd7ff379-027",
+      "emailHint": "z••••@gmail.com",
+      "notify": [],
+      "fable": "",
+      "goodreads": "",
+      "hue": ""
     }
   ],
   "books": [
@@ -444,20 +457,22 @@
       "ageMin": 10,
       "ageMax": 13,
       "blurb": "Fatimah is a devout Muslim. Steve has never given much thought to matters of faith. The two of them happen to be walking down the same street when a terrorist bomb explodes. Steve is badly injured, and when the emergency services arrive they find Fatimah cradling his head in her lap, talking to him, willing him to stay alive. \n\nBut the media is there too, and the next day their picture appears in every newspaper. “Romeo and Juliet!” and “Love Across the Divide!” scream the headlines. Then the threats and anonymous phone calls start. Can the two young people rise above the hatred and learn to understand one another? And what about the terrorists, who surely aren't doing nothing as Steve and Fatimah try to break down barriers? ",
-      "status": "current",
+      "status": "past",
       "cover": "https://covers.openlibrary.org/b/id/2032470-L.jpg",
       "badge": "",
       "series": "",
       "seriesIndex": 1,
       "started": "2026-09-28",
-      "finished": "",
-      "progressPage": 147,
+      "finished": "2026-11-01",
+      "progressPage": 192,
       "members": [
         "mb-saira",
         "mb-mt3zx2lgcj3x8",
         "mb-mtaiuu788is5a",
         "mb-mtcdg54c8cyyc",
-        "mb-munn9nj7dj0fl"
+        "mb-munn9nj7dj0fl",
+        "mb-mv75yt4orjyed",
+        "mb-mvsuptrprh4h1"
       ],
       "order": 3,
       "level": "Ages 10-13",
@@ -470,13 +485,73 @@
         }
       ],
       "review": {
-        "text": "",
-        "rating": 0,
+        "text": "Writing style is very basic. She doesn't even set the setting properly. The initial bomb scene and the rescue were well done but almost the rest of the book kind of sucked. There was no building of tension. You could not feel the tension. The characters went against their beliefs at times, which genuinely fought them in a situation at the end. It didn't make any sense for her character. Steve and Steve's dad were the only fun characters. We didn't really like anyone else.\n\n\nHow did the community rating get so high? We were harsher because we read it over a long time and this book doesn't have much to its burger, just a piece of lettuce. Also we are muslim, we know too much about the author being misrepresentative of Islam",
+        "rating": 1,
         "community": 3.4,
         "by": ""
       },
       "tropes": [],
       "subgenres": []
+    },
+    {
+      "id": "suggest-fddd8ae2-833",
+      "title": "A Deadly Education",
+      "author": "Naomi Novik",
+      "pages": 313,
+      "genres": [
+        "Coming-of-Age",
+        "Epic",
+        "Fantasy",
+        "Magic"
+      ],
+      "subgenres": [],
+      "tropes": [],
+      "ageMin": 13,
+      "ageMax": 100,
+      "blurb": "A Deadly Education is set at Scholomance, a school for the magically gifted where failure means certain death (for real) — until one girl, El, begins to unlock its many secrets.\n\nThere are no teachers, no holidays, and no friendships, save strategic ones. Survival is more important than any letter grade, for the school won’t allow its students to leave until they graduate… or die! The rules are deceptively simple: Don’t walk the halls alone. And beware of the monsters who lurk everywhere.\n\nEl is uniquely prepared for the school’s dangers. She may be without allies, but she possesses a dark power strong enough to level mountains and wipe out millions. It would be easy enough for El to defeat the monsters that prowl the school. The problem? Her powerful dark magic might also kill all the other students.",
+      "status": "current",
+      "cover": "https://covers.openlibrary.org/b/id/10206042-L.jpg",
+      "badge": "",
+      "series": "",
+      "seriesIndex": 1,
+      "started": "2026-11-01",
+      "finished": "",
+      "progressPage": 0,
+      "members": [],
+      "review": {
+        "rating": 0,
+        "community": 3.9,
+        "text": "",
+        "by": ""
+      },
+      "order": 1,
+      "level": "Ages 13+",
+      "getbook": [
+        {
+          "id": "get-mvvne89vksrrj",
+          "kind": "link",
+          "title": "PDF",
+          "url": "https://drive.google.com/file/d/1GK-Lq70wva1-JtPE3jbeXlD4lVaFt2ff/view?usp=sharing"
+        },
+        {
+          "id": "get-mvvneo138qhb5",
+          "kind": "link",
+          "title": "EPUB",
+          "url": "https://drive.google.com/file/d/1ReTukSttdhOejW3tNH5BTOSsS3StL94U/view?usp=sharing"
+        },
+        {
+          "id": "get-mvvnjw1535n2g",
+          "kind": "link",
+          "title": "MP4",
+          "url": "https://drive.google.com/file/d/1fXC8fPZb5-UcE4ZhMwFogHxjDBK4mKby/view?usp=drive_link"
+        },
+        {
+          "id": "get-mvye9bk1rma45",
+          "kind": "link",
+          "title": "Vaughan Public Library",
+          "url": "https://vaughanpl.bibliocommons.com/v2/record/S130C507419?locale=en-CA"
+        }
+      ]
     }
   ],
   "meetings": [
@@ -1295,7 +1370,8 @@
             "mb-mtqod125fcqtd",
             "mb-mtaiuu788is5a",
             "mb-mtcdg54c8cyyc"
-          ]
+          ],
+          "verdict": "no"
         },
         {
           "id": "pred-194ce44c-1a4",
@@ -1305,7 +1381,8 @@
             "mb-saira",
             "mb-mtqod125fcqtd",
             "mb-mtaiuu788is5a"
-          ]
+          ],
+          "verdict": "yes"
         },
         {
           "id": "pred-d8a46b7f-312",
@@ -1316,7 +1393,8 @@
             "mb-mtaiuu788is5a",
             "mb-mtcdg54c8cyyc",
             "mb-mtqod125fcqtd"
-          ]
+          ],
+          "verdict": "part"
         },
         {
           "id": "pred-9a191eeb-bd7",
@@ -1326,7 +1404,8 @@
             "mb-saira",
             "mb-mtcdg54c8cyyc",
             "mb-mtaiuu788is5a"
-          ]
+          ],
+          "verdict": "yes"
         },
         {
           "id": "pred-948777d7-7fa",
@@ -1336,7 +1415,8 @@
             "mb-saira",
             "mb-mtaiuu788is5a",
             "mb-mtqod125fcqtd"
-          ]
+          ],
+          "verdict": "no"
         },
         {
           "id": "pred-93ddb1ec-230",
@@ -1347,7 +1427,8 @@
             "mb-mtaiuu788is5a",
             "mb-mtcdg54c8cyyc",
             "mb-mtqod125fcqtd"
-          ]
+          ],
+          "verdict": "part"
         },
         {
           "id": "pred-be2673ca-38f",
@@ -1356,7 +1437,8 @@
           "byIds": [
             "mb-mt3zx2lgcj3x8",
             "mb-saira"
-          ]
+          ],
+          "verdict": "no"
         }
       ],
       "points": [],
@@ -1383,8 +1465,82 @@
       "points": [],
       "sent": {},
       "ready": [
-        "mb-mt3zx2lgcj3x8"
+        "mb-saira",
+        "mb-mt3zx2lgcj3x8",
+        "mb-mtaiuu788is5a",
+        "mb-mtcdg54c8cyyc",
+        "mb-munn9nj7dj0fl",
+        "mb-mv75yt4orjyed",
+        "mb-mvsuptrprh4h1"
       ]
+    },
+    {
+      "id": "mt-mvvnwh8jcxfeq",
+      "bookId": "suggest-fddd8ae2-833",
+      "kind": "meeting",
+      "date": "2026-11-08",
+      "time": "19:00",
+      "place": "Online - Discord",
+      "chapters": "1-4",
+      "pages": "64",
+      "done": false,
+      "summary": "",
+      "photos": [],
+      "predictions": [],
+      "points": [],
+      "ready": [],
+      "sent": {}
+    },
+    {
+      "id": "mt-mvvnzcqfljd7i",
+      "bookId": "suggest-fddd8ae2-833",
+      "kind": "meeting",
+      "date": "2026-11-15",
+      "time": "19:00",
+      "place": "Online - Discord",
+      "chapters": "5-7",
+      "pages": "57",
+      "done": false,
+      "summary": "",
+      "photos": [],
+      "predictions": [],
+      "points": [],
+      "ready": [],
+      "sent": {}
+    },
+    {
+      "id": "mt-mvvo1zpp6jcz9",
+      "bookId": "suggest-fddd8ae2-833",
+      "kind": "meeting",
+      "date": "2026-11-22",
+      "time": "19:00",
+      "place": "Online - Discord",
+      "chapters": "8-11",
+      "pages": "77",
+      "done": false,
+      "summary": "",
+      "photos": [],
+      "predictions": [],
+      "points": [],
+      "ready": [],
+      "sent": {}
+    },
+    {
+      "id": "mt-mvvo3gvaaafw5",
+      "bookId": "suggest-fddd8ae2-833",
+      "kind": "meeting",
+      "date": "2026-11-29",
+      "time": "17:00",
+      "place": "Ferdinand",
+      "chapters": "12-13",
+      "pages": "51",
+      "done": false,
+      "summary": "",
+      "photos": [],
+      "predictions": [],
+      "points": [],
+      "ready": [],
+      "sent": {}
     }
   ],
   "recs": [
@@ -1441,7 +1597,7 @@
       "at": "",
       "cover": "https://covers.openlibrary.org/b/olid/OL61995434M-L.jpg",
       "blurb": "Scout Finch grows up in Depression-era Alabama watching her father defend a Black man falsely accused of assault. A courtroom drama told from a child's shoulder height, where the neighbour everyone fears turns out to be the one paying attention.",
-      "shortlist": true,
+      "shortlist": false,
       "summarySource": "own",
       "reviews": [],
       "endorsements": [
@@ -1683,7 +1839,7 @@
       "cover": "https://covers.openlibrary.org/b/id/8361789-L.jpg",
       "blurb": "Jude and her two sisters are taken to the High Court of Faerie as children, after the fae knight Madoc kills their parents and claims them as his own. Ten years on, Jude is seventeen and mortal in a world that treats humans as pets or amusements, and she wants a place at court badly enough to bleed for it. Standing in her way is Prince Cardan, the youngest son of the High King, who makes her humiliation something close to a hobby. The court runs on old rules about lying, debts, and hospitality, and Jude learns quickly that the rules are the only weapon a human gets.",
       "summarySource": "ai",
-      "shortlist": true,
+      "shortlist": false,
       "reviews": [],
       "endorsements": [
         {
@@ -1786,7 +1942,7 @@
       "cover": "https://covers.openlibrary.org/b/id/13156188-L.jpg",
       "blurb": "Five years ago, Andie Bell disappeared from a small English town, and her boyfriend Sal Singh was blamed and found dead soon after. Pip Fitz-Amobi, a sixth-form student with an appetite for research, chooses the case for her senior capstone project, convinced the accepted story has holes in it. She enlists Sal's younger brother Ravi to help her retrace the timeline, and the interviews turn up neighbours and classmates who would rather the questions stopped. The book is structured around Pip's project logs and transcripts alongside the narrative.",
       "summarySource": "ai",
-      "shortlist": true,
+      "shortlist": false,
       "reviews": [],
       "endorsements": [
         {
@@ -2239,7 +2395,7 @@
       "cover": "https://covers.openlibrary.org/b/id/7263528-L.jpg",
       "blurb": "The word gifted has never been applied to a kid like Donovan Curtis. It's usually more like Don't try this at home. So when the troublemaker pulls a major prank at his middle school, he thinks he's finally gone too far. But thanks to a mix-up by one of the administrators, instead of getting in trouble, Donovan is sent to the Academy of Scholastic Distinction (ASD), a special program for gifted and talented students.\n\nIt wasn't exactly what Donovan had intended, but there couldn't be a more perfect hideout for someone like him. That is, if he can manage to fool people whose IQs are above genius level. And that becomes harder and harder as the students and teachers of ASD grow to realize that Donovan may not be good at math or science (or just about anything). But after an ongoing experiment with a live human (sister), an unforgettably dramatic middle-school dance, and the most astonishing come-from-behind robot victory ever, Donovan shows that his gifts might be exactly what the ASD students never knew they needed.",
       "summarySource": "fetched",
-      "shortlist": true,
+      "shortlist": false,
       "reviews": [],
       "endorsements": [],
       "dislikes": [],
@@ -2615,49 +2771,6 @@
       ]
     },
     {
-      "id": "suggest-fddd8ae2-833",
-      "title": "A Deadly Education",
-      "author": "Naomi Novik",
-      "pages": 313,
-      "ageMin": 13,
-      "ageMax": 100,
-      "genres": [
-        "Coming-of-Age",
-        "Epic",
-        "Fantasy",
-        "Magic"
-      ],
-      "by": "Saira",
-      "byId": "mb-saira",
-      "status": "approved",
-      "at": "2026-09-30",
-      "cover": "https://covers.openlibrary.org/b/id/10206042-L.jpg",
-      "blurb": "A Deadly Education is set at Scholomance, a school for the magically gifted where failure means certain death (for real) — until one girl, El, begins to unlock its many secrets.\n\nThere are no teachers, no holidays, and no friendships, save strategic ones. Survival is more important than any letter grade, for the school won’t allow its students to leave until they graduate… or die! The rules are deceptively simple: Don’t walk the halls alone. And beware of the monsters who lurk everywhere.\n\nEl is uniquely prepared for the school’s dangers. She may be without allies, but she possesses a dark power strong enough to level mountains and wipe out millions. It would be easy enough for El to defeat the monsters that prowl the school. The problem? Her powerful dark magic might also kill all the other students.",
-      "summarySource": "fetched",
-      "shortlist": true,
-      "reviews": [],
-      "endorsements": [
-        {
-          "name": "Filza",
-          "at": "2026-10-23T21:26:47.969Z"
-        },
-        {
-          "name": "Eliza",
-          "at": "2026-10-26T20:33:32.137Z"
-        }
-      ],
-      "dislikes": [],
-      "ratings": [
-        {
-          "score": 3.9,
-          "source": "Goodreads"
-        }
-      ],
-      "level": "Ages 13+",
-      "tropes": [],
-      "subgenres": []
-    },
-    {
       "id": "suggest-1a451d9b-60a",
       "title": "The Martian",
       "author": "Andy Weir",
@@ -2731,6 +2844,42 @@
       ],
       "level": "Ages 13-16",
       "subgenres": []
+    },
+    {
+      "id": "suggest-629c3849-033",
+      "title": "The Last Graduate",
+      "author": "Naomi Novik",
+      "pages": 376,
+      "ageMin": 13,
+      "ageMax": 100,
+      "by": "Saira",
+      "byId": "mb-saira",
+      "status": "approved",
+      "at": "2026-11-01",
+      "endorsements": [],
+      "cover": "https://www.indigo.ca/cdn/shop/files/1_9ddb9b99-17d7-41b5-82b1-dc4fbe0a2c56.jpg?v=1757328053",
+      "blurb": "A budding dark sorceress determined not to use her formidable powers uncovers yet more secrets about the workings of her world in the stunning sequel to A Deadly Education, the start of Naomi Novik’s groundbreaking crossover series.\n\nAt the Scholomance, El, Orion, and the other students are faced with their final year—and the looming specter of graduation, a deadly ritual that leaves few students alive in its wake. El is determined that her chosen group will survive, but it is a prospect that is looking harder by the day as the savagery of the school ramps up. Until El realizes that sometimes winning the game means throwing out all the rules . . .",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "dislikes": [],
+      "ratings": [
+        {
+          "score": 4.11,
+          "source": "Open Library"
+        }
+      ],
+      "genres": [
+        "Magic",
+        "Fantasy",
+        "Epic"
+      ],
+      "subgenres": [
+        "Academia",
+        "Monsters"
+      ],
+      "tropes": [],
+      "level": "Ages 13+"
     }
   ],
   "inbox": [
@@ -2886,7 +3035,9 @@
     "join-06d354fe-40c",
     "endorse-c8c97ea6-5d3",
     "endorse-290eb033-da1",
-    "endorse-2ac8c096-d2c"
+    "endorse-2ac8c096-d2c",
+    "join-97e12eef-92b",
+    "suggest-629c3849-033"
   ],
   "vocab": {
     "genre": {
@@ -3073,10 +3224,46 @@
       "opensAt": "2026-10-29T00:50:52.083Z",
       "closesAt": "2026-10-31T00:00:00.000Z",
       "cancelledAt": null,
-      "closedAt": null,
-      "turnout": 5,
-      "totals": null,
-      "winner": null,
+      "closedAt": "2026-10-31T00:01:52.383Z",
+      "turnout": 9,
+      "totals": [
+        {
+          "id": "suggest-fddd8ae2-833",
+          "title": "A Deadly Education",
+          "total": 62,
+          "raters": 9,
+          "avg": 6.9
+        },
+        {
+          "id": "rc-mockingbird",
+          "title": "To Kill a Mockingbird",
+          "total": 53,
+          "raters": 9,
+          "avg": 5.9
+        },
+        {
+          "id": "suggest-2603dba6-457",
+          "title": "The Cruel Prince",
+          "total": 44,
+          "raters": 9,
+          "avg": 4.9
+        },
+        {
+          "id": "suggest-6944d6d5-5f3",
+          "title": "A Good Girl's Guide to Murder",
+          "total": 42,
+          "raters": 9,
+          "avg": 4.7
+        },
+        {
+          "id": "suggest-98664ae7-609",
+          "title": "Ungifted",
+          "total": 35,
+          "raters": 9,
+          "avg": 3.9
+        }
+      ],
+      "winner": "suggest-fddd8ae2-833",
       "tied": null,
       "parent": null,
       "at": "2026-10-29T00:50:52.083Z"
