@@ -1,5 +1,5 @@
 {
-  "rev": 1772,
+  "rev": 1773,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -2844,6 +2844,42 @@
       ],
       "level": "Ages 13-16",
       "subgenres": []
+    },
+    {
+      "id": "suggest-629c3849-033",
+      "title": "The Last Graduate",
+      "author": "Naomi Novik",
+      "pages": 376,
+      "ageMin": 13,
+      "ageMax": 100,
+      "by": "Saira",
+      "byId": "mb-saira",
+      "status": "approved",
+      "at": "2026-11-01",
+      "endorsements": [],
+      "cover": "https://www.indigo.ca/cdn/shop/files/1_9ddb9b99-17d7-41b5-82b1-dc4fbe0a2c56.jpg?v=1757328053",
+      "blurb": "A budding dark sorceress determined not to use her formidable powers uncovers yet more secrets about the workings of her world in the stunning sequel to A Deadly Education, the start of Naomi Novik’s groundbreaking crossover series.\n\nAt the Scholomance, El, Orion, and the other students are faced with their final year—and the looming specter of graduation, a deadly ritual that leaves few students alive in its wake. El is determined that her chosen group will survive, but it is a prospect that is looking harder by the day as the savagery of the school ramps up. Until El realizes that sometimes winning the game means throwing out all the rules . . .",
+      "summarySource": "fetched",
+      "shortlist": false,
+      "reviews": [],
+      "dislikes": [],
+      "ratings": [
+        {
+          "score": 4.11,
+          "source": "Open Library"
+        }
+      ],
+      "genres": [
+        "Magic",
+        "Fantasy",
+        "Epic"
+      ],
+      "subgenres": [
+        "Academia",
+        "Monsters"
+      ],
+      "tropes": [],
+      "level": "Ages 13+"
     }
   ],
   "inbox": [
@@ -3000,7 +3036,8 @@
     "endorse-c8c97ea6-5d3",
     "endorse-290eb033-da1",
     "endorse-2ac8c096-d2c",
-    "join-97e12eef-92b"
+    "join-97e12eef-92b",
+    "suggest-629c3849-033"
   ],
   "vocab": {
     "genre": {
