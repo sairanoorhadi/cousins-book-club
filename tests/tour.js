@@ -33,7 +33,10 @@ function pageFile() {
 
 /* Everything a tour is allowed to ask the script for: reads, and the one
    write that records having taken it. Anything else is a tour that changed
-   something. */
+   something.
+   Only calls made from the moment a tour starts are counted. The page does
+   its own things on the way up -- counting a vote whose deadline has passed,
+   among them -- and those are the page's, not the tour's. */
 const ALLOWED = ['session', 'nom-mine', 'vote-mine', 'notify-get', 'profile-get', 'vote-mail'];
 
 (async () => {
@@ -42,6 +45,9 @@ const ALLOWED = ['session', 'nom-mine', 'vote-mine', 'notify-get', 'profile-get'
   const ME = truth.members[0];
 
   let sent = [], who = null;            /* who: null | 'member' | 'observer' */
+  /* Writes made from a given point on, the tour's own flag aside. */
+  const since = (n) => sent.slice(n).filter(q => ALLOWED.indexOf(q.kind) === -1 &&
+    q.kind !== 'profile-set');
   let tourDone = false;
   const srv = http.createServer((q, r) => {
     let u = q.url.split('?')[0]; if (u === '/') u = '/index.html';
@@ -133,6 +139,7 @@ const ALLOWED = ['session', 'nom-mine', 'vote-mine', 'notify-get', 'profile-get'
     }
     await p.click('[data-tourgo="' + tier + '"]');
     await p.waitForTimeout(400);
+    return sent.length;
   };
 
   const tourTitles = [];
@@ -144,7 +151,7 @@ const ALLOWED = ['session', 'nom-mine', 'vote-mine', 'notify-get', 'profile-get'
       !!document.querySelector('.tourbar')), await p.evaluate(() =>
       !!document.querySelector('.tourbar')));
     for (const tier of ['visitor', 'observer', 'member']) {
-      await startTour(p, tier);
+      const from = await startTour(p, tier);
       const steps = await walk(p);
       const nums = steps.map(s => s.n);
       steps.forEach(s => { if (tourTitles.indexOf(s.title) === -1) tourTitles.push(s.title); });
@@ -162,7 +169,7 @@ const ALLOWED = ['session', 'nom-mine', 'vote-mine', 'notify-get', 'profile-get'
         steps.every(s => s.focused));
       check('  Back is off on the first step only', steps.map(s => s.backOff).indexOf(true),
         steps[0].backOff === true && steps.slice(1).every(s => !s.backOff));
-      const wrote = sent.filter(q => ALLOWED.indexOf(q.kind) === -1 && q.kind !== 'profile-set');
+      const wrote = since(from);
       check('  and nothing was written', wrote.map(q => q.kind), wrote.length === 0);
       check('  the tour closed itself at the end', (await state(p)).up, (await state(p)).up === false);
     }
@@ -267,6 +274,7 @@ const ALLOWED = ['session', 'nom-mine', 'vote-mine', 'notify-get', 'profile-get'
   console.log('\n=== required: an observer signing in ===');
   who = 'observer'; tourDone = false;
   p = await open(1280);
+  const obsFrom = sent.length;
   s = await state(p);
   check('it opens on its own', s.up, s.up === true);
   check('  and it is the observer tour', s.n, /of (2[0-9])$/.test(s.n));
@@ -275,9 +283,8 @@ const ALLOWED = ['session', 'nom-mine', 'vote-mine', 'notify-get', 'profile-get'
     sent.filter(q => q.kind === 'profile-set').map(q => q.payload.tourDone),
     sent.filter(q => q.kind === 'profile-set').length === 1 &&
     sent.filter(q => q.kind === 'profile-set')[0].payload.tourDone === true);
-  check('  and nothing else was written',
-    sent.filter(q => ALLOWED.indexOf(q.kind) === -1 && q.kind !== 'profile-set').map(q => q.kind),
-    sent.filter(q => ALLOWED.indexOf(q.kind) === -1 && q.kind !== 'profile-set').length === 0);
+  check('  and nothing else was written', since(obsFrom).map(q => q.kind),
+    since(obsFrom).length === 0);
   check('  the flag carries only itself',
     Object.keys(sent.filter(q => q.kind === 'profile-set')[0].payload).sort(),
     JSON.stringify(Object.keys(sent.filter(q => q.kind === 'profile-set')[0].payload).sort()) ===

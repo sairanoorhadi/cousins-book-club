@@ -152,38 +152,59 @@ img{max-width:100%;display:block}
 .memblock:nth-last-child(-n+2){border-bottom:0}
 /* name, how long they have been here, and their genres on one line; the two
    profiles elsewhere stacked at the end of it */
-.memhead{display:flex;gap:11px;align-items:center;border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);padding:12px 13px}
+/* Two rows beside the avatar: the name with the duration tag, and the
+   genres under them. It was one nowrap row, which at half a page meant the
+   name came out "Sai..." and all three genres came out cut -- four things
+   shortened to fit a line that none of them fitted.
+   The right padding is the room the links are lifted out into. They belong
+   beside both rows rather than on either, and the markup has them inside
+   the name's wrapper for the phone's sake, so they are taken out of the
+   flow and pinned instead -- a grid was tried first and a long name made
+   the genre row, which spans two of its columns, push the card wider than
+   the column it sits in. */
+.memhead{display:flex;align-items:center;gap:11px;position:relative;
+  border:2px solid var(--edge);border-radius:var(--r);
+  background:var(--surface);box-shadow:var(--shadow);padding:12px 54px 12px 13px}
 .memhead__pic{flex:none;display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;font-size:17px;border-radius:50%;border:2px solid var(--edge);background:var(--c,var(--sky));color:var(--cf,var(--on-sky));font-family:var(--f-display);font-weight:800;overflow:hidden}
 .memhead__pic img{width:100%;height:100%;object-fit:cover}
-/* One line: the name, how long they have been here, and their genres. Half a
-   page is not much for three things, so everything on it is trimmed to the
-   size that keeps the longest of them — "11 months, 30 days" — beside a name
-   rather than under it. nowrap on the row, and the name gives way first. */
-.memhead__who{flex:1 1 auto;min-width:0;display:flex;flex-wrap:nowrap;align-items:center;gap:8px}
-.memhead__who h3{font-size:18px;line-height:1.1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* min-width:0 is what keeps the two rows inside the card: it lets this
+   shrink below the width its longest line would like, and the lines then
+   wrap inside it instead of the card growing. min-height is the links',
+   which no longer hold the card open now that they are out of the flow. */
+.memhead__who{flex:1 1 auto;min-width:0;min-height:66px;display:flex;flex-wrap:wrap;
+  align-items:center;align-content:center;gap:7px 8px}
+/* The name is never shortened: it takes what it needs on row one, and wraps
+   rather than ellipsing if it cannot have it. */
+/* The max-width is what keeps the tag beside the name rather than under
+   it. A flex line is collected from what each item would like to be, so a
+   long name asks for its whole length, the tag does not fit after it and
+   drops to a line of its own. Clamped, the name asks for less, the tag sits
+   where it belongs, and the name wraps inside its own box instead. 128px is
+   the longest the tag gets -- "11 months, 30 days" -- and its gap. */
+.memhead__who h3{flex:0 1 auto;min-width:0;max-width:calc(100% - 128px);
+  font-size:18px;line-height:1.15;
+  white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}
 .memtag{flex:none;border:2px solid var(--edge);border-radius:999px;background:var(--zest);color:var(--on-zest);padding:2px 8px;font-family:var(--f-display);font-size:9.5px;font-weight:700;white-space:nowrap}
 /* three genres someone picks to stand for themselves */
-/* The genres are the part that gives: a name is a name and the duration is
-   the point of the tag, so when three long genres will not fit beside them the
-   chips narrow rather than the row breaking or spilling. */
-.memgen{flex:0 1 auto;display:flex;align-items:center;gap:4px;min-width:0}
+/* A line of its own, whatever is left of row one: flex-basis 100% puts it
+   under the name, and it wraps to a third line when three long genres will
+   not sit on one. Nothing here is trimmed -- a genre cut to "Realistic
+   Fict..." is a worse answer than a second line. */
+.memgen{flex:1 1 100%;min-width:0;display:flex;flex-wrap:wrap;
+  align-items:center;gap:6px}
 .memgen__lab{font-family:var(--f-mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
-.memgen__c{flex:0 1 auto;min-width:38px;border:2px solid var(--edge);border-radius:999px;background:var(--sunk);padding:2px 7px;font-family:var(--f-display);font-weight:700;font-size:10px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.memgen__c{flex:0 0 auto;min-width:0;border:2px solid var(--edge);border-radius:999px;background:var(--sunk);padding:2px 7px;font-family:var(--f-display);font-weight:700;font-size:10px;color:var(--ink);white-space:nowrap}
 .memgen__c--none{border-style:dashed;background:none;color:var(--muted);font-weight:400;font-family:var(--f-mono);font-size:8.5px}
 /* the two profiles elsewhere, as marks rather than sentences, one above the other */
-/* The name and the two links are their own row in the markup now, so the
-   phone can drop the tag and the genres below them (see the 700px block).
-   Here the wrapper is transparent and the header is the single flex line it
-   always was -- with the links ordered last, since in source they follow the
-   name rather than the genres. */
+/* The name and the two links are their own row in the markup, which is what
+   the phone wants (see the 700px block). Here it is transparent too, and the
+   links take the column the grid keeps for them. */
 .memhead__top{display:contents}
-/* The 3px of padding is the three the move cost: the links used to be the
-   header's own child, 11px along from the genres, and inside .memhead__who
-   they are 8px along instead. Padding rather than a margin because the auto
-   margin takes the free space and there is none to take -- the row is
-   over-subscribed at every width, so the gap would simply have come out 3px
-   short and the pills 3px longer. */
-.memlinks{flex:none;display:flex;flex-direction:column;gap:6px;margin-left:auto;order:1;padding-left:3px}
+/* Out of the flow and pinned to the right, centred against the avatar --
+   where they already were when the header was one line, and where they stay
+   whether the text beside them runs to two lines or three. */
+.memlinks{position:absolute;right:13px;top:50%;transform:translateY(-50%);
+  flex:none;display:flex;flex-direction:column;gap:6px}
 .memmark{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid var(--edge);border-radius:50%;box-shadow:2px 2px 0 var(--stamp);text-decoration:none}
 .memmark__l{font-family:var(--f-display);font-weight:800;font-size:16px;line-height:1}
 .memmark--goodreads{background:#F4F1EA;color:#382110}
@@ -1661,18 +1682,21 @@ a.getrow:hover{background:var(--sunk)}
      an ellipsis. Two rows here. Row one is the name with its two links beside
      it, level with the top of the avatar; row two is the tag and the genres,
      wrapping as they need to. */
-  .memhead{align-items:flex-start;gap:10px}
-  .memhead__who{flex-wrap:wrap;align-items:flex-start;gap:7px}
+  /* The links come back into the row here, so the space held open for them
+     goes back too, and the text block stops being held to their height. */
+  .memhead{align-items:flex-start;gap:10px;padding:12px 13px}
+  .memhead__who{flex-wrap:wrap;align-items:flex-start;align-content:flex-start;
+    gap:7px;min-height:0}
   /* flex-basis 100% so the tag and the genres cannot join this row. */
   .memhead__top{display:flex;flex:1 1 100%;min-width:0;gap:8px;align-items:flex-start}
   /* No ellipsis and no nowrap: a name cut to its first letter says nothing,
      and this one takes the width it needs and wraps when it cannot have it.
      flex:0 1 auto rather than 1 1 auto, so the links sit beside the name
      instead of being pushed to the far edge by it. */
-  .memhead__who h3{flex:0 1 auto;white-space:normal;overflow:visible;
+  .memhead__who h3{flex:0 1 auto;max-width:none;white-space:normal;overflow:visible;
     text-overflow:clip;overflow-wrap:break-word}
   /* Beside the name, not out at the right margin. */
-  .memlinks{flex-direction:row;align-items:flex-start;gap:6px;margin-left:0;order:0;padding-left:0}
+  .memlinks{position:static;transform:none;flex-direction:row;align-items:flex-start;gap:6px;order:0}
   /* The label and the three pills join the tag's flow rather than being one
      unsplittable item after it, so the row fills and then wraps. */
   .memgen{display:contents}
