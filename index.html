@@ -3546,11 +3546,21 @@ function scriptVersionNote(v){
 /* Checked once when an organiser opens Admin, and only spoken about when it is
    wrong. A mismatch is silent by nature: the saves succeed. */
 var scriptChecked = false;
+/* What the deployed copy last said it was, so anything that needs to know
+   can ask once rather than each time. Null means nobody has asked yet. */
+var scriptSeen = null;
+async function scriptAsk(){
+  if(scriptSeen !== null) return scriptSeen;
+  if(!endpoint()) return (scriptSeen = "");
+  var probe = await callEndpoint("ping", {});
+  scriptSeen = (probe && probe.ok) ? String(probe.version || "") : "";
+  return scriptSeen;
+}
 async function scriptVersionWatch(){
   if(scriptChecked || DEV || !endpoint()) return;
   scriptChecked = true;
-  var probe = await callEndpoint("ping", {});
-  if(probe && probe.ok && !scriptCurrent(probe.version)) say(scriptVersionNote(probe.version), "bad");
+  var v = await scriptAsk();
+  if(v && !scriptCurrent(v)) say(scriptVersionNote(v), "bad");
 }
 
 function notesTrouble(err, detail){
@@ -9791,13 +9801,19 @@ function tourEnd(done){
    the account, so another device does not start it again. A tour taken
    while signed out has no account to write to, which is the whole of the
    difference. */
-function tourMarkDone(){
+async function tourMarkDone(){
   try{ localStorage.setItem("marginNotes.tourDone", "1"); }catch(e){}
-  if(me && sessionToken()){
-    callEndpoint("profile-set", { token: sessionToken(), tourDone: true }).then(function(res){
-      if(res && res.ok && me) me.tourDone = true;
-    });
-  }
+  if(!(me && sessionToken())) return;
+  /* The flag rides on profile-set, and a deployed copy older than this page
+     reads that call as a profile save carrying nothing -- which is not
+     harmless: that copy sets the badge colour on every profile save, from a
+     field this call does not send, so recording the tour would blank it. So
+     ask what is deployed first, and until it is a copy that knows the
+     field, the tour stays remembered in this browser alone. */
+  var v = await scriptAsk();
+  if(!scriptCurrent(v)) return;
+  var res = await callEndpoint("profile-set", { token: sessionToken(), tourDone: true });
+  if(res && res.ok && me) me.tourDone = true;
 }
 function tourTaken(){
   if(me && me.tourDone) return true;
