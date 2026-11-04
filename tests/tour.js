@@ -37,7 +37,13 @@ function pageFile() {
    Only calls made from the moment a tour starts are counted. The page does
    its own things on the way up -- counting a vote whose deadline has passed,
    among them -- and those are the page's, not the tour's. */
-const ALLOWED = ['session', 'nom-mine', 'vote-mine', 'notify-get', 'profile-get', 'vote-mail'];
+const ALLOWED = ['session', 'nom-mine', 'vote-mine', 'notify-get', 'profile-get', 'vote-mail',
+  /* the page asks what is deployed before it writes the tour flag */
+  'ping'];
+/* What this page would need the script to be. Read from the page rather
+   than written down, so the pair cannot drift here either. */
+const WANT = (fs.readFileSync(path.join(ROOT, 'dev', 'index.html'), 'utf8')
+  .match(/SCRIPT_WANT = "([^"]+)"/) || [])[1];
 
 (async () => {
   const PAGE = pageFile();
@@ -45,6 +51,7 @@ const ALLOWED = ['session', 'nom-mine', 'vote-mine', 'notify-get', 'profile-get'
   const ME = truth.members[0];
 
   let sent = [], who = null;            /* who: null | 'member' | 'observer' */
+  let deployed = WANT;                  /* what the script says it is */
   /* Writes made from a given point on, the tour's own flag aside. */
   const since = (n) => sent.slice(n).filter(q => ALLOWED.indexOf(q.kind) === -1 &&
     q.kind !== 'profile-set');
@@ -80,6 +87,7 @@ const ALLOWED = ['session', 'nom-mine', 'vote-mine', 'notify-get', 'profile-get'
           type: who, observerId: who === 'observer' ? 'ob-1' : '', isMember: who === 'member',
           tourDone: tourDone } });
       }
+      if (q.kind === 'ping') return reply({ ok: true, pong: true, version: deployed });
       if (q.kind === 'nom-mine' || q.kind === 'vote-mine') return reply({ ok: true, mine: null });
       if (q.kind === 'profile-set') return reply({ ok: true, tourDone: !!q.payload.tourDone });
       if (q.kind === 'join') return reply({ ok: true });
@@ -295,6 +303,26 @@ const ALLOWED = ['session', 'nom-mine', 'vote-mine', 'notify-get', 'profile-get'
   p = await open(1280);
   check('done on another device: it stays shut', (await state(p)).up, (await state(p)).up === false);
   await p.close();
+
+  console.log('\n=== a script older than this page ===');
+  /* profile-set carrying only the tour flag is a save with nothing in it to
+     a copy that does not know the field -- and that copy writes the badge
+     colour on every profile save, so it would blank it. The page asks
+     first. */
+  who = 'observer'; tourDone = false; deployed = '2026-01-01a';
+  p = await open(1280);
+  const oldFrom = sent.length;
+  await walk(p);
+  check('the flag is not sent to it',
+    sent.slice(oldFrom).filter(q => q.kind === 'profile-set').length,
+    sent.slice(oldFrom).filter(q => q.kind === 'profile-set').length === 0);
+  check('  it asked what was deployed', sent.slice(oldFrom).some(q => q.kind === 'ping'),
+    sent.slice(oldFrom).some(q => q.kind === 'ping') === true);
+  check('  and the tour is still done in this browser', await p.evaluate(() =>
+    localStorage.getItem('marginNotes.tourDone')),
+    (await p.evaluate(() => localStorage.getItem('marginNotes.tourDone'))) === '1');
+  await p.close();
+  deployed = WANT;
 
   console.log('\n=== how it works ===');
   who = null; tourDone = false;
