@@ -102,10 +102,12 @@ const SCRIMS = ['rateScrim', 'dropScrim', 'bulkScrim', 'lightbox', 'loginScrim',
       await p.waitForTimeout(120);
       const still = await shown(p, id);
       check(id + ': the backdrop does nothing', still, still === true);
-      await p.keyboard.press('Escape');
-      await p.waitForTimeout(150);
-      const gone = await shown(p, id);
-      check('  and Escape closes it', gone, gone === false);
+      /* Put it away again by hand. Escape is not used here: it closes the
+         top of the stack openScrim keeps, and these were shown straight
+         from the DOM without going through it. Escape is proved on panels
+         opened the real way, below and in tests/modalstack.js. */
+      await p.evaluate(i => { document.getElementById(i).hidden = true; }, id);
+      await p.waitForTimeout(60);
     }
     await p.close();
   }
@@ -135,9 +137,14 @@ const SCRIMS = ['rateScrim', 'dropScrim', 'bulkScrim', 'lightbox', 'loginScrim',
       await p.waitForTimeout(150);
       check(id + ': stays open on a backdrop press', await shown(p, id),
         (await shown(p, id)) === true);
+      await p.keyboard.press('Escape');
+      await p.waitForTimeout(250);
+      check('  but Escape closes it', await shown(p, id), (await shown(p, id)) === false);
+      await go();
+      await p.waitForTimeout(600);
       await p.click('[data-close="' + id + '"]');
       await p.waitForTimeout(250);
-      check('  and the cross closes it', await shown(p, id), (await shown(p, id)) === false);
+      check('  and so does the cross', await shown(p, id), (await shown(p, id)) === false);
     }
     await p.close();
   }
