@@ -2205,6 +2205,20 @@
           }
         ]
       }
+    },
+    {
+      "id": "join-891b3911-d27",
+      "kind": "join",
+      "at": "2026-11-05T14:09:01.834Z",
+      "payload": {
+        "name": "Aroush",
+        "accountType": "member",
+        "fable": "",
+        "goodreads": "",
+        "note": "",
+        "emailRef": "sub-24559876-cd5",
+        "emailHint": "a••••@gmail.com"
+      }
     }
   ]
 }
