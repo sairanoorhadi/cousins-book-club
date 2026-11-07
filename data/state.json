@@ -1,5 +1,5 @@
 {
-  "rev": 1773,
+  "rev": 1779,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1482,13 +1482,15 @@
       "time": "19:00",
       "place": "Online - Discord",
       "chapters": "1-4",
-      "pages": "64",
+      "pages": "82",
       "done": false,
       "summary": "",
       "photos": [],
       "predictions": [],
       "points": [],
-      "ready": [],
+      "ready": [
+        "mb-mt3zx2lgcj3x8"
+      ],
       "sent": {}
     },
     {
@@ -1499,7 +1501,7 @@
       "time": "19:00",
       "place": "Online - Discord",
       "chapters": "5-7",
-      "pages": "57",
+      "pages": "73",
       "done": false,
       "summary": "",
       "photos": [],
@@ -1516,7 +1518,7 @@
       "time": "19:00",
       "place": "Online - Discord",
       "chapters": "8-11",
-      "pages": "77",
+      "pages": "96",
       "done": false,
       "summary": "",
       "photos": [],
@@ -1533,7 +1535,7 @@
       "time": "17:00",
       "place": "Ferdinand",
       "chapters": "12-13",
-      "pages": "51",
+      "pages": "65",
       "done": false,
       "summary": "",
       "photos": [],
@@ -3037,7 +3039,8 @@
     "endorse-290eb033-da1",
     "endorse-2ac8c096-d2c",
     "join-97e12eef-92b",
-    "suggest-629c3849-033"
+    "suggest-629c3849-033",
+    "join-891b3911-d27"
   ],
   "vocab": {
     "genre": {
