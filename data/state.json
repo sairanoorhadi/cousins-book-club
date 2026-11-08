@@ -1,5 +1,5 @@
 {
-  "rev": 1787,
+  "rev": 1788,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1495,6 +1495,14 @@
             "mb-saira",
             "mb-mt3zx2lgcj3x8",
             "mb-mv75yt4orjyed"
+          ]
+        },
+        {
+          "id": "pred-b1bbccb2-8a9",
+          "text": "Orion and El are going be enemies to lovers",
+          "by": "",
+          "byIds": [
+            "mb-mt3zx2lgcj3x8"
           ]
         }
       ],
