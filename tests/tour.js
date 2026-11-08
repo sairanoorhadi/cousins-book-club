@@ -69,7 +69,7 @@ const WANT = (fs.readFileSync(path.join(ROOT, 'dev', 'index.html'), 'utf8')
   await new Promise(r => srv.listen(8441, r));
   const b = await chromium.launch();
 
-  const open = async (w, alreadyDone) => {
+  const open = async (w) => {
     sent = [];
     const p = await b.newPage({ viewport: { width: w || 1280, height: 900 }, hasTouch: (w || 1280) <= 700 });
     p.on('pageerror', e => { bad++; console.log(' FAIL PAGEERROR ' + e.message); });
@@ -96,8 +96,6 @@ const WANT = (fs.readFileSync(path.join(ROOT, 'dev', 'index.html'), 'utf8')
     await p.route('https://api.github.com/**', r => r.fulfill({ status: 404, body: '{}' }));
     if (who) await p.addInitScript(() => { try {
       localStorage.setItem('marginNotes.session', 'tok'); } catch (e) {} });
-    if (alreadyDone) await p.addInitScript(() => { try {
-      localStorage.setItem('marginNotes.tourDone', '1'); } catch (e) {} });
     await p.goto('http://localhost:8441/', { waitUntil: 'domcontentloaded' });
     await p.waitForTimeout(1700);
     return p;
@@ -282,29 +280,49 @@ const WANT = (fs.readFileSync(path.join(ROOT, 'dev', 'index.html'), 'utf8')
   await p.close();
 
   console.log('\n=== required: an observer signing in ===');
-  who = 'observer';
+  who = 'observer'; tourDone = false;
   p = await open(1280);
   const obsFrom = sent.length;
   s = await state(p);
   check('it opens on its own', s.up, s.up === true);
   check('  and it is the observer tour', s.n, /of (2[0-9])$/.test(s.n));
+  const steps = await walk(p);
+  check('  finishing records it on the account',
+    sent.filter(q => q.kind === 'profile-set').map(q => q.payload.tourDone),
+    sent.filter(q => q.kind === 'profile-set').length === 1 &&
+    sent.filter(q => q.kind === 'profile-set')[0].payload.tourDone === true);
+  check('  and nothing else was written', since(obsFrom).map(q => q.kind),
+    since(obsFrom).length === 0);
+  check('  the flag carries only itself',
+    Object.keys(sent.filter(q => q.kind === 'profile-set')[0].payload).sort(),
+    JSON.stringify(Object.keys(sent.filter(q => q.kind === 'profile-set')[0].payload).sort()) ===
+      JSON.stringify(['token', 'tourDone']));
+  await p.close();
+
+  who = 'observer'; tourDone = true;
+  p = await open(1280);
+  check('done on another device: it stays shut', (await state(p)).up, (await state(p)).up === false);
+  await p.close();
+
+  console.log('\n=== a script older than this page ===');
+  /* profile-set carrying only the tour flag is a save with nothing in it to
+     a copy that does not know the field -- and that copy writes the badge
+     colour on every profile save, so it would blank it. The page asks
+     first. */
+  who = 'observer'; tourDone = false; deployed = '2026-01-01a';
+  p = await open(1280);
+  const oldFrom = sent.length;
   await walk(p);
-  /* The tour is remembered in the browser and nowhere else: it was briefly
-     kept on the account too, which needed a script newer than the one
-     deployed. Nothing about finishing it writes anything now. */
-  check('  finishing writes nothing at all', sent.slice(obsFrom).map(q => q.kind),
-    since(obsFrom).length === 0 &&
-    sent.slice(obsFrom).filter(q => q.kind === 'profile-set').length === 0);
-  check('  and it is remembered in this browser', await p.evaluate(() =>
+  check('the flag is not sent to it',
+    sent.slice(oldFrom).filter(q => q.kind === 'profile-set').length,
+    sent.slice(oldFrom).filter(q => q.kind === 'profile-set').length === 0);
+  check('  it asked what was deployed', sent.slice(oldFrom).some(q => q.kind === 'ping'),
+    sent.slice(oldFrom).some(q => q.kind === 'ping') === true);
+  check('  and the tour is still done in this browser', await p.evaluate(() =>
     localStorage.getItem('marginNotes.tourDone')),
     (await p.evaluate(() => localStorage.getItem('marginNotes.tourDone'))) === '1');
   await p.close();
-
-  who = 'observer';
-  p = await open(1280, true);
-  check('having been round it already, it stays shut', (await state(p)).up,
-    (await state(p)).up === false);
-  await p.close();
+  deployed = WANT;
 
   console.log('\n=== how it works ===');
   who = null; tourDone = false;
