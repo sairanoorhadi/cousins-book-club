@@ -1,5 +1,5 @@
 {
-  "rev": 1785,
+  "rev": 1786,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1486,7 +1486,18 @@
       "done": false,
       "summary": "",
       "photos": [],
-      "predictions": [],
+      "predictions": [
+        {
+          "id": "pred-77abd7df-c8a",
+          "text": "Orion is part mal",
+          "by": "",
+          "byIds": [
+            "mb-saira",
+            "mb-mt3zx2lgcj3x8",
+            "mb-mv75yt4orjyed"
+          ]
+        }
+      ],
       "points": [],
       "ready": [
         "mb-saira",
