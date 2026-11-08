@@ -1,5 +1,5 @@
 {
-  "rev": 1786,
+  "rev": 1787,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1498,7 +1498,16 @@
           ]
         }
       ],
-      "points": [],
+      "points": [
+        {
+          "id": "disc-a2d2cf35-5f4",
+          "text": "How did El get this affinity for major arcana?",
+          "by": "",
+          "byIds": [
+            "mb-saira"
+          ]
+        }
+      ],
       "ready": [
         "mb-saira",
         "mb-mt3zx2lgcj3x8",
