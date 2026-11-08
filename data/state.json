@@ -1,5 +1,5 @@
 {
-  "rev": 1788,
+  "rev": 1789,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1510,6 +1510,14 @@
         {
           "id": "disc-a2d2cf35-5f4",
           "text": "How did El get this affinity for major arcana?",
+          "by": "",
+          "byIds": [
+            "mb-saira"
+          ]
+        },
+        {
+          "id": "disc-81a74c8f-b1f",
+          "text": "What is the void?",
           "by": "",
           "byIds": [
             "mb-saira"
