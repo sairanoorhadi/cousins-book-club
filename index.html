@@ -415,17 +415,33 @@ a.getrow:hover{background:var(--sunk)}
 .bellbtn:hover{background:var(--zest);color:var(--on-zest);transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--stamp)}
 /* who has finished the section. The row is always on the card, so it has to
    pay for itself out of the line the countdown gave back: a shorter gap above
-   it, and a button sized to the faces beside it rather than taller than them. */
+   it, and a button sized to sit on one line. */
 .meetcard__row--ready{align-items:center;margin-top:8px}
 .meetcard__row--ready .btn{padding-top:3px;padding-bottom:3px}
 /* the row holds the height the Ready button needs whether or not it is there,
    so the card does not jump when someone signs in */
 .meetcard__row--ready .readyrow{min-height:30px}
 .readyrow{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
-.readyface{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:none;
-  border-radius:50%;border:2px solid var(--edge);background:var(--c,var(--sky));color:var(--cf,var(--on-sky));
-  font-family:var(--f-display);font-weight:800;font-size:11px;overflow:hidden;cursor:default}
-.readyface img{width:100%;height:100%;object-fit:cover}
+/* The rows on the left, who is ready down the right. The names were
+   initials in circles -- S, F, Z -- which take a colour and a guess, and
+   the right of the card was empty anyway. */
+.meetcard__cols{display:flex;align-items:flex-start;gap:16px}
+.meetcard__rows{flex:1 1 auto;min-width:0}
+/* It may grow downward and never sideways: the column takes a share of the
+   width and no more, and a name too long for it loses type rather than
+   letters (see readyFit). */
+.readycol{flex:0 0 auto;max-width:38%;min-width:0;margin-top:10px;
+  display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.readycol__k{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted)}
+.readycol__none{font-size:13px;color:var(--muted)}
+.readypill{max-width:100%;border:2px solid var(--edge);border-radius:999px;padding:1px 9px;
+  font-family:var(--f-display);font-weight:700;font-size:12px;line-height:1.35;
+  white-space:nowrap;overflow:hidden;overflow-wrap:break-word;
+  background:var(--c,var(--sky));color:var(--cf,var(--on-sky))}
+/* The same pills again, for the phone, where there is no right-hand space
+   to put them in. One of the two is drawn, never both. */
+.readyrow__pills{display:none}
 
 .upnext{border:2px solid var(--edge);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
 .upnext[hidden]{display:none}
@@ -1676,6 +1692,16 @@ a.getrow:hover{background:var(--sunk)}
   .tree__disc span{font-size:17px}
   .tree__disc--hub{width:84px;height:84px}
   .tree__cap{font-size:10.5px;max-width:92px}
+  /* No room beside the rows at this width, so who is ready goes back under
+     the Ready button and wraps across as many lines as it needs. */
+  .meetcard__cols{display:block}
+  .readycol{display:none}
+  .readyrow__pills{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+  /* With the names under it the row is several lines deep, and a label
+     centred on all of them sits against nothing. It belongs beside the
+     button, which is the row's first line. */
+  .meetcard__row--ready{align-items:flex-start}
+  .meetcard__row--ready .k{margin-top:9px}
   /* The profile header was one nowrap row at every width, and the name is
      what gave way: at 390 it had 11px of the 51 "Saira" needs -- a letter and
      an ellipsis. Two rows here. Row one is the name with its two links beside
@@ -5245,11 +5271,55 @@ function readingRowHTML(m){
    for the ones who said so on Discord instead. */
 function readyList(m){ return (m && Array.isArray(m.ready)) ? m.ready : []; }
 function isReady(m, memberId){ return readyList(m).indexOf(memberId) !== -1; }
-function readyFaceHTML(mem){
-  return '<span class="readyface" ' + hueStyle(mem) + ' title="' + esc(mem.name) + '" ' +
-    'tabindex="0" role="img" aria-label="' + esc(mem.name) + ' is ready">' +
-    (mem.avatar ? '<img src="' + esc(mem.avatar) + '" alt="">' : esc(initials(mem.name))) +
-    "</span>";
+/* First name only: the column has room for one word, and this is a list of
+   who rather than a register. A title on its own says nothing, so a first
+   word that is one brings the next along with it. */
+var READY_TITLE = /^(mr|mrs|ms|miss|dr|prof|aunt|auntie|uncle)\.?$/i;
+function firstName(name){
+  var w = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if(!w.length) return "";
+  return (w.length > 1 && READY_TITLE.test(w[0])) ? w[0] + " " + w[1] : w[0];
+}
+/* A name in their own badge colour, with the contrast colour that colour is
+   paired with everywhere else. The initial circles carried a title with the
+   name in it, because a letter says nothing on its own; the name is on the
+   pill now, so there is nothing left for a tooltip to add. */
+function readyPillHTML(mem){
+  return '<span class="readypill" ' + hueStyle(mem) + ">" +
+    esc(firstName(mem.name)) + "</span>";
+}
+function readyPeople(m){ return readyList(m).map(memberById).filter(Boolean); }
+function readyPillsHTML(m){ return readyPeople(m).map(readyPillHTML).join(""); }
+/* The column beside the rows. Always drawn, so the card does not change
+   shape when the first person says they are ready. */
+function readyColHTML(m){
+  var who = readyPeople(m);
+  return '<div class="readycol"><span class="readycol__k">Ready</span>' +
+    (who.length ? readyPillsHTML(m) : '<span class="readycol__none">No one yet</span>') +
+    "</div>";
+}
+/* A name that will not fit its column drops a little type until it does,
+   and at the floor it wraps. An ellipsis would hide the one thing the pill
+   is there to say. */
+/* The display face arrives after the first paint, and a measurement taken
+   in the fallback is the wrong one, so the pass runs again once it lands. */
+var readyFontWait = false;
+function readyFit(){
+  if(!readyFontWait && document.fonts && document.fonts.ready){
+    readyFontWait = true;
+    document.fonts.ready.then(function(){ readyFit(); });
+  }
+  var pills = document.querySelectorAll(".readycol .readypill");
+  Array.prototype.forEach.call(pills, function(n){
+    n.style.fontSize = "";
+    n.style.whiteSpace = "";
+    var size = 12;
+    while(n.scrollWidth > n.clientWidth + 1 && size > 9){
+      size -= 0.5;
+      n.style.fontSize = size + "px";
+    }
+    if(n.scrollWidth > n.clientWidth + 1) n.style.whiteSpace = "normal";
+  });
 }
 function readyRowHTML(m){
   var mine = myMember();
@@ -5264,8 +5334,9 @@ function readyRowHTML(m){
           '" type="button" data-ready="' + esc(m.id) + '">' +
           (isReady(m, mine.id) ? "You’re ready" : "Ready") + "</button>"
         : "") +
-      faces.map(readyFaceHTML).join("") +
-      (!faces.length ? '<span class="hint">No one yet.</span>' : "") +
+      '<span class="readyrow__pills">' +
+        (faces.length ? readyPillsHTML(m) : '<span class="hint">No one yet.</span>') +
+      "</span>" +
     "</span></div>";
 }
 
@@ -5384,13 +5455,18 @@ function renderHero(){
               'aria-label="Email me about this" title="Email me about this">' + BELL + "</button>") +
         "</span>" +
       "</div>" +
-      '<div class="meetcard__row"><span class="k">Time</span><span>' + esc(prettyTime(meet.time) || "TBC") + "</span></div>" +
-      '<div class="meetcard__row"><span class="k">Where</span><span>' + esc(meet.place || "TBC") + "</span></div>" +
-      /* The book was named directly above this card, so the row only repeated
-         it. Chapters and pages are one fact about the same reading, so they
-         are one line. A party has no reading attached at all. */
-      (isParty ? "" : readingRowHTML(meet)) +
-      readyRowHTML(meet);
+      /* The detail rows on the left, who is ready down the right. On the
+         phone the column is off and the names come back under the button. */
+      '<div class="meetcard__cols"><div class="meetcard__rows">' +
+        '<div class="meetcard__row"><span class="k">Time</span><span>' + esc(prettyTime(meet.time) || "TBC") + "</span></div>" +
+        '<div class="meetcard__row"><span class="k">Where</span><span>' + esc(meet.place || "TBC") + "</span></div>" +
+        /* The book was named directly above this card, so the row only repeated
+           it. Chapters and pages are one fact about the same reading, so they
+           are one line. A party has no reading attached at all. */
+        (isParty ? "" : readingRowHTML(meet)) +
+        readyRowHTML(meet) +
+      "</div>" + readyColHTML(meet) + "</div>";
+    readyFit();
   }
   renderFlags();
   renderUpNext();
@@ -16286,6 +16362,13 @@ window.addEventListener("hashchange", voteJumpIfAsked);
   window.addEventListener("resize", function(){
     clearTimeout(recResize);
     recResize = setTimeout(function(){ if($("recGrid")) renderRecGrid(); }, 150);
+  });
+  /* The ready column's width is a share of the card's, so a name that fitted
+     at one window width may not at the next. Same settling as the grid. */
+  var readyResize = null;
+  window.addEventListener("resize", function(){
+    clearTimeout(readyResize);
+    readyResize = setTimeout(readyFit, 150);
   });
 })();
 
