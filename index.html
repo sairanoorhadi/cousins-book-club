@@ -3546,11 +3546,21 @@ function scriptVersionNote(v){
 /* Checked once when an organiser opens Admin, and only spoken about when it is
    wrong. A mismatch is silent by nature: the saves succeed. */
 var scriptChecked = false;
+/* What the deployed copy last said it was, so anything that needs to know
+   can ask once rather than each time. Null means nobody has asked yet. */
+var scriptSeen = null;
+async function scriptAsk(){
+  if(scriptSeen !== null) return scriptSeen;
+  if(!endpoint()) return (scriptSeen = "");
+  var probe = await callEndpoint("ping", {});
+  scriptSeen = (probe && probe.ok) ? String(probe.version || "") : "";
+  return scriptSeen;
+}
 async function scriptVersionWatch(){
   if(scriptChecked || DEV || !endpoint()) return;
   scriptChecked = true;
-  var probe = await callEndpoint("ping", {});
-  if(probe && probe.ok && !scriptCurrent(probe.version)) say(scriptVersionNote(probe.version), "bad");
+  var v = await scriptAsk();
+  if(v && !scriptCurrent(v)) say(scriptVersionNote(v), "bad");
 }
 
 function notesTrouble(err, detail){
@@ -3868,7 +3878,7 @@ var DEV_SAFE = ["ping", "details", "summarise", "images", "agenote"];
    older than this will take a save, answer that it worked, and quietly drop
    whatever that version had not been taught about — which is exactly how a
    summary could be typed, saved and lost with a success message over it. */
-var SCRIPT_WANT = "2026-10-26a";
+var SCRIPT_WANT = "2026-10-29a";
 
 /* Add ?debug=endpoint to the address to watch every call to the script go
    out and come back: the kind, the URL, the status, how long it took and the
@@ -9787,15 +9797,26 @@ function tourEnd(done){
   if(done) tourMarkDone();
   renderTourCta();
 }
-/* Remembered in this browser, and nowhere else. It was briefly kept on the
-   account as well, through a profile-set field, so a second device would
-   not start it again -- that needed a script newer than the one deployed,
-   and it was not worth a redeploy for. Somebody who takes the tour on their
-   phone and then opens the site on a laptop is offered it once more there. */
-function tourMarkDone(){
+/* Done is remembered twice over: here, so this browser stops asking, and on
+   the account, so another device does not start it again. A tour taken
+   while signed out has no account to write to, which is the whole of the
+   difference. */
+async function tourMarkDone(){
   try{ localStorage.setItem("marginNotes.tourDone", "1"); }catch(e){}
+  if(!(me && sessionToken())) return;
+  /* The flag rides on profile-set, and a deployed copy older than this page
+     reads that call as a profile save carrying nothing -- which is not
+     harmless: that copy sets the badge colour on every profile save, from a
+     field this call does not send, so recording the tour would blank it. So
+     ask what is deployed first, and until it is a copy that knows the
+     field, the tour stays remembered in this browser alone. */
+  var v = await scriptAsk();
+  if(!scriptCurrent(v)) return;
+  var res = await callEndpoint("profile-set", { token: sessionToken(), tourDone: true });
+  if(res && res.ok && me) me.tourDone = true;
 }
 function tourTaken(){
+  if(me && me.tourDone) return true;
   try{ return localStorage.getItem("marginNotes.tourDone") === "1"; }catch(e){ return false; }
 }
 /* On the test site only: a step pointing at something that is not there any
@@ -12369,9 +12390,9 @@ document.addEventListener("click", async function(e){
     /* Somebody who was sent here from a book goes back to it, rather than
        being left on the landing page to find it again. Run once. */
     if(afterSignIn){ var go = afterSignIn; afterSignIn = null; try{ go(); }catch(e){} }
-    /* First time in: observers are shown round, unless this browser has
-       been round already. */
-    if(me && me.type === "observer" && !tourTaken()) tourStart("observer", true);
+    /* First time in: observers are shown round. The flag is on the account,
+       so a second device does not start it again. */
+    if(me && me.type === "observer" && !me.tourDone) tourStart("observer", true);
     return;
   }
   if(t.closest("#meNotifySave") || t.closest("#meNotifyNone")){
@@ -16256,7 +16277,7 @@ window.addEventListener("hashchange", voteJumpIfAsked);
   tourCheckSteps();
   /* An observer who has never been round it gets it on sight, including the
      session they signed in with a moment ago and restored here. */
-  if(me && me.type === "observer" && !tourTaken()) tourStart("observer", true);
+  if(me && me.type === "observer" && !me.tourDone) tourStart("observer", true);
   window.addEventListener("resize", function(){ renderTree(); });
   /* A narrower window fits fewer covers to a row, which makes a page hold
      fewer of them. Settle first: a drag across a desktop fires this by the
