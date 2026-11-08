@@ -1,5 +1,5 @@
 {
-  "rev": 1779,
+  "rev": 1784,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1479,7 +1479,7 @@
       "bookId": "suggest-fddd8ae2-833",
       "kind": "meeting",
       "date": "2026-11-08",
-      "time": "19:00",
+      "time": "18:00",
       "place": "Online - Discord",
       "chapters": "1-4",
       "pages": "82",
@@ -1489,7 +1489,9 @@
       "predictions": [],
       "points": [],
       "ready": [
-        "mb-mt3zx2lgcj3x8"
+        "mb-saira",
+        "mb-mt3zx2lgcj3x8",
+        "mb-mtcdg54c8cyyc"
       ],
       "sent": {}
     },
@@ -1498,7 +1500,7 @@
       "bookId": "suggest-fddd8ae2-833",
       "kind": "meeting",
       "date": "2026-11-15",
-      "time": "19:00",
+      "time": "18:00",
       "place": "Online - Discord",
       "chapters": "5-7",
       "pages": "73",
@@ -1515,7 +1517,7 @@
       "bookId": "suggest-fddd8ae2-833",
       "kind": "meeting",
       "date": "2026-11-22",
-      "time": "19:00",
+      "time": "18:00",
       "place": "Online - Discord",
       "chapters": "8-11",
       "pages": "96",
