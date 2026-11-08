@@ -1,5 +1,5 @@
 {
-  "rev": 1789,
+  "rev": 1790,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1518,6 +1518,14 @@
         {
           "id": "disc-81a74c8f-b1f",
           "text": "What is the void?",
+          "by": "",
+          "byIds": [
+            "mb-saira"
+          ]
+        },
+        {
+          "id": "disc-858f62f6-a74",
+          "text": "The magic system is very cool",
           "by": "",
           "byIds": [
             "mb-saira"
