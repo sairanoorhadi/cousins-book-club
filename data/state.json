@@ -1,5 +1,5 @@
 {
-  "rev": 1796,
+  "rev": 1797,
   "club": {
     "name": "Cousins Book Club",
     "tagline": "",
@@ -1554,7 +1554,11 @@
       "photos": [],
       "predictions": [],
       "points": [],
-      "ready": [],
+      "ready": [
+        "mb-saira",
+        "mb-mtcdg54c8cyyc",
+        "mb-munn9nj7dj0fl"
+      ],
       "sent": {}
     },
     {
